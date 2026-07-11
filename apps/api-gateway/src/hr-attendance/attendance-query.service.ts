@@ -17,14 +17,30 @@ import {
 import { AttendanceSettingsService } from './attendance-settings.service';
 import { WorksiteService } from './worksite.service';
 import { AttendanceDashboardService } from './attendance-dashboard.service';
-
-type AuthUser = {
-  id: number;
-  roles?: string[];
-};
-
-const DEFAULT_FACE_IDENTIFY_MIN_SIMILARITY = 0.82;
-const DEFAULT_FACE_VERIFY_MIN_SIMILARITY = 0.82;
+import {
+  AuthUser,
+  DEFAULT_FACE_IDENTIFY_MIN_SIMILARITY,
+  DEFAULT_FACE_VERIFY_MIN_SIMILARITY,
+  resolvePagination,
+  emptyPaginatedResponse,
+  paginatedMeta,
+  computeStandardDailyMinutes,
+  isPathWithinBase,
+  deriveSnapshotMimeType,
+  deriveSnapshotFileName,
+} from './attendance-query.helpers';
+import {
+  buildAttendanceTodayQuery,
+  buildAttendanceRecentEventsQuery,
+  buildAttendanceHistoryFragments,
+  buildAttendanceHistoryRowsQuery,
+  buildAttendanceHistoryCountQuery,
+  buildHolidayExpr,
+  buildTimesheetFragments,
+  buildTimesheetRowsQuery,
+  buildTimesheetCountQuery,
+  buildAttendanceSnapshotQuery,
+} from './attendance-query.sql';
 
 @Injectable()
 export class AttendanceQueryService {
@@ -53,41 +69,13 @@ export class AttendanceQueryService {
       Number(profile.hrUserId),
     );
 
-    const todayRows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(Prisma.sql`
-      SELECT
-        s.id,
-        s.work_date,
-        s.clock_in_at,
-        s.clock_out_at,
-        s.clock_in_status,
-        s.clock_out_status,
-        s.total_work_minutes,
-        win.name AS clock_in_worksite_name,
-        wout.name AS clock_out_worksite_name
-      FROM public.hr_attendance_sessions s
-      LEFT JOIN public.hr_worksites win ON win.id = s.clock_in_worksite_id
-      LEFT JOIN public.hr_worksites wout ON wout.id = s.clock_out_worksite_id
-      WHERE s.user_id = ${profile.hrUserId}
-        AND s.deleted_at IS NULL
-        AND s.work_date = CURRENT_DATE
-      ORDER BY s.id DESC
-      LIMIT 1
-    `);
+    const todayRows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(
+      buildAttendanceTodayQuery(Number(profile.hrUserId)),
+    );
 
-    const recentEvents = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(Prisma.sql`
-      SELECT
-        e.id,
-        e.event_type,
-        e.event_at,
-        e.result,
-        e.reason_code,
-        e.snapshot_url
-      FROM public.hr_attendance_events e
-      WHERE e.user_id = ${profile.hrUserId}
-        AND e.deleted_at IS NULL
-      ORDER BY e.event_at DESC, e.id DESC
-      LIMIT 5
-    `);
+    const recentEvents = await this.prisma.$queryRaw<
+      Array<Record<string, unknown>>
+    >(buildAttendanceRecentEventsQuery(Number(profile.hrUserId)));
 
     const autoSubmitEnabled = await this.settingsService.getBooleanSetting(
       'attendance',
@@ -130,9 +118,11 @@ export class AttendanceQueryService {
   }
 
   async getAttendanceHistory(authUser: AuthUser, query: QueryHrAttendanceHistoryDto) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = resolvePagination({
+      page: query.page,
+      limit: query.limit,
+      defaultLimit: 10,
+    });
     const privileged = await resolveHrPrivilege(this.prisma, authUser);
     const search = query.search?.trim() ?? '';
     const targetAppUserId = query.userId ? (privileged ? query.userId : authUser.id) : null;
@@ -141,95 +131,38 @@ export class AttendanceQueryService {
     if (targetAppUserId !== null) {
       const profile = await getHrProfileByAppUserId(this.prisma, targetAppUserId);
       if (!profile) {
-        return {
-          success: true,
-          data: [],
-          meta: { page, limit, total: 0, totalPages: 1 },
-        };
+        return emptyPaginatedResponse(page, limit);
       }
       targetHrUserId = Number(profile.hrUserId);
     } else if (!privileged) {
       const profile = await getHrProfileByAppUserId(this.prisma, authUser.id);
       if (!profile) {
-        return {
-          success: true,
-          data: [],
-          meta: { page, limit, total: 0, totalPages: 1 },
-        };
+        return emptyPaginatedResponse(page, limit);
       }
       targetHrUserId = Number(profile.hrUserId);
     }
 
-    const hrUserScopeSql =
-      targetHrUserId !== null ? Prisma.sql`AND s.user_id = ${targetHrUserId}` : Prisma.empty;
-    const searchSql =
-      search.length > 0
-        ? Prisma.sql`
-            AND (
-              lower(coalesce(u.full_name, '')) LIKE lower(${`%${search}%`})
-              OR lower(coalesce(u.username, '')) LIKE lower(${`%${search}%`})
-              OR lower(coalesce(hu.employee_code, '')) LIKE lower(${`%${search}%`})
-            )
-          `
-        : Prisma.empty;
-    const dateFromSql = query.dateFrom
-      ? Prisma.sql`AND s.work_date >= ${query.dateFrom}::date`
-      : Prisma.empty;
-    const dateToSql = query.dateTo
-      ? Prisma.sql`AND s.work_date <= ${query.dateTo}::date`
-      : Prisma.empty;
+    const fragments = buildAttendanceHistoryFragments({
+      targetHrUserId,
+      search,
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+    });
 
-    const rows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(Prisma.sql`
-      SELECT
-        s.id,
-        s.work_date,
-        s.clock_in_at,
-        s.clock_out_at,
-        s.clock_in_status,
-        s.clock_out_status,
-        s.total_work_minutes,
-        win.name AS clock_in_worksite_name,
-        wout.name AS clock_out_worksite_name,
-        u.username,
-        u.full_name
-      FROM public.hr_attendance_sessions s
-      JOIN public.hr_users hu ON hu.id = s.user_id
-      JOIN public.m0_users u ON u.id = hu.user_id
-      LEFT JOIN public.hr_worksites win ON win.id = s.clock_in_worksite_id
-      LEFT JOIN public.hr_worksites wout ON wout.id = s.clock_out_worksite_id
-      WHERE s.deleted_at IS NULL
-        ${hrUserScopeSql}
-        ${searchSql}
-        ${dateFromSql}
-        ${dateToSql}
-      ORDER BY s.work_date DESC, s.id DESC
-      LIMIT ${limit}
-      OFFSET ${offset}
-    `);
+    const rows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(
+      buildAttendanceHistoryRowsQuery({ fragments, limit, offset }),
+    );
 
-    const countRows = await this.prisma.$queryRaw<Array<{ total: bigint | number }>>(Prisma.sql`
-      SELECT count(*)::bigint AS total
-      FROM public.hr_attendance_sessions s
-      JOIN public.hr_users hu ON hu.id = s.user_id
-      JOIN public.m0_users u ON u.id = hu.user_id
-      WHERE s.deleted_at IS NULL
-        ${hrUserScopeSql}
-        ${searchSql}
-        ${dateFromSql}
-        ${dateToSql}
-    `);
+    const countRows = await this.prisma.$queryRaw<Array<{ total: bigint | number }>>(
+      buildAttendanceHistoryCountQuery(fragments),
+    );
 
     const total = Number(countRows[0]?.total ?? 0);
 
     return {
       success: true,
       data: normalizeHrDates(rows),
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.max(1, Math.ceil(total / limit)),
-      },
+      meta: paginatedMeta({ page, limit, total }),
     };
   }
 
@@ -244,9 +177,11 @@ export class AttendanceQueryService {
    * everyone; regular users see only themselves.
    */
   async getTimesheets(authUser: AuthUser, query: QueryHrTimesheetDto) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 25;
-    const offset = (page - 1) * limit;
+    const { page, limit, offset } = resolvePagination({
+      page: query.page,
+      limit: query.limit,
+      defaultLimit: 25,
+    });
     const privileged = await resolveHrPrivilege(this.prisma, authUser);
     const search = query.search?.trim() ?? '';
 
@@ -259,7 +194,7 @@ export class AttendanceQueryService {
         targetAppUserId ?? authUser.id,
       );
       if (!profile) {
-        return { success: true, data: [], meta: { page, limit, total: 0, totalPages: 1 } };
+        return emptyPaginatedResponse(page, limit);
       }
       targetHrUserId = Number(profile.hrUserId);
     }
@@ -286,146 +221,95 @@ export class AttendanceQueryService {
       'count_holiday_as_overtime',
       true,
     );
-    const standardDailyMinutes = Math.max(0, Math.round(dailyRegularHours * 60));
+    const standardDailyMinutes = computeStandardDailyMinutes(dailyRegularHours);
 
     // A session's work_date is a holiday if an active hr_holidays row matches it,
     // either on the exact date or (for recurring rows) on the same month/day.
-    const isHolidayExpr = Prisma.sql`EXISTS (
-      SELECT 1 FROM public.hr_holidays h
-      WHERE h.deleted_at IS NULL AND h.is_active
-        AND (
-          (NOT h.is_recurring AND h.holiday_date = s.work_date)
-          OR (h.is_recurring AND to_char(h.holiday_date, 'MM-DD') = to_char(s.work_date, 'MM-DD'))
-        )
-    )`;
+    // Built once; interpolated 3× in the rows query so the same expression reuse
+    // exactly.
+    const isHolidayExpr = buildHolidayExpr();
 
-    const scopeSql =
-      targetHrUserId !== null ? Prisma.sql`AND s.user_id = ${targetHrUserId}` : Prisma.empty;
-    const searchSql =
-      search.length > 0
-        ? Prisma.sql`
-            AND (
-              lower(coalesce(u.full_name, '')) LIKE lower(${`%${search}%`})
-              OR lower(coalesce(u.username, '')) LIKE lower(${`%${search}%`})
-              OR lower(coalesce(hu.employee_code, '')) LIKE lower(${`%${search}%`})
-            )`
-        : Prisma.empty;
-    const dateFromSql = query.dateFrom
-      ? Prisma.sql`AND s.work_date >= ${query.dateFrom}::date`
-      : Prisma.empty;
-    const dateToSql = query.dateTo
-      ? Prisma.sql`AND s.work_date <= ${query.dateTo}::date`
-      : Prisma.empty;
+    const fragments = buildTimesheetFragments({
+      targetHrUserId,
+      search,
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+    });
 
-    const rows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(Prisma.sql`
-      SELECT
-        hu.user_id AS "appUserId",
-        hu.employee_code AS "employeeCode",
-        u.username,
-        u.full_name AS "fullName",
-        count(*) FILTER (WHERE s.clock_in_at IS NOT NULL)::int AS "daysPresent",
-        count(*) FILTER (WHERE s.clock_in_at IS NOT NULL AND ${isHolidayExpr})::int AS "holidayDays",
-        coalesce(sum(s.total_work_minutes), 0)::int AS "totalMinutes",
-        coalesce(sum(CASE WHEN ${isHolidayExpr} THEN coalesce(s.total_work_minutes, 0) ELSE 0 END), 0)::int AS "holidayMinutes",
-        coalesce(sum(
-          CASE
-            WHEN ${overtimeEnabled} = false THEN 0
-            WHEN ${countHolidayAsOvertime} = true AND ${isHolidayExpr}
-              THEN coalesce(s.total_work_minutes, 0)
-            ELSE GREATEST(coalesce(s.total_work_minutes, 0) - ${standardDailyMinutes}, 0)
-          END
-        ), 0)::int AS "overtimeMinutes",
-        min(s.work_date) AS "firstDate",
-        max(s.work_date) AS "lastDate"
-      FROM public.hr_attendance_sessions s
-      JOIN public.hr_users hu ON hu.id = s.user_id
-      JOIN public.m0_users u ON u.id = hu.user_id
-      WHERE s.deleted_at IS NULL
-        ${scopeSql}
-        ${searchSql}
-        ${dateFromSql}
-        ${dateToSql}
-      GROUP BY hu.user_id, hu.employee_code, u.username, u.full_name
-      ORDER BY u.full_name NULLS LAST, u.username
-      LIMIT ${limit}
-      OFFSET ${offset}
-    `);
+    const rows = await this.prisma.$queryRaw<Array<Record<string, unknown>>>(
+      buildTimesheetRowsQuery({
+        fragments,
+        isHolidayExpr,
+        overtimeEnabled,
+        countHolidayAsOvertime,
+        standardDailyMinutes,
+        limit,
+        offset,
+      }),
+    );
 
-    const countRows = await this.prisma.$queryRaw<Array<{ total: bigint | number }>>(Prisma.sql`
-      SELECT count(*)::bigint AS total FROM (
-        SELECT 1
-        FROM public.hr_attendance_sessions s
-        JOIN public.hr_users hu ON hu.id = s.user_id
-        JOIN public.m0_users u ON u.id = hu.user_id
-        WHERE s.deleted_at IS NULL
-          ${scopeSql}
-          ${searchSql}
-          ${dateFromSql}
-          ${dateToSql}
-        GROUP BY hu.user_id
-      ) t
-    `);
+    const countRows = await this.prisma.$queryRaw<Array<{ total: bigint | number }>>(
+      buildTimesheetCountQuery(fragments),
+    );
 
     const total = Number(countRows[0]?.total ?? 0);
 
     return {
       success: true,
       data: normalizeHrDates(rows),
-      meta: {
+      meta: paginatedMeta({
         page,
         limit,
         total,
-        totalPages: Math.max(1, Math.ceil(total / limit)),
-        standardDailyMinutes,
-        overtimeEnabled,
-        dailyRegularMinutes: standardDailyMinutes,
-        countHolidayAsOvertime,
-      },
+        extra: {
+          standardDailyMinutes,
+          overtimeEnabled,
+          dailyRegularMinutes: standardDailyMinutes,
+          countHolidayAsOvertime,
+        },
+      }),
     };
   }
 
   async getAttendanceEventSnapshot(authUser: AuthUser, eventId: number) {
     const privileged = await resolveHrPrivilege(this.prisma, authUser);
+
+    // (1) Authorized DB lookup.
     const rows = await this.prisma.$queryRaw<
       Array<{ snapshot_url: string | null; user_id: number }>
-    >(Prisma.sql`
-      SELECT e.snapshot_url, e.user_id
-      FROM public.hr_attendance_events e
-      JOIN public.hr_users hu ON hu.id = e.user_id
-      WHERE e.id = ${eventId}
-        AND e.deleted_at IS NULL
-        AND (
-          ${privileged}
-          OR hu.user_id = ${authUser.id}
-        )
-      LIMIT 1
-    `);
+    >(buildAttendanceSnapshotQuery({ eventId, privileged, appUserId: authUser.id }));
 
     const row = rows[0];
+
+    // (2) Missing-URL check.
     if (!row?.snapshot_url) {
       throw new NotFoundException('Attendance snapshot not found.');
     }
 
+    // (3) Resolve path.
     const baseDir = getAttendanceStorageBaseDir();
     const resolvedFile = resolveAttendanceSnapshotPath(row.snapshot_url, baseDir);
     const resolvedBase = path.resolve(baseDir);
 
-    if (!resolvedFile.startsWith(resolvedBase + path.sep) && resolvedFile !== resolvedBase) {
+    // (4) Enforce base-directory containment (security-sensitive).
+    if (!isPathWithinBase(resolvedFile, resolvedBase)) {
       throw new Error('Attendance snapshot path is outside the allowed storage root.');
     }
 
+    // (5) Read file (I/O + error translation stays in the service).
     const buffer = await readFile(resolvedFile).catch(() => null);
     if (!buffer) {
       throw new NotFoundException('Attendance snapshot file is missing.');
     }
 
-    const extension = path.extname(resolvedFile).toLowerCase();
-    const mimeType = extension === '.png' ? 'image/png' : 'image/jpeg';
+    // (6) Derive MIME.
+    const mimeType = deriveSnapshotMimeType(resolvedFile);
+    const fileName = deriveSnapshotFileName(resolvedFile);
 
     return {
       buffer,
       mimeType,
-      fileName: path.basename(resolvedFile),
+      fileName,
     };
   }
 }
