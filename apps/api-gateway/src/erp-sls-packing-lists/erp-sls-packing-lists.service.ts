@@ -11,13 +11,18 @@ import {
   TransitionSlsPackingListDto,
 } from './dto/transition-sls-packing-list.dto';
 import {
-  toBigInt,
   EDITABLE,
   NEXT,
   buildSlsPackingListWhere,
   mapPackingListLine,
   computeOrderTotals,
 } from './sls-packing-list.helpers';
+import {
+  buildSlsPackingListCreateData,
+  buildSlsPackingListUpdatePatch,
+  mapExistingSlsPackingListLines,
+  buildSlsPackingListTotalsInput,
+} from './sls-packing-list-persistence.mapper';
 
 const DOC_CODE = 'PL';
 const FALLBACK_PREFIX = 'PL';
@@ -128,46 +133,20 @@ export class ErpSlsPackingListsService {
       if (!docNumber) throw new BadRequestException('No dokumen wajib diisi.');
 
       const row = await tx.erpSlsPackingList.create({
-        data: {
-          code: docNumber,
+        data: buildSlsPackingListCreateData(dto, {
           docNumber,
-          autoNumber: wantAuto ? docNumber : null,
-          branchId: BigInt(dto.branchId),
-          locationId: toBigInt(dto.locationId),
-          warehouseId: toBigInt(dto.warehouseId),
-          docDate: new Date(dto.docDate),
+          wantAuto,
           fiscalPeriodId,
-          customerId: toBigInt(dto.customerId),
-          paymentTermId: toBigInt(dto.paymentTermId),
           dueDate,
-          currencyId: BigInt(dto.currencyId),
-          exchangeRate: new Prisma.Decimal(dto.exchangeRate),
-          priceMode: priceMode as never,
+          priceMode,
           subtotal,
-          discountPercent: dto.discountPercent != null ? new Prisma.Decimal(dto.discountPercent) : null,
-          discountAmount: discountAmount,
-          tax1Amount: dto.tax1Amount != null ? new Prisma.Decimal(dto.tax1Amount) : null,
-          tax2Amount: dto.tax2Amount != null ? new Prisma.Decimal(dto.tax2Amount) : null,
-          otherCostAmount: otherCostAmount,
+          discountAmount,
+          otherCostAmount,
           grandTotal,
-          description: dto.description ?? null,
-          notes: dto.notes ?? null,
-          referenceNo: dto.referenceNo ?? null,
-          referenceDate: dto.referenceDate ? new Date(dto.referenceDate) : null,
-          receivableAccountId: toBigInt(dto.receivableAccountId),
-          salesDeptId: toBigInt(dto.salesDeptId),
-          quotationId: toBigInt(dto.quotationId),
-          orderId: toBigInt(dto.orderId),
-          proformaInvoiceId: toBigInt(dto.proformaInvoiceId),
-          status: 'DRAFT',
-          postingStatus: 'UNPOSTED',
-          legacyCode: dto.legacyCode ?? null,
-          createdById: actor,
-          updatedById: actor,
-          lines: computedLines.length
-            ? { create: computedLines.map((l) => mapPackingListLine(l, header)) }
-            : undefined,
-        },
+          computedLines,
+          header,
+          actor,
+        }),
         select: { id: true },
       });
       return row;
@@ -225,38 +204,7 @@ export class ErpSlsPackingListsService {
     };
 
     await this.prisma.$transaction(async (tx) => {
-       
-      const data: any = { updatedById: actor };
-      if (dto.docNumber !== undefined) {
-        data.docNumber = dto.docNumber;
-        data.code = dto.docNumber;
-      }
-      if (dto.branchId !== undefined) data.branchId = BigInt(dto.branchId);
-      if (dto.locationId !== undefined) data.locationId = toBigInt(dto.locationId);
-      if (dto.warehouseId !== undefined) data.warehouseId = toBigInt(dto.warehouseId);
-      if (dto.customerId !== undefined) data.customerId = toBigInt(dto.customerId);
-      if (dto.paymentTermId !== undefined) data.paymentTermId = toBigInt(dto.paymentTermId);
-      if (dto.dueDate !== undefined) data.dueDate = dto.dueDate ? new Date(dto.dueDate) : null;
-      if (dto.currencyId !== undefined) data.currencyId = BigInt(dto.currencyId);
-      if (dto.exchangeRate !== undefined) data.exchangeRate = new Prisma.Decimal(dto.exchangeRate);
-      if (dto.priceMode !== undefined) data.priceMode = dto.priceMode as never;
-      if (dto.description !== undefined) data.description = dto.description;
-      if (dto.notes !== undefined) data.notes = dto.notes;
-      if (dto.referenceNo !== undefined) data.referenceNo = dto.referenceNo;
-      if (dto.referenceDate !== undefined) {
-        data.referenceDate = dto.referenceDate ? new Date(dto.referenceDate) : null;
-      }
-      if (dto.receivableAccountId !== undefined) {
-        data.receivableAccountId = toBigInt(dto.receivableAccountId);
-      }
-      if (dto.salesDeptId !== undefined) data.salesDeptId = toBigInt(dto.salesDeptId);
-      if (dto.discountPercent !== undefined) {
-        data.discountPercent = dto.discountPercent != null ? new Prisma.Decimal(dto.discountPercent) : null;
-      }
-      if (dto.legacyCode !== undefined) data.legacyCode = dto.legacyCode;
-      if (dto.quotationId !== undefined) data.quotationId = toBigInt(dto.quotationId);
-      if (dto.orderId !== undefined) data.orderId = toBigInt(dto.orderId);
-      if (dto.proformaInvoiceId !== undefined) data.proformaInvoiceId = toBigInt(dto.proformaInvoiceId);
+      const data = buildSlsPackingListUpdatePatch(dto, actor);
       if (dto.docDate !== undefined) {
         data.docDate = new Date(dto.docDate);
         data.fiscalPeriodId = await this.resolvePeriod(tx, dto.fiscalPeriodId, dto.docDate);
@@ -265,16 +213,8 @@ export class ErpSlsPackingListsService {
       }
 
       // Header money fields — merge DTO with existing, then recompute totals.
-      const discountAmount =
-        dto.discountAmount !== undefined ? dto.discountAmount : existing.discountAmount?.toString();
-      const tax1Amount =
-        dto.tax1Amount !== undefined ? dto.tax1Amount : existing.tax1Amount?.toString();
-      const tax2Amount =
-        dto.tax2Amount !== undefined ? dto.tax2Amount : existing.tax2Amount?.toString();
-      const otherCostAmount =
-        dto.otherCostAmount !== undefined
-          ? dto.otherCostAmount
-          : existing.otherCostAmount?.toString();
+      const totalsInput = buildSlsPackingListTotalsInput(dto, existing);
+      const { discountAmount, tax1Amount, tax2Amount, otherCostAmount } = totalsInput;
       if (dto.tax1Amount !== undefined) {
         data.tax1Amount = dto.tax1Amount != null ? new Prisma.Decimal(dto.tax1Amount) : null;
       }
@@ -282,20 +222,8 @@ export class ErpSlsPackingListsService {
         data.tax2Amount = dto.tax2Amount != null ? new Prisma.Decimal(dto.tax2Amount) : null;
       }
 
-      const mergedLines: typeof dto.lines = dto.lines ?? existing.lines.map((l) => ({
-        itemId: l.itemId.toString(),
-        quantity: l.quantity.toString(),
-        unitId: l.unitId.toString(),
-        unitPrice: l.unitPrice.toString(),
-        discountPercent: l.discountPercent?.toString(),
-        discountAmount: l.discountAmount?.toString(),
-        tax1Id: (l.tax1Id as bigint | null)?.toString(),
-        tax2Id: (l.tax2Id as bigint | null)?.toString(),
-        tax1Amount: l.tax1Amount?.toString(),
-        tax2Amount: l.tax2Amount?.toString(),
-        lineNo: l.lineNo,
-        customFields: undefined,
-      }));
+      const mergedLines: typeof dto.lines =
+        dto.lines ?? mapExistingSlsPackingListLines(existing);
 
       const priceMode = ((dto.priceMode ?? existing.priceMode) as string) as 'TAX_EXCLUSIVE' | 'TAX_INCLUSIVE';
       const taxIds = mergedLines.flatMap((l) => [l.tax1Id, l.tax2Id]);
