@@ -18,6 +18,12 @@ import {
   mapOrderLine,
   computeOrderTotals,
 } from './sls-order.helpers';
+import {
+  buildSlsOrderCreateData,
+  buildSlsOrderUpdatePatch,
+  buildSlsOrderTotalsInput,
+  mapExistingSlsOrderLines,
+} from './sls-order-persistence.mapper';
 
 const DOC_CODE = 'SO';
 const FALLBACK_PREFIX = 'SO';
@@ -58,7 +64,7 @@ export class ErpSlsOrdersService {
       });
       return `${numbering.prefix}${String(seq).padStart(numbering.digitCount, '0')}`;
     }
-    const count = await tx.erpSlsOrder.count();
+    const count = await this.prisma.erpSlsOrder.count();
     return `${FALLBACK_PREFIX}${String(count + 1).padStart(6, '0')}`;
   }
 
@@ -127,47 +133,21 @@ export class ErpSlsOrdersService {
       const docNumber = wantAuto ? await this.genDocNumber(tx) : dto.docNumber;
       if (!docNumber) throw new BadRequestException('No dokumen wajib diisi.');
 
-      const row = await tx.erpSlsOrder.create({
-        data: {
-          code: docNumber,
-          docNumber,
-          autoNumber: wantAuto ? docNumber : null,
-          branchId: BigInt(dto.branchId),
-          locationId: toBigInt(dto.locationId),
-          warehouseId: toBigInt(dto.warehouseId),
-          docDate: new Date(dto.docDate),
-          fiscalPeriodId,
-          customerId: toBigInt(dto.customerId),
-          paymentTermId: toBigInt(dto.paymentTermId),
-          dueDate,
-          currencyId: BigInt(dto.currencyId),
-          exchangeRate: new Prisma.Decimal(dto.exchangeRate),
-          priceMode: priceMode as never,
-          subtotal,
-          discountPercent: dto.discountPercent != null ? new Prisma.Decimal(dto.discountPercent) : null,
-          discountAmount: discountAmount,
-          tax1Amount: dto.tax1Amount != null ? new Prisma.Decimal(dto.tax1Amount) : null,
-          tax2Amount: dto.tax2Amount != null ? new Prisma.Decimal(dto.tax2Amount) : null,
-          otherCostAmount: otherCostAmount,
-          grandTotal,
-          description: dto.description ?? null,
-          notes: dto.notes ?? null,
-          referenceNo: dto.referenceNo ?? null,
-          referenceDate: dto.referenceDate ? new Date(dto.referenceDate) : null,
-          receivableAccountId: toBigInt(dto.receivableAccountId),
-          salesDeptId: toBigInt(dto.salesDeptId),
-          status: 'DRAFT',
-          postingStatus: 'UNPOSTED',
-          legacyCode: dto.legacyCode ?? null,
-          customFields: dto.customFields ? (dto.customFields as Prisma.InputJsonValue) : undefined,
-          createdById: actor,
-          updatedById: actor,
-          lines: computedLines.length
-            ? { create: computedLines.map((l) => mapOrderLine(l, header)) }
-            : undefined,
-        },
-        select: { id: true },
+      const data = buildSlsOrderCreateData(dto, {
+        actor,
+        priceMode,
+        fiscalPeriodId,
+        docNumber,
+        wantAuto,
+        dueDate,
+        subtotal,
+        grandTotal,
+        discountAmount,
+        otherCostAmount,
+        computedLines,
+        header,
       });
+      const row = await tx.erpSlsOrder.create({ data, select: { id: true } });
       return row;
     });
     return this.one(created.id);
@@ -223,34 +203,8 @@ export class ErpSlsOrdersService {
     };
 
     await this.prisma.$transaction(async (tx) => {
-      const data: Prisma.ErpSlsOrderUpdateInput = { updatedById: actor };
-      if (dto.docNumber !== undefined) {
-        data.docNumber = dto.docNumber;
-        data.code = dto.docNumber;
-      }
-      if (dto.branchId !== undefined) data.branchId = BigInt(dto.branchId);
-      if (dto.locationId !== undefined) data.locationId = toBigInt(dto.locationId);
-      if (dto.warehouseId !== undefined) data.warehouseId = toBigInt(dto.warehouseId);
-      if (dto.customerId !== undefined) data.customerId = toBigInt(dto.customerId);
-      if (dto.paymentTermId !== undefined) data.paymentTermId = toBigInt(dto.paymentTermId);
-      if (dto.dueDate !== undefined) data.dueDate = dto.dueDate ? new Date(dto.dueDate) : null;
-      if (dto.currencyId !== undefined) data.currencyId = BigInt(dto.currencyId);
-      if (dto.exchangeRate !== undefined) data.exchangeRate = new Prisma.Decimal(dto.exchangeRate);
-      if (dto.priceMode !== undefined) data.priceMode = dto.priceMode as never;
-      if (dto.description !== undefined) data.description = dto.description;
-      if (dto.notes !== undefined) data.notes = dto.notes;
-      if (dto.referenceNo !== undefined) data.referenceNo = dto.referenceNo;
-      if (dto.referenceDate !== undefined) {
-        data.referenceDate = dto.referenceDate ? new Date(dto.referenceDate) : null;
-      }
-      if (dto.receivableAccountId !== undefined) {
-        data.receivableAccountId = toBigInt(dto.receivableAccountId);
-      }
-      if (dto.salesDeptId !== undefined) data.salesDeptId = toBigInt(dto.salesDeptId);
-      if (dto.discountPercent !== undefined) {
-        data.discountPercent = dto.discountPercent != null ? new Prisma.Decimal(dto.discountPercent) : null;
-      }
-      if (dto.legacyCode !== undefined) data.legacyCode = dto.legacyCode;
+      const data = buildSlsOrderUpdatePatch(dto, actor);
+
       if (dto.docDate !== undefined) {
         data.docDate = new Date(dto.docDate);
         data.fiscalPeriodId = await this.resolvePeriod(tx, dto.fiscalPeriodId, dto.docDate);
@@ -258,51 +212,27 @@ export class ErpSlsOrdersService {
         data.fiscalPeriodId = BigInt(dto.fiscalPeriodId);
       }
 
-      // Header money fields — merge DTO with existing, then recompute totals.
-      const discountAmount =
-        dto.discountAmount !== undefined ? dto.discountAmount : existing.discountAmount?.toString();
-      const tax1Amount =
-        dto.tax1Amount !== undefined ? dto.tax1Amount : existing.tax1Amount?.toString();
-      const tax2Amount =
-        dto.tax2Amount !== undefined ? dto.tax2Amount : existing.tax2Amount?.toString();
-      const otherCostAmount =
-        dto.otherCostAmount !== undefined
-          ? dto.otherCostAmount
-          : existing.otherCostAmount?.toString();
-      if (dto.tax1Amount !== undefined) {
-        data.tax1Amount = dto.tax1Amount != null ? new Prisma.Decimal(dto.tax1Amount) : null;
-      }
-      if (dto.tax2Amount !== undefined) {
-        data.tax2Amount = dto.tax2Amount != null ? new Prisma.Decimal(dto.tax2Amount) : null;
-      }
-
-      const mergedLines: typeof dto.lines = dto.lines ?? existing.lines.map((l) => ({
-        itemId: l.itemId.toString(),
-        quantity: l.quantity.toString(),
-        unitId: l.unitId.toString(),
-        unitPrice: l.unitPrice.toString(),
-        discountPercent: l.discountPercent?.toString(),
-        discountAmount: l.discountAmount?.toString(),
-        tax1Id: (l.tax1Id as bigint | null)?.toString(),
-        tax2Id: (l.tax2Id as bigint | null)?.toString(),
-        tax1Amount: l.tax1Amount?.toString(),
-        tax2Amount: l.tax2Amount?.toString(),
-        lineNo: l.lineNo,
-        customFields: (l.customFields as Record<string, unknown> | null) ?? undefined,
-      }));
+      const mergedLines =
+        dto.lines ?? mapExistingSlsOrderLines(existing.lines as Parameters<typeof mapExistingSlsOrderLines>[0]);
 
       const priceMode = ((dto.priceMode ?? existing.priceMode) as string) as 'TAX_EXCLUSIVE' | 'TAX_INCLUSIVE';
       const taxIds = mergedLines.flatMap((l) => [l.tax1Id, l.tax2Id]);
       const rateById = await this.taxRateMap(taxIds);
-      const totals = computeOrderTotals(mergedLines, { discountAmount, discountPercent: dto.discountPercent, tax1Amount, tax2Amount, otherCostAmount }, rateById, priceMode);
+      const totals = computeOrderTotals(
+        mergedLines,
+        buildSlsOrderTotalsInput(dto, {
+          discountAmount: existing.discountAmount,
+          tax1Amount: existing.tax1Amount,
+          tax2Amount: existing.tax2Amount,
+          otherCostAmount: existing.otherCostAmount,
+        }),
+        rateById,
+        priceMode,
+      );
       data.subtotal = totals.subtotal;
       data.grandTotal = totals.grandTotal;
       if (totals.discountAmount !== null) data.discountAmount = totals.discountAmount;
       if (totals.otherCostAmount !== null) data.otherCostAmount = totals.otherCostAmount;
-
-      if (dto.customFields !== undefined) {
-        data.customFields = dto.customFields ? (dto.customFields as Prisma.InputJsonValue) : Prisma.DbNull;
-      }
 
       // Recompute dueDate if paymentTerm changed but dueDate not explicitly set.
       if (dto.paymentTermId !== undefined && dto.dueDate === undefined) {
