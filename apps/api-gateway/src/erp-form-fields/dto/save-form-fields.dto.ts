@@ -17,7 +17,7 @@ export class FormFieldInputDto {
   @ApiProperty({ example: 'Terima Dari' }) @IsString() label!: string;
   @ApiProperty({ enum: FORM_FIELD_TYPES }) @IsIn(FORM_FIELD_TYPES) fieldType!: (typeof FORM_FIELD_TYPES)[number];
   @ApiPropertyOptional({ example: 'partners' }) @IsOptional() @IsString() lookupSource?: string;
-  @ApiPropertyOptional({ example: { isCustomer: true } }) @IsOptional() @IsObject() lookupDefaultFilter?: Record<string, unknown>;
+  @ApiPropertyOptional({ example: { typeKind: 'CUSTOMER' } }) @IsOptional() @IsObject() lookupDefaultFilter?: Record<string, unknown>;
   @ApiPropertyOptional({ example: 'name:asc' }) @IsOptional() @IsString() lookupDefaultSort?: string;
   @ApiPropertyOptional({ example: 'Pilih akun kas/bank…' }) @IsOptional() @IsString() placeholder?: string;
   @ApiPropertyOptional({ example: '1' }) @IsOptional() @IsString() defaultValue?: string;

@@ -9,6 +9,7 @@
 @source '../components';
 @source '../shared';
 @source '../lib';
+@source '../../../packages/ui-kit/src';
 @import './erp-tokens.css';
 @import './erp-components.css';
 

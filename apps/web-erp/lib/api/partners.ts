@@ -2,12 +2,12 @@
 // Endpoints: /partners
 
 import { apiGet, apiPost, apiPatch, apiDelete } from './client';
+import type { ErpPartnerTypeKind } from './partner-types';
 import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
 
 export interface ListPartnersParams extends PaginationParams {
-  isCustomer?: boolean;
-  isSupplier?: boolean;
-  isSalesman?: boolean;
+  partnerTypeId?: string;
+  typeKind?: ErpPartnerTypeKind;
   categoryId?: string;
 }
 
@@ -58,9 +58,8 @@ export interface ErpPartner {
   code: string;
   name: string;
   categoryId?: string | null;
-  isCustomer: boolean;
-  isSupplier: boolean;
-  isSalesman: boolean;
+  partnerTypeId: string;
+  partnerType?: (ErpMasterRef & { kind: ErpPartnerTypeKind }) | null;
   customerCategoryId?: string | null;
   supplierCategoryId?: string | null;
   salesmanCategoryId?: string | null;
@@ -96,9 +95,7 @@ export interface CreatePartnerPayload {
   code: string;
   name: string;
   categoryId?: string;
-  isCustomer?: boolean;
-  isSupplier?: boolean;
-  isSalesman?: boolean;
+  partnerTypeId: string;
   customerCategoryId?: string | null;
   supplierCategoryId?: string | null;
   salesmanCategoryId?: string | null;
@@ -123,9 +120,7 @@ export interface UpdatePartnerPayload {
   code?: string;
   name?: string;
   categoryId?: string;
-  isCustomer?: boolean;
-  isSupplier?: boolean;
-  isSalesman?: boolean;
+  partnerTypeId?: string;
   customerCategoryId?: string | null;
   supplierCategoryId?: string | null;
   salesmanCategoryId?: string | null;

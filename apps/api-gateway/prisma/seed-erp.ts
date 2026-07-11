@@ -1205,6 +1205,12 @@ async function seedMenus(): Promise<Map<string, bigint>> {
         legacyCode: '1-3',
       },
       {
+        code: 'M1.PARTNER.TYPES',
+        title: 'Partner Types',
+        path: '/master/partner-types',
+        legacyCode: '1-3b',
+      },
+      {
         code: 'M1.PARTNER.CUSTOMER-CAT',
         title: 'Customer Categories',
         path: '/master/customer-categories',
@@ -5225,6 +5231,31 @@ async function seedPartnerCategories() {
   console.log(`✓ md_partner_categories — CUSTOMER (${count} entries)`);
 }
 
+async function seedPartnerTypes(prisma: any) {
+  const types: { code: string; name: string; kind: string }[] = [
+    { code: 'CUST', name: 'Customer', kind: 'CUSTOMER' },
+    { code: 'SUP', name: 'Supplier', kind: 'SUPPLIER' },
+    { code: 'SLS', name: 'Salesman', kind: 'SALESMAN' },
+    { code: 'GEN', name: 'General', kind: 'GENERAL' },
+  ];
+
+  let count = 0;
+  for (const t of types) {
+    await prisma.erpPartnerType.upsert({
+      where: { code: t.code },
+      create: {
+        code: t.code,
+        name: t.name,
+        kind: t.kind,
+        isActive: true,
+      },
+      update: {},
+    });
+    count++;
+  }
+  console.log(`✓ md_partner_types (${count} entries)`);
+}
+
 async function main() {
   console.log('Seeding ERP MVP (m0 + m1)...\n');
   await seedLanguages();
@@ -5241,6 +5272,7 @@ async function main() {
   await seedDivisions();
   await seedNotifications();
   await seedPartnerCategories();
+  await seedPartnerTypes(prisma);
   await seedTransactionNotes(prisma);
   await seedTransactionGrids(prisma);
   await seedSalesForms(prisma);

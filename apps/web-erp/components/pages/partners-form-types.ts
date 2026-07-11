@@ -1,22 +1,15 @@
 import { type ErpPartner, type CreatePartnerPayload } from '@/lib/api/partners';
+import { type ErpPartnerTypeKind } from '@/lib/api/partner-types';
 import { validateForm } from '@/lib/form-validation';
 
 // ─── Partner type helpers ─────────────────────────────────────────────────────
 
-export type PartnerTypeKey = 'CUSTOMER' | 'SUPPLIER' | 'SALESMAN';
-
-export function resolvePartnerType(p: ErpPartner): PartnerTypeKey {
-  if (p.isSalesman) return 'SALESMAN';
-  if (p.isSupplier) return 'SUPPLIER';
-  return 'CUSTOMER';
+export function partnerTypeLabel(p: ErpPartner): string {
+  return p.partnerType?.name ?? '—';
 }
 
-export function partnerTypeLabel(p: ErpPartner): string {
-  const types: string[] = [];
-  if (p.isCustomer) types.push('Customer');
-  if (p.isSupplier) types.push('Supplier');
-  if (p.isSalesman) types.push('Salesman');
-  return types.length > 0 ? types.join(', ') : '—';
+export function partnerTypeKind(p: ErpPartner): ErpPartnerTypeKind | '' {
+  return p.partnerType?.kind ?? '';
 }
 
 // ─── Form interface ────────────────────────────────────────────────────────────
@@ -25,7 +18,9 @@ export interface PartnerForm {
   id: string;
   code: string;
   name: string;
-  partnerType: PartnerTypeKey;
+  partnerTypeId: string;
+  partnerTypeLabel: string;
+  partnerTypeKind: ErpPartnerTypeKind | '';
   taxNumber: string;
   customerCategoryId: string;
   customerCategoryLabel: string;
@@ -62,7 +57,9 @@ export const defaultForm = (): PartnerForm => ({
   id: '',
   code: '',
   name: '',
-  partnerType: 'CUSTOMER',
+  partnerTypeId: '',
+  partnerTypeLabel: '',
+  partnerTypeKind: '',
   taxNumber: '',
   customerCategoryId: '',
   customerCategoryLabel: '',
@@ -126,7 +123,9 @@ export const fromRecord = (p: ErpPartner): PartnerForm => {
     id: p.id,
     code: p.code,
     name: p.name,
-    partnerType: resolvePartnerType(p),
+    partnerTypeId: p.partnerTypeId ?? '',
+    partnerTypeLabel: p.partnerType?.name ?? '',
+    partnerTypeKind: partnerTypeKind(p),
     taxNumber: p.taxNumber ?? '',
     customerCategoryId: p.customerCategoryId ?? '',
     customerCategoryLabel: catLabel(p.customerCategory),
@@ -162,13 +161,11 @@ export const fromRecord = (p: ErpPartner): PartnerForm => {
 export const toPayload = (f: PartnerForm): CreatePartnerPayload => ({
   code: f.code,
   name: f.name,
-  isCustomer: f.partnerType === 'CUSTOMER',
-  isSupplier: f.partnerType === 'SUPPLIER',
-  isSalesman: f.partnerType === 'SALESMAN',
-  customerCategoryId: f.partnerType === 'CUSTOMER' ? (f.customerCategoryId || null) : null,
-  supplierCategoryId: f.partnerType === 'SUPPLIER' ? (f.supplierCategoryId || null) : null,
-  salesmanCategoryId: f.partnerType === 'SALESMAN' ? (f.salesmanCategoryId || null) : null,
-  salesmanId: f.partnerType === 'CUSTOMER' ? (f.salesmanId || null) : null,
+  partnerTypeId: f.partnerTypeId,
+  customerCategoryId: f.partnerTypeKind === 'CUSTOMER' ? (f.customerCategoryId || null) : null,
+  supplierCategoryId: f.partnerTypeKind === 'SUPPLIER' ? (f.supplierCategoryId || null) : null,
+  salesmanCategoryId: f.partnerTypeKind === 'SALESMAN' ? (f.salesmanCategoryId || null) : null,
+  salesmanId: f.partnerTypeKind === 'CUSTOMER' ? (f.salesmanId || null) : null,
   taxNumber: f.taxNumber || undefined,
   receivableAccountId: f.receivableAccountId || null,
   payableAccountId: f.payableAccountId || null,
@@ -188,10 +185,11 @@ export const validatePartner = (form: PartnerForm) =>
   validateForm(form, [
     { field: 'code', label: 'Kode', required: true },
     { field: 'name', label: 'Nama', required: true },
+    { field: 'partnerTypeId', label: 'Tipe', required: true },
     {
       field: 'salesmanId',
       label: 'Salesman',
       validate: (value, f) =>
-        f.partnerType === 'CUSTOMER' && !value ? 'Salesman wajib diisi' : undefined,
+        f.partnerTypeKind === 'CUSTOMER' && !value ? 'Salesman wajib diisi' : undefined,
     },
   ]);

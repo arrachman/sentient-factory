@@ -34,6 +34,7 @@ export const PARTNER_REF_INCLUDE = {
  */
 export const PARTNER_RELATION_INCLUDE = {
   category: { select: { id: true, code: true, name: true, kind: true, salesTier: true } },
+  partnerType: { select: { id: true, code: true, name: true, kind: true } },
   customerCategory: { select: { id: true, code: true, name: true } },
   supplierCategory: { select: { id: true, code: true, name: true } },
   salesmanCategory: { select: { id: true, code: true, name: true } },
@@ -78,6 +79,7 @@ export const PARTNER_DETAIL_INCLUDE = {
 
 /** Relation include reused at create/update (CRUD mutation responses). */
 export const PARTNER_MUTATION_INCLUDE = {
+  ...PARTNER_RELATION_INCLUDE,
   ...PARTNER_DIM_INCLUDE,
   ...PARTNER_TRX_INCLUDE,
   ...PARTNER_REF_INCLUDE,
@@ -102,16 +104,12 @@ export function buildErpPartnerWhere(
     where.categoryId = BigInt(query.categoryId);
   }
 
-  if (query.isCustomer !== undefined) {
-    where.isCustomer = query.isCustomer;
+  if (query.partnerTypeId !== undefined) {
+    where.partnerTypeId = BigInt(query.partnerTypeId);
   }
 
-  if (query.isSupplier !== undefined) {
-    where.isSupplier = query.isSupplier;
-  }
-
-  if (query.isSalesman !== undefined) {
-    where.isSalesman = query.isSalesman;
+  if (query.typeKind !== undefined) {
+    where.partnerType = { kind: query.typeKind, deletedAt: null, isActive: true };
   }
 
   if (query.isActive !== undefined) {

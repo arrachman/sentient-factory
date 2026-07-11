@@ -107,7 +107,7 @@ model ErpFormField {
   label               String    @map("label") // display label shown in the form
   fieldType           String    @default("TEXT") @map("field_type") // TEXT|NUMBER|DATE|PARTNER|ACCOUNT|BRANCH|LOCATION|CURRENCY|LOOKUP
   lookupSource        String?   @map("lookup_source") // for LOOKUP: API slug, e.g. "partners"
-  lookupDefaultFilter Json?     @map("lookup_default_filter") // extra filter params merged into loader, e.g. {"isCustomer":true}
+  lookupDefaultFilter Json?     @map("lookup_default_filter") // extra filter params merged into loader, e.g. {"typeKind":"CUSTOMER"}
   lookupDefaultSort   String?   @map("lookup_default_sort") // "field:direction", e.g. "name:asc"
   placeholder         String?   @map("placeholder") // input placeholder shown when empty; null = use form default
   defaultValue        String?   @map("default_value") // prefilled value on new records (lookup = id, others = raw string)

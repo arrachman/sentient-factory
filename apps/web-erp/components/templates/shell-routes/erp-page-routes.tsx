@@ -44,6 +44,7 @@ import { ErpItemCategoriesPage } from '@/components/pages/item-categories-page';
 import { ErpLocationsPage } from '@/components/pages/locations-page';
 import { ErpWarehousesPage } from '@/components/pages/warehouses-page';
 import { ErpPartnerCategoriesPage } from '@/components/pages/partner-categories-page';
+import { ErpPartnerTypesPage } from '@/components/pages/partner-types-page';
 import { ErpAccountsPage } from '@/components/pages/accounts-page';
 import { ErpCurrenciesPage } from '@/components/pages/currencies-page';
 import { ErpTaxesPage } from '@/components/pages/taxes-page';
@@ -177,6 +178,7 @@ export const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/locations': () => <ErpLocationsPage />,
   '/master/warehouses': () => <ErpWarehousesPage />,
   '/master/partner-categories': () => <ErpPartnerCategoriesPage />,
+  '/master/partner-types': () => <ErpPartnerTypesPage />,
   '/master/accounts': () => <ErpAccountsPage />,
   '/master/currencies': () => <ErpCurrenciesPage />,
   '/master/taxes': () => <ErpTaxesPage />,

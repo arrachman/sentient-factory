@@ -170,19 +170,34 @@ export const IMPORT_ADAPTERS: Record<string, EntityAdapter> = {
   partners: {
     label: 'Partner / Kontak',
     requiredHeaders: ['code', 'name'],
-    optionalHeaders: ['isCustomer', 'isSupplier', 'taxNumber', 'isActive'],
+    optionalHeaders: ['partnerTypeCode', 'taxNumber', 'isActive'],
     rowToData(row) {
       return {
         code: str(row, 'code'),
         name: str(row, 'name'),
-        isCustomer: toBool(optStr(row, 'isCustomer'), false),
-        isSupplier: toBool(optStr(row, 'isSupplier'), false),
+        partnerTypeCode: optStr(row, 'partnerTypeCode'),
         taxNumber: optStr(row, 'taxNumber'),
         isActive: toBool(optStr(row, 'isActive')),
       };
     },
     async insert(prisma, data, actorId) {
-      await prisma.erpPartner.create({ data: { ...data, ...audit(actorId) } as never });
+      const { partnerTypeCode, ...partner } = data as Record<string, unknown>;
+      if (!partnerTypeCode) {
+        throw new Error('partnerTypeCode is required for partner import');
+      }
+      const partnerType = await prisma.erpPartnerType.findFirst({
+        where: { code: String(partnerTypeCode), deletedAt: null },
+      });
+      if (!partnerType) {
+        throw new Error(`Unknown partnerTypeCode: ${String(partnerTypeCode)}`);
+      }
+      await prisma.erpPartner.create({
+        data: {
+          ...partner,
+          partnerTypeId: partnerType.id,
+          ...audit(actorId),
+        } as never,
+      });
     },
   },
 

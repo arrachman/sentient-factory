@@ -76,6 +76,13 @@ enum ErpPartnerCategoryKind {
   GENERAL
 }
 
+enum ErpPartnerTypeKind {
+  CUSTOMER
+  SUPPLIER
+  SALESMAN
+  GENERAL
+}
+
 enum ErpAuditAction {
   CREATE
   UPDATE

@@ -526,13 +526,30 @@ model ErpPartnerCategory {
   @@map("md_partner_categories")
 }
 
+model ErpPartnerType {
+  id          BigInt             @id @default(autoincrement())
+  code        String             @unique @map("code")
+  name        String             @map("name")
+  kind        ErpPartnerTypeKind @map("kind")
+  isActive    Boolean            @default(true) @map("is_active")
+  legacyCode  String?            @map("legacy_code")
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById BigInt?            @map("created_by_id")
+  updatedById BigInt?            @map("updated_by_id")
+  deletedAt   DateTime?          @map("deleted_at") @db.Timestamptz(6)
+
+  partners ErpPartner[]
+
+  @@index([legacyCode])
+  @@map("md_partner_types")
+}
+
 model ErpPartner {
   id                  BigInt    @id @default(autoincrement())
   code                String    @unique @map("code")
   name                String    @map("name")
-  isCustomer          Boolean   @default(false) @map("is_customer")
-  isSupplier          Boolean   @default(false) @map("is_supplier")
-  isSalesman          Boolean   @default(false) @map("is_salesman")
+  partnerTypeId       BigInt    @map("partner_type_id")
   categoryId          BigInt?   @map("category_id")
   customerCategoryId  BigInt?   @map("customer_category_id")
   supplierCategoryId  BigInt?   @map("supplier_category_id")
@@ -560,6 +577,7 @@ model ErpPartner {
   deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   category          ErpPartnerCategory? @relation(fields: [categoryId], references: [id])
+  partnerType       ErpPartnerType       @relation(fields: [partnerTypeId], references: [id], onDelete: Restrict)
   customerCategory  ErpPartnerCategory? @relation("PartnerCustomerCategory", fields: [customerCategoryId], references: [id])
   supplierCategory  ErpPartnerCategory? @relation("PartnerSupplierCategory", fields: [supplierCategoryId], references: [id])
   salesmanCategory  ErpPartnerCategory? @relation("PartnerSalesmanCategory", fields: [salesmanCategoryId], references: [id])
@@ -583,6 +601,7 @@ model ErpPartner {
   itemVendor          ErpItem[]                @relation("ItemVendor")
 
   @@index([categoryId])
+  @@index([partnerTypeId])
   @@index([customerCategoryId])
   @@index([supplierCategoryId])
   @@index([salesmanCategoryId])

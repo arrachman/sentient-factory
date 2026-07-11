@@ -1,8 +1,8 @@
 'use client';
 
 /**
- * F3 Master Data — Vendor page (md_partners filtered to isSupplier=true).
- * All entries created here are Suppliers. Type is locked; no dropdown shown.
+ * F3 Master Data — Vendor page (md_partners filtered to partner type kind SUPPLIER).
+ * All entries created here are Supplier-type partners.
  * Atomic tier: Page.
  */
 
@@ -10,6 +10,7 @@ import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { BooleanRadio } from '@/components/ui/radio-group';
+import { SearchSelect } from '@/components/molecules/search-select';
 import { SimpleMasterPage, type ExtraColumn } from '@/components/organisms/simple-master-page';
 import {
   listPartners,
@@ -22,12 +23,15 @@ import {
   type CreatePartnerPayload,
 } from '@/lib/api/partners';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
+import { loadSupplierPartnerTypeOptions } from './items-form-lookups';
 
 // ─── Form ─────────────────────────────────────────────────────────────────────
 
 interface VendorForm {
   code: string;
   name: string;
+  partnerTypeId: string;
+  partnerTypeLabel: string;
   taxNumber: string;
   isTaxable: boolean;
   isActive: boolean;
@@ -36,6 +40,8 @@ interface VendorForm {
 const defaultForm = (): VendorForm => ({
   code: '',
   name: '',
+  partnerTypeId: '',
+  partnerTypeLabel: '',
   taxNumber: '',
   isTaxable: true,
   isActive: true,
@@ -44,6 +50,8 @@ const defaultForm = (): VendorForm => ({
 const fromRecord = (p: ErpPartner): VendorForm => ({
   code: p.code,
   name: p.name,
+  partnerTypeId: p.partnerTypeId ?? '',
+  partnerTypeLabel: p.partnerType?.name ?? '',
   taxNumber: p.taxNumber ?? '',
   isTaxable: p.isTaxable,
   isActive: p.isActive,
@@ -52,8 +60,7 @@ const fromRecord = (p: ErpPartner): VendorForm => ({
 const toPayload = (f: VendorForm): CreatePartnerPayload => ({
   code: f.code,
   name: f.name,
-  isCustomer: false,
-  isSupplier: true,
+  partnerTypeId: f.partnerTypeId,
   taxNumber: f.taxNumber || undefined,
   isTaxable: f.isTaxable,
   isActive: f.isActive,
@@ -63,6 +70,7 @@ const validateVendor = (form: VendorForm) =>
   validateForm(form, [
     { field: 'code', label: 'Kode', required: true },
     { field: 'name', label: 'Nama', required: true },
+    { field: 'partnerTypeId', label: 'Tipe', required: true },
   ]);
 
 function VendorFormFields({
@@ -74,7 +82,7 @@ function VendorFormFields({
   onChange: (d: VendorForm) => void;
   errors?: FormErrors<VendorForm>;
 }) {
-  const set = (k: keyof VendorForm, v: string | boolean) =>
+  const set = <K extends keyof VendorForm>(k: K, v: VendorForm[K]) =>
     onChange({ ...data, [k]: v });
 
   return (
@@ -95,6 +103,24 @@ function VendorFormFields({
           onChange={(e) => set('name', e.target.value)}
           placeholder="PT Sumber Makmur"
           aria-invalid={!!errors.name}
+        />
+      </FormField>
+      <FormField label="Tipe" htmlFor="vf-type" required error={errors.partnerTypeId}>
+        <SearchSelect
+          id="vf-type"
+          value={data.partnerTypeId}
+          onValueChange={(v) => {
+            if (v) {
+              set('partnerTypeId', v);
+              return;
+            }
+            onChange({ ...data, partnerTypeId: '', partnerTypeLabel: '' });
+          }}
+          onPick={(opt) => onChange({ ...data, partnerTypeId: opt.value, partnerTypeLabel: opt.label })}
+          placeholder="Pilih tipe supplier…"
+          loadOptions={loadSupplierPartnerTypeOptions}
+          initialLabel={data.partnerTypeLabel}
+          title="Tipe Supplier"
         />
       </FormField>
       <FormField label="NPWP" htmlFor="vf-tax">
@@ -140,10 +166,10 @@ const extraColumns: ExtraColumn<ErpPartner>[] = [
   },
 ];
 
-// ─── Vendor list = partners filtered to isSupplier=true ───────────────────────
+// ─── Vendor list = partners filtered to type kind SUPPLIER ───────────────────
 
 function listVendors(params: Parameters<typeof listPartners>[0]) {
-  return listPartners({ ...params, isSupplier: true });
+  return listPartners({ ...params, typeKind: 'SUPPLIER' });
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

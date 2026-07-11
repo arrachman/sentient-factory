@@ -3,15 +3,10 @@ import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { ErpPartnerTypeKind } from '@prisma/client';
 
-const SORTABLE_FIELDS = [
-  'code',
-  'name',
-  'isActive',
-  'createdAt',
-] as const;
+const SORTABLE_FIELDS = ['code', 'name', 'isActive', 'createdAt'] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
 
-export class QueryErpPartnerDto {
+export class QueryErpPartnerTypeDto {
   @ApiPropertyOptional({ example: 1, default: 1 })
   @IsOptional()
   @Type(() => Number)
@@ -27,25 +22,15 @@ export class QueryErpPartnerDto {
   @Max(100)
   limit?: number = 10;
 
-  @ApiPropertyOptional({ example: 'maju' })
+  @ApiPropertyOptional({ example: 'retail' })
   @IsOptional()
   @IsString()
   search?: string;
 
-  @ApiPropertyOptional({ example: '1', description: 'Filter by category ID' })
-  @IsOptional()
-  @IsString()
-  categoryId?: string;
-
-  @ApiPropertyOptional({ example: '1', description: 'Filter by partner type ID' })
-  @IsOptional()
-  @IsString()
-  partnerTypeId?: string;
-
-  @ApiPropertyOptional({ enum: ErpPartnerTypeKind, description: 'Filter by partner type kind (peran)' })
+  @ApiPropertyOptional({ enum: ErpPartnerTypeKind })
   @IsOptional()
   @IsEnum(ErpPartnerTypeKind)
-  typeKind?: ErpPartnerTypeKind;
+  kind?: ErpPartnerTypeKind;
 
   @ApiPropertyOptional({ example: true })
   @IsOptional()
@@ -57,12 +42,12 @@ export class QueryErpPartnerDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiPropertyOptional({ example: 'name', enum: SORTABLE_FIELDS })
+  @ApiPropertyOptional({ example: 'createdAt', enum: SORTABLE_FIELDS })
   @IsOptional()
   @IsIn(SORTABLE_FIELDS)
   sortBy?: SortableField;
 
-  @ApiPropertyOptional({ example: 'asc', enum: ['asc', 'desc'] })
+  @ApiPropertyOptional({ example: 'desc', enum: ['asc', 'desc'] })
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortDir?: 'asc' | 'desc';

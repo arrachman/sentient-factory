@@ -26,20 +26,12 @@ export class CreateErpPartnerDto {
   @IsString()
   categoryId?: string;
 
-  @ApiPropertyOptional({ example: false, default: false })
-  @IsOptional()
-  @IsBoolean()
-  isCustomer?: boolean = false;
-
-  @ApiPropertyOptional({ example: false, default: false })
-  @IsOptional()
-  @IsBoolean()
-  isSupplier?: boolean = false;
-
-  @ApiPropertyOptional({ example: false, default: false })
-  @IsOptional()
-  @IsBoolean()
-  isSalesman?: boolean = false;
+  @ApiProperty({
+    example: '1',
+    description: 'ErpPartnerType ID (string → BigInt) — peran inti partner (Customer/Supplier/Salesman/General)',
+  })
+  @IsString()
+  partnerTypeId!: string;
 
   @ApiPropertyOptional({ example: '5', description: 'ErpPartnerCategory ID (kind=CUSTOMER)' })
   @IsOptional()

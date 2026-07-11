@@ -11,6 +11,20 @@ di `CLAUDE.md` (section "Aturan turunan lintas-fitur"); di sini detail lengkapny
 
 ---
 
+### Master Data Partner — Tipe Partner sebagai master data (2026-07-11)
+
+Keputusan user: dropdown statis `Tipe` di `/master/partners` **diganti menjadi
+master data** `md_partner_types` + CRUD `/master/partner-types`. Partner kini memakai
+1 FK `md_partners.partner_type_id` (1 partner = 1 tipe), bukan lagi 3 boolean
+`isCustomer`/`isSupplier`/`isSalesman`.
+
+`md_partner_types.kind` (`CUSTOMER`/`SUPPLIER`/`SALESMAN`/`GENERAL`) menjadi penanda
+peran untuk filter lookup Customer/Supplier/Salesman di sales/purchase/inventory dan
+form Partner. `md_partner_categories` tetap terpisah sebagai kategori/sub-segmen
+partner (termasuk `salesTier`) — tipe ≠ kategori.
+
+---
+
 ### Report Engine — Custom PDF Report Engine (2026-06-06)
 
 Keputusan: Senti ERP membangun **custom report engine sendiri** — tanpa 3rd-party

@@ -219,15 +219,18 @@ async function main(): Promise<void> {
   await seedIfEmpty('md_partners', () => prisma.erpPartner.count(), async () => {
     const cats = await prisma.erpPartnerCategory.findMany({ select: { id: true }, take: 200 });
     const currencies = await prisma.erpCurrency.findMany({ select: { id: true }, take: 50 });
+    const [customerType, supplierType] = await Promise.all([
+      prisma.erpPartnerType.findUnique({ where: { code: 'CUST' } }),
+      prisma.erpPartnerType.findUnique({ where: { code: 'SUP' } }),
+    ]);
+    if (!customerType || !supplierType) throw new Error('Missing md_partner_types CUST/SUP seed');
     const rows = Array.from({ length: COUNT }, (_, i) => {
       const isCust = Math.random() < 0.6;
       const isSup = Math.random() < 0.5;
       return {
         code: `${PREFIX}-PRT-${pad(i + 1)}`,
         name: `${rp(SUFFIXES)} ${rp(PARTNER_NAMES)} ${rp(PARTNER_NAMES)} ${pad(i + 1)}`,
-        isCustomer: isCust || !isSup,
-        isSupplier: isSup,
-        isSalesman: false,
+        partnerTypeId: isSup && !isCust ? supplierType.id : customerType.id,
         categoryId: cats.length ? cats[i % cats.length].id : null,
         currencyId: currencies.length ? currencies[i % currencies.length].id : null,
         taxNumber: `${ri(10, 99)}.${ri(100, 999)}.${ri(100, 999)}.${ri(1, 9)}-${ri(100, 999)}.${ri(100, 999)}`,

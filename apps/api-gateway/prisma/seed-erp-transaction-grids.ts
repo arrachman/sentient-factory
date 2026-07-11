@@ -166,6 +166,7 @@ const TXNS: TxnDef[] = [
 interface ColDef {
   field: string; header: string; width: number; type: 'TEXT' | 'NUMBER' | 'DATE' | 'LOOKUP';
   kind?: 'STANDARD' | 'CUSTOM'; lookup?: string; visible?: boolean; required?: boolean; editable?: boolean;
+  lookupDefaultFilter?: Record<string, unknown>;
   skippable?: boolean;
   // Semantic render slots — null = derive from `type` via inferColumnType. Set explicitly
   // only where derivation is insufficient (e.g. rownum).
@@ -446,7 +447,10 @@ const PURCHASE_RECEIPT_COLUMNS: ColDef[] = [
 // purchaseRfq → pur_rfq_suppliers (RFQ "lines" = invited suppliers, NOT items).
 const PURCHASE_RFQ_COLUMNS: ColDef[] = [
   ROWNUM_COL,
-  { field: 'supplierId', header: 'Supplier', width: 360, type: 'LOOKUP', lookup: 'partners', required: true },
+  {
+    field: 'supplierId', header: 'Supplier', width: 360, type: 'LOOKUP', lookup: 'partners', required: true,
+    lookupDefaultFilter: { typeKind: 'SUPPLIER', isActive: true },
+  },
   { field: 'notes', header: 'Catatan', width: 320, type: 'TEXT' },
 ];
 
@@ -538,6 +542,7 @@ export async function seedTransactionGrids(prisma: PrismaClient): Promise<void> 
           width: c.width, dataType: c.type, kind: c.kind ?? 'STANDARD', lookupSource: c.lookup ?? null,
           isVisible: c.visible ?? true, isRequired: c.required ?? false, isEditable: c.editable ?? true,
           isSkippable: c.skippable ?? false,
+          lookupDefaultFilter: c.lookupDefaultFilter ?? undefined,
           columnType: c.columnType ?? null, labelFormatter: c.labelFormatter ?? null,
           headerRenderer: c.headerRenderer ?? null, cellRenderer: c.cellRenderer ?? null, cellEditor: c.cellEditor ?? null,
         },

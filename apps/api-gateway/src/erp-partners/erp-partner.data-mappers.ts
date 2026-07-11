@@ -35,6 +35,7 @@ export function buildErpPartnerCreateData(
   actorBigInt: bigint | null,
 ): Prisma.ErpPartnerUncheckedCreateInput {
   const categoryBigInt = dto.categoryId ? BigInt(dto.categoryId) : null;
+  const partnerTypeBigInt = BigInt(dto.partnerTypeId);
   const customerCatBigInt = dto.customerCategoryId ? BigInt(dto.customerCategoryId) : null;
   const supplierCatBigInt = dto.supplierCategoryId ? BigInt(dto.supplierCategoryId) : null;
   const salesmanCatBigInt = dto.salesmanCategoryId ? BigInt(dto.salesmanCategoryId) : null;
@@ -49,13 +50,11 @@ export function buildErpPartnerCreateData(
     code: dto.code,
     name: dto.name,
     categoryId: categoryBigInt,
+    partnerTypeId: partnerTypeBigInt,
     customerCategoryId: customerCatBigInt,
     supplierCategoryId: supplierCatBigInt,
     salesmanCategoryId: salesmanCatBigInt,
     salesmanId: salesmanBigInt,
-    isCustomer: dto.isCustomer ?? false,
-    isSupplier: dto.isSupplier ?? false,
-    isSalesman: dto.isSalesman ?? false,
     taxNumber: dto.taxNumber,
     isTaxable: dto.isTaxable ?? false,
     receivableAccountId: receivableBigInt,
@@ -97,61 +96,65 @@ export function buildErpPartnerUpdatePatch(
   actorBigInt: bigint | null,
 ): Prisma.ErpPartnerUncheckedUpdateInput {
   const categoryBigInt =
-    dto.categoryId !== undefined ? (dto.categoryId ? BigInt(dto.categoryId) : null) : undefined;
+    dto.categoryId !== undefined ? (dto.categoryId ? BigInt(dto.categoryId) : undefined) : undefined;
+  const partnerTypeBigInt =
+    dto.partnerTypeId !== undefined
+      ? dto.partnerTypeId
+        ? BigInt(dto.partnerTypeId)
+        : undefined
+      : undefined;
   const customerCatBigInt =
     dto.customerCategoryId !== undefined
       ? dto.customerCategoryId
         ? BigInt(dto.customerCategoryId)
-        : null
+        : undefined
       : undefined;
   const supplierCatBigInt =
     dto.supplierCategoryId !== undefined
       ? dto.supplierCategoryId
         ? BigInt(dto.supplierCategoryId)
-        : null
+        : undefined
       : undefined;
   const salesmanCatBigInt =
     dto.salesmanCategoryId !== undefined
       ? dto.salesmanCategoryId
         ? BigInt(dto.salesmanCategoryId)
-        : null
+        : undefined
       : undefined;
   const salesmanBigInt =
-    dto.salesmanId !== undefined ? (dto.salesmanId ? BigInt(dto.salesmanId) : null) : undefined;
+    dto.salesmanId !== undefined ? (dto.salesmanId ? BigInt(dto.salesmanId) : undefined) : undefined;
   const receivableBigInt =
     dto.receivableAccountId !== undefined
       ? dto.receivableAccountId
         ? BigInt(dto.receivableAccountId)
-        : null
+        : undefined
       : undefined;
   const payableBigInt =
     dto.payableAccountId !== undefined
       ? dto.payableAccountId
         ? BigInt(dto.payableAccountId)
-        : null
+        : undefined
       : undefined;
   const currencyBigInt =
-    dto.currencyId !== undefined ? (dto.currencyId ? BigInt(dto.currencyId) : null) : undefined;
+    dto.currencyId !== undefined ? (dto.currencyId ? BigInt(dto.currencyId) : undefined) : undefined;
   const saleTermBigInt =
-    dto.saleTermId !== undefined ? (dto.saleTermId ? BigInt(dto.saleTermId) : null) : undefined;
+    dto.saleTermId !== undefined ? (dto.saleTermId ? BigInt(dto.saleTermId) : undefined) : undefined;
   const purchaseTermBigInt =
     dto.purchaseTermId !== undefined
       ? dto.purchaseTermId
         ? BigInt(dto.purchaseTermId)
-        : null
+        : undefined
       : undefined;
 
   return {
     code: dto.code,
     name: dto.name,
     categoryId: categoryBigInt,
+    partnerTypeId: partnerTypeBigInt,
     customerCategoryId: customerCatBigInt,
     supplierCategoryId: supplierCatBigInt,
     salesmanCategoryId: salesmanCatBigInt,
     salesmanId: salesmanBigInt,
-    isCustomer: dto.isCustomer,
-    isSupplier: dto.isSupplier,
-    isSalesman: dto.isSalesman,
     taxNumber: dto.taxNumber,
     isTaxable: dto.isTaxable,
     receivableAccountId: receivableBigInt,

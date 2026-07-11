@@ -45,6 +45,7 @@ export const ERP_ROUTE_META: Record<string, { group: string; title: string; icon
   '/master/partners': { group: 'Data Master', title: 'Partner', icon: 'database' },
   '/master/vendors': { group: 'Data Master', title: 'Vendor', icon: 'database' },
   '/master/partner-categories': { group: 'Data Master', title: 'Partner Categories', icon: 'database' },
+  '/master/partner-types': { group: 'Data Master', title: 'Tipe Partner', icon: 'database' },
   '/master/accounts': { group: 'Data Master', title: 'Chart of Accounts', icon: 'database' },
   '/master/currencies': { group: 'Data Master', title: 'Currencies', icon: 'database' },
   '/master/taxes': { group: 'Data Master', title: 'Taxes', icon: 'database' },

@@ -128,6 +128,7 @@ import { ErpItemCategoriesModule } from './erp-item-categories/erp-item-categori
 import { ErpItemsModule } from './erp-items/erp-items.module';
 import { ErpAttachmentsModule } from './erp-attachments/erp-attachments.module';
 import { ErpPartnerCategoriesModule } from './erp-partner-categories/erp-partner-categories.module';
+import { ErpPartnerTypesModule } from './erp-partner-types/erp-partner-types.module';
 import { ErpPartnersModule } from './erp-partners/erp-partners.module';
 import { ErpColorsModule } from './erp-colors/erp-colors.module';
 import { ErpNozzlesModule } from './erp-nozzles/nozzles.module';
@@ -343,6 +344,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpItemsModule,
     ErpAttachmentsModule,
     ErpPartnerCategoriesModule,
+    ErpPartnerTypesModule,
     ErpPartnersModule,
     ErpColorsModule,
     ErpNozzlesModule,

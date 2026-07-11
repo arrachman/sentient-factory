@@ -2,6 +2,7 @@
 // Each loader returns { data: {value,label,code}[], total } from a master list API.
 
 import { listPartnerCategories } from '@/lib/api/partner-categories';
+import { listPartnerTypes, type ErpPartnerTypeKind } from '@/lib/api/partner-types';
 import { listItemCategories } from '@/lib/api/item-categories';
 import { listUnits } from '@/lib/api/units';
 import { listItemKinds } from '@/lib/api/item-types';
@@ -109,19 +110,31 @@ export const loadCustomerCategoryOptions = makePartnerCategoryLoader('CUSTOMER')
 export const loadSupplierCategoryOptions = makePartnerCategoryLoader('SUPPLIER');
 export const loadSalesmanCategoryOptions = makePartnerCategoryLoader('SALESMAN');
 
-export const loadSalesmanPartnerOptions = async (search: string, page: number, limit: number) => {
-  const res = await listPartners({ search: search || undefined, page, limit, isActive: true, isSalesman: true });
-  return {
-    data: res.data.map((x) => ({ value: x.id, label: x.name, code: x.code })),
-    total: res.meta.total,
+const makePartnerTypeLoader = (kind?: ErpPartnerTypeKind) =>
+  async (search: string, page: number, limit: number) => {
+    const res = await listPartnerTypes({ page, limit, search: search || undefined, isActive: true, kind });
+    return {
+      data: res.data.map((x) => ({ value: x.id, label: x.name, code: x.code, meta: x.kind })),
+      total: res.meta.total,
+    };
   };
-};
 
-/** Distributor picker = partners flagged as supplier (legacy "Distributor" tab). */
-export const loadSupplierOptions = async (search: string, page: number, limit: number) => {
-  const res = await listPartners({ search: search || undefined, page, limit, isActive: true, isSupplier: true });
-  return {
-    data: res.data.map((x) => ({ value: x.id, label: x.name, code: x.code })),
-    total: res.meta.total,
+export const loadPartnerTypeOptions = makePartnerTypeLoader();
+export const loadCustomerPartnerTypeOptions = makePartnerTypeLoader('CUSTOMER');
+export const loadSupplierPartnerTypeOptions = makePartnerTypeLoader('SUPPLIER');
+export const loadSalesmanPartnerTypeOptions = makePartnerTypeLoader('SALESMAN');
+
+const makePartnerLoaderByTypeKind = (typeKind: ErpPartnerTypeKind) =>
+  async (search: string, page: number, limit: number) => {
+    const res = await listPartners({ search: search || undefined, page, limit, isActive: true, typeKind });
+    return {
+      data: res.data.map((x) => ({ value: x.id, label: x.name, code: x.code })),
+      total: res.meta.total,
+    };
   };
-};
+
+export const loadCustomerPartnerOptions = makePartnerLoaderByTypeKind('CUSTOMER');
+export const loadSalesmanPartnerOptions = makePartnerLoaderByTypeKind('SALESMAN');
+
+/** Distributor picker = partners with type kind SUPPLIER (legacy "Distributor" tab). */
+export const loadSupplierOptions = makePartnerLoaderByTypeKind('SUPPLIER');

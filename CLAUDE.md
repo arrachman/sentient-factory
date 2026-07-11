@@ -93,7 +93,7 @@ Checklist tiap kali menambah port:
    ```
 3. Verifikasi dari klien LAN: `curl -v --max-time 5 http://<host-ip>:<PORT>/`.
 
-Cek port yang sudah dibuka: `sudo ufw status numbered`. Port yang sudah di-allow saat ini termasuk: 22 (ssh), 3203 (api-gateway), 3218 (web-erp prototype), 3307 (mysql), 9395.
+Cek port yang sudah dibuka: `sudo ufw status numbered`. Port yang sudah di-allow saat ini termasuk: 22 (ssh), 3203 (api-gateway), 3219 (web-erp), 3307 (mysql), 9395.
 
 ### 4.2 Menjalankan app Next.js — pakai standalone, BUKAN `next start`
 
@@ -195,6 +195,12 @@ Env internal-API per app (rewrite `/api/*` → api-gateway 3203, dibake saat bui
 Tanya user. Lebih baik konfirmasi 10 detik daripada rollback 1 jam.
 
 ## 11. Tips produktivitas vibe coding
+
+**Checklist wajib setelah vibe coding**
+- Setelah sesi vibe coding selesai, **WAJIB commit** perubahan dengan pesan conventional commit yang jelas.
+- Setelah commit, **WAJIB push ke `origin`** pada branch kerja yang sesuai.
+- Setelah push, **WAJIB deploy** ke environment target sesuai instruksi task/deployment yang berlaku.
+- Setelah deploy, **WAJIB test/verifikasi** flow yang terdampak dan laporkan hasilnya secara eksplisit.
 
 **Refactor besar — jangan mati di context limit**
 - Gunakan `Task` agent per file: satu agent = satu file oversized, context parent tetap kecil.

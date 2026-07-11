@@ -3,13 +3,6 @@
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { Card, CardHeader, CardTitle, CardSubtitle, CardBody } from '@/components/ui/card';
 import { Icon, type IconName } from '@/components/ui/icons';
@@ -27,11 +20,12 @@ import {
   loadSupplierCategoryOptions,
   loadSalesmanCategoryOptions,
   loadSalesmanPartnerOptions,
+  loadPartnerTypeOptions,
 } from './items-form-lookups';
 import { loadPaymentTermOptions } from './pur-form-lookups';
 import { loadReceivableAccounts, loadPayableAccounts, loadCurrencyOptions } from './partners-lookups';
 import type { FormErrors } from '@/lib/form-validation';
-import type { PartnerForm, PartnerTypeKey } from './partners-form-types';
+import type { PartnerForm } from './partners-form-types';
 
 /** Titled, icon-led card used to group related transaksi fields. */
 function TrxSection({
@@ -70,12 +64,12 @@ export function PartnerFormFields({
   onChange: (d: PartnerForm) => void;
   errors?: FormErrors<PartnerForm>;
 }) {
-  const set = (k: keyof PartnerForm, v: string | boolean) =>
+  const set = <K extends keyof PartnerForm>(k: K, v: PartnerForm[K]) =>
     onChange({ ...data, [k]: v });
 
-  const showCustomerFields = data.partnerType === 'CUSTOMER';
-  const showSupplierFields = data.partnerType === 'SUPPLIER';
-  const showSalesmanFields = data.partnerType === 'SALESMAN';
+  const showCustomerFields = data.partnerTypeKind === 'CUSTOMER';
+  const showSupplierFields = data.partnerTypeKind === 'SUPPLIER';
+  const showSalesmanFields = data.partnerTypeKind === 'SALESMAN';
 
   const savedHint = (
     <div className="p-4 text-[12.5px] text-muted-foreground">
@@ -112,20 +106,48 @@ export function PartnerFormFields({
               aria-invalid={!!errors.name}
             />
           </FormField>
-          <FormField label="Tipe" htmlFor="pf-type">
-            <Select
-              value={data.partnerType}
-              onValueChange={(v) => set('partnerType', v as PartnerTypeKey)}
-            >
-              <SelectTrigger id="pf-type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="CUSTOMER">Customer</SelectItem>
-                <SelectItem value="SUPPLIER">Supplier</SelectItem>
-                <SelectItem value="SALESMAN">Salesman</SelectItem>
-              </SelectContent>
-            </Select>
+          <FormField label="Tipe" htmlFor="pf-type" required error={errors.partnerTypeId}>
+            <SearchSelect
+              id="pf-type"
+              value={data.partnerTypeId}
+              onValueChange={(v) => {
+                if (v) {
+                  set('partnerTypeId', v);
+                  return;
+                }
+                onChange({
+                  ...data,
+                  partnerTypeId: '',
+                  partnerTypeLabel: '',
+                  partnerTypeKind: '',
+                  customerCategoryId: '',
+                  customerCategoryLabel: '',
+                  supplierCategoryId: '',
+                  supplierCategoryLabel: '',
+                  salesmanCategoryId: '',
+                  salesmanCategoryLabel: '',
+                  salesmanId: '',
+                  salesmanLabel: '',
+                });
+              }}
+              onPick={(opt) => onChange({
+                ...data,
+                partnerTypeId: opt.value,
+                partnerTypeLabel: opt.label,
+                partnerTypeKind: (opt.meta ?? '') as PartnerForm['partnerTypeKind'],
+                customerCategoryId: opt.meta === 'CUSTOMER' ? data.customerCategoryId : '',
+                customerCategoryLabel: opt.meta === 'CUSTOMER' ? data.customerCategoryLabel : '',
+                supplierCategoryId: opt.meta === 'SUPPLIER' ? data.supplierCategoryId : '',
+                supplierCategoryLabel: opt.meta === 'SUPPLIER' ? data.supplierCategoryLabel : '',
+                salesmanCategoryId: opt.meta === 'SALESMAN' ? data.salesmanCategoryId : '',
+                salesmanCategoryLabel: opt.meta === 'SALESMAN' ? data.salesmanCategoryLabel : '',
+              })}
+              placeholder="Pilih tipe partner…"
+              loadOptions={loadPartnerTypeOptions}
+              initialLabel={data.partnerTypeLabel}
+              title="Tipe Partner"
+              aria-invalid={!!errors.partnerTypeId}
+            />
           </FormField>
           {showCustomerFields && (
             <FormField label="Kategori Customer" htmlFor="pf-cust-cat">

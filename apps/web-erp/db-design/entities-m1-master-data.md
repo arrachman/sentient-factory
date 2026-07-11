@@ -265,6 +265,22 @@ Semua FK intra-domain `md` ditegakkan (named `@relation` + back-pointer di paren
 
 ## Partners — unified Customer / Supplier / Salesman (`md_*`)
 
+### PartnerType  → `md_partner_types`  (new — replaces static tipe dropdown)
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String unique | e.g. `CUST`, `SUP`, `SLS`, `GEN` |
+| name | String | display label (Customer, Supplier, Salesman, General) |
+| kind ◆ | `PartnerTypeKind` | CUSTOMER/SUPPLIER/SALESMAN/GENERAL — drives lookup filtering |
+| isActive | Boolean | |
+
+> **✅ IMPLEMENTED 2026-07-11** — `Tipe Partner` yang sebelumnya hardcoded di UI
+> dan disimpan sebagai 3 boolean `isCustomer/isSupplier/isSalesman` kini menjadi
+> master data `md_partner_types` + FK tunggal `md_partners.partner_type_id`.
+> Keputusan user: 1 partner = 1 tipe; lookup Customer/Supplier/Salesman filter
+> via `partnerType.kind`.
+
 ### Partner  → `md_partners`  (legacy `m1_contact` — normalized)
 
 | Field | Type | Notes |
@@ -272,9 +288,7 @@ Semua FK intra-domain `md` ditegakkan (named `@relation` + back-pointer di paren
 | id | BigInt PK | |
 | code 🔑 | String unique | `kkode` |
 | name | String | `knama` |
-| isCustomer | Boolean | duality — `kkategoricustomer` present |
-| isSupplier | Boolean | duality — `kkategorisupplier` present |
-| isSalesman | Boolean | salesman-type contact |
+| partnerTypeId ○ ➜ | BigInt → PartnerType | peran inti partner; replaces boolean `isCustomer/isSupplier/isSalesman` |
 | categoryId ○ ➜ | BigInt → PartnerCategory | `kkategori` |
 | taxNumber ○ | String | NPWP (`knpwp`) |
 | isTaxable | Boolean | PKP flag (`kpkp`) |
@@ -291,7 +305,7 @@ Semua FK intra-domain `md` ditegakkan (named `@relation` + back-pointer di paren
 | isActive | Boolean | `kaktif` |
 | metadata ○ | Json | `kcustomtext*`, misc |
 
-Relations: `category`, `currency`, `receivableAccount`/`payableAccount`,
+Relations: `partnerType`, `category`, `currency`, `receivableAccount`/`payableAccount`,
 `saleTerm`/`purchaseTerm`, `salesman` (self), `addresses PartnerAddress[]`,
 `contacts PartnerContact[]`, `bankAccounts PartnerBankAccount[]`.
 
@@ -529,8 +543,8 @@ Relations: `area Area`.
 
 ---
 
-**Count:** 17 Master Data (`md_*`) core entities (3 org, 3 items, 5 partner, 5 finance¹ + ItemCategory/Unit).
+**Count:** 18 Master Data (`md_*`) core entities (3 org, 3 items, 6 partner, 5 finance¹ + ItemCategory/Unit).
 ¹ finance = Currency, **CurrencyRate**, Account, Tax, PaymentTerm.
-Combined MVP total = **31 tables** (14 Administrator `sys_*`/`adm_*` + 17 `md_*`).
+Combined MVP total = **32 tables** (14 Administrator `sys_*`/`adm_*` + 18 `md_*`).
 Geographic reference (4 tabel: Country, Province, City, Area) ditambahkan via §2.18 batch.
 Legacy field-mapping appendix: **[legacy-mapping.md](legacy-mapping.md)**.

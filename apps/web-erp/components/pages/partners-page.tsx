@@ -6,8 +6,8 @@
  * Atomic tier: Page.
  */
 
-import * as React from 'react';
 import { SimpleMasterPage, type ExtraColumn } from '@/components/organisms/simple-master-page';
+import { PARTNER_TYPE_KINDS, PARTNER_TYPE_KIND_LABEL } from '@/lib/api/partner-types';
 import {
   listPartners,
   createPartner,
@@ -37,37 +37,19 @@ const extraColumns: ExtraColumn<ErpPartner>[] = [
 
 const TYPE_FILTER_EXTRAS = [
   {
-    key: 'type',
+    key: 'typeKind',
     label: 'Tipe',
     defaultValue: '',
-    options: [
-      { label: 'Customer', value: 'customer' },
-      { label: 'Supplier', value: 'supplier' },
-    ],
+    options: PARTNER_TYPE_KINDS.map((kind) => ({
+      label: PARTNER_TYPE_KIND_LABEL[kind],
+      value: kind,
+    })),
   },
 ];
-
-function makeListPartners(typeVal: string) {
-  return (params: Parameters<typeof listPartners>[0]) => {
-    const { type: _type, ...rest } = params as typeof params & { type?: string };
-    return listPartners({
-      ...rest,
-      isCustomer: typeVal === 'customer' ? true : undefined,
-      isSupplier: typeVal === 'supplier' ? true : undefined,
-    });
-  };
-}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export function ErpPartnersPage() {
-  const [typeFilter, setTypeFilter] = React.useState('');
-
-  const listFn = React.useMemo(
-    () => makeListPartners(typeFilter),
-    [typeFilter],
-  );
-
   return (
     <SimpleMasterPage<ErpPartner, PartnerForm>
       title="Partner"
@@ -75,7 +57,7 @@ export function ErpPartnersPage() {
       entityLabel="partner"
       storageKey="partners"
       auditEntityName="ErpPartner"
-      list={listFn}
+      list={listPartners}
       create={createPartner}
       update={updatePartner}
       remove={deletePartner}
@@ -91,7 +73,6 @@ export function ErpPartnersPage() {
       defaultSortBy="code"
       defaultSortDir="asc"
       extraFilters={TYPE_FILTER_EXTRAS}
-      onExtraFilterChange={(vals) => setTypeFilter(vals['type'] ?? '')}
     />
   );
 }

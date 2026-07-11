@@ -165,15 +165,18 @@ const pad4 = (n: number) => String(n).padStart(4, '0');
 
 async function main(): Promise<void> {
   // ---- 1. Resolve FK IDs at runtime
-  const [idrCurrency, custCats, termRows] = await Promise.all([
+  const [idrCurrency, custCats, termRows, customerType, supplierType] = await Promise.all([
     prisma.erpCurrency.findFirstOrThrow({ where: { code: 'IDR', deletedAt: null } }),
     prisma.erpPartnerCategory.findMany({ where: { kind: 'CUSTOMER', deletedAt: null }, orderBy: { id: 'asc' } }),
     prisma.erpPaymentTerm.findMany({ where: { deletedAt: null }, select: { id: true, code: true } }),
+    prisma.erpPartnerType.findUnique({ where: { code: 'CUST' } }),
+    prisma.erpPartnerType.findUnique({ where: { code: 'SUP' } }),
   ]);
 
   const termMap = new Map(termRows.map(t => [t.code, t.id]));
 
   if (custCats.length === 0) throw new Error('No CUSTOMER partner categories found — run category seed first');
+  if (!customerType || !supplierType) throw new Error('Missing md_partner_types CUST/SUP seed');
 
   // ---- 2. Delete dummy partners
   const deleted = await prisma.erpPartner.deleteMany({
@@ -192,9 +195,7 @@ async function main(): Promise<void> {
     return {
       code: `CUST-${pad4(i + 1)}`,
       name: c.name,
-      isCustomer: true,
-      isSupplier: supplier,
-      isSalesman: false,
+      partnerTypeId: supplier ? supplierType.id : customerType.id,
       categoryId: catId,
       currencyId: idrCurrency.id,
       taxNumber: taxable ? generateNpwp(i) : null,

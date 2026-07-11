@@ -2,6 +2,7 @@
 // Used by Form Builder (dropdown) and by the custom-fields renderer (loader builder).
 
 import { listPartners } from '@/lib/api/partners';
+import { PARTNER_TYPE_KINDS } from '@/lib/api/partner-types';
 import { listAccounts } from '@/lib/api/accounts';
 import { listBranches } from '@/lib/api/branches';
 import { listLocations } from '@/lib/api/locations';
@@ -73,8 +74,8 @@ const SOURCE_SCHEMA_MAP: Record<string, SourceSchema> = {
   partners: {
     sortFields: COMMON_SORT,
     filterFields: [
-      { key: 'isCustomer', label: 'Pelanggan',     type: 'boolean' },
-      { key: 'isSupplier', label: 'Supplier',      type: 'boolean' },
+      { key: 'typeKind', label: 'Jenis Tipe', type: 'enum', options: PARTNER_TYPE_KINDS },
+      { key: 'partnerTypeId', label: 'Tipe Partner (ID)', type: 'string' },
       { key: 'categoryId', label: 'Kategori (ID)', type: 'string' },
       ...COMMON_FILTER,
     ],

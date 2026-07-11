@@ -135,7 +135,9 @@ const VENDOR_DATA: Array<{ name: string; taxNumber: string; isTaxable: boolean }
 const pad = (n: number, w = 4) => String(n).padStart(w, '0');
 
 async function main() {
-  console.log(`Seeding ${VENDOR_DATA.length} vendors (md_partners, isSupplier=true)...`);
+  console.log(`Seeding ${VENDOR_DATA.length} vendors (md_partners, partnerType=SUPPLIER)...`);
+  const supplierType = await prisma.erpPartnerType.findUnique({ where: { code: 'SUP' } });
+  if (!supplierType) throw new Error('Missing md_partner_types SUP seed');
   let created = 0;
   let skipped = 0;
 
@@ -153,9 +155,7 @@ async function main() {
       data: {
         code,
         name: v.name,
-        isCustomer: false,
-        isSupplier: true,
-        isSalesman: false,
+        partnerTypeId: supplierType.id,
         taxNumber: v.taxNumber,
         isTaxable: v.isTaxable,
         isActive: true,

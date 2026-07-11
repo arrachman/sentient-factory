@@ -95,7 +95,10 @@ const rp = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)];
 const pad = (n: number) => String(n).padStart(4, '0');
 
 async function main() {
-  const existing = await prisma.erpPartner.count({ where: { isSalesman: true } });
+  const salesmanType = await prisma.erpPartnerType.findUnique({ where: { code: 'SLS' } });
+  if (!salesmanType) throw new Error('Missing md_partner_types SLS seed');
+
+  const existing = await prisma.erpPartner.count({ where: { partnerTypeId: salesmanType.id } });
   if (existing >= 500) {
     console.log(`✓ Skipped: already ${existing} salesman rows`);
     return;
@@ -110,9 +113,7 @@ async function main() {
   const rows = Array.from({ length: 500 }, (_, i) => ({
     code: `SLS-${pad(i + 1)}`,
     name: `${rp(FIRST_NAMES)} ${rp(LAST_NAMES)}`,
-    isCustomer: false,
-    isSupplier: false,
-    isSalesman: true,
+    partnerTypeId: salesmanType.id,
     salesmanCategoryId: salesmanCats.length ? salesmanCats[i % salesmanCats.length].id : null,
     isActive: true,
   }));
