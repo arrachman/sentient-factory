@@ -17,10 +17,19 @@ export const metadata: Metadata = {
   applicationName: 'Sentient ERP',
   authors: [{ name: 'Sentient Factory' }],
   formatDetection: { telephone: false },
+  icons: {
+    icon: [
+      { url: '/icon.png', sizes: '512x512', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }],
+  },
 };
 
 export const viewport = {
-  themeColor: '#2563eb',
+  themeColor: '#007a55',
   width: 'device-width',
   initialScale: 1,
 };

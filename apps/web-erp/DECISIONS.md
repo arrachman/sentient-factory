@@ -159,6 +159,15 @@ Pemetaan field:
 - Tweaks UI lain (`primary`, `density`, `fontScale`, `sidebar`) → `metadata`
   Json (default dari `DEFAULTS` di `appearance-parts.tsx`).
 
+**Favicon/browser tab (2026-07-10):** ikon tab Senti ERP memakai mark hijau
+rounded-square dengan glyph putih dari aset yang diberikan user. Asset kanonik:
+[`app/icon.png`](app/icon.png) + [`app/apple-icon.png`](app/apple-icon.png)
++ [`app/favicon.ico`](app/favicon.ico) untuk App Router, fallback browser di
+[`public/favicon.ico`](public/favicon.ico) serta PNG 16/32. Metadata `icons`
+dan `themeColor` diset di
+[`app/layout.tsx`](app/layout.tsx) agar tab browser dan mobile touch icon
+konsisten.
+
 **API**: module `erp-user-preferences`
 (`apps/api-gateway/src/erp-user-preferences/**`) — `GET /erp/user-preferences/me`
 + `PUT /erp/user-preferences/me` (guard `ErpJwtAuthGuard`). FE pakai client
