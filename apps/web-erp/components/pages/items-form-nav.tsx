@@ -14,7 +14,7 @@ import { isStockable } from './items-form-parts';
 
 export type Mode = 'cepat' | 'lengkap';
 export type SectionId =
-  | 'identitas' | 'klasifikasi' | 'media' | 'lampiran' | 'atribut' | 'inventory'
+  | 'identitas' | 'media' | 'lampiran' | 'atribut' | 'inventory'
   | 'pergerakanstok' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier';
 
 export const CEPAT_SECTIONS: SectionId[] = ['identitas'];
@@ -32,8 +32,7 @@ const GROUP_ORDER: GroupId[] = ['inti', 'detail', 'keuangan', 'lainnya'];
 interface SectionMeta { label: string; icon: IconName; group: GroupId }
 
 const SECTION_META: Record<SectionId, SectionMeta> = {
-  identitas: { label: 'Identitas', icon: 'file', group: 'inti' },
-  klasifikasi: { label: 'Klasifikasi', icon: 'layers', group: 'inti' },
+  identitas: { label: 'Identitas & Klasifikasi', icon: 'layers', group: 'inti' },
   media: { label: 'Media', icon: 'eye', group: 'detail' },
   lampiran: { label: 'Lampiran', icon: 'file', group: 'detail' },
   atribut: { label: 'Atribut', icon: 'tag', group: 'detail' },

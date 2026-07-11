@@ -24,6 +24,29 @@ const renderTrackingSection = (overrides = {}) => {
   return { data, onChange };
 };
 
+describe('Item identity section', () => {
+  it('combines identity and classification fields', () => {
+    renderPage(
+      <SectionBody
+        id="identitas"
+        data={defaultItemForm()}
+        onChange={vi.fn()}
+        errors={{}}
+        generating={false}
+        onAutoCode={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText('Identitas & Klasifikasi')).toBeInTheDocument();
+    expect(screen.getByText('Kode')).toBeInTheDocument();
+    expect(screen.getByText('Nama')).toBeInTheDocument();
+    expect(screen.getByText('Tipe')).toBeInTheDocument();
+    expect(screen.getByText('Kategori')).toBeInTheDocument();
+    expect(screen.getByText('Satuan')).toBeInTheDocument();
+    expect(screen.getByText('Jenis Barang')).toBeInTheDocument();
+  });
+});
+
 describe('Item stock tracking section', () => {
   it('explains all three exclusive tracking choices', () => {
     renderTrackingSection();

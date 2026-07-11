@@ -2,7 +2,7 @@
 
 /**
  * Item form UI orchestrator. Two entry modes:
- *  - Cepat: only Identitas + Klasifikasi (quick-add).
+ *  - Cepat: only Identitas & Klasifikasi (quick-add).
  *  - Lengkap: grouped side-nav with one section visible at a time, a live
  *    identity header, and a progress / prev-next footer.
  * Default: Cepat for a new item (no code), Lengkap when editing.
