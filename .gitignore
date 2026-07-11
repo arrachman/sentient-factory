@@ -150,6 +150,13 @@ MANIFEST
 !apps/*/**/lib/
 !apps/*/**/lib/**
 
+# Python virtualenvs (local artifacts, never commit)
+# Covers .venv/, .venv-*/, named venvs, and the .venv-brosur/ scratch venv.
+.venv/
+.venv-*/
+venv/
+.venv-brosur/
+
 # PyInstaller
 *.manifest
 *.spec
