@@ -7,31 +7,12 @@
  */
 
 import * as React from 'react';
-import { Icon } from '@/components/ui/icons';
-import { Badge } from '@/components/ui/badge';
 import {
-  ErpListLayout,
   type ListPaginationConfig,
   type SummaryConfig,
 } from '@/components/organisms/erp-list-layout';
+import { emptyCrFilters, type CrFilters } from './fin-cash-receipts-filters';
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  TableEmpty,
-  CodeLinkCell,
-} from '@/components/organisms/table';
-import {
-  CashReceiptFilters,
-  emptyCrFilters,
-  type CrFilters,
-} from './fin-cash-receipts-filters';
-import {
-  RowActionsMenu,
-  RowContextMenu,
   type RowActionItem,
 } from '@/components/molecules/row-actions-menu';
 import { confirmAction, notify } from '@/lib/feedback';
@@ -43,8 +24,6 @@ import {
 } from '@/lib/trx-route';
 import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
-import { formatNumber } from '@/lib/format';
-import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import {
   listCashReceipts,
   createCashReceipt,
@@ -65,9 +44,9 @@ import {
   type CashReceiptFormHandle,
 } from './fin-cash-receipts-form';
 import { useAllowedCreationStatuses } from '@/lib/use-allowed-creation-statuses';
-
-/** Canonical list path (seeded `sys_menus.path`); base for /new and /:id. */
-const CR_BASE = '/finance/cash-receipts';
+import { CR_BASE, TRANSITION_VERBS } from './fin-cash-receipts-config';
+import { CashReceiptFormView } from './fin-cash-receipts-form-view';
+import { CashReceiptsList } from './fin-cash-receipts-list';
 
 export function ErpCashReceiptsPage({
   formMode,
@@ -106,6 +85,8 @@ export function ErpCashReceiptsPage({
     return () => clearTimeout(t);
   }, [filters]);
 
+  // Fixed transaction-date descending sort is set in the API request (not
+  // via clickable sort headers in the table) — preserve this exactly.
   const { rows, meta, loading, error, reload } = useErpList(
     () =>
       listCashReceipts({
@@ -168,10 +149,11 @@ export function ErpCashReceiptsPage({
 
   const persist = async (closeAfter: boolean, newAfter = false) => {
     // Validate required header fields; focus the first one that is empty.
+    // Domain behavior — kept in the page (queries ref + focuses).
     const missing: { key: string; label: string }[] = [
-      { key: 'branchId',       label: 'Cabang' },
-      { key: 'bankAccountId',  label: 'Akun Kas' },
-      { key: 'description',    label: 'Uraian' },
+      { key: 'branchId', label: 'Cabang' },
+      { key: 'bankAccountId', label: 'Akun Kas' },
+      { key: 'description', label: 'Uraian' },
     ].filter(({ key }) => !form[key as keyof typeof form]);
 
     if (missing.length) {
@@ -210,16 +192,9 @@ export function ErpCashReceiptsPage({
       reason = window.prompt('Alasan menolak dokumen ini?') ?? undefined;
       if (!reason) return;
     }
-    const verb: Record<CashBankTransition, string> = {
-      SUBMIT: 'mengajukan',
-      APPROVE: 'menyetujui',
-      REJECT: 'menolak',
-      POST: 'memposting',
-      REOPEN: 'membuka kembali',
-    };
     try {
       await transitionCashReceipt(r.id, action, reason);
-      notify(`Berhasil ${verb[action]} ${r.docNumber}`, 'success');
+      notify(`Berhasil ${TRANSITION_VERBS[action]} ${r.docNumber}`, 'success');
       reload();
     } catch (e: unknown) {
       notify(e instanceof Error ? e.message : 'Gagal', 'danger');
@@ -254,38 +229,32 @@ export function ErpCashReceiptsPage({
   // ── form view ───────────────────────────────────────────────────────────────
   if (mode === 'form') {
     return (
-      <div className="page">
-        <div className="page-header">
-          <h1 className="page-title flex items-center gap-2">
-            <button className="iconbtn" onClick={goList} title="Kembali" style={{ fontSize: 18, lineHeight: 1 }}>
-              ←
-            </button>
-            Kas Masuk
-            <span className="code-tag">CR</span>
-          </h1>
-        </div>
-        <div className="page-body overflow-auto p-4">
-          {formReady ? (
-            <CashReceiptForm
-              ref={formRef}
-              data={form}
-              onChange={setForm}
-              saving={saving}
-              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
-              onSave={() => persist(true)}
-              onSaveNew={() => persist(false, true)}
-              onReset={loadForm}
-            />
-          ) : (
-            <div className="p-8 text-center text-muted">Memuat…</div>
-          )}
-        </div>
-      </div>
+      <CashReceiptFormView
+        title="Kas Masuk"
+        code="CR"
+        formReady={formReady}
+        onBack={goList}
+      >
+        <CashReceiptForm
+          ref={formRef}
+          data={form}
+          onChange={setForm}
+          saving={saving}
+          allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
+          onSave={() => persist(true)}
+          onSaveNew={() => persist(false, true)}
+          onReset={loadForm}
+        />
+      </CashReceiptFormView>
     );
   }
 
   // ── list view ─────────────────────────────────────────────────────────────────
-  const summary: SummaryConfig = { metricLabel: 'Σ Kas Masuk', rowCount: rows.length, totalCount: totalRows };
+  const summary: SummaryConfig = {
+    metricLabel: 'Σ Kas Masuk',
+    rowCount: rows.length,
+    totalCount: totalRows,
+  };
   const pagination: ListPaginationConfig = {
     page,
     pageCount,
@@ -302,113 +271,25 @@ export function ErpCashReceiptsPage({
     });
 
   return (
-    <ErpListLayout
-      title="Kas Masuk"
-      code="CR"
+    <CashReceiptsList
+      rows={rows}
       loading={loading}
       error={error}
       search={search}
       onSearch={setSearch}
       onAdd={openCreate}
       onRefresh={reload}
-      toolbar={<CashReceiptFilters value={filters} onChange={setFilters} />}
+      filters={filters}
+      onFiltersChange={setFilters}
+      selected={selected}
+      onToggleSelect={toggleSel}
+      onClearSelection={() => setSelected(new Set())}
+      focused={focused}
+      onFocusChange={setFocused}
+      rowActions={rowActions}
+      onEdit={openEdit}
       summary={summary}
       pagination={pagination}
-      keyboardRows={{
-        rowCount: rows.length,
-        focusedIndex: focused,
-        onFocusChange: setFocused,
-        onToggle: (i) => rows[i] && toggleSel(rows[i].id),
-        onOpen: (i) => rows[i] && openEdit(rows[i]),
-      }}
-    >
-      {selected.size > 0 && (
-        <div className="bulk-bar flex items-center gap-3 px-3 py-2 mb-2 rounded-md bg-secondary text-sm">
-          <strong>{selected.size}</strong> baris dipilih
-          <button
-            className="btn sm danger"
-            onClick={() =>
-              confirmAction({
-                title: 'Hapus terpilih?',
-                message: `${selected.size} Kas Masuk akan dihapus permanen.`,
-                variant: 'danger',
-                confirmLabel: 'Hapus',
-                onConfirm: async () => {
-                  await Promise.all([...selected].map((id) => deleteCashReceipt(id).catch(() => null)));
-                  notify(`${selected.size} dokumen dihapus`, 'success');
-                  setSelected(new Set());
-                  reload();
-                },
-              })
-            }
-          >
-            <Icon name="trash" size={12} /> Hapus
-          </button>
-          <button className="btn ghost sm" onClick={() => setSelected(new Set())}>
-            Batal pilihan
-          </button>
-        </div>
-      )}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead style={{ width: 36 }} />
-            <TableHead>No Transaksi</TableHead>
-            <TableHead>Tanggal</TableHead>
-            <TableHead>Terima Dari</TableHead>
-            <TableHead>Uraian</TableHead>
-            <TableHead style={{ textAlign: 'right' }}>Total</TableHead>
-            <TableHead>Uang</TableHead>
-            <TableHead style={{ textAlign: 'right' }}>Kurs</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead style={{ width: 44 }} />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.length === 0 ? (
-            <TableEmpty colSpan={10} />
-          ) : (
-            rows.map((r, i) => {
-              const actions = rowActions(r);
-              return (
-                <RowContextMenu key={r.id} items={actions}>
-                  <TableRow
-                    style={focused === i ? { boxShadow: 'inset 2px 0 0 var(--primary)' } : undefined}
-                    className="cursor-pointer"
-                  >
-                    <TableCell style={{ textAlign: 'center' }}>
-                      <input
-                        type="checkbox"
-                        checked={selected.has(r.id)}
-                        onChange={() => toggleSel(r.id)}
-                      />
-                    </TableCell>
-                    <CodeLinkCell code={r.docNumber} onOpen={() => openEdit(r)} />
-                    <TableCell>{r.transactionDate.slice(0, 10)}</TableCell>
-                    <TableCell>{r.partner?.name ?? r.contactPerson ?? '—'}</TableCell>
-                    <TableCell>{r.description}</TableCell>
-                    <TableCell className="tabular-nums" style={{ textAlign: 'right' }}>
-                      {formatNumber(Number(r.amount), 2)}
-                    </TableCell>
-                    <TableCell>{r.currency?.code ?? '—'}</TableCell>
-                    <TableCell className="tabular-nums" style={{ textAlign: 'right' }}>
-                      {formatNumber(Number(r.exchangeRate), 2)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={statusBadgeVariant(r.status)} dot>
-                        {statusLabel(r.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <RowActionsMenu items={actions} />
-                    </TableCell>
-                  </TableRow>
-                </RowContextMenu>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
-    </ErpListLayout>
+    />
   );
 }
