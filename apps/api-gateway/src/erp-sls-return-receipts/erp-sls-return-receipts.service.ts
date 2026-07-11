@@ -11,13 +11,18 @@ import {
   TransitionSlsReturnReceiptDto,
 } from './dto/transition-sls-return-receipt.dto';
 import {
-  toBigInt,
   EDITABLE,
   NEXT,
   buildSlsReturnReceiptWhere,
   mapReturnReceiptLine,
   computeReturnReceiptTotals,
 } from './sls-return-receipt.helpers';
+import {
+  buildSlsReturnReceiptCreateData,
+  buildSlsReturnReceiptUpdatePatch,
+  mapExistingSlsReturnReceiptLines,
+  buildSlsReturnReceiptTotalsInput,
+} from './sls-return-receipt-persistence.mapper';
 
 const DOC_CODE = 'RNR';
 const FALLBACK_PREFIX = 'RNR';
@@ -116,8 +121,6 @@ export class ErpSlsReturnReceiptsService {
 
     const taxIds = dto.lines.flatMap((l) => [l.tax1Id, l.tax2Id]);
     const rateById = await this.taxRateMap(taxIds);
-    const { subtotal, grandTotal, lines: computedLines, discountAmount, otherCostAmount } =
-      computeReturnReceiptTotals(dto.lines, dto, rateById, priceMode);
 
     const dueDate = await this.resolveDueDate(dto.paymentTermId, dto.docDate, dto.dueDate);
 
@@ -127,49 +130,18 @@ export class ErpSlsReturnReceiptsService {
       const docNumber = wantAuto ? await this.genDocNumber(tx) : dto.docNumber;
       if (!docNumber) throw new BadRequestException('No dokumen wajib diisi.');
 
-      const row = await tx.erpSlsReturnReceipt.create({
-        data: {
-          code: docNumber,
-          docNumber,
-          autoNumber: wantAuto ? docNumber : null,
-          branchId: BigInt(dto.branchId),
-          locationId: toBigInt(dto.locationId),
-          warehouseId: toBigInt(dto.warehouseId),
-          docDate: new Date(dto.docDate),
-          fiscalPeriodId,
-          customerId: toBigInt(dto.customerId),
-          paymentTermId: toBigInt(dto.paymentTermId),
-          dueDate,
-          currencyId: BigInt(dto.currencyId),
-          exchangeRate: new Prisma.Decimal(dto.exchangeRate),
-          priceMode: priceMode as never,
-          subtotal,
-          discountPercent: dto.discountPercent != null ? new Prisma.Decimal(dto.discountPercent) : null,
-          discountAmount: discountAmount,
-          tax1Amount: dto.tax1Amount != null ? new Prisma.Decimal(dto.tax1Amount) : null,
-          tax2Amount: dto.tax2Amount != null ? new Prisma.Decimal(dto.tax2Amount) : null,
-          otherCostAmount: otherCostAmount,
-          grandTotal,
-          description: dto.description ?? null,
-          notes: dto.notes ?? null,
-          referenceNo: dto.referenceNo ?? null,
-          referenceDate: dto.referenceDate ? new Date(dto.referenceDate) : null,
-          receivableAccountId: toBigInt(dto.receivableAccountId),
-          salesDeptId: toBigInt(dto.salesDeptId),
-          invoiceId: toBigInt(dto.invoiceId),
-          returnId: toBigInt(dto.returnId),
-          settlementStatus: (dto.settlementStatus ?? 'OPEN') as never,
-          status: 'DRAFT',
-          postingStatus: 'UNPOSTED',
-          legacyCode: dto.legacyCode ?? null,
-          createdById: actor,
-          updatedById: actor,
-          lines: computedLines.length
-            ? { create: computedLines.map((l) => mapReturnReceiptLine(l, header)) }
-            : undefined,
-        },
-        select: { id: true },
+      const data = buildSlsReturnReceiptCreateData(dto, {
+        docNumber,
+        wantAuto,
+        fiscalPeriodId,
+        dueDate,
+        actor,
+        priceMode,
+        rateById,
+        header,
       });
+
+      const row = await tx.erpSlsReturnReceipt.create({ data, select: { id: true } });
       return row;
     });
     return this.one(created.id);
@@ -225,41 +197,7 @@ export class ErpSlsReturnReceiptsService {
     };
 
     await this.prisma.$transaction(async (tx) => {
-      const data: Prisma.ErpSlsReturnReceiptUpdateInput = { updatedById: actor };
-      if (dto.docNumber !== undefined) {
-        data.docNumber = dto.docNumber;
-        data.code = dto.docNumber;
-      }
-      if (dto.branchId !== undefined) data.branchId = BigInt(dto.branchId);
-      if (dto.locationId !== undefined) data.locationId = toBigInt(dto.locationId);
-      if (dto.warehouseId !== undefined) data.warehouseId = toBigInt(dto.warehouseId);
-      if (dto.customerId !== undefined) data.customerId = toBigInt(dto.customerId);
-      if (dto.paymentTermId !== undefined) data.paymentTermId = toBigInt(dto.paymentTermId);
-      if (dto.dueDate !== undefined) data.dueDate = dto.dueDate ? new Date(dto.dueDate) : null;
-      if (dto.currencyId !== undefined) data.currencyId = BigInt(dto.currencyId);
-      if (dto.exchangeRate !== undefined) data.exchangeRate = new Prisma.Decimal(dto.exchangeRate);
-      if (dto.priceMode !== undefined) data.priceMode = dto.priceMode as never;
-      if (dto.description !== undefined) data.description = dto.description;
-      if (dto.notes !== undefined) data.notes = dto.notes;
-      if (dto.referenceNo !== undefined) data.referenceNo = dto.referenceNo;
-      if (dto.referenceDate !== undefined) {
-        data.referenceDate = dto.referenceDate ? new Date(dto.referenceDate) : null;
-      }
-      if (dto.receivableAccountId !== undefined) {
-        data.receivableAccountId = toBigInt(dto.receivableAccountId);
-      }
-      if (dto.salesDeptId !== undefined) data.salesDeptId = toBigInt(dto.salesDeptId);
-      if (dto.invoiceId !== undefined) {
-        data.invoice = dto.invoiceId ? { connect: { id: BigInt(dto.invoiceId) } } : { disconnect: true };
-      }
-      if (dto.returnId !== undefined) {
-        data.return = dto.returnId ? { connect: { id: BigInt(dto.returnId) } } : { disconnect: true };
-      }
-      if (dto.settlementStatus !== undefined) data.settlementStatus = dto.settlementStatus as never;
-      if (dto.discountPercent !== undefined) {
-        data.discountPercent = dto.discountPercent != null ? new Prisma.Decimal(dto.discountPercent) : null;
-      }
-      if (dto.legacyCode !== undefined) data.legacyCode = dto.legacyCode;
+      const data = buildSlsReturnReceiptUpdatePatch(dto, actor);
       if (dto.docDate !== undefined) {
         data.docDate = new Date(dto.docDate);
         data.fiscalPeriodId = await this.resolvePeriod(tx, dto.fiscalPeriodId, dto.docDate);
@@ -267,41 +205,15 @@ export class ErpSlsReturnReceiptsService {
         data.fiscalPeriodId = BigInt(dto.fiscalPeriodId);
       }
 
-      const discountAmount =
-        dto.discountAmount !== undefined ? dto.discountAmount : existing.discountAmount?.toString();
-      const tax1Amount =
-        dto.tax1Amount !== undefined ? dto.tax1Amount : existing.tax1Amount?.toString();
-      const tax2Amount =
-        dto.tax2Amount !== undefined ? dto.tax2Amount : existing.tax2Amount?.toString();
-      const otherCostAmount =
-        dto.otherCostAmount !== undefined
-          ? dto.otherCostAmount
-          : existing.otherCostAmount?.toString();
-      if (dto.tax1Amount !== undefined) {
-        data.tax1Amount = dto.tax1Amount != null ? new Prisma.Decimal(dto.tax1Amount) : null;
-      }
-      if (dto.tax2Amount !== undefined) {
-        data.tax2Amount = dto.tax2Amount != null ? new Prisma.Decimal(dto.tax2Amount) : null;
-      }
+      const totalsInput = buildSlsReturnReceiptTotalsInput(dto, existing);
 
-      const mergedLines: typeof dto.lines = dto.lines ?? existing.lines.map((l) => ({
-        itemId: l.itemId.toString(),
-        quantity: l.quantity.toString(),
-        unitId: l.unitId.toString(),
-        unitPrice: l.unitPrice.toString(),
-        discountPercent: l.discountPercent?.toString(),
-        discountAmount: l.discountAmount?.toString(),
-        tax1Id: (l.tax1Id as bigint | null)?.toString(),
-        tax2Id: (l.tax2Id as bigint | null)?.toString(),
-        tax1Amount: l.tax1Amount?.toString(),
-        tax2Amount: l.tax2Amount?.toString(),
-        lineNo: l.lineNo,
-      }));
+      const mergedLines: typeof dto.lines =
+        dto.lines ?? mapExistingSlsReturnReceiptLines(existing.lines);
 
       const priceMode = ((dto.priceMode ?? existing.priceMode) as string) as 'TAX_EXCLUSIVE' | 'TAX_INCLUSIVE';
       const taxIds = mergedLines.flatMap((l) => [l.tax1Id, l.tax2Id]);
       const rateById = await this.taxRateMap(taxIds);
-      const totals = computeReturnReceiptTotals(mergedLines, { discountAmount, discountPercent: dto.discountPercent, tax1Amount, tax2Amount, otherCostAmount }, rateById, priceMode);
+      const totals = computeReturnReceiptTotals(mergedLines, totalsInput, rateById, priceMode);
       data.subtotal = totals.subtotal;
       data.grandTotal = totals.grandTotal;
       if (totals.discountAmount !== null) data.discountAmount = totals.discountAmount;
