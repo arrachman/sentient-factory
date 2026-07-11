@@ -70,9 +70,10 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
     valueKey: keyof ItemFormData;
     labelKey: keyof ItemFormData;
   }> = [
+    // Kiri: Pajak Beli 1 → 2. Kanan: Pajak Jual 1 → 2 (grid 2-kolom mengalir kiri→kanan).
     { id: 'if-buytax-1', label: 'Pajak Beli 1', valueKey: 'purchaseTaxId', labelKey: 'purchaseTaxLabel' },
-    { id: 'if-buytax-2', label: 'Pajak Beli 2', valueKey: 'purchaseTax2Id', labelKey: 'purchaseTax2Label' },
     { id: 'if-selltax-1', label: 'Pajak Jual 1', valueKey: 'saleTaxId', labelKey: 'saleTaxLabel' },
+    { id: 'if-buytax-2', label: 'Pajak Beli 2', valueKey: 'purchaseTax2Id', labelKey: 'purchaseTax2Label' },
     { id: 'if-selltax-2', label: 'Pajak Jual 2', valueKey: 'saleTax2Id', labelKey: 'saleTax2Label' },
   ];
 
