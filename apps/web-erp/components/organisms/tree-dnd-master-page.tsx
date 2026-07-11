@@ -3,57 +3,33 @@
 // Tree-aware DnD master page organism. Built for sys_menus (CLAUDE.md §2.22).
 // Drag handle replaces checkbox column → no bulk action. Cross-parent drop
 // rule in `tree-dnd-helpers.ts#inferNewParent`; backend re-validates.
+//
+// Slimmed via pure-restructure split into co-located siblings:
+//   tree-dnd-master-toolbar.tsx — header/filter/search/actions
+//   tree-dnd-master-table.tsx   — DndContext + table + row actions
+//   tree-dnd-master-dialogs.tsx — form modal + audit modal
+// Behavior preserved exactly. Public export TreeDndMasterPage unchanged.
 
 import * as React from 'react';
 import {
-  DndContext,
-  PointerSensor,
-  KeyboardSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  SortableContext,
   arrayMove,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { Icon } from '@/components/ui/icons';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { type RowActionItem } from '@/components/molecules/row-actions-menu';
-import {
-  Modal,
-  ModalContent,
-  ModalHeader,
-  ModalTitle,
-  ModalFooter,
-} from '@/components/organisms/modal';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableEmpty,
-} from '@/components/organisms/table';
-import { AuditHistoryPanel } from '@/components/organisms/audit-history-panel';
 import { ListFooter } from '@/components/organisms/list-footer';
-import { TreeDndRow } from './tree-dnd-row';
 import {
   flattenTree,
   inferNewParent,
   computeReorderChanges,
   validateDrop,
 } from './tree-dnd-helpers';
+import { TreeDndMasterToolbar } from './tree-dnd-master-toolbar';
+import { TreeDndMasterTable } from './tree-dnd-master-table';
+import {
+  TreeDndMasterFormDialog,
+  TreeDndMasterAuditDialog,
+} from './tree-dnd-master-dialogs';
 import type {
   TreeRow,
   TreeDndMasterPageProps,
@@ -311,11 +287,6 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
       },
     });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
@@ -368,105 +339,35 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
 
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 12, height: '100%', minHeight: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 12px 0' }}>
-        <h2 style={{ fontSize: 'calc(15px * var(--font-scale, 1))', fontWeight: 600 }}>{tGlobal(title)}</h2>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {treeFilters?.map((cfg, i) => {
-            const label = cfg.label ?? cfg.type;
-            return (
-              <Select
-                key={cfg.type + i}
-                value={filterSel[i] || '__ALL__'}
-                onValueChange={(v) => setFilterAt(i, v === '__ALL__' ? '' : v)}
-              >
-                <SelectTrigger aria-label={tGlobal(label)} style={{ width: 180 }}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__ALL__">
-                    {tGlobal('Semua')} {tGlobal(label)}
-                  </SelectItem>
-                  {filterOptions[i]?.map((n) => (
-                    <SelectItem key={n.id} value={n.id}>
-                      {n.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            );
-          })}
-          <Input ref={searchRef} value={search} onChange={(e) => setSearch(e.target.value)} placeholder={tGlobal('Cari…')} style={{ width: 220 }} />
-          <button className="btn ghost" onClick={reload} title={tGlobal('Muat ulang')}><Icon name="refresh" /></button>
-          <button className="btn primary" onClick={openCreate}><Icon name="plus" /> {tGlobal('Tambah')}</button>
-        </div>
-      </div>
+      <TreeDndMasterToolbar
+        title={title}
+        treeFilters={treeFilters}
+        filterSel={filterSel}
+        filterOptions={filterOptions}
+        search={search}
+        searchRef={searchRef}
+        onFilterAt={setFilterAt}
+        onSearchChange={setSearch}
+        onReload={reload}
+        onAdd={openCreate}
+      />
 
-      <div className="lines" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-        {loading ? (
-          <div style={{ padding: 16 }} className="muted">{tGlobal('Memuat...')}</div>
-        ) : error ? (
-          <div style={{ padding: 16, color: 'var(--danger, #c33)' }}>{tGlobal('Gagal memuat data')}: {error}</div>
-        ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <Table className="table-fixed">
-              <colgroup>
-                <col style={{ width: 36 }} />
-                <col style={{ width: 200 }} />
-                <col />
-                {extraColumns.map((c) => <col key={c.key} style={{ width: 160 }} />)}
-                <col style={{ width: 120 }} />
-                <col style={{ width: 48 }} />
-              </colgroup>
-              <TableHeader>
-                <TableRow>
-                  <TableHead aria-label={tGlobal('Tarik')} />
-                  <TableHead>{tGlobal('Kode')}</TableHead>
-                  <TableHead>{tGlobal('Nama')}</TableHead>
-                  {extraColumns.map((c) => <TableHead key={c.key}>{tGlobal(c.label)}</TableHead>)}
-                  <TableHead>{tGlobal('Status')}</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
-                  {visibleFlat.length === 0 ? (
-                    <TableEmpty
-                      colSpan={colCount}
-                      variant={debouncedSearch || filterActive ? 'filtered' : 'empty'}
-                      entityLabel={tGlobal(entityLabel)}
-                      searchTerm={debouncedSearch || undefined}
-                    />
-                  ) : (
-                    visibleFlat.map(({ row, depth }, idx) => {
-                      const actions: RowActionItem[] = [
-                        { label: tGlobal('Edit'), onSelect: () => openEdit(row) },
-                        { label: tGlobal('Riwayat'), onSelect: () => setAuditTarget(row) },
-                        {
-                          label: tGlobal('Hapus'),
-                          onSelect: () => handleDelete(row),
-                          danger: true,
-                          separatorBefore: true,
-                        },
-                      ];
-                      return (
-                        <TreeDndRow
-                          key={row.id}
-                          row={row}
-                          depth={depth}
-                          focused={focusedIndex === idx}
-                          extraColumns={extraColumns}
-                          rowActions={actions}
-                          onOpenEdit={openEdit}
-                        />
-                      );
-                    })
-                  )}
-                </SortableContext>
-              </TableBody>
-            </Table>
-          </DndContext>
-        )}
-      </div>
+      <TreeDndMasterTable
+        loading={loading}
+        error={error}
+        visibleFlat={visibleFlat}
+        sortableIds={sortableIds}
+        extraColumns={extraColumns}
+        colCount={colCount}
+        filterActive={filterActive}
+        debouncedSearch={debouncedSearch}
+        entityLabel={entityLabel}
+        focusedIndex={focusedIndex}
+        onDragEnd={handleDragEnd}
+        onOpenEdit={openEdit}
+        onDelete={handleDelete}
+        onOpenAudit={setAuditTarget}
+      />
 
       {!loading && !error && (
         <ListFooter
@@ -476,41 +377,24 @@ export function TreeDndMasterPage<T extends TreeRow, F>({
         />
       )}
 
-      <Modal open={open} onOpenChange={setOpen}>
-        <ModalContent>
-          <ModalHeader>
-            <ModalTitle>
-              {editing
-                ? `${tGlobal('Edit')} ${tGlobal(title)}`
-                : `${tGlobal('Tambah')} ${tGlobal(title)}`}
-            </ModalTitle>
-          </ModalHeader>
-          <FormFields data={form} onChange={setForm} errors={formErrors} />
-          <ModalFooter>
-            <button className="btn ghost" onClick={() => setOpen(false)}>
-              {tGlobal('Batal')}
-            </button>
-            <button className="btn primary" onClick={handleSave} disabled={saving} title="Ctrl+Enter">
-              {saving ? tGlobal('Menyimpan...') : tGlobal('Simpan')}
-            </button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <TreeDndMasterFormDialog
+        open={open}
+        editing={!!editing}
+        title={title}
+        form={form}
+        formErrors={formErrors}
+        saving={saving}
+        FormFields={FormFields}
+        onOpenChange={setOpen}
+        onChange={setForm}
+        onSave={handleSave}
+      />
 
-      <Modal open={!!auditTarget} onOpenChange={(v) => { if (!v) setAuditTarget(null); }}>
-        <ModalContent size="lg">
-          <ModalHeader>
-            <ModalTitle>
-              {tGlobal('Riwayat Perubahan')} — {auditTarget?.code} {auditTarget?.name}
-            </ModalTitle>
-          </ModalHeader>
-          <div style={{ padding: 0, maxHeight: '60vh', overflowY: 'auto' }}>
-            {auditTarget && (
-              <AuditHistoryPanel entityName={auditEntityName} entityId={auditTarget.id} />
-            )}
-          </div>
-        </ModalContent>
-      </Modal>
+      <TreeDndMasterAuditDialog
+        auditTarget={auditTarget}
+        auditEntityName={auditEntityName}
+        onOpenChange={(v) => { if (!v) setAuditTarget(null); }}
+      />
     </div>
   );
 }
