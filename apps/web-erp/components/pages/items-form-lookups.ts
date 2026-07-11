@@ -45,7 +45,7 @@ function makeLoader(listFn: ListFn) {
 export const loadCategoryOptions = makeLoader(listItemCategories as unknown as ListFn);
 export const loadUnitOptions = makeLoader(listUnits as unknown as ListFn);
 
-/** Loader satuan dengan conversionFactor di option data — untuk Satuan Jual Default. */
+/** Loader satuan dengan conversionFactor di option data — untuk Satuan Default. */
 export const loadUnitOptionsWithFactor = async (search: string, page: number, limit: number) => {
   const res = await listUnits({ search: search || undefined, page, limit, isActive: true });
   return {

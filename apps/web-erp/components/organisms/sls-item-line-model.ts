@@ -23,6 +23,7 @@ export interface SlsItemLineRow extends GridRowBase {
   tax1Id?: string;
   tax1Label?: string;
   tax2Id?: string;
+  tax2Label?: string;
   warehouseId?: string;
   warehouseLabel?: string;
   notes?: string;
@@ -74,6 +75,7 @@ const LABEL_KEYS: Record<string, keyof SlsItemLineRow> = {
   itemId: 'itemLabel',
   unitId: 'unitLabel',
   tax1Id: 'tax1Label',
+  tax2Id: 'tax2Label',
   warehouseId: 'warehouseLabel',
 };
 

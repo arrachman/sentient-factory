@@ -240,6 +240,10 @@ export const SlsItemLinesEditor = React.forwardRef<SlsItemLinesHandle, {
                               autoPatch.tax1Id = item.saleTaxId;
                               autoPatch.tax1Label = item.saleTax?.name;
                             }
+                            if (item.saleTax2Id && !l.tax2Id) {
+                              autoPatch.tax2Id = item.saleTax2Id;
+                              autoPatch.tax2Label = item.saleTax2?.name;
+                            }
                             if (Object.keys(autoPatch).length) patch(l.key, autoPatch);
                           }).catch(() => null);
                         }

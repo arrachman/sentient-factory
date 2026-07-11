@@ -5,7 +5,7 @@
  * best-practice into three sub-sections: Dimensi & Berat · Klasifikasi Produk ·
  * Penanganan & Regulasi. Lookups reuse existing masters (Warna/Merk/Ukuran/
  * Material/Section/Desainer), the two new masters (Nozzle/OEM), partners
- * (Vendor) and units (Satuan Jual Default + faktor konversi). Atomic tier: Organism.
+ * (Vendor) and units (Satuan Default + faktor konversi). Atomic tier: Organism.
  */
 
 import * as React from 'react';
@@ -47,9 +47,9 @@ export function ItemAtributSection({
         <LookupField id="if-vendor" label="Vendor" value={data.vendorId} onPick={(v) => set('vendorId', v)} loader={loadPartnerOptions} placeholder="Pilih vendor…" initialLabel={data.vendorLabel} />
       </Section>
 
-      <Section title="Penanganan & Regulasi" hint="Satuan jual default, izin edar & flag operasional">
-        <LookupField id="if-fieldunit" label="Satuan Jual Default" value={data.fieldUnitId} onPick={(v) => set('fieldUnitId', v)} onPickOpt={(opt) => onChange({ ...data, fieldUnitId: opt.value, fieldUnitLabel: opt.label, fieldUnitConversionFactor: String(opt.conversionFactor ?? '1') })} loader={loadUnitOptionsWithFactor} placeholder="Pilih satuan…" initialLabel={data.fieldUnitLabel} />
-        <FormField label="Faktor Konversi Satuan Jual" htmlFor="if-fieldunit-factor" help="1 satuan jual = N satuan dasar — diambil dari master Satuan">
+      <Section title="Penanganan & Regulasi" hint="Satuan default, izin edar & flag operasional">
+        <LookupField id="if-fieldunit" label="Satuan Default" value={data.fieldUnitId} onPick={(v) => set('fieldUnitId', v)} onPickOpt={(opt) => onChange({ ...data, fieldUnitId: opt.value, fieldUnitLabel: opt.label, fieldUnitConversionFactor: String(opt.conversionFactor ?? '1') })} loader={loadUnitOptionsWithFactor} placeholder="Pilih satuan…" initialLabel={data.fieldUnitLabel} />
+        <FormField label="Faktor Konversi Satuan Default" htmlFor="if-fieldunit-factor" help="1 satuan default = N satuan dasar — diambil dari master Satuan">
           <input id="if-fieldunit-factor" readOnly value={data.fieldUnitConversionFactor} className="h-8 w-full rounded-[var(--radius)] border border-border bg-[var(--panel-2)] px-2 text-sm text-[var(--fg-muted)] cursor-default" />
         </FormField>
         <FormField label="No. Ijin Edar" htmlFor="if-regno">

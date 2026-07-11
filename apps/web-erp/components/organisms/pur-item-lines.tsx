@@ -216,6 +216,10 @@ export const PurItemLinesEditor = React.forwardRef<PurItemLinesHandle, {
                               autoPatch.tax1Id = item.purchaseTaxId;
                               autoPatch.tax1Label = item.purchaseTax?.name;
                             }
+                            if (item.purchaseTax2Id && !l.tax2Id) {
+                              autoPatch.tax2Id = item.purchaseTax2Id;
+                              autoPatch.tax2Label = item.purchaseTax2?.name;
+                            }
                             if (Object.keys(autoPatch).length) patch(l.key, autoPatch);
                           }).catch(() => null);
                         }
