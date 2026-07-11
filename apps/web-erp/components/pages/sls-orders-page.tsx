@@ -7,29 +7,12 @@
  */
 
 import * as React from 'react';
-import { Icon } from '@/components/ui/icons';
-import { Badge } from '@/components/ui/badge';
 import {
-  ErpListLayout,
   type ListPaginationConfig,
   type SummaryConfig,
 } from '@/components/organisms/erp-list-layout';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-  TableEmpty,
-  CodeLinkCell,
-} from '@/components/organisms/table';
-import { SlsOrderFilters, emptySlsFilters, type SlsFilters } from './sls-orders-filters';
-import {
-  RowActionsMenu,
-  RowContextMenu,
-  type RowActionItem,
-} from '@/components/molecules/row-actions-menu';
+import { emptySlsFilters, type SlsFilters } from './sls-orders-filters';
+import type { RowActionItem } from '@/components/molecules/row-actions-menu';
 import { confirmAction, notify } from '@/lib/feedback';
 import { cashBankWorkflowActions } from '@/lib/fin-cash-bank-workflow';
 import {
@@ -40,7 +23,6 @@ import {
 import { useErpList } from '@/lib/use-erp-list';
 import { useListPagination } from '@/lib/use-list-pagination';
 import { formatNumber } from '@/lib/format';
-import { statusBadgeVariant, statusLabel } from '@/lib/status';
 import {
   listSlsOrders,
   createSlsOrder,
@@ -60,9 +42,9 @@ import {
   toSlsOrderPayload,
   type SlsOrderFormData,
 } from './sls-order-form';
-
-/** Canonical list path (seeded `sys_menus.path`); base for /new and /:id. */
-const SO_BASE = '/sales/orders';
+import { SO_BASE, TRANSITION_VERBS } from './sls-orders-config';
+import { SlsOrdersFormView } from './sls-orders-form-view';
+import { SlsOrdersList } from './sls-orders-list';
 
 export function ErpSlsOrdersPage({ formMode, recordId, onNavigate }: TrxFormPageProps = {}) {
   const mode: 'list' | 'form' = formMode ? 'form' : 'list';
@@ -189,16 +171,9 @@ export function ErpSlsOrdersPage({ formMode, recordId, onNavigate }: TrxFormPage
       reason = window.prompt('Alasan menolak dokumen ini?') ?? undefined;
       if (!reason) return;
     }
-    const verb: Record<SlsOrderTransition, string> = {
-      SUBMIT: 'mengajukan',
-      APPROVE: 'menyetujui',
-      REJECT: 'menolak',
-      POST: 'memposting',
-      REOPEN: 'membuka kembali',
-    };
     try {
       await transitionSlsOrder(r.id, action, reason);
-      notify(`Berhasil ${verb[action]} ${r.docNumber}`, 'success');
+      notify(`Berhasil ${TRANSITION_VERBS[action]} ${r.docNumber}`, 'success');
       reload();
     } catch (e: unknown) {
       notify(e instanceof Error ? e.message : 'Gagal', 'danger');
@@ -233,32 +208,22 @@ export function ErpSlsOrdersPage({ formMode, recordId, onNavigate }: TrxFormPage
   // ── form view ───────────────────────────────────────────────────────────────
   if (mode === 'form') {
     return (
-      <div className="page">
-        <div className="page-header">
-          <h1 className="page-title flex items-center gap-2">
-            <button className="iconbtn" onClick={goList} title="Kembali" style={{ fontSize: 18, lineHeight: 1 }}>
-              ←
-            </button>
-            Sales Order
-            <span className="code-tag">SO</span>
-          </h1>
-        </div>
-        <div className="page-body overflow-auto p-4">
-          {formReady ? (
-            <SlsOrderForm
-              data={form}
-              onChange={setForm}
-              saving={saving}
-              allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
-              onSave={() => persist(true)}
-              onSaveNew={() => persist(false, true)}
-              onReset={loadForm}
-            />
-          ) : (
-            <div className="p-8 text-center text-muted">Memuat…</div>
-          )}
-        </div>
-      </div>
+      <SlsOrdersFormView
+        title="Sales Order"
+        code="SO"
+        formReady={formReady}
+        onBack={goList}
+      >
+        <SlsOrderForm
+          data={form}
+          onChange={setForm}
+          saving={saving}
+          allowedCreationStatuses={formMode === 'create' ? allowedCreationStatuses : undefined}
+          onSave={() => persist(true)}
+          onSaveNew={() => persist(false, true)}
+          onReset={loadForm}
+        />
+      </SlsOrdersFormView>
     );
   }
 
@@ -284,140 +249,45 @@ export function ErpSlsOrdersPage({ formMode, recordId, onNavigate }: TrxFormPage
       n.has(id) ? n.delete(id) : n.add(id);
       return n;
     });
+  const handleBulkDelete = () =>
+    confirmAction({
+      title: 'Hapus terpilih?',
+      message: `${selected.size} Sales Order akan dihapus permanen.`,
+      variant: 'danger',
+      confirmLabel: 'Hapus',
+      onConfirm: async () => {
+        await Promise.all([...selected].map((id) => deleteSlsOrder(id).catch(() => null)));
+        notify(`${selected.size} dokumen dihapus`, 'success');
+        setSelected(new Set());
+        reload();
+      },
+    });
 
   return (
-    <ErpListLayout
-      title="Sales Order"
-      code="SO"
+    <SlsOrdersList
+      rows={rows}
       loading={loading}
       error={error}
       search={search}
       onSearch={setSearch}
       onAdd={openCreate}
       onRefresh={reload}
-      toolbar={
-        <>
-          <SlsOrderFilters value={filters} onChange={setFilters} />
-          <button
-            type="button"
-            className="btn ghost sm"
-            onClick={() => notify('Export akan tersedia segera.', 'info')}
-            title="Export ke CSV/Excel"
-          >
-            <Icon name="download" size={12} /> Export
-          </button>
-        </>
-      }
+      filters={filters}
+      onFiltersChange={setFilters}
+      selected={selected}
+      onToggleSelect={toggleSel}
+      onSelectAll={(ids) => setSelected(new Set(ids))}
+      onClearSelection={() => setSelected(new Set())}
+      onBulkDelete={handleBulkDelete}
+      sortBy={sortBy}
+      sortDir={sortDir}
+      onSort={toggleSort}
+      focused={focused}
+      onFocusChange={setFocused}
+      rowActions={rowActions}
+      onEdit={openEdit}
       summary={summary}
       pagination={pagination}
-      keyboardRows={{
-        rowCount: rows.length,
-        focusedIndex: focused,
-        onFocusChange: setFocused,
-        onToggle: (i) => rows[i] && toggleSel(rows[i].id),
-        onOpen: (i) => rows[i] && openEdit(rows[i]),
-      }}
-    >
-      {selected.size > 0 && (
-        <div className="bulk-bar flex items-center gap-3 px-3 py-2 mb-2 rounded-md bg-secondary text-sm">
-          <strong>{selected.size}</strong> baris dipilih
-          <button
-            className="btn sm danger"
-            onClick={() =>
-              confirmAction({
-                title: 'Hapus terpilih?',
-                message: `${selected.size} Sales Order akan dihapus permanen.`,
-                variant: 'danger',
-                confirmLabel: 'Hapus',
-                onConfirm: async () => {
-                  await Promise.all([...selected].map((id) => deleteSlsOrder(id).catch(() => null)));
-                  notify(`${selected.size} dokumen dihapus`, 'success');
-                  setSelected(new Set());
-                  reload();
-                },
-              })
-            }
-          >
-            <Icon name="trash" size={12} /> Hapus
-          </button>
-          <button className="btn ghost sm" onClick={() => setSelected(new Set())}>
-            Batal pilihan
-          </button>
-        </div>
-      )}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead style={{ width: 36, textAlign: 'center' }}>
-              <input
-                type="checkbox"
-                checked={rows.length > 0 && rows.every((r) => selected.has(r.id))}
-                ref={(el) => { if (el) el.indeterminate = selected.size > 0 && !rows.every((r) => selected.has(r.id)); }}
-                onChange={(e) => setSelected(e.target.checked ? new Set(rows.map((r) => r.id)) : new Set())}
-                title="Pilih semua"
-              />
-            </TableHead>
-            {([
-              ['docNumber', 'No Transaksi'],
-              ['docDate', 'Tanggal'],
-              [null, 'Pelanggan'],
-              [null, 'Uraian'],
-              ['grandTotal', 'Total'],
-              [null, 'Uang'],
-              ['status', 'Status'],
-            ] as [string | null, string][]).map(([col, label]) => (
-              <TableHead
-                key={label}
-                style={col === 'grandTotal' ? { textAlign: 'right', cursor: col ? 'pointer' : undefined } : { cursor: col ? 'pointer' : undefined }}
-                onClick={col ? () => toggleSort(col) : undefined}
-              >
-                {label}
-                {col && sortBy === col && (
-                  <span className="ml-1 text-muted-foreground text-xs">{sortDir === 'asc' ? '↑' : '↓'}</span>
-                )}
-              </TableHead>
-            ))}
-            <TableHead style={{ width: 44 }} />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.length === 0 ? (
-            <TableEmpty colSpan={9} />
-          ) : (
-            rows.map((r, i) => {
-              const actions = rowActions(r);
-              return (
-                <RowContextMenu key={r.id} items={actions}>
-                  <TableRow
-                    style={focused === i ? { boxShadow: 'inset 2px 0 0 var(--primary)' } : undefined}
-                    className="cursor-pointer"
-                  >
-                    <TableCell style={{ textAlign: 'center' }}>
-                      <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleSel(r.id)} />
-                    </TableCell>
-                    <CodeLinkCell code={r.docNumber} onOpen={() => openEdit(r)} />
-                    <TableCell>{r.docDate.slice(0, 10)}</TableCell>
-                    <TableCell>{r.customer?.name ?? '—'}</TableCell>
-                    <TableCell>{r.description ?? '—'}</TableCell>
-                    <TableCell className="tabular-nums" style={{ textAlign: 'right' }}>
-                      {formatNumber(Number(r.grandTotal), 2)}
-                    </TableCell>
-                    <TableCell>{r.currency?.code ?? '—'}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusBadgeVariant(r.status)} dot>
-                        {statusLabel(r.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <RowActionsMenu items={actions} />
-                    </TableCell>
-                  </TableRow>
-                </RowContextMenu>
-              );
-            })
-          )}
-        </TableBody>
-      </Table>
-    </ErpListLayout>
+    />
   );
 }
