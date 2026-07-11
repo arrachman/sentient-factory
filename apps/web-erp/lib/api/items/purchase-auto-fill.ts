@@ -16,7 +16,9 @@ export interface ItemPurchaseAutoFill {
   fieldUnitId?: string | null;
   fieldUnit?: { id: string; code: string; name: string } | null;
   purchaseTaxId?: string | null;
+  purchaseTax2Id?: string | null;
   purchaseTax?: { id: string; code: string; name: string; rate?: string } | null;
+  purchaseTax2?: { id: string; code: string; name: string; rate?: string } | null;
 }
 
 export async function getItemForPurchaseAutoFill(id: string): Promise<ItemPurchaseAutoFill | null> {

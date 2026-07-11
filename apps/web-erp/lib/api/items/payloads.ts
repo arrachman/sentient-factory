@@ -69,7 +69,9 @@ export interface CreateItemPayload {
   purchaseDiscountAccountId?: string | null;
   consignmentAccountId?: string | null;
   purchaseTaxId?: string | null;
+  purchaseTax2Id?: string | null;
   saleTaxId?: string | null;
+  saleTax2Id?: string | null;
   primarySupplierId?: string | null;
   weight?: string;
 

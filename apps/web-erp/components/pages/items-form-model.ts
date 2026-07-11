@@ -109,7 +109,7 @@ export interface ItemFormData {
 
   // Costs & prices
   lastHpp: string;            // "HPP Terakhir" (net cost of latest purchase, readonly)
-  averageCost: string;        // "HPP Rata-rata" (moving average, readonly — display only)
+  averageCost: string;        // "HPP Rata-rata" (moving average, internal; not rendered in form)
   purchasePrice: string;      // "Harga Beli Terakhir" (readonly, from latest purchase)
   purchaseDiscount: string;   // "Diskon Pembelian" (percent)
   salePrices: string[];       // "Harga Jual 1..N" (index 0 = level 1, dinamis/unlimited)
@@ -142,7 +142,9 @@ export interface ItemFormData {
   purchaseDiscountAccountId: string; purchaseDiscountAccountLabel?: string;
   consignmentAccountId: string; consignmentAccountLabel?: string;
   purchaseTaxId: string; purchaseTaxLabel?: string;
+  purchaseTax2Id: string; purchaseTax2Label?: string;
   saleTaxId: string; saleTaxLabel?: string;
+  saleTax2Id: string; saleTax2Label?: string;
 
   // Supplier & physical
   primarySupplierId: string; primarySupplierLabel?: string;
@@ -187,7 +189,7 @@ export const defaultItemForm = (): ItemFormData => ({
   inventoryAccountId: '', salesAccountId: '', cogsAccountId: '',
   salesReturnAccountId: '', salesDiscountAccountId: '',
   purchaseReturnAccountId: '', purchaseDiscountAccountId: '', consignmentAccountId: '',
-  purchaseTaxId: '', saleTaxId: '',
+  purchaseTaxId: '', purchaseTax2Id: '', saleTaxId: '', saleTax2Id: '',
   primarySupplierId: '', weight: '',
   length: '', width: '', height: '', volume: '', conversionKgPcs: '1', registrationNo: '',
   isReturnable: true, isMobile: false,

@@ -138,7 +138,9 @@ export interface ErpItem {
 
   // Tax
   purchaseTaxId?: string | null;
+  purchaseTax2Id?: string | null;
   saleTaxId?: string | null;
+  saleTax2Id?: string | null;
 
   // Supplier & physical
   primarySupplierId?: string | null;
@@ -187,7 +189,9 @@ export interface ErpItem {
   purchaseDiscountAccount?: RelationRef | null;
   consignmentAccount?: RelationRef | null;
   purchaseTax?: RelationRef | null;
+  purchaseTax2?: RelationRef | null;
   saleTax?: RelationRef | null;
+  saleTax2?: RelationRef | null;
   primarySupplier?: RelationRef | null;
   brand?: RelationRef | null;
   material?: RelationRef | null;

@@ -190,8 +190,10 @@ sendiri (legacy MyERP+ cuma punya 2: Tipe Produk + Kategori Produk):
 | purchaseReturnAccountId ○ ➜ | BigInt → Account | tab Akun "Retur Pembelian" |
 | purchaseDiscountAccountId ○ ➜ | BigInt → Account | tab Akun "Diskon Pembelian" |
 | consignmentAccountId ○ ➜ | BigInt → Account | tab Akun "Konsinyasi" |
-| purchaseTaxId ○ ➜ | BigInt → Tax | `bpajakbeli` |
-| saleTaxId ○ ➜ | BigInt → Tax | `bpajakjual` |
+| purchaseTaxId ○ ➜ | BigInt → Tax | Pajak Beli 1 (`bpajakbeli`) |
+| purchaseTax2Id ○ ➜ | BigInt → Tax | Pajak Beli 2 (additive, optional) |
+| saleTaxId ○ ➜ | BigInt → Tax | Pajak Jual 1 (`bpajakjual`) |
+| saleTax2Id ○ ➜ | BigInt → Tax | Pajak Jual 2 (additive, optional) |
 | primarySupplierId ○ ➜ | BigInt → Partner | `bsuplier` |
 | weight ○ | Decimal(19,4) | optional logistics |
 | ageCategory ○ | String | legacy "Kategori Umur" (`bkategoriumur`) — freetext |

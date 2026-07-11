@@ -208,7 +208,9 @@ export interface ItemAutoFill {
   fieldUnit?: { id: string; code: string; name: string } | null;
   fieldUnitFactor?: string | null; // 1 satuan jual = N satuan dasar
   saleTaxId?: string | null;
+  saleTax2Id?: string | null;
   saleTax?: { id: string; code: string; name: string; rate: string } | null;
+  saleTax2?: { id: string; code: string; name: string; rate: string } | null;
   // Harga Jual 1..10 + Diskon Jual 1..10 — the active tier is picked by the
   // customer category's salesTier (PartnerAutoFill.category.salesTier).
   prices?: { level: number; price: string; discountPercent: string }[];

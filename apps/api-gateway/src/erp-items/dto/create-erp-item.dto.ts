@@ -224,7 +224,9 @@ export class CreateErpItemDto {
 
   // ─── Tax ──────────────────────────────────────────────────────────
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() purchaseTaxId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() purchaseTax2Id?: string | null;
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() saleTaxId?: string | null;
+  @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() saleTax2Id?: string | null;
 
   // ─── Supplier & physical ──────────────────────────────────────────
   @ApiPropertyOptional({ nullable: true }) @IsOptional() @IsString() primarySupplierId?:

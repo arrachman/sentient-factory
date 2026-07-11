@@ -713,7 +713,7 @@ per mode. Keputusan ini berlaku **khusus form item** — masih sectioned
 
 **Mode entri:**
 - **Cepat** — default saat tambah item baru (`data.code === ''`). Hanya
-  section Identitas + Klasifikasi (~7-8 field wajib). Layout scroll.
+  section gabungan **Identitas & Klasifikasi** (~7-8 field wajib). Layout scroll.
 - **Lengkap** — default saat edit. Semua section, **side-nav 200px di
   kiri** + content section aktif di kanan. Section conditional (Inventory
   & Tracking) hanya muncul saat `isStockable(itemType)`. Dot merah di
@@ -723,11 +723,19 @@ Toggle Cepat/Lengkap di top form (pill segmented). User bebas switch
 tanpa kehilangan state form. Modal pakai `size="xl"` (1100px) supaya
 side-nav + content tidak crowded.
 
-**Section grouping (9 section):**
-Identitas · Klasifikasi · Inventory & Tracking (conditional) · Harga ·
-Pajak · Akuntansi · Dimensi GL · Supplier · Catatan. Restructure dari
-7 section lama (§2.23) yang campur identitas dengan satuan, dan Akun
-GL dengan Dimensi/Supplier.
+**Section grouping inti:**
+Identitas & Klasifikasi · Media · Lampiran · Atribut · Inventory & Tracking
+(conditional) · Pergerakan Stok · Harga · Pajak · Akuntansi · Dimensi GL ·
+Supplier. Restructure dari 7 section lama (§2.23) yang campur identitas
+dengan satuan, dan Akun GL dengan Dimensi/Supplier.
+
+**Identitas + Klasifikasi digabung (2026-07-11):**
+Atas permintaan user, dua entry side-nav `identitas` dan `klasifikasi` dilebur
+menjadi satu section **Identitas & Klasifikasi**. Field tetap sama: Kode, Nama,
+Barcode, Status, Tipe, Kategori, Satuan, Jenis Barang. Quick-add tetap hanya
+menampilkan field inti/wajib, tetapi kini sebagai satu section agar alur input
+lebih ringkas. Error validasi `code`/`name`/`categoryId`/`unitId` dan marker
+terisi dirutekan ke section gabungan.
 
 **Atribut + Lain-lain + Custom digabung jadi 1 section (2026-06-12):**
 Atas permintaan user, tiga entry side-nav terpisah (`atribut`, `lainlain`,
@@ -1173,8 +1181,8 @@ price tiers 2–10" dari §2.23.
 
 **Pemetaan field MyERP+ → schema (jangan bikin kolom redundan):**
 - "Harga Beli Terakhir" → `purchasePrice` (sudah ada).
-- "Hpp rata-rata" (readonly) → `averageCost` (computed sistem; field form
-  read-only, **tidak** dikirim di payload).
+- "Hpp rata-rata" → `averageCost` (computed sistem; data internal, **tidak**
+  ditampilkan di form dan **tidak** dikirim di payload).
 - "Hpp Update" → `standardCost` (manual/standard HPP, legacy `bhpp`) — **bukan**
   kolom baru.
 - "Harga Jual 1..10" / "Diskon Jual 1..10" → `md_item_prices` rows.
@@ -1194,12 +1202,12 @@ selalu sinkron walau caller (mis. API mentah) tak mengirim `salePrice`. Blank
 L1 price → cache tidak disentuh.
 
 **Frontend:** `ItemFormData.salePrices`/`saleDiscounts` = `string[10]` (index
-0 = level 1) + `purchaseDiscount` + `averageCost` (display-only). `fromItem`
-expand sparse rows → 10 slot (`tierColumn`); `toItemPayload` collapse →
-sparse rows (`buildPriceTiers`, skip kosong) + `salePrice = salePrices[0]`.
-Layout = 2-kolom paired (Harga Jual N kiri ‖ Diskon Jual N kanan), buy-side
-(Harga Beli/Diskon Pembelian/HPP) di atas. `NumField` dapat prop `readOnly`
-untuk HPP Rata-rata.
+0 = level 1) + `purchaseDiscount`; `averageCost` boleh tetap tersimpan di model
+sebagai data internal dari API, tetapi tidak dirender. `fromItem` expand sparse
+rows → 10 slot (`tierColumn`); `toItemPayload` collapse → sparse rows
+(`buildPriceTiers`, skip kosong) + `salePrice = salePrices[0]`. Layout = 2-kolom
+paired (Harga Jual N kiri ‖ Diskon Jual N kanan), buy-side visible = Harga Beli
+Terakhir + HPP Terakhir + Diskon Pembelian di atas.
 
 ---
 
@@ -1447,8 +1455,10 @@ Menambahkan tab **Atribut** ke form item (`/app/master/items`), meniru tab
 - **Layout = 1 tab "Atribut" bergrup** (best practice, bukan grid datar legacy):
   3 grup → **Dimensi & Berat** (Panjang/Lebar/Tinggi/Volume/Berat/Konversi
   Kg-Pcs) · **Klasifikasi Produk** (Warna/Merk/Ukuran/Material/Section/Desainer/
-  Nozzle/OEM/Vendor) · **Penanganan & Regulasi** (Satuan Lapangan/No. Ijin Edar/
+  Nozzle/OEM/Vendor) · **Penanganan & Regulasi** (Satuan Default/No. Ijin Edar/
   Retur/Mobile). Section "Atribut" disisipkan di side-nav setelah "Klasifikasi".
+  Label UI untuk relasi `fieldUnitId` memakai **Satuan Default** (bukan "Satuan
+  Jual Default") agar netral dan tidak menyiratkan hanya untuk penjualan.
 - **Berat dipindah** dari section Klasifikasi → grup Dimensi & Berat (hapus
   `showsWeight` gate di Klasifikasi). **Serial/Batch tetap** di section Inventory
   (`tracksSerial`/`tracksBatch`) — tidak diduplikasi di Atribut.
@@ -2980,8 +2990,10 @@ dikonfirmasi dengan user — scope **end-to-end** (master + form transaksi + pos
   lalu diskon amount/qty, lalu diskon %), dan **seed** `averageCost` = `lastHpp`
   hanya bila masih 0. Moving-average penuh menunggu pass `inv_*` stock movement
   (GRN GL posting masih NO-OP). Reopen/repost = re-stamp; cost stamp tidak di-reverse.
-- UI: ketiga field di tab Harga jadi **read-only** (`Harga Beli Terakhir`,
-  `HPP Terakhir`, `HPP Rata-rata`), help "Otomatis dari transaksi pembelian terakhir".
+- UI: field biaya yang visible di tab Harga jadi **read-only** (`Harga Beli Terakhir`,
+  `HPP Terakhir`), help "Otomatis dari transaksi pembelian terakhir". `HPP Rata-rata`
+  (`averageCost`) tetap data internal/seed untuk moving-average, tapi **tidak ditampilkan**
+  di form item atas keputusan user 2026-07-11.
 
 **2. "HPP Update" (manual standardCost) dihapus** dari form item. Kolom
 `md_items.standard_cost` **tetap ada** (non-destruktif) tapi tidak lagi
@@ -2994,6 +3006,14 @@ item dipilih di grid pembelian (`pur-item-lines.tsx`, dipakai semua dokumen via
 default `discountPercent` dari `item.purchaseDiscount`, plus `unitPrice` dari
 Harga Beli Terakhir, satuan dasar, dan pajak beli. Semua hanya mengisi sel yang
 masih kosong — operator tetap bisa override per baris.
+
+**3a. Pajak item = dua slot beli + dua slot jual (2026-07-11).** Tab **Pajak**
+di master item menampilkan **Pajak Beli 1**, **Pajak Beli 2**, **Pajak Jual 1**,
+**Pajak Jual 2**. Schema/API menambah kolom nullable `purchase_tax2_id` dan
+`sale_tax2_id` (FK `md_taxes`, additive; kolom lama menjadi slot 1). Pajak 2
+disimpan end-to-end agar bisa dipakai auto-fill transaksi lanjutan; auto-fill
+baris yang sudah ada tetap mengisi slot pajak pertama sampai grid transaksi
+dikurasi untuk dua pajak.
 
 **4. Tingkat Harga/Diskon Jual (1–10) ditentukan kategori pelanggan.** Pakai
 kolom existing `md_partner_categories.sales_tier` (`salesTier`, 1–10).

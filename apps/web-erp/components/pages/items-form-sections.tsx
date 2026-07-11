@@ -64,11 +64,22 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
       saleDiscounts: data.saleDiscounts.slice(0, -1),
     });
   };
+  const taxFields: Array<{
+    id: string;
+    label: string;
+    valueKey: keyof ItemFormData;
+    labelKey: keyof ItemFormData;
+  }> = [
+    { id: 'if-buytax-1', label: 'Pajak Beli 1', valueKey: 'purchaseTaxId', labelKey: 'purchaseTaxLabel' },
+    { id: 'if-buytax-2', label: 'Pajak Beli 2', valueKey: 'purchaseTax2Id', labelKey: 'purchaseTax2Label' },
+    { id: 'if-selltax-1', label: 'Pajak Jual 1', valueKey: 'saleTaxId', labelKey: 'saleTaxLabel' },
+    { id: 'if-selltax-2', label: 'Pajak Jual 2', valueKey: 'saleTax2Id', labelKey: 'saleTax2Label' },
+  ];
 
   switch (id) {
     case 'identitas':
       return (
-        <Section title="Identitas" icon="file">
+        <Section title="Identitas & Klasifikasi" icon="layers" hint="Data dasar, tipe, kategori, dan satuan item">
           <FormField label="Kode" htmlFor="if-code" required error={errors.code}>
             <div className="flex w-full items-center gap-1.5">
               <Input id="if-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder={nextCodePreview(data.itemType)} aria-invalid={!!errors.code} />
@@ -86,12 +97,6 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
           <FormField label="Status" htmlFor="if-active">
             <BooleanRadio id="if-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
           </FormField>
-        </Section>
-      );
-
-    case 'klasifikasi':
-      return (
-        <Section title="Klasifikasi" icon="layers" hint="Tipe menentukan field yang muncul">
           <div className="grid grid-cols-[110px_1fr] items-center gap-x-3 py-[5px]">
             <div className="flex items-center gap-1">
               <Label htmlFor="if-type" required>Tipe</Label>
@@ -174,7 +179,6 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
         <Section title="Harga" icon="coins" hint="Harga Jual bertingkat + diskon per tingkat — tambah sebanyak yang dibutuhkan">
           <NumField id="if-buy" label="Harga Beli Terakhir" value={data.purchasePrice} onChange={() => {}} readOnly help="Otomatis dari transaksi pembelian terakhir" />
           <NumField id="if-lasthpp" label="HPP Terakhir" value={data.lastHpp} onChange={() => {}} readOnly help="Otomatis dari transaksi pembelian terakhir" />
-          <NumField id="if-avgcost" label="HPP Rata-rata" value={data.averageCost} onChange={() => {}} readOnly help="Rata-rata bergerak (otomatis)" />
           <NumField id="if-buydisc" label="Diskon Pembelian" value={data.purchaseDiscount} onChange={(v) => set('purchaseDiscount', v)} placeholder="0" decimals={2} help="Persen (%) · jadi default diskon di PR/PO/RI/PRT" />
           {data.salePrices.map((_, i) => (
             <React.Fragment key={i}>
@@ -197,8 +201,18 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
     case 'pajak':
       return (
         <Section title="Pajak" icon="receipt">
-          <LookupField id="if-buytax" label="Pajak Beli" value={data.purchaseTaxId} onPick={(v) => set('purchaseTaxId', v)} loader={loadTaxOptions} placeholder="Pilih pajak…" initialLabel={data.purchaseTaxLabel} />
-          <LookupField id="if-selltax" label="Pajak Jual" value={data.saleTaxId} onPick={(v) => set('saleTaxId', v)} loader={loadTaxOptions} placeholder="Pilih pajak…" initialLabel={data.saleTaxLabel} />
+          {taxFields.map((field) => (
+            <LookupField
+              key={field.id}
+              id={field.id}
+              label={field.label}
+              value={String(data[field.valueKey] ?? '')}
+              onPick={(v) => set(field.valueKey, v)}
+              loader={loadTaxOptions}
+              placeholder="Pilih pajak…"
+              initialLabel={String(data[field.labelKey] ?? '')}
+            />
+          ))}
         </Section>
       );
 

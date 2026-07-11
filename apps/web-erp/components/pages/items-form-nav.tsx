@@ -17,7 +17,7 @@ export type SectionId =
   | 'identitas' | 'klasifikasi' | 'media' | 'lampiran' | 'atribut' | 'inventory'
   | 'pergerakanstok' | 'harga' | 'pajak' | 'akuntansi' | 'dimensi' | 'supplier';
 
-export const CEPAT_SECTIONS: SectionId[] = ['identitas', 'klasifikasi'];
+export const CEPAT_SECTIONS: SectionId[] = ['identitas'];
 
 type GroupId = 'inti' | 'detail' | 'keuangan' | 'lainnya';
 
@@ -47,7 +47,7 @@ const SECTION_META: Record<SectionId, SectionMeta> = {
 };
 
 const ORDER: SectionId[] = [
-  'identitas', 'klasifikasi', 'media', 'lampiran', 'atribut', 'inventory',
+  'identitas', 'media', 'lampiran', 'atribut', 'inventory',
   'pergerakanstok', 'harga', 'pajak', 'akuntansi', 'dimensi', 'supplier',
 ];
 
@@ -56,8 +56,7 @@ const anySet = (...vals: (string | undefined)[]) => vals.some((v) => !!v && v.tr
 /** Whether the user has put meaningful data into a section (drives the side-nav fill dot). */
 function sectionFilled(id: SectionId, d: ItemFormData): boolean {
   switch (id) {
-    case 'identitas': return anySet(d.code, d.name);
-    case 'klasifikasi': return anySet(d.categoryId, d.unitId, d.kindId);
+    case 'identitas': return anySet(d.code, d.name, d.categoryId, d.unitId, d.kindId);
     case 'atribut': return anySet(
       d.brandId, d.materialId, d.sizeId, d.colorId, d.sectionId, d.designerId,
       d.nozzleId, d.oemId, d.vendorId, d.description,
@@ -65,7 +64,7 @@ function sectionFilled(id: SectionId, d: ItemFormData): boolean {
     case 'inventory': return anySet(d.minStock, d.maxStock, d.minOrderQty) || d.warehouseStocks.length > 0 || d.tracksBin;
     case 'pergerakanstok': return d.tracksSerial || d.tracksBatch;
     case 'harga': return d.salePrices.some((v) => anySet(v)) || anySet(d.purchaseDiscount);
-    case 'pajak': return anySet(d.purchaseTaxId, d.saleTaxId);
+    case 'pajak': return anySet(d.purchaseTaxId, d.purchaseTax2Id, d.saleTaxId, d.saleTax2Id);
     case 'akuntansi': return anySet(d.inventoryAccountId, d.salesAccountId, d.cogsAccountId);
     case 'dimensi': return d.branchIds.length > 0 || d.defaultWarehouseIds.length > 0
       || d.defaultLocationIds.length > 0 || anySet(d.divisionId, d.departmentId, d.costCenterId, d.projectId);
@@ -94,8 +93,7 @@ export function buildSections(data: ItemFormData, errors: FormErrors<ItemFormDat
     || errors.purchaseDiscountAccountId || errors.consignmentAccountId
   );
   const errorById: Partial<Record<SectionId, boolean>> = {
-    identitas: !!(errors.code || errors.name),
-    klasifikasi: !!(errors.categoryId || errors.unitId),
+    identitas: !!(errors.code || errors.name || errors.categoryId || errors.unitId),
     akuntansi: accountError,
   };
   return ORDER.map((id) => ({
@@ -125,7 +123,7 @@ export function ModeToggle({ mode, onMode }: { mode: Mode; onMode: (m: Mode) => 
           type="button"
           onClick={() => onMode('cepat')}
           className={`flex items-center gap-1 px-3 py-1 text-[11px] font-medium transition-colors ${mode === 'cepat' ? 'bg-primary text-primary-foreground' : 'bg-card text-foreground hover:bg-[var(--panel-hover)]'}`}
-          title="Tambah kilat: hanya Identitas + Klasifikasi"
+          title="Tambah kilat: hanya Identitas & Klasifikasi"
         >
           <Icon name="redo" size={11} /> Cepat
         </button>
