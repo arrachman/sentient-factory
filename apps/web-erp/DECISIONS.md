@@ -737,12 +737,14 @@ Map otoritatif (`TYPE_NORMAL_BALANCE_MAP` di `components/pages/accounts-form.tsx
 | EQUITY | CREDIT |
 | REVENUE | CREDIT |
 
-Implementasi FE: handler `onValueChange` "Tipe Akun" ikut men-set
-`normalBalance` dari map (satu `onChange`, immutable). Field "Saldo Normal"
-di-render **read-only** sebagai `Badge` + catatan "Ditentukan otomatis dari
-Tipe Akun" — bukan `Select`/radio. Payload tetap mengirim `normalBalance`
-(diturunkan), jadi kontrak API tidak berubah. `NORMAL_BALANCES` di
-`lib/api/accounts.ts` dipertahankan untuk filter list & lookup lain.
+Implementasi FE: helper `normalBalanceForAccountType()` dipakai di tiga jalur:
+`fromAccount()` (edit data lama dinormalisasi saat form dibuka), handler
+`onValueChange` "Tipe Akun" (satu `onChange`, immutable), dan
+`toAccountPayload()` (payload selalu derive ulang sebelum dikirim). Field
+"Saldo Normal" di-render **read-only** sebagai `Badge` + catatan "Ditentukan
+otomatis dari Tipe Akun" — bukan `Select`/radio. Payload tetap mengirim
+`normalBalance` (diturunkan), jadi kontrak API tidak berubah. `NORMAL_BALANCES`
+di `lib/api/accounts.ts` dipertahankan untuk filter list & lookup lain.
 
 > Backend `md_accounts` masih menerima `normalBalance` apa adanya (belum
 > di-derive server-side) — FE yang menjamin konsistensi. Enforcement

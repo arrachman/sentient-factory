@@ -47,6 +47,10 @@ const TYPE_NORMAL_BALANCE_MAP: Record<ErpAccountType, ErpNormalBalance> = {
   REVENUE: 'CREDIT',
 };
 
+function normalBalanceForAccountType(type: ErpAccountType): ErpNormalBalance {
+  return TYPE_NORMAL_BALANCE_MAP[type];
+}
+
 
 // ─── Account code format cache (sys_settings group "account-code") ────────────
 //
@@ -145,7 +149,7 @@ export function fromAccount(a: { code: string; name: string; alias?: string | nu
     alias: a.alias ?? '',
     accountType: a.type,
     accountKind: a.kind,
-    normalBalance: a.normalBalance,
+    normalBalance: normalBalanceForAccountType(a.type),
     cashFlowCategory: a.cashFlowCategory ?? '',
     parentId: a.parentId ?? '',
     isControlAccount: a.isControlAccount,
@@ -161,7 +165,7 @@ export function toAccountPayload(f: AccountFormData): CreateAccountPayload {
     alias: f.alias || undefined,
     accountType: f.accountType,
     accountKind: f.accountKind,
-    normalBalance: f.normalBalance,
+    normalBalance: normalBalanceForAccountType(f.accountType),
     cashFlowCategory:
       (f.cashFlowCategory as ErpCashFlowCategory) || undefined,
     parentId: f.parentId || null,
@@ -232,7 +236,7 @@ export function AccountFormFields({
       <FormField label="Tipe Akun" htmlFor="ac-type" required>
         <Select value={data.accountType} onValueChange={(v) => {
             const newType = v as ErpAccountType;
-            onChange({ ...data, accountType: newType, normalBalance: TYPE_NORMAL_BALANCE_MAP[newType] });
+            onChange({ ...data, accountType: newType, normalBalance: normalBalanceForAccountType(newType) });
           }}>
           <SelectTrigger id="ac-type"><SelectValue /></SelectTrigger>
           <SelectContent>
