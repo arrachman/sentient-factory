@@ -719,6 +719,37 @@ harus hapus semua akun dulu (out of scope MVP: tool migrasi rename code).
 
 ---
 
+### 2.24.1 Saldo Normal CoA = derived dari Tipe Akun, bukan input manual (2026-07-13)
+
+Field **Saldo Normal** (`md_accounts.normalBalance`, DEBIT/CREDIT) di form
+Bagan Akun **tidak** lagi diinput manual — ditentukan otomatis dari **Tipe
+Akun** mengikuti prinsip akuntansi baku. Alasan (keputusan user): saldo normal
+adalah konsekuensi deterministik dari tipe akun; input manual hanya membuka
+peluang data tidak konsisten (mis. ASSET ber-saldo normal CREDIT).
+
+Map otoritatif (`TYPE_NORMAL_BALANCE_MAP` di `components/pages/accounts-form.tsx`):
+
+| Tipe Akun | Saldo Normal |
+| --- | --- |
+| ASSET | DEBIT |
+| EXPENSE | DEBIT |
+| LIABILITY | CREDIT |
+| EQUITY | CREDIT |
+| REVENUE | CREDIT |
+
+Implementasi FE: handler `onValueChange` "Tipe Akun" ikut men-set
+`normalBalance` dari map (satu `onChange`, immutable). Field "Saldo Normal"
+di-render **read-only** sebagai `Badge` + catatan "Ditentukan otomatis dari
+Tipe Akun" — bukan `Select`/radio. Payload tetap mengirim `normalBalance`
+(diturunkan), jadi kontrak API tidak berubah. `NORMAL_BALANCES` di
+`lib/api/accounts.ts` dipertahankan untuk filter list & lookup lain.
+
+> Backend `md_accounts` masih menerima `normalBalance` apa adanya (belum
+> di-derive server-side) — FE yang menjamin konsistensi. Enforcement
+> server-side = follow-up bila diperlukan.
+
+---
+
 ### 2.25 Item master form redesign — quick-add + side-nav (2026-05-27)
 
 Lanjutan §2.23. Form item kini punya **2 mode entri** dan layout berbeda

@@ -18,11 +18,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
+import { Badge } from '@/components/ui/badge';
 import { SearchSelect, type SearchSelectOption } from '@/components/molecules/search-select';
 import {
   ACCOUNT_TYPES,
   ACCOUNT_KINDS,
-  NORMAL_BALANCES,
   CASH_FLOW_CATEGORIES,
   listAccounts,
   getAccountCodeFormat,
@@ -38,6 +38,15 @@ import type {
 import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 const NONE = '__none__';
+
+const TYPE_NORMAL_BALANCE_MAP: Record<ErpAccountType, ErpNormalBalance> = {
+  ASSET: 'DEBIT',
+  EXPENSE: 'DEBIT',
+  LIABILITY: 'CREDIT',
+  EQUITY: 'CREDIT',
+  REVENUE: 'CREDIT',
+};
+
 
 // ─── Account code format cache (sys_settings group "account-code") ────────────
 //
@@ -221,7 +230,10 @@ export function AccountFormFields({
         <Input id="ac-alias" value={data.alias} onChange={(e) => set('alias', e.target.value)} placeholder="Kas Besar" />
       </FormField>
       <FormField label="Tipe Akun" htmlFor="ac-type" required>
-        <Select value={data.accountType} onValueChange={(v) => set('accountType', v as ErpAccountType)}>
+        <Select value={data.accountType} onValueChange={(v) => {
+            const newType = v as ErpAccountType;
+            onChange({ ...data, accountType: newType, normalBalance: TYPE_NORMAL_BALANCE_MAP[newType] });
+          }}>
           <SelectTrigger id="ac-type"><SelectValue /></SelectTrigger>
           <SelectContent>
             {ACCOUNT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
@@ -236,13 +248,15 @@ export function AccountFormFields({
           </SelectContent>
         </Select>
       </FormField>
-      <FormField label="Saldo Normal" htmlFor="ac-nb" required>
-        <Select value={data.normalBalance} onValueChange={(v) => set('normalBalance', v as ErpNormalBalance)}>
-          <SelectTrigger id="ac-nb"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            {NORMAL_BALANCES.map((n) => <SelectItem key={n} value={n}>{n}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      <FormField label="Saldo Normal" htmlFor="ac-nb">
+        <div className="flex items-center h-10">
+          <Badge variant={data.normalBalance === 'DEBIT' ? 'success' : 'info'}>
+            {data.normalBalance}
+          </Badge>
+          <span className="text-xs text-muted-foreground ml-3 italic">
+            * Ditentukan otomatis dari Tipe Akun
+          </span>
+        </div>
       </FormField>
       <FormField label="Kategori Arus Kas" htmlFor="ac-cf">
         <Select value={data.cashFlowCategory || NONE} onValueChange={(v) => set('cashFlowCategory', v === NONE ? '' : v)}>
