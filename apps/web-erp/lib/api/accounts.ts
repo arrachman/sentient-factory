@@ -39,6 +39,27 @@ export const CASH_FLOW_CATEGORIES: ErpCashFlowCategory[] = [
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export interface ErpAccountDimRef {
+  id: string;
+  code: string;
+  name: string;
+}
+
+export interface ErpAccountDimBranch {
+  branchId: string;
+  branch?: ErpAccountDimRef | null;
+}
+
+export interface ErpAccountDimLocation {
+  locationId: string;
+  location?: ErpAccountDimRef | null;
+}
+
+export interface ErpAccountDimDivision {
+  divisionId: string;
+  division?: ErpAccountDimRef | null;
+}
+
 // NOTE: read responses expose `type`/`kind`; create/update payload uses
 // `accountType`/`accountKind` (per CreateErpAccountDto).
 export interface ErpAccount {
@@ -54,10 +75,17 @@ export interface ErpAccount {
   parent?: { id: string; code: string; name: string } | null;
   currencyId?: string | null;
   currency?: { id: string; code: string; name: string; symbol?: string | null } | null;
+  bankId?: string | null;
+  bank?: { id: string; code: string; name: string } | null;
   level?: number | null;
-  isControlAccount: boolean;
+  /** @deprecated Removed from UI; retained for seed/AR-AP seed data. */
+  isControlAccount?: boolean;
+  /** @deprecated Prefer bankId + bank. */
   bankName?: string | null;
   bankAccountNo?: string | null;
+  dimBranches?: ErpAccountDimBranch[];
+  dimLocations?: ErpAccountDimLocation[];
+  dimDivisions?: ErpAccountDimDivision[];
   notes?: string | null;
   isActive: boolean;
   legacyCode?: string | null;
@@ -75,9 +103,13 @@ export interface CreateAccountPayload {
   cashFlowCategory?: ErpCashFlowCategory;
   parentId?: string | null;
   currencyId?: string | null;
-  isControlAccount?: boolean;
-  bankName?: string;
+  bankId?: string | null;
   bankAccountNo?: string;
+  /** @deprecated Prefer bankId. */
+  bankName?: string;
+  branchIds?: string[];
+  locationIds?: string[];
+  divisionIds?: string[];
   notes?: string;
   isActive?: boolean;
 }
@@ -91,6 +123,8 @@ export async function listAccounts(
     accountType?: ErpAccountType;
     accountKind?: ErpAccountKind;
     normalBalance?: ErpNormalBalance;
+    /** Parent account ID, or `'null'` for root-level accounts. */
+    parentId?: string;
   },
 ): Promise<PaginatedResponse<ErpAccount>> {
   return apiGet<PaginatedResponse<ErpAccount>>(

@@ -3649,3 +3649,29 @@ Master **Item Transaction Types** di-rebrand jadi **Stock Adjustment Types**
   tetap dilayani). Form: SearchSelect CoA postable (label **No Akun**).
 - **Menu:** code `M1.REF.ITEM-TXN-TYPE` dipertahankan (stabilitas
   `adm_role_menus`); title/path di-update lewat migrasi + seed.
+
+---
+
+## Account form — bank master + multi-dim + drop Control Account (2026-07-14)
+
+Route: `/master/accounts` (`accounts-form.tsx`).
+
+**Keputusan user (2026-07-14):** form CoA ditambah field scope/bank; Control Account dihapus dari UI.
+
+| Field | UI | Persist |
+| --- | --- | --- |
+| Mata Uang | `SearchSelect` → `md_currencies` | `md_accounts.currency_id` (leaf/POSTABLE only) |
+| Bank (Cek/Giro) | `SearchSelect` → `md_banks` | `md_accounts.bank_id` (+ legacy `bank_name` optional) |
+| No. Rekening Bank | text | `md_accounts.bank_account_no` |
+| Cabang multi | `MultiLookupField` | junction `md_account_dim_branches` |
+| Lokasi multi | `MultiLookupField` | junction `md_account_dim_locations` |
+| Divisi multi | `MultiLookupField` | junction `md_account_dim_divisions` |
+| Control Account | **dihapus dari form** | kolom DB `is_control_account` tetap (seed AR/AP); create baru force `false` |
+
+Aturan:
+
+- Detail posting + multi-dim **hanya leaf/POSTABLE** (segmen kode terakhir non-nol) — mirror validasi existing currency/bank.
+- Empty multi-dim = tidak membatasi scope (semua cabang/lokasi/divisi).
+- Mirror pola partner/item dim: `buildAccountDimRows` + include `ACCOUNT_DIM_INCLUDE`.
+- Migrasi additive: `20260714_005_erp_account_bank_multi_dims`.
+

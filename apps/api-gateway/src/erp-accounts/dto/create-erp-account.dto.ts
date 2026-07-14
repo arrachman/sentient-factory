@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsOptional,
@@ -82,22 +83,58 @@ export class CreateErpAccountDto {
   @IsBoolean()
   isActive?: boolean = true;
 
-  @ApiPropertyOptional({ example: false, default: false })
+  @ApiPropertyOptional({
+    example: false,
+    default: false,
+    deprecated: true,
+    description:
+      'Deprecated — Control Account dihapus dari UI. Kolom DB tetap; create baru always false.',
+  })
   @IsOptional()
   @IsBoolean()
   isControlAccount?: boolean = false;
 
-  @ApiPropertyOptional({ example: 'Bank BCA' })
+  @ApiPropertyOptional({
+    example: '1',
+    description: 'Bank master ID (md_banks) — untuk akun cek/giro. Leaf only.',
+  })
+  @IsOptional()
+  @IsString()
+  bankId?: string | null;
+
+  @ApiPropertyOptional({
+    example: 'Bank BCA',
+    deprecated: true,
+    description: 'Legacy free-text bank name. Prefer bankId.',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(100)
   bankName?: string;
 
-  @ApiPropertyOptional({ example: '1234567890' })
+  @ApiPropertyOptional({ example: '1234567890', description: 'Nomor rekening bank (cek/giro)' })
   @IsOptional()
   @IsString()
   @MaxLength(50)
   bankAccountNo?: string;
+
+  @ApiPropertyOptional({ type: [String], description: 'Cabang multi-select (BigInt ids)' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  branchIds?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Lokasi multi-select (BigInt ids)' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  locationIds?: string[];
+
+  @ApiPropertyOptional({ type: [String], description: 'Divisi multi-select (BigInt ids)' })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  divisionIds?: string[];
 
   @ApiPropertyOptional({ example: 'Opening balance notes' })
   @IsOptional()

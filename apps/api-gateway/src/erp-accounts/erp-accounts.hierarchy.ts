@@ -74,6 +74,16 @@ export class ErpAccountsHierarchy {
     }
   }
 
+  async validateBank(bankId: bigint): Promise<void> {
+    const bank = await this.prisma.erpBank.findFirst({
+      where: { id: BigInt(bankId), deletedAt: null, isActive: true },
+      select: { id: true },
+    });
+    if (!bank) {
+      throw new BadRequestException('Bank tidak ditemukan atau tidak aktif');
+    }
+  }
+
   deriveLevel(parent: AccountParent | null): number {
     return parent ? parent.level + 1 : 1;
   }

@@ -3,6 +3,7 @@
 /**
  * Account create/edit form — used inside a Modal.
  * Parent-first CoA input: child account scope follows the selected parent.
+ * Kode diisi otomatis: increment sibling di bawah parent (atau mulai 1).
  * Atomic tier: Molecule/Organism sub-part.
  */
 
@@ -21,6 +22,13 @@ import { Badge } from '@/components/ui/badge';
 import { SearchSelect, type SearchSelectOption } from '@/components/molecules/search-select';
 import { loadCurrencyOptions } from './partners-lookups';
 import {
+  loadBankOptions,
+  loadBranchOptions,
+  loadDivisionOptions,
+  loadLocationOptions,
+} from './items-form-lookups';
+import { MultiLookupField } from './items-form-parts';
+import {
   ACCOUNT_TYPES,
   ACCOUNT_KINDS,
   CASH_FLOW_CATEGORIES,
@@ -36,6 +44,7 @@ import type {
   CreateAccountPayload,
   AccountCodeFormat,
 } from '@/lib/api/accounts';
+import { generateNextAccountCode } from '@/lib/accounts-code-generator';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
 
 const NONE = '__none__';
@@ -69,6 +78,11 @@ function isLeafAccountCode(code: string, format: AccountCodeFormat | null): bool
   const parts = splitAccountCode(code, format);
   const last = parts[parts.length - 1] ?? '';
   return /[1-9]/.test(last);
+}
+
+function parentCodeFromLabel(label: string): string | null {
+  const code = label.split('—')[0]?.trim() ?? '';
+  return code || null;
 }
 
 // ─── Account code format cache (sys_settings group "account-code") ────────────
@@ -126,6 +140,22 @@ export function useAccountCodeFormat(): AccountCodeFormat | null {
   return format;
 }
 
+function dimFromRows<T>(
+  rows: T[] | undefined | null,
+  getId: (r: T) => string,
+  getRef: (r: T) => { name: string } | null | undefined,
+): { ids: string[]; labels: Record<string, string> } {
+  const ids: string[] = [];
+  const labels: Record<string, string> = {};
+  (rows ?? []).forEach((r) => {
+    const id = getId(r);
+    ids.push(id);
+    const ref = getRef(r);
+    if (ref) labels[id] = ref.name;
+  });
+  return { ids, labels };
+}
+
 export interface AccountFormData {
   code: string;
   name: string;
@@ -138,11 +168,46 @@ export interface AccountFormData {
   parentLabel: string;
   currencyId: string;
   currencyLabel: string;
-  isControlAccount: boolean;
-  bankName: string;
+  bankId: string;
+  bankLabel: string;
   bankAccountNo: string;
+  branchIds: string[];
+  branchLabels: Record<string, string>;
+  locationIds: string[];
+  locationLabels: Record<string, string>;
+  divisionIds: string[];
+  divisionLabels: Record<string, string>;
   notes: string;
   isActive: boolean;
+}
+
+function emptyPostingDetails(): Pick<
+  AccountFormData,
+  | 'currencyId'
+  | 'currencyLabel'
+  | 'bankId'
+  | 'bankLabel'
+  | 'bankAccountNo'
+  | 'branchIds'
+  | 'branchLabels'
+  | 'locationIds'
+  | 'locationLabels'
+  | 'divisionIds'
+  | 'divisionLabels'
+> {
+  return {
+    currencyId: '',
+    currencyLabel: '',
+    bankId: '',
+    bankLabel: '',
+    bankAccountNo: '',
+    branchIds: [],
+    branchLabels: {},
+    locationIds: [],
+    locationLabels: {},
+    divisionIds: [],
+    divisionLabels: {},
+  };
 }
 
 export const defaultAccountForm = (): AccountFormData => ({
@@ -155,16 +220,15 @@ export const defaultAccountForm = (): AccountFormData => ({
   cashFlowCategory: '',
   parentId: '',
   parentLabel: '',
-  currencyId: '',
-  currencyLabel: '',
-  isControlAccount: false,
-  bankName: '',
-  bankAccountNo: '',
+  ...emptyPostingDetails(),
   notes: '',
   isActive: true,
 });
 
 export function fromAccount(a: ErpAccount): AccountFormData {
+  const b = dimFromRows(a.dimBranches, (r) => r.branchId, (r) => r.branch);
+  const l = dimFromRows(a.dimLocations, (r) => r.locationId, (r) => r.location);
+  const d = dimFromRows(a.dimDivisions, (r) => r.divisionId, (r) => r.division);
   return {
     code: a.code,
     name: a.name,
@@ -177,9 +241,19 @@ export function fromAccount(a: ErpAccount): AccountFormData {
     parentLabel: a.parent ? `${a.parent.code} — ${a.parent.name}` : '',
     currencyId: a.currencyId ?? '',
     currencyLabel: a.currency ? `${a.currency.code} — ${a.currency.name}` : '',
-    isControlAccount: a.isControlAccount,
-    bankName: a.bankName ?? '',
+    bankId: a.bankId ?? '',
+    bankLabel: a.bank
+      ? `${a.bank.code} — ${a.bank.name}`
+      : a.bankName
+        ? a.bankName
+        : '',
     bankAccountNo: a.bankAccountNo ?? '',
+    branchIds: b.ids,
+    branchLabels: b.labels,
+    locationIds: l.ids,
+    locationLabels: l.labels,
+    divisionIds: d.ids,
+    divisionLabels: d.labels,
     notes: a.notes ?? '',
     isActive: a.isActive,
   };
@@ -197,9 +271,11 @@ export function toAccountPayload(f: AccountFormData): CreateAccountPayload {
     cashFlowCategory: (f.cashFlowCategory as ErpCashFlowCategory) || undefined,
     parentId: f.parentId || null,
     currencyId: shouldSendLeafDetails ? f.currencyId || null : null,
-    isControlAccount: f.isControlAccount,
-    bankName: shouldSendLeafDetails ? f.bankName || undefined : undefined,
+    bankId: shouldSendLeafDetails ? f.bankId || null : null,
     bankAccountNo: shouldSendLeafDetails ? f.bankAccountNo || undefined : undefined,
+    branchIds: shouldSendLeafDetails ? f.branchIds : [],
+    locationIds: shouldSendLeafDetails ? f.locationIds : [],
+    divisionIds: shouldSendLeafDetails ? f.divisionIds : [],
     notes: f.notes || undefined,
     isActive: f.isActive,
   };
@@ -218,7 +294,12 @@ async function loadParentOptions(
     accountKind: 'HEADER',
   });
   return {
-    data: res.data.map((a) => ({ value: a.id, label: a.name, code: a.code, meta: a.type })),
+    data: res.data.map((a) => ({
+      value: a.id,
+      label: `${a.code} — ${a.name}`,
+      code: a.code,
+      meta: a.type,
+    })),
     total: res.meta?.total ?? res.data.length,
   };
 }
@@ -245,18 +326,22 @@ export const validateAccount = (form: AccountFormData) => {
       field: 'currencyId',
       label: 'Mata Uang',
       validate: () => {
-        const hasDetails = Boolean(form.currencyId || form.bankName || form.bankAccountNo);
+        const hasDetails = Boolean(form.currencyId || form.bankId || form.bankAccountNo);
         return fmt && hasDetails && !isLeaf
           ? 'Mata uang/bank hanya boleh untuk kode segmen terakhir'
           : undefined;
       },
     },
     {
-      field: 'bankName',
+      field: 'bankId',
       label: 'Bank',
       validate: () => {
-        if (form.bankAccountNo && !form.bankName) return 'Bank wajib diisi bila No. Rekening diisi';
-        if (form.bankName && !form.bankAccountNo) return 'No. Rekening wajib diisi bila Bank diisi';
+        if (form.bankAccountNo && !form.bankId) {
+          return 'Bank wajib diisi bila No. Rekening diisi';
+        }
+        if (form.bankId && !form.bankAccountNo) {
+          return 'No. Rekening wajib diisi bila Bank diisi';
+        }
         return undefined;
       },
     },
@@ -278,6 +363,37 @@ export function AccountFormFields({
   const isChild = Boolean(data.parentId);
   const isLeaf = isLeafAccountCode(data.code, format);
   const canShowPostingDetails = data.accountKind === 'POSTABLE' && isLeaf;
+  const [suggestingCode, setSuggestingCode] = React.useState(false);
+  const dataRef = React.useRef(data);
+  dataRef.current = data;
+  const onChangeRef = React.useRef(onChange);
+  onChangeRef.current = onChange;
+  const suggestedForParentRef = React.useRef<string | null>(null);
+
+  const fillNextCode = React.useCallback(
+    async (parentId: string, parentCode: string | null, base?: AccountFormData) => {
+      const fmt = accountCodeFormatCache;
+      if (!fmt) return;
+      setSuggestingCode(true);
+      try {
+        const next = await generateNextAccountCode(parentId || null, parentCode, fmt);
+        const current = base ?? dataRef.current;
+        onChangeRef.current({ ...current, code: next });
+        suggestedForParentRef.current = parentId || '__root__';
+      } finally {
+        setSuggestingCode(false);
+      }
+    },
+    [],
+  );
+
+  // Create form (empty code): auto-suggest next sibling under parent / root.
+  React.useEffect(() => {
+    if (!format || data.code) return;
+    const key = data.parentId || '__root__';
+    if (suggestedForParentRef.current === key) return;
+    void fillNextCode(data.parentId, parentCodeFromLabel(data.parentLabel), data);
+  }, [format, data.code, data.parentId, data.parentLabel, data, fillNextCode]);
 
   const set = (k: keyof AccountFormData, v: string | boolean) => {
     onChange({ ...data, [k]: v });
@@ -290,24 +406,26 @@ export function AccountFormFields({
   const setAccountKind = (kind: ErpAccountKind) => {
     const patch: AccountFormData = { ...data, accountKind: kind };
     if (kind === 'HEADER') {
-      patch.currencyId = '';
-      patch.currencyLabel = '';
-      patch.bankName = '';
-      patch.bankAccountNo = '';
+      Object.assign(patch, emptyPostingDetails());
     }
     onChange(patch);
   };
 
-  const handleParentPick = (opt: { value: string; label: string; meta?: string }) => {
+  const handleParentPick = (opt: SearchSelectOption) => {
     const parentType = opt.meta as ErpAccountType | undefined;
     if (!parentType) return;
-    onChange({
+    const parentCode =
+      typeof opt.code === 'string' ? opt.code : parentCodeFromLabel(String(opt.label));
+    const next: AccountFormData = {
       ...data,
       parentId: opt.value,
-      parentLabel: `${opt.label}`,
+      parentLabel: String(opt.label),
       accountType: parentType,
       normalBalance: normalBalanceForAccountType(parentType),
-    });
+    };
+    onChange(next);
+    suggestedForParentRef.current = null;
+    void fillNextCode(opt.value, parentCode, next);
   };
 
   const clearParent = (value: string) => {
@@ -315,7 +433,10 @@ export function AccountFormFields({
       set('parentId', value);
       return;
     }
-    onChange({ ...data, parentId: '', parentLabel: '' });
+    const next: AccountFormData = { ...data, parentId: '', parentLabel: '' };
+    onChange(next);
+    suggestedForParentRef.current = null;
+    void fillNextCode('', null, next);
   };
 
   return (
@@ -332,43 +453,95 @@ export function AccountFormFields({
         />
       </FormField>
       <FormField label="Kode" htmlFor="ac-code" required error={errors.code}>
-        <Input id="ac-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder={codePlaceholder} aria-invalid={!!errors.code} maxLength={codeMaxLength} />
+        <Input
+          id="ac-code"
+          value={data.code}
+          onChange={(e) => set('code', e.target.value)}
+          placeholder={codePlaceholder}
+          aria-invalid={!!errors.code}
+          maxLength={codeMaxLength}
+        />
       </FormField>
       <FormField label="Nama" htmlFor="ac-name" required error={errors.name}>
-        <Input id="ac-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Kas Kecil" aria-invalid={!!errors.name} />
+        <Input
+          id="ac-name"
+          value={data.name}
+          onChange={(e) => set('name', e.target.value)}
+          placeholder="Kas Kecil"
+          aria-invalid={!!errors.name}
+        />
       </FormField>
       <FormField label="Alias" htmlFor="ac-alias">
-        <Input id="ac-alias" value={data.alias} onChange={(e) => set('alias', e.target.value)} placeholder="Petty Cash" />
+        <Input
+          id="ac-alias"
+          value={data.alias}
+          onChange={(e) => set('alias', e.target.value)}
+          placeholder="Petty Cash"
+        />
       </FormField>
       <FormField label="Tipe Akun" htmlFor="ac-type" required>
-        <Select value={data.accountType} onValueChange={(v) => setAccountType(v as ErpAccountType)} disabled={isChild}>
-          <SelectTrigger id="ac-type"><SelectValue /></SelectTrigger>
+        <Select
+          value={data.accountType}
+          onValueChange={(v) => setAccountType(v as ErpAccountType)}
+          disabled={isChild}
+        >
+          <SelectTrigger id="ac-type">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {ACCOUNT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+            {ACCOUNT_TYPES.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-        {isChild ? <p className="mt-1 text-xs text-muted-foreground italic">Mengikuti tipe parent.</p> : null}
+        {isChild ? (
+          <p className="mt-1 text-xs text-muted-foreground italic">Mengikuti tipe parent.</p>
+        ) : null}
       </FormField>
       <FormField label="Jenis" htmlFor="ac-kind" required>
-        <Select value={data.accountKind} onValueChange={(v) => setAccountKind(v as ErpAccountKind)}>
-          <SelectTrigger id="ac-kind"><SelectValue /></SelectTrigger>
+        <Select
+          value={data.accountKind}
+          onValueChange={(v) => setAccountKind(v as ErpAccountKind)}
+        >
+          <SelectTrigger id="ac-kind">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
-            {ACCOUNT_KINDS.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
+            {ACCOUNT_KINDS.map((k) => (
+              <SelectItem key={k} value={k}>
+                {k}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </FormField>
       <FormField label="Saldo Normal" htmlFor="ac-nb">
         <div className="flex items-center h-10">
-          <Badge variant={data.normalBalance === 'DEBIT' ? 'success' : 'info'}>{data.normalBalance}</Badge>
-          <span className="text-xs text-muted-foreground ml-3 italic">* Ditentukan otomatis dari Tipe Akun</span>
+          <Badge variant={data.normalBalance === 'DEBIT' ? 'success' : 'info'}>
+            {data.normalBalance}
+          </Badge>
+          <span className="text-xs text-muted-foreground ml-3 italic">
+            * Ditentukan otomatis dari Tipe Akun
+          </span>
         </div>
       </FormField>
       <FormField label="Kategori Arus Kas" htmlFor="ac-cf">
-        <Select value={data.cashFlowCategory || NONE} onValueChange={(v) => set('cashFlowCategory', v === NONE ? '' : v)}>
-          <SelectTrigger id="ac-cf"><SelectValue placeholder="— Tidak ada —" /></SelectTrigger>
+        <Select
+          value={data.cashFlowCategory || NONE}
+          onValueChange={(v) => set('cashFlowCategory', v === NONE ? '' : v)}
+        >
+          <SelectTrigger id="ac-cf">
+            <SelectValue placeholder="— Tidak ada —" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value={NONE}>— Tidak ada —</SelectItem>
-            {CASH_FLOW_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            {CASH_FLOW_CATEGORIES.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </FormField>
@@ -382,27 +555,97 @@ export function AccountFormFields({
               placeholder="Pilih mata uang"
               value={data.currencyId}
               initialLabel={data.currencyLabel}
-              onValueChange={(v) => set('currencyId', v)}
+              onValueChange={(v) => {
+                if (!v) {
+                  onChange({ ...data, currencyId: '', currencyLabel: '' });
+                  return;
+                }
+                set('currencyId', v);
+              }}
+              onPick={(opt) =>
+                onChange({
+                  ...data,
+                  currencyId: opt.value,
+                  currencyLabel: String(opt.label),
+                })
+              }
               loadOptions={loadCurrencyOptions}
               error={!!errors.currencyId}
             />
           </FormField>
-          <FormField label="Bank" htmlFor="ac-bank" error={errors.bankName}>
-            <Input id="ac-bank" value={data.bankName} onChange={(e) => set('bankName', e.target.value)} placeholder="Bank BCA" aria-invalid={!!errors.bankName} />
+          <FormField label="Bank (Cek/Giro)" htmlFor="ac-bank" error={errors.bankId}>
+            <SearchSelect
+              id="ac-bank"
+              placeholder="Pilih bank"
+              value={data.bankId}
+              initialLabel={data.bankLabel}
+              onValueChange={(v) => {
+                if (!v) {
+                  onChange({ ...data, bankId: '', bankLabel: '' });
+                  return;
+                }
+                set('bankId', v);
+              }}
+              onPick={(opt) =>
+                onChange({
+                  ...data,
+                  bankId: opt.value,
+                  bankLabel: opt.code ? `${opt.code} — ${opt.label}` : String(opt.label),
+                })
+              }
+              loadOptions={loadBankOptions}
+              error={!!errors.bankId}
+            />
           </FormField>
-          <FormField label="No. Rekening" htmlFor="ac-bank-no">
-            <Input id="ac-bank-no" value={data.bankAccountNo} onChange={(e) => set('bankAccountNo', e.target.value)} placeholder="123-456-7890" />
+          <FormField label="No. Rekening Bank" htmlFor="ac-bank-no">
+            <Input
+              id="ac-bank-no"
+              value={data.bankAccountNo}
+              onChange={(e) => set('bankAccountNo', e.target.value)}
+              placeholder="123-456-7890"
+            />
           </FormField>
+          <MultiLookupField
+            id="ac-branch"
+            label="Cabang"
+            values={data.branchIds}
+            labels={data.branchLabels}
+            onChange={(ids, labels) =>
+              onChange({ ...data, branchIds: ids, branchLabels: labels })
+            }
+            loader={loadBranchOptions}
+            placeholder="Pilih cabang…"
+          />
+          <MultiLookupField
+            id="ac-location"
+            label="Lokasi"
+            values={data.locationIds}
+            labels={data.locationLabels}
+            onChange={(ids, labels) =>
+              onChange({ ...data, locationIds: ids, locationLabels: labels })
+            }
+            loader={loadLocationOptions}
+            placeholder="Pilih lokasi…"
+          />
+          <MultiLookupField
+            id="ac-division"
+            label="Divisi"
+            values={data.divisionIds}
+            labels={data.divisionLabels}
+            onChange={(ids, labels) =>
+              onChange({ ...data, divisionIds: ids, divisionLabels: labels })
+            }
+            loader={loadDivisionOptions}
+            placeholder="Pilih divisi…"
+          />
         </div>
       ) : (
         <p className="mb-3 text-xs text-muted-foreground italic">
-          Mata uang, no. rekening, dan bank hanya tersedia untuk akun POSTABLE pada segmen kode terakhir.
+          Mata uang, bank, no. rekening, cabang, lokasi, dan divisi hanya tersedia untuk akun
+          POSTABLE pada segmen kode terakhir.
         </p>
       )}
 
-      <FormField label="Control Account" htmlFor="ac-ctrl">
-        <BooleanRadio id="ac-ctrl" value={data.isControlAccount} onValueChange={(v) => set('isControlAccount', v)} trueLabel="Ya" falseLabel="Tidak" />
-      </FormField>
       <FormField label="Catatan" htmlFor="ac-notes">
         <Input id="ac-notes" value={data.notes} onChange={(e) => set('notes', e.target.value)} />
       </FormField>

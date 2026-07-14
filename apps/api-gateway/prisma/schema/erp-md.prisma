@@ -23,6 +23,7 @@ model ErpBranch {
   items              ErpItem[]             @relation("ItemBranch")
   itemDimBranches    ErpItemDimBranch[]    @relation("ItemDimBranchBranch")
   partnerDimBranches ErpPartnerDimBranch[] @relation("PartnerDimBranchBranch")
+  accountDimBranches ErpAccountDimBranch[] @relation("AccountDimBranchBranch")
 
   @@index([legacyCode])
   @@map("md_branches")
@@ -52,6 +53,7 @@ model ErpLocation {
   items               ErpItem[]               @relation("ItemDefaultLocation")
   itemDimLocations    ErpItemDimLocation[]    @relation("ItemDimLocationLocation")
   partnerDimLocations ErpPartnerDimLocation[] @relation("PartnerDimLocationLocation")
+  accountDimLocations ErpAccountDimLocation[] @relation("AccountDimLocationLocation")
 
   @@index([branchId])
   @@index([legacyCode])
@@ -746,7 +748,9 @@ model ErpAccount {
   cashFlowCategory ErpCashFlowCategory? @map("cash_flow_category")
   currencyId       BigInt?              @map("currency_id")
   isControlAccount Boolean              @default(false) @map("is_control_account")
+  /// Free-text bank name (legacy). Prefer bankId → md_banks when available.
   bankName         String?              @map("bank_name")
+  bankId           BigInt?              @map("bank_id")
   bankAccountNo    String?              @map("bank_account_no")
   openingBalance   Decimal              @default(0) @map("opening_balance") @db.Decimal(19, 4)
   isActive         Boolean              @default(true) @map("is_active")
@@ -761,6 +765,11 @@ model ErpAccount {
   parent   ErpAccount?  @relation("AccountParent", fields: [parentId], references: [id])
   children ErpAccount[] @relation("AccountParent")
   currency ErpCurrency? @relation(fields: [currencyId], references: [id])
+  bank     ErpBank?     @relation("AccountBank", fields: [bankId], references: [id])
+
+  dimBranches  ErpAccountDimBranch[]   @relation("AccountDimBranches")
+  dimLocations ErpAccountDimLocation[] @relation("AccountDimLocations")
+  dimDivisions ErpAccountDimDivision[] @relation("AccountDimDivisions")
 
   itemCatInventory        ErpItemCategory[] @relation("ItemCatInventoryAcct")
   itemCatCogs             ErpItemCategory[] @relation("ItemCatCogsAcct")
@@ -784,11 +793,58 @@ model ErpAccount {
   partnerPayable          ErpPartner[]      @relation("PartnerPayableAcct")
   otherCostDebit          ErpOtherCost[]    @relation("OtherCostDebitAcct")
   otherCostCredit         ErpOtherCost[]    @relation("OtherCostCreditAcct")
+  stockAdjustmentTypes    ErpStockAdjustmentType[] @relation("StockAdjTypeAccount")
 
   @@index([parentId])
   @@index([currencyId])
+  @@index([bankId])
   @@index([legacyCode])
   @@map("md_accounts")
+}
+
+/// Multi-select scope: cabang yang boleh memakai akun CoA ini.
+model ErpAccountDimBranch {
+  id        BigInt   @id @default(autoincrement())
+  accountId BigInt   @map("account_id")
+  branchId  BigInt   @map("branch_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  account ErpAccount @relation("AccountDimBranches", fields: [accountId], references: [id], onDelete: Cascade)
+  branch  ErpBranch  @relation("AccountDimBranchBranch", fields: [branchId], references: [id])
+
+  @@unique([accountId, branchId])
+  @@index([branchId])
+  @@map("md_account_dim_branches")
+}
+
+/// Multi-select scope: lokasi yang boleh memakai akun CoA ini.
+model ErpAccountDimLocation {
+  id         BigInt   @id @default(autoincrement())
+  accountId  BigInt   @map("account_id")
+  locationId BigInt   @map("location_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  account  ErpAccount  @relation("AccountDimLocations", fields: [accountId], references: [id], onDelete: Cascade)
+  location ErpLocation @relation("AccountDimLocationLocation", fields: [locationId], references: [id])
+
+  @@unique([accountId, locationId])
+  @@index([locationId])
+  @@map("md_account_dim_locations")
+}
+
+/// Multi-select scope: divisi yang boleh memakai akun CoA ini.
+model ErpAccountDimDivision {
+  id         BigInt   @id @default(autoincrement())
+  accountId  BigInt   @map("account_id")
+  divisionId BigInt   @map("division_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  account  ErpAccount  @relation("AccountDimDivisions", fields: [accountId], references: [id], onDelete: Cascade)
+  division ErpDivision @relation("AccountDimDivisionDivision", fields: [divisionId], references: [id])
+
+  @@unique([accountId, divisionId])
+  @@index([divisionId])
+  @@map("md_account_dim_divisions")
 }
 
 model ErpTax {
@@ -899,6 +955,7 @@ model ErpDivision {
   budgetRealizations            ErpFinBudgetRealization[]
   recurringJournalTemplateLines ErpFinRecurringJournalTemplateLine[]
   items                         ErpItem[]                            @relation("ItemDivision")
+  accountDimDivisions           ErpAccountDimDivision[]              @relation("AccountDimDivisionDivision")
 
   @@index([parentId])
   @@index([legacyCode])
@@ -1163,6 +1220,8 @@ model ErpBank {
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
 
+  accounts ErpAccount[] @relation("AccountBank")
+
   @@index([legacyCode])
   @@map("md_banks")
 }
@@ -1227,11 +1286,12 @@ model ErpCommission {
   @@map("md_commissions")
 }
 
-model ErpItemTransactionType {
+model ErpStockAdjustmentType {
   id          BigInt    @id @default(autoincrement())
   code        String    @unique @map("code")
   name        String    @map("name")
   direction   String    @default("IN") @map("direction") // IN|OUT|TRANSFER
+  accountId   BigInt?   @map("account_id") // FK -> md_accounts (POSTABLE), No Akun
   isActive    Boolean   @default(true) @map("is_active")
   legacyCode  String?   @map("legacy_code")
   metadata    Json?     @map("metadata")
@@ -1241,8 +1301,11 @@ model ErpItemTransactionType {
   updatedById BigInt?   @map("updated_by_id")
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
 
+  account ErpAccount? @relation("StockAdjTypeAccount", fields: [accountId], references: [id])
+
+  @@index([accountId])
   @@index([legacyCode])
-  @@map("md_item_transaction_types")
+  @@map("md_stock_adjustment_types")
 }
 
 model ErpCountry {

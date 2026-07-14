@@ -16,6 +16,7 @@ import {
   validateAccountCode,
 } from './account-code-format';
 import { toBigIntId, toOptionalBigIntId } from './account-hierarchy';
+import { ACCOUNT_DIM_INCLUDE, buildAccountDimRows } from './account-dim';
 import { ErpAccountsHierarchy } from './erp-accounts.hierarchy';
 import { ErpAccountKind, ErpAccountType } from '@prisma/client';
 import { BulkErpAccountDto, BulkStatusErpAccountDto } from './dto/bulk-erp-account.dto';
@@ -167,14 +168,25 @@ export class ErpAccountsService {
 
     const isLeaf = this.hierarchy.isLeaf(dto.code, format);
     const currencyIdBig = toOptionalBigIntId(dto.currencyId, 'currencyId');
+    const bankIdBig = toOptionalBigIntId(dto.bankId, 'bankId');
     const hasDetails = Boolean(
-      currencyIdBig || dto.bankName?.trim() || dto.bankAccountNo?.trim(),
+      currencyIdBig ||
+        bankIdBig ||
+        dto.bankName?.trim() ||
+        dto.bankAccountNo?.trim(),
     );
     this.hierarchy.assertLeafDetails(hasDetails, isLeaf);
 
     if (currencyIdBig) {
       await this.hierarchy.validateCurrency(currencyIdBig);
     }
+    if (bankIdBig && isLeaf) {
+      await this.hierarchy.validateBank(bankIdBig);
+    }
+
+    const branchRows = isLeaf ? buildAccountDimRows(dto.branchIds, 'branchId') : [];
+    const locationRows = isLeaf ? buildAccountDimRows(dto.locationIds, 'locationId') : [];
+    const divisionRows = isLeaf ? buildAccountDimRows(dto.divisionIds, 'divisionId') : [];
 
     let created;
     try {
@@ -188,15 +200,23 @@ export class ErpAccountsService {
           normalBalance: this.hierarchy.normalBalanceOf(effectiveType),
           cashFlowCategory: dto.cashFlowCategory,
           parentId: parent ? parent.id : null,
-          currencyId: currencyIdBig ?? null,
+          currencyId: isLeaf ? (currencyIdBig ?? null) : null,
           level: effectiveLevel,
           isActive: dto.isActive ?? true,
-          isControlAccount: dto.isControlAccount ?? false,
-          bankName: dto.bankName,
-          bankAccountNo: dto.bankAccountNo,
+          // Control Account removed from UI; keep column for seed/AR-AP (default false).
+          isControlAccount: false,
+          bankId: isLeaf ? (bankIdBig ?? null) : null,
+          bankName: isLeaf ? dto.bankName : undefined,
+          bankAccountNo: isLeaf ? dto.bankAccountNo : undefined,
           notes: dto.notes,
           createdById: toAuditUserId(actorId),
           updatedById: toAuditUserId(actorId),
+          ...(branchRows?.length ? { dimBranches: { create: branchRows } } : {}),
+          ...(locationRows?.length ? { dimLocations: { create: locationRows } } : {}),
+          ...(divisionRows?.length ? { dimDivisions: { create: divisionRows } } : {}),
+        },
+        include: {
+          ...ACCOUNT_DIM_INCLUDE,
         },
       });
     } catch (error) {
@@ -246,8 +266,7 @@ export class ErpAccountsService {
         skip,
         take: limit,
         include: {
-          parent: { select: { id: true, code: true, name: true } },
-          currency: { select: { id: true, code: true, name: true, symbol: true } },
+          ...ACCOUNT_DIM_INCLUDE,
         },
       }),
       this.prisma.erpAccount.count({ where }),
@@ -269,9 +288,8 @@ export class ErpAccountsService {
     const item = await this.prisma.erpAccount.findFirst({
       where: { id, deletedAt: null },
       include: {
-        parent: { select: { id: true, code: true, name: true } },
+        ...ACCOUNT_DIM_INCLUDE,
         children: { where: { deletedAt: null }, select: { id: true, code: true, name: true } },
-        currency: { select: { id: true, code: true, name: true, symbol: true } },
       },
     });
     if (!item) {
@@ -341,50 +359,91 @@ export class ErpAccountsService {
     const isLeaf = this.hierarchy.isLeaf(effectiveCode, format);
 
     const currencyIdBig = toOptionalBigIntId(dto.currencyId, 'currencyId');
-    const bankFields: { bankName?: string | null; bankAccountNo?: string | null } = {
+    const bankIdBig = toOptionalBigIntId(dto.bankId, 'bankId');
+    const bankFields: {
+      bankName?: string | null;
+      bankAccountNo?: string | null;
+      bankId?: bigint | null;
+    } = {
       bankName: dto.bankName,
       bankAccountNo: dto.bankAccountNo,
+      bankId: bankIdBig === undefined ? undefined : bankIdBig,
     };
     const hasDetails =
       Boolean(currencyIdBig) ||
+      Boolean(bankIdBig) ||
       Boolean(dto.bankName?.trim()) ||
       Boolean(dto.bankAccountNo?.trim());
     this.hierarchy.assertLeafDetails(hasDetails, isLeaf);
     if (!isLeaf) {
       bankFields.bankName = null;
       bankFields.bankAccountNo = null;
+      bankFields.bankId = null;
     }
 
-    if (currencyIdBig) {
+    if (currencyIdBig && isLeaf) {
       await this.hierarchy.validateCurrency(currencyIdBig);
+    }
+    if (bankIdBig && isLeaf) {
+      await this.hierarchy.validateBank(bankIdBig);
     }
 
     let updated;
     try {
       const result = await this.prisma.$transaction(async (tx) => {
+        // Use UncheckedUpdateInput so scalar FKs (parentId/currencyId/bankId)
+        // can coexist with nested dim junction writes.
+        const data: Prisma.ErpAccountUncheckedUpdateInput = {
+          code: dto.code,
+          name: dto.name,
+          alias: dto.alias,
+          type: effectiveType,
+          kind: dto.accountKind,
+          normalBalance: this.hierarchy.normalBalanceOf(effectiveType),
+          cashFlowCategory: dto.cashFlowCategory,
+          parentId: parentIdEffective,
+          currencyId: isLeaf
+            ? currencyIdBig === undefined
+              ? undefined
+              : currencyIdBig
+            : null,
+          isActive: dto.isActive,
+          // Do not accept UI writes for control account; leave existing DB value.
+          bankId: bankFields.bankId,
+          bankName: bankFields.bankName,
+          bankAccountNo: bankFields.bankAccountNo,
+          notes: dto.notes,
+          updatedById: toAuditUserId(actorId),
+        };
+        if (dto.branchIds !== undefined) {
+          data.dimBranches = {
+            deleteMany: {},
+            create: isLeaf ? (buildAccountDimRows(dto.branchIds, 'branchId') ?? []) : [],
+          };
+        }
+        if (dto.locationIds !== undefined) {
+          data.dimLocations = {
+            deleteMany: {},
+            create: isLeaf ? (buildAccountDimRows(dto.locationIds, 'locationId') ?? []) : [],
+          };
+        }
+        if (dto.divisionIds !== undefined) {
+          data.dimDivisions = {
+            deleteMany: {},
+            create: isLeaf ? (buildAccountDimRows(dto.divisionIds, 'divisionId') ?? []) : [],
+          };
+        }
+
         const updatedRow = await tx.erpAccount.update({
           where: { id },
-          data: {
-            code: dto.code,
-            name: dto.name,
-            alias: dto.alias,
-            type: effectiveType,
-            kind: dto.accountKind,
-            normalBalance: this.hierarchy.normalBalanceOf(effectiveType),
-            cashFlowCategory: dto.cashFlowCategory,
-            parentId: parentIdEffective,
-            currencyId: currencyIdBig,
-            isActive: dto.isActive,
-            isControlAccount: dto.isControlAccount,
-            bankName: bankFields.bankName,
-            bankAccountNo: bankFields.bankAccountNo,
-            notes: dto.notes,
-            updatedById: toAuditUserId(actorId),
+          data,
+          include: {
+            ...ACCOUNT_DIM_INCLUDE,
           },
         });
 
         if (parentMoved) {
-          const newLevel = (parentForType ? parentForType.level + 1 : 1);
+          const newLevel = parentForType ? parentForType.level + 1 : 1;
           await this.recomputeSubtreeWithinTx(tx, id, newLevel);
         }
         return updatedRow;
