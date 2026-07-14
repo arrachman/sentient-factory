@@ -1021,6 +1021,12 @@ user menavigasi halaman dgn `←`/`→`:
 - Fallback "Memuat…" full-body **hanya** dipakai saat truly empty
   (`loading && displayOptions.length === 0`, mis. saat modal baru dibuka
   belum ada data sama sekali).
+- **Multi-select keyboard submit (2026-07-14):** di mode `multi`, tombol
+  **Enter** selalu menjalankan aksi footer **Pilih** (`confirm()`), baik fokus
+  sedang di search input maupun di tabel. Toggle baris dilakukan via klik atau
+  **Space** saat baris fokus; `Ctrl/Cmd+Enter` tetap submit sebagai alias.
+  Alasan: user mengharapkan Enter = tombol utama dialog, bukan no-op saat fokus
+  masih di search box.
 
 Konsekuensi vibe coding: kalau menambah list modal-style baru di web-erp,
 **dilarang** pola "replace tbody dgn loader row" untuk transisi halaman —
