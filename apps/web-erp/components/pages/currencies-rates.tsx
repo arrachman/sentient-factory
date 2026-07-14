@@ -145,73 +145,68 @@ export function CurrencyRatesPanel({ currencyId }: { currencyId: string }) {
   };
 
   return (
-    <div className="p-4">
-      <div className="flex flex-col gap-3">
-        <FormField label="Periode berlaku (mulai → selesai)" htmlFor="cr-from" required>
-          <DateRangePicker
-            id="cr-from"
-            from={form.from}
-            to={form.to}
-            onChangeFrom={(v) => setForm((f) => ({ ...f, from: v }))}
-            onChangeTo={(v) => setForm((f) => ({ ...f, to: v }))}
-          />
-        </FormField>
-        <p className="muted" style={{ margin: 0, fontSize: 'calc(12px * var(--font-scale, 1))' }}>
-          Satu baris kurs per hari di rentang (nilai rate sama). Kosongkan Selesai untuk 1 hari.
-        </p>
-
-        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-          <FormField label="Rate / Kurs" htmlFor="cr-rate" required>
-            <NumInput
-              id="cr-rate"
-              value={form.rate}
-              onChange={(raw) => setForm((f) => ({ ...f, rate: raw }))}
-              placeholder="15.750,00"
-              style={{ maxWidth: 200 }}
-            />
-          </FormField>
+    <div>
+      <FormField
+        label="Periode"
+        htmlFor="cr-from"
+        required
+        help="1 baris/hari di rentang · kosongkan Selesai = 1 hari"
+      >
+        <DateRangePicker
+          id="cr-from"
+          from={form.from}
+          to={form.to}
+          onChangeFrom={(v) => setForm((f) => ({ ...f, from: v }))}
+          onChangeTo={(v) => setForm((f) => ({ ...f, to: v }))}
+        />
+      </FormField>
+      <FormField
+        label="Kurs"
+        htmlFor="cr-rate"
+        required
+        controlAddon={
           <button
             type="button"
-            className="btn primary sm"
+            className="btn primary sm ml-2 shrink-0"
             onClick={handleAdd}
             disabled={adding}
           >
-            {adding
-              ? progress
-                ? `Menambah… ${progress}`
-                : 'Menambah…'
-              : 'Tambah Rate'}
+            {adding ? (progress ? `… ${progress}` : '…') : 'Tambah'}
           </button>
-        </div>
-      </div>
+        }
+      >
+        <NumInput
+          id="cr-rate"
+          value={form.rate}
+          onChange={(raw) => setForm((f) => ({ ...f, rate: raw }))}
+          placeholder="15.750,00"
+          className="max-w-[10rem]"
+        />
+      </FormField>
 
-      <div className="lines" style={{ marginTop: 16 }}>
+      <div className="mt-2">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Tanggal</TableHead>
               <TableHead className="text-right">Rate</TableHead>
-              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={3} className="muted">
+                <TableCell colSpan={2} className="muted">
                   Memuat...
                 </TableCell>
               </TableRow>
             ) : rates.length === 0 ? (
-              <TableEmpty colSpan={3} />
+              <TableEmpty colSpan={2} />
             ) : (
               rates.map((r) => (
-                <TableRow key={r.id}>
+                <TableRow key={r.id} className={r.isActive ? undefined : 'opacity-50'}>
                   <TableCell>{formatDate(r.rateDate) || '—'}</TableCell>
                   <TableCell className="text-right tabular-nums">
                     {formatNumber(r.rate, 2)}
-                  </TableCell>
-                  <TableCell className="muted">
-                    {r.isActive ? 'Aktif' : 'Nonaktif'}
                   </TableCell>
                 </TableRow>
               ))

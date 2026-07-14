@@ -79,69 +79,66 @@ function FormFields({
   errors?: FormErrors<CurrencyForm>;
 }) {
   const set = (k: keyof CurrencyForm, v: string | boolean) => onChange({ ...data, [k]: v });
-  // Wider label column so "Mata Uang Dasar" fits without wrapping and
-  // both columns share the same label/control baseline.
-  const fieldCls = 'grid-cols-[132px_1fr]';
   return (
     <div className="p-4">
-      <div className="grid grid-cols-1 gap-x-6 gap-y-0 sm:grid-cols-2">
-        <FormField className={fieldCls} label="Kode" htmlFor="cu-code" required error={errors.code}>
-          <Input
-            id="cu-code"
-            value={data.code}
-            onChange={(e) => set('code', e.target.value)}
-            placeholder="USD"
-            aria-invalid={!!errors.code}
-          />
-        </FormField>
-        <FormField className={fieldCls} label="Nama" htmlFor="cu-name" required error={errors.name}>
-          <Input
-            id="cu-name"
-            value={data.name}
-            onChange={(e) => set('name', e.target.value)}
-            placeholder="US Dollar"
-            aria-invalid={!!errors.name}
-          />
-        </FormField>
-        <FormField className={fieldCls} label="Simbol" htmlFor="cu-symbol">
-          <Input
-            id="cu-symbol"
-            value={data.symbol}
-            onChange={(e) => set('symbol', e.target.value)}
-            placeholder="$"
-          />
-        </FormField>
-        <FormField className={fieldCls} label="Desimal" htmlFor="cu-decimal" error={errors.decimalPlaces}>
-          <NumInput
-            id="cu-decimal"
-            value={data.decimalPlaces}
-            onChange={(v) => set('decimalPlaces', v)}
-            decimals={0}
-            placeholder="2"
-            className="w-24"
-            aria-invalid={!!errors.decimalPlaces}
-          />
-        </FormField>
-        <FormField className={fieldCls} label="Mata Uang Dasar" htmlFor="cu-base">
-          <BooleanRadio
-            id="cu-base"
-            value={data.isBase}
-            onValueChange={(v) => set('isBase', v)}
-            trueLabel="Ya"
-            falseLabel="Tidak"
-          />
-        </FormField>
-        <FormField className={fieldCls} label="Status" htmlFor="cu-active">
-          <BooleanRadio
-            id="cu-active"
-            value={data.isActive}
-            onValueChange={(v) => set('isActive', v)}
-          />
-        </FormField>
-      </div>
+      <FormField label="Kode" htmlFor="cu-code" required error={errors.code}>
+        <Input
+          id="cu-code"
+          value={data.code}
+          onChange={(e) => set('code', e.target.value)}
+          placeholder="USD"
+          aria-invalid={!!errors.code}
+        />
+      </FormField>
+      <FormField label="Nama" htmlFor="cu-name" required error={errors.name}>
+        <Input
+          id="cu-name"
+          value={data.name}
+          onChange={(e) => set('name', e.target.value)}
+          placeholder="US Dollar"
+          aria-invalid={!!errors.name}
+        />
+      </FormField>
+      <FormField label="Simbol" htmlFor="cu-symbol">
+        <Input
+          id="cu-symbol"
+          value={data.symbol}
+          onChange={(e) => set('symbol', e.target.value)}
+          placeholder="$"
+        />
+      </FormField>
+      <FormField label="Desimal" htmlFor="cu-decimal" error={errors.decimalPlaces}>
+        <NumInput
+          id="cu-decimal"
+          value={data.decimalPlaces}
+          onChange={(v) => set('decimalPlaces', v)}
+          decimals={0}
+          placeholder="2"
+          className="w-24"
+          aria-invalid={!!errors.decimalPlaces}
+        />
+      </FormField>
+      <FormField label="Dasar" htmlFor="cu-base">
+        <BooleanRadio
+          id="cu-base"
+          value={data.isBase}
+          onValueChange={(v) => set('isBase', v)}
+          trueLabel="Ya"
+          falseLabel="Tidak"
+        />
+      </FormField>
+      <FormField label="Status" htmlFor="cu-active">
+        <BooleanRadio
+          id="cu-active"
+          value={data.isActive}
+          onValueChange={(v) => set('isActive', v)}
+        />
+      </FormField>
       {data.id && (
-        <div className="mt-4">
-          <div className="mb-2 text-sm font-semibold">Kurs Nilai Tukar</div>
+        <div className="mt-3 border-t border-[var(--border)] pt-3">
+          <div className="mb-1 text-[12px] font-semibold text-[var(--fg-muted)]">
+            Kurs nilai tukar
+          </div>
           <CurrencyRatesPanel currencyId={data.id} />
         </div>
       )}
@@ -168,7 +165,6 @@ export function ErpCurrenciesPage() {
       toPayload={toPayload}
       FormFields={FormFields}
       validate={validateCurrency}
-      modalSize="lg"
       extraColumns={[
         { key: 'symbol', label: 'Simbol', render: (row) => row.symbol ?? '—' },
         {
