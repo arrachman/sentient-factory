@@ -2,12 +2,15 @@
 
 /**
  * Editable sub-list of partner addresses (md_partner_addresses).
- * Location fields use cascading lookups: Negara → Provinsi → Kota → Kecamatan.
- * Kode pos auto-filled from selected kecamatan but remains editable.
+ * UX: list-or-form — form only visible while adding/editing so the user
+ * is not confused by a permanent empty form under the list.
+ * Location fields cascade: Negara → Provinsi → Kota → Kecamatan → Kelurahan.
+ * Atomic tier: Organism.
  */
 
 import * as React from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Icon } from '@/components/ui/icons';
 import {
   Table,
   TableHeader,
@@ -42,6 +45,9 @@ import {
   type DraftAddress,
 } from '@/components/organisms/partner-address-form-fields';
 
+/** null = list mode; 'new' = create form; string id = edit form */
+type FormMode = null | 'new' | string;
+
 const emptyDraft = (): DraftAddress => ({
   type: 'BILLING',
   addressLine1: '',
@@ -63,10 +69,8 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
   const [loading, setLoading] = React.useState(true);
   const [draft, setDraft] = React.useState<DraftAddress>(emptyDraft);
   const [saving, setSaving] = React.useState(false);
-  const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [formMode, setFormMode] = React.useState<FormMode>(null);
   const [initialLabels, setInitialLabels] = React.useState<AddressInitialLabels>({});
-
-  // Cache kode pos per subAreaId — diisi saat loader dipanggil
   const subAreaPostalRef = React.useRef<Record<string, string>>({});
 
   React.useEffect(() => {
@@ -106,8 +110,14 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draft.subAreaId]);
 
+  const openCreate = () => {
+    setFormMode('new');
+    setDraft(emptyDraft());
+    setInitialLabels({});
+  };
+
   const handleEdit = (a: ErpPartnerAddress) => {
-    setEditingId(a.id);
+    setFormMode(a.id);
     setDraft({
       type: a.type,
       addressLine1: a.addressLine1,
@@ -132,8 +142,8 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
     });
   };
 
-  const handleCancelEdit = () => {
-    setEditingId(null);
+  const handleCancel = () => {
+    setFormMode(null);
     setDraft(emptyDraft());
     setInitialLabels({});
   };
@@ -157,18 +167,16 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
         website: draft.website.trim() || undefined,
         isDefault: draft.isDefault,
       };
-      if (editingId) {
-        const updated = await updatePartnerAddress(partnerId, editingId, payload);
-        setItems((prev) => prev.map((x) => (x.id === editingId ? updated : x)));
+      if (formMode && formMode !== 'new') {
+        const updated = await updatePartnerAddress(partnerId, formMode, payload);
+        setItems((prev) => prev.map((x) => (x.id === formMode ? updated : x)));
         notify('Alamat diperbarui', 'success');
       } else {
         const created = await addPartnerAddress(partnerId, payload);
         setItems((prev) => [...prev, created]);
         notify('Alamat ditambahkan', 'success');
       }
-      setEditingId(null);
-      setDraft(emptyDraft());
-      setInitialLabels({});
+      handleCancel();
     } catch (e) {
       notify(e instanceof Error ? e.message : 'Gagal menyimpan alamat', 'danger');
     } finally {
@@ -187,7 +195,7 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
         try {
           await removePartnerAddress(partnerId, a.id);
           setItems((prev) => prev.filter((x) => x.id !== a.id));
-          if (editingId === a.id) handleCancelEdit();
+          if (formMode === a.id) handleCancel();
           notify('Alamat dihapus', 'success');
         } catch (e) {
           notify(e instanceof Error ? e.message : 'Gagal menghapus', 'danger');
@@ -195,8 +203,63 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
       },
     });
 
+  // Form mode — hide list so user focuses on one task
+  if (formMode !== null) {
+    const isEdit = formMode !== 'new';
+    return (
+      <div className="flex flex-col gap-3 p-4">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <div className="text-[13px] font-semibold text-foreground">
+              {isEdit ? 'Edit alamat' : 'Tambah alamat'}
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              Isi data alamat, lalu simpan. Kembali ke daftar dengan Batal.
+            </div>
+          </div>
+          <button type="button" className="btn ghost sm" onClick={handleCancel} disabled={saving}>
+            <Icon name="arrowleft" size={12} /> Kembali ke daftar
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1 rounded-[var(--radius)] border border-border bg-secondary/30 p-3">
+          <PartnerAddressFormFields
+            draft={draft}
+            setD={setD}
+            setDraft={setDraft}
+            initialLabels={initialLabels}
+            provinceLoader={provinceLoader}
+            cityLoader={cityLoader}
+            areaLoader={areaLoader}
+            subAreaLoader={subAreaLoader}
+            loadCountryOptions={loadCountryOptions}
+          />
+
+          <div className="col-span-2 flex items-end justify-end gap-2 border-t border-border pt-3 mt-1">
+            <button type="button" className="btn ghost" onClick={handleCancel} disabled={saving}>
+              Batal
+            </button>
+            <button type="button" className="btn primary" onClick={handleSubmit} disabled={saving}>
+              {saving ? 'Menyimpan…' : isEdit ? 'Simpan perubahan' : 'Simpan alamat'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // List mode
   return (
-    <div className="flex flex-col gap-4 p-4">
+    <div className="flex flex-col gap-3 p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-[12px] text-muted-foreground">
+          {loading ? 'Memuat…' : `${items.length} alamat`}
+        </div>
+        <button type="button" className="btn sm primary" onClick={openCreate}>
+          <Icon name="plus" size={12} /> Tambah alamat
+        </button>
+      </div>
+
       <div className="lines">
         <Table className="table-fixed">
           <TableHeader>
@@ -244,34 +307,16 @@ export function PartnerAddressesEditor({ partnerId }: { partnerId: string }) {
         </Table>
       </div>
 
-      <fieldset className="grid grid-cols-2 gap-x-3 gap-y-1 rounded-[var(--radius)] border border-border p-3">
-        <legend className="px-1 text-[12px] font-medium text-muted-foreground">
-          {editingId ? 'Edit alamat' : 'Tambah alamat'}
-        </legend>
-
-        <PartnerAddressFormFields
-          draft={draft}
-          setD={setD}
-          setDraft={setDraft}
-          initialLabels={initialLabels}
-          provinceLoader={provinceLoader}
-          cityLoader={cityLoader}
-          areaLoader={areaLoader}
-          subAreaLoader={subAreaLoader}
-          loadCountryOptions={loadCountryOptions}
-        />
-
-        <div className="flex items-end justify-end gap-2">
-          {editingId && (
-            <button type="button" className="btn ghost" onClick={handleCancelEdit} disabled={saving}>
-              Batal
-            </button>
-          )}
-          <button type="button" className="btn primary" onClick={handleSubmit} disabled={saving}>
-            {saving ? 'Menyimpan…' : editingId ? 'Simpan' : 'Tambah alamat'}
+      {!loading && items.length === 0 && (
+        <div className="flex flex-col items-center gap-2 rounded-[var(--radius)] border border-dashed border-border py-6 text-center">
+          <div className="text-[12px] text-muted-foreground">
+            Belum ada alamat. Tambah alamat penagihan, pengiriman, atau lainnya.
+          </div>
+          <button type="button" className="btn sm primary" onClick={openCreate}>
+            <Icon name="plus" size={12} /> Tambah alamat pertama
           </button>
         </div>
-      </fieldset>
+      )}
     </div>
   );
 }
