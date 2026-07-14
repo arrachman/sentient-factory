@@ -29,10 +29,11 @@ otomatis dari `code`** (server + FE payload): `CUST` → `CUSTOMER`, `SUP` → `
 display). Client `kind` di body create/update diabaikan.
 
 **Update 2026-07-14 (sort):** list `/master/partner-types` **selalu pin** tipe
-terkunci di atas. `orderBy` API: `kind ASC` dulu (enum Postgres:
-`CUSTOMER` < `SUPPLIER` < `SALESMAN` < `GENERAL` → CUST/SUP/SLS di atas), lalu
-sort sekunder user (`sortBy`/`sortDir`, default `createdAt desc`). Berlaku di
-semua page/pagination — bukan sort klien.
+terkunci di atas lewat SQL `ORDER BY CASE code WHEN 'CUST' THEN 0 WHEN 'SUP'
+THEN 1 WHEN 'SLS' THEN 2 ELSE 3 END`, lalu sort sekunder user
+(`sortBy`/`sortDir`, default `createdAt desc`). Pin by **code** (bukan kind)
+agar hanya 3 baris sistem yang naik, bukan seluruh kind CUSTOMER/SUPPLIER.
+Berlaku di semua page/pagination — bukan sort klien.
 
 ---
 
