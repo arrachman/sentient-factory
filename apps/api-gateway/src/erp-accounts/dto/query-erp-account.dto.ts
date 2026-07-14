@@ -3,7 +3,7 @@ import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { ErpAccountType, ErpAccountKind, ErpNormalBalance } from '@prisma/client';
 
-const SORTABLE_FIELDS = ['code', 'name', 'isActive', 'createdAt'] as const;
+const SORTABLE_FIELDS = ['code', 'name', 'type', 'kind', 'level', 'isActive', 'createdAt'] as const;
 type SortableField = (typeof SORTABLE_FIELDS)[number];
 
 export class QueryErpAccountDto {

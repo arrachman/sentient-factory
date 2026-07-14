@@ -18,6 +18,7 @@ import { CreateErpAccountDto } from './dto/create-erp-account.dto';
 import { QueryErpAccountDto } from './dto/query-erp-account.dto';
 import { UpdateAccountCodeFormatDto } from './dto/update-account-code-format.dto';
 import { UpdateErpAccountDto } from './dto/update-erp-account.dto';
+import { toBigIntId } from './account-hierarchy';
 import { ErpAccountsService } from './erp-accounts.service';
 
 @ApiTags('ERP Accounts')
@@ -67,14 +68,14 @@ export class ErpAccountsController {
   @ApiOperation({ summary: 'Get one ERP account' })
   @ApiResponse({ status: 200, description: 'Account detail with parent and children' })
   findOne(@Param('id') id: string) {
-    return this.service.findOne(BigInt(id));
+    return this.service.findOne(toBigIntId(id, 'id'));
   }
 
   @Patch(':id')
   @ApiOperation({ summary: 'Update ERP account' })
   @ApiResponse({ status: 200, description: 'Account updated' })
   update(@Param('id') id: string, @Body() dto: UpdateErpAccountDto, @Request() req: any) {
-    return this.service.update(BigInt(id), dto, req.user?.id);
+    return this.service.update(toBigIntId(id, 'id'), dto, req.user?.id);
   }
 
   @Patch('bulk/status')
@@ -95,6 +96,6 @@ export class ErpAccountsController {
   @ApiOperation({ summary: 'Soft delete ERP account' })
   @ApiResponse({ status: 200, description: 'Account deleted' })
   remove(@Param('id') id: string, @Request() req: any) {
-    return this.service.remove(BigInt(id), req.user?.id);
+    return this.service.remove(toBigIntId(id, 'id'), req.user?.id);
   }
 }

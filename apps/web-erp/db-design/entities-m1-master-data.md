@@ -397,20 +397,25 @@ Rate at a transaction date = latest row with `rateDate <= txnDate`. Base currenc
 
 ### Account  → `md_accounts`  (legacy `m1_coa` — Chart of Accounts)
 
-**Format kode wajib: `NNNN.NN.NNN` (4-2-3, dual dot, 11 char).** Decision
-2026-05-27 (lihat `README.md §8` #43). 4 digit prefix = kelompok-grup PSAK
-(`1xxx` Aset, `2xxx` Liab, `3xxx` Ekuitas, `4xxx` Revenue, `5xxx` HPP,
-`6xxx` Beban, `7xxx` Pos Luar Biasa & Pajak); 2 digit middle = sub-grup
-(max 99 anak per cabang); 3 digit leaf = nomor urut akun (max 999, mirror
-legacy `.NNN`). HEADER pakai trailing zero `NNNN.00.000`; POSTABLE pakai
-non-zero, default `NNNN.01.001`. Regex enforcement di
-`CreateErpAccountDto` (`@Matches(/^\d{4}\.\d{2}\.\d{3}$/)`) + FE form
-validator di `accounts-form.tsx`.
+**Format kode dinamis dari `sys_settings` (group `account-code`).** Default seed
+`NNNN.NN.NNN` (4-2-3, dual dot, 11 char) — decision 2026-05-27 (`README.md §8`
+#43 → #44). 4 digit prefix = kelompok-grup PSAK (`1xxx` Aset, `2xxx` Liab,
+`3xxx` Ekuitas, `4xxx` Revenue, `5xxx` HPP, `6xxx` Beban, `7xxx` Pos Luar Biasa
+& Pajak); 2 digit middle = sub-grup (max 99 anak per cabang); 3 digit leaf =
+nomor urut akun (max 999, mirror legacy `.NNN`). HEADER pakai trailing zero
+`NNNN.00.000`; POSTABLE pakai non-zero, default `NNNN.01.001`. Validasi format
+dinamis di service `ErpAccountsService` (`validateAccountCode()`); DTO hanya
+`@MaxLength(30)` (regex hardcode dihapus). FE form validator dinamis di
+`accounts-form.tsx` (hook `useAccountCodeFormat`). Aturan hierarki (2026-07-14,
+lihat `DECISIONS.md §2.24.2`): parent-first; parent wajib `HEADER`; tipe child
+ter-filter = tipe parent; `level` & `normalBalance` di-derive server-side;
+pindah cabang recompute level keturunan; field `currencyId`/`bankName`/
+`bankAccountNo` hanya untuk akun di segmen kode terakhir.
 
 | Field | Type | Notes |
 | --- | --- | --- |
 | id | BigInt PK | |
-| code 🔑 | String unique | account number `NNNN.NN.NNN` (legacy `cnomor`) |
+| code 🔑 | String unique | account number format dinamis (default `NNNN.NN.NNN`; legacy `cnomor`) |
 | name | String | `cnama` |
 | alias ○ | String | `cnamaalias1` (alias2/3 → metadata) |
 | type ◆ | `AccountType` | `ctipe` |

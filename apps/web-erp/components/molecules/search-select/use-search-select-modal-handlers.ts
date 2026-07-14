@@ -21,7 +21,7 @@ export interface ModalHandlersCtx {
   value?: string;
   values: string[];
   onValueChange: (v: string) => void;
-  onPick?: (o: { value: string; label: string; meta: string }) => void;
+  onPick?: (o: SearchSelectOption) => void;
   onValuesChange: (v: string[]) => void;
 
   // Modal state values
@@ -116,7 +116,7 @@ export function useSearchSelectModalHandlers(ctx: ModalHandlersCtx) {
   const confirmRow = (opt: SearchSelectOption) => {
     if (isMulti) { toggleMulti(opt.value); return; }
     onValueChange(opt.value);
-    onPick?.({ value: opt.value, label: optLabel(opt), meta: String(opt.meta ?? '') });
+    onPick?.({ ...opt, label: optLabel(opt), meta: String(opt.meta ?? '') });
     setDisplayLabel(optLabel(opt));
     closeModal(true);
   };

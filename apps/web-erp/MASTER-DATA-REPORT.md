@@ -125,10 +125,12 @@
 | M1.FIN.OTHER-COSTS | Other Costs | `/master/other-costs` | `other-costs-page.tsx` | `erp-other-costs` |
 
 **Catatan:**
-- Chart of Accounts: tree hierarki, validasi format kode `NNNN.NN.NNN`, field
-  `kind` (HEADER/POSTABLE), `type` (ASSET/LIABILITY/EQUITY/REVENUE/EXPENSE),
-  `cashFlowCategory`, `openingBalance`, `bankAccount`, `isControlAccount`.
-  Form terpisah `accounts-form.tsx`.
+- Chart of Accounts: tree hierarki parent-first, validasi format kode dinamis dari
+  `sys_settings` (default `NNNN.NN.NNN`), field `kind` (HEADER/POSTABLE), `type`
+  (ASSET/LIABILITY/EQUITY/REVENUE/EXPENSE), `cashFlowCategory`, `openingBalance`,
+  `currencyId`, `bankName`, `bankAccountNo`, `isControlAccount`. Form terpisah
+  `accounts-form.tsx`; tipe child mengikuti parent, level & saldo normal di-derive
+  server-side, detail bank/mata-uang hanya untuk segmen kode terakhir.
 - Currencies: punya panel tarif `currencies-rates.tsx` (CurrencyRate bertanggal —
   keputusan 2026-05-17).
 - Taxes: punya FK ke akun GL sale & purchase.

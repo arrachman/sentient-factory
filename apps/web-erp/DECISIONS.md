@@ -762,9 +762,37 @@ otomatis dari Tipe Akun" — bukan `Select`/radio. Payload tetap mengirim
 `normalBalance` (diturunkan), jadi kontrak API tidak berubah. `NORMAL_BALANCES`
 di `lib/api/accounts.ts` dipertahankan untuk filter list & lookup lain.
 
-> Backend `md_accounts` masih menerima `normalBalance` apa adanya (belum
-> di-derive server-side) — FE yang menjamin konsistensi. Enforcement
-> server-side = follow-up bila diperlukan.
+> Status 2026-07-14: backend `erp-accounts` sekarang juga menderivasi
+> `normalBalance` dari tipe akun efektif, sehingga payload yang mencoba
+> mengirim saldo normal tidak konsisten tidak lagi menjadi sumber kebenaran.
+
+### 2.24.2 CoA parent-first + validasi scope akun (2026-07-14)
+
+Form Bagan Akun (`/master/accounts`) wajib **parent-first**: user memilih
+Parent terlebih dahulu, baru mengisi kode/nama dan atribut akun. Untuk akun
+root, **Tipe Akun** tetap manual. Untuk akun child, tipe manual tetapi
+**ter-filter/terkunci mengikuti tipe parent** — contoh `Kas` berada di bawah
+ASSET, `Modal` di bawah EQUITY; sistem tidak menebak dari nama, melainkan dari
+scope parent agar tidak salah setting.
+
+Backend `erp-accounts` adalah SSOT validasi hierarki:
+- Parent wajib akun aktif/non-deleted dengan `kind=HEADER`; `POSTABLE` tidak
+  boleh punya anak.
+- Child `accountType` wajib sama dengan parent; root bebas memilih tipe.
+- `level` di-derive server-side (`root=1`, child=`parent.level+1`) dan saat
+  parent cabang dipindah, level seluruh keturunan dihitung ulang.
+- `normalBalance` di-derive dari tipe efektif (§2.24.1).
+- Update parent menolak self-parent dan descendant-parent (cycle).
+- Hapus akun yang masih punya anak aktif ditolak; hapus anak dulu.
+
+Field **Mata Uang**, **Bank**, dan **No. Rekening** hanya valid untuk akun di
+**segmen kode terakhir** sesuai format dinamis `sys_settings` (§2.24), yaitu
+segmen terakhir kode memiliki digit non-nol. FE menampilkan section "Detail
+Akun Posting" hanya saat `Jenis=POSTABLE` dan kode terdeteksi leaf; backend
+tetap menjadi penentu final dan menolak field tersebut pada akun non-leaf.
+`currencyId` wajib mengarah ke `md_currencies` aktif/non-deleted. Tidak ada
+migrasi DB karena `currencyId`, `bankName`, `bankAccountNo`, `level`, dan
+`parentId` sudah ada di `md_accounts`.
 
 ---
 

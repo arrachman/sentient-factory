@@ -2,10 +2,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsEnum,
-  IsNotEmpty,
   IsOptional,
   IsString,
-  Matches,
   MaxLength,
 } from 'class-validator';
 import {
@@ -15,19 +13,17 @@ import {
   ErpCashFlowCategory,
 } from '@prisma/client';
 
-export const ERP_ACCOUNT_CODE_PATTERN = /^\d{4}\.\d{2}\.\d{3}$/;
 export const ERP_ACCOUNT_CODE_MESSAGE =
-  'code wajib mengikuti format NNNN.NN.NNN (4-2-3, contoh: 1101.01.001)';
+  'code wajib mengikuti format kode akun aktif (dinamis dari sys_settings)';
 
 export class CreateErpAccountDto {
   @ApiProperty({
     example: '1101.01.001',
     description:
-      'Unique account code (format `NNNN.NN.NNN` 4-2-3). HEADER pakai trailing zero: `1100.00.000`. POSTABLE default: `1101.01.001`.',
+      'Unique account code. Format dinamis dari sys_settings (default NNNN.NN.NNN, 4-2-3). Validasi dilakukan service sesuai format aktif. HEADER pakai trailing zero: `1100.00.000`. POSTABLE default: `1101.01.001`.',
   })
   @IsString()
-  @MaxLength(11)
-  @Matches(ERP_ACCOUNT_CODE_PATTERN, { message: ERP_ACCOUNT_CODE_MESSAGE })
+  @MaxLength(30)
   code!: string;
 
   @ApiProperty({ example: 'Cash on Hand' })
@@ -49,9 +45,14 @@ export class CreateErpAccountDto {
   @IsEnum(ErpAccountKind)
   accountKind!: ErpAccountKind;
 
-  @ApiProperty({ enum: ErpNormalBalance, example: ErpNormalBalance.DEBIT })
+  @ApiPropertyOptional({
+    enum: ErpNormalBalance,
+    description:
+      'Saldo normal. Opsional — backend menderivasinya dari tipe akun efektif.',
+  })
+  @IsOptional()
   @IsEnum(ErpNormalBalance)
-  normalBalance!: ErpNormalBalance;
+  normalBalance?: ErpNormalBalance;
 
   @ApiPropertyOptional({ enum: ErpCashFlowCategory })
   @IsOptional()
@@ -68,7 +69,11 @@ export class CreateErpAccountDto {
   @IsString()
   currencyId?: string | null;
 
-  @ApiPropertyOptional({ example: 1, description: 'Account level in hierarchy' })
+  @ApiPropertyOptional({
+    example: 1,
+    description:
+      'Level hierarki. Diabaikan — backend menderivasinya dari parent (root=1, anak=parent.level+1).',
+  })
   @IsOptional()
   level?: number;
 

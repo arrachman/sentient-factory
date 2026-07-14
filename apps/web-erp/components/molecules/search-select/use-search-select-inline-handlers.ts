@@ -20,7 +20,7 @@ export interface InlineHandlersCtx {
   // is guarded by `!isMulti`.
   isMulti: boolean;
   onValueChange: (v: string) => void;
-  onPick?: (o: { value: string; label: string; meta: string }) => void;
+  onPick?: (o: SearchSelectOption) => void;
   loadOptions: (q: string, p: number, limit: number) => Promise<{ data: SearchSelectOption[]; total: number }>;
   limit: number;
   openModal: (initialQuery?: string) => void;
@@ -180,7 +180,7 @@ export function useSearchSelectInlineHandlers(ctx: InlineHandlersCtx) {
   const selectFromDropdown = (opt: SearchSelectOption) => {
     if (!isMulti) {
       onValueChange(opt.value);
-      onPick?.({ value: opt.value, label: optLabel(opt), meta: String(opt.meta ?? '') });
+      onPick?.({ ...opt, label: optLabel(opt), meta: String(opt.meta ?? '') });
       setDisplayLabel(optLabel(opt));
       setInputText(optLabel(opt));
     }

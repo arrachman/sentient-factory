@@ -4,10 +4,16 @@ import { emptyList, renderPage } from '../helpers/render-page';
 import { createFeedbackMock } from '../helpers/feedback-mock';
 
 const api = vi.hoisted(() => ({
+  ACCOUNT_TYPES: ['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE'],
+  ACCOUNT_KINDS: ['HEADER', 'POSTABLE'],
+  CASH_FLOW_CATEGORIES: ['OPERATING', 'INVESTING', 'FINANCING'],
+  getAccountCodeFormat: vi.fn(),
   listAccounts: vi.fn(),
   createAccount: vi.fn(),
   updateAccount: vi.fn(),
   deleteAccount: vi.fn(),
+  bulkUpdateAccountStatus: vi.fn(),
+  bulkDeleteAccounts: vi.fn(),
 }));
 vi.mock('@/lib/api/accounts', () => api);
 vi.mock('@/lib/feedback', () => createFeedbackMock());

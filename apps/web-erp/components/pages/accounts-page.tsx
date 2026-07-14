@@ -27,13 +27,16 @@ const fromRecord = (r: ErpAccount): AccountFormData => fromAccount(r);
 const extraColumns: ExtraColumn<ErpAccount>[] = [
   { key: 'type', label: 'Tipe', sortable: true, render: (r) => r.type },
   { key: 'kind', label: 'Jenis', sortable: true, render: (r) => r.kind },
+  { key: 'level', label: 'Level', sortable: true, render: (r) => r.level ?? '—' },
   {
     key: 'parent',
     label: 'Parent',
-    render: (r) => {
-      const p = (r as ErpAccount & { parent?: { code: string; name: string } | null }).parent;
-      return p ? `${p.code} — ${p.name}` : '—';
-    },
+    render: (r) => (r.parent ? `${r.parent.code} — ${r.parent.name}` : '—'),
+  },
+  {
+    key: 'currency',
+    label: 'Mata Uang',
+    render: (r) => r.currency?.code ?? '—',
   },
 ];
 
@@ -65,6 +68,7 @@ export function ErpAccountsPage() {
       FormFields={AccountFormFields}
       validate={validateAccount}
       extraColumns={extraColumns}
+      modalSize="lg"
       defaultSortBy="code"
       defaultSortDir="asc"
       extraFilters={accountFilters}

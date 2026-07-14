@@ -51,7 +51,9 @@ export interface ErpAccount {
   normalBalance: ErpNormalBalance;
   cashFlowCategory?: ErpCashFlowCategory | null;
   parentId?: string | null;
+  parent?: { id: string; code: string; name: string } | null;
   currencyId?: string | null;
+  currency?: { id: string; code: string; name: string; symbol?: string | null } | null;
   level?: number | null;
   isControlAccount: boolean;
   bankName?: string | null;
@@ -69,10 +71,13 @@ export interface CreateAccountPayload {
   alias?: string;
   accountType: ErpAccountType;
   accountKind: ErpAccountKind;
-  normalBalance: ErpNormalBalance;
+  normalBalance?: ErpNormalBalance;
   cashFlowCategory?: ErpCashFlowCategory;
   parentId?: string | null;
+  currencyId?: string | null;
   isControlAccount?: boolean;
+  bankName?: string;
+  bankAccountNo?: string;
   notes?: string;
   isActive?: boolean;
 }

@@ -2,8 +2,7 @@
 
 /**
  * Account create/edit form — used inside a Modal.
- * Renders enum selects (type/kind/normal balance/cash flow) and the
- * parent-account picker for the Chart of Accounts hierarchy.
+ * Parent-first CoA input: child account scope follows the selected parent.
  * Atomic tier: Molecule/Organism sub-part.
  */
 
@@ -20,6 +19,7 @@ import {
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
 import { SearchSelect, type SearchSelectOption } from '@/components/molecules/search-select';
+import { loadCurrencyOptions } from './partners-lookups';
 import {
   ACCOUNT_TYPES,
   ACCOUNT_KINDS,
@@ -28,6 +28,7 @@ import {
   getAccountCodeFormat,
 } from '@/lib/api/accounts';
 import type {
+  ErpAccount,
   ErpAccountType,
   ErpAccountKind,
   ErpNormalBalance,
@@ -51,14 +52,26 @@ function normalBalanceForAccountType(type: ErpAccountType): ErpNormalBalance {
   return TYPE_NORMAL_BALANCE_MAP[type];
 }
 
+function splitAccountCode(code: string, format: AccountCodeFormat): string[] {
+  if (!format.separator) {
+    let offset = 0;
+    return format.segments.map((length) => {
+      const part = code.slice(offset, offset + length);
+      offset += length;
+      return part;
+    });
+  }
+  return code.split(format.separator);
+}
+
+function isLeafAccountCode(code: string, format: AccountCodeFormat | null): boolean {
+  if (!format || !code) return false;
+  const parts = splitAccountCode(code, format);
+  const last = parts[parts.length - 1] ?? '';
+  return /[1-9]/.test(last);
+}
 
 // ─── Account code format cache (sys_settings group "account-code") ────────────
-//
-// §2.24: format kode CoA dinamis dari `sys_settings`. Cache module-level supaya
-// `validateAccount` (sync, dipanggil SimpleMasterPage) bisa pakai pattern aktif
-// tanpa async fetch tiap submit. Hook `useAccountCodeFormat()` priming cache
-// saat form pertama mount; `invalidateAccountCodeFormatCache()` di-panggil
-// setelah PUT /accounts/code-format sukses agar form refresh.
 
 let accountCodeFormatCache: AccountCodeFormat | null = null;
 let inflightFormatRequest: Promise<AccountCodeFormat> | null = null;
@@ -89,9 +102,8 @@ export function invalidateAccountCodeFormatCache(): void {
   accountCodeFormatCache = null;
   inflightFormatRequest = null;
   formatListeners.forEach((cb) => cb(null));
-  // Re-prime so any mounted form picks up the new format immediately.
   void fetchAccountCodeFormat().catch(() => {
-    /* swallow — form will retry on next mount */
+    /* form will retry on next mount */
   });
 }
 
@@ -104,7 +116,7 @@ export function useAccountCodeFormat(): AccountCodeFormat | null {
       void fetchAccountCodeFormat()
         .then((f) => setFormat(f))
         .catch(() => {
-          /* keep null — validateAccount falls back to length-only check */
+          /* keep null — server validates */
         });
     }
     return () => {
@@ -123,7 +135,12 @@ export interface AccountFormData {
   normalBalance: ErpNormalBalance;
   cashFlowCategory: string;
   parentId: string;
+  parentLabel: string;
+  currencyId: string;
+  currencyLabel: string;
   isControlAccount: boolean;
+  bankName: string;
+  bankAccountNo: string;
   notes: string;
   isActive: boolean;
 }
@@ -137,12 +154,17 @@ export const defaultAccountForm = (): AccountFormData => ({
   normalBalance: 'DEBIT',
   cashFlowCategory: '',
   parentId: '',
+  parentLabel: '',
+  currencyId: '',
+  currencyLabel: '',
   isControlAccount: false,
+  bankName: '',
+  bankAccountNo: '',
   notes: '',
   isActive: true,
 });
 
-export function fromAccount(a: { code: string; name: string; alias?: string | null; type: ErpAccountType; kind: ErpAccountKind; normalBalance: ErpNormalBalance; cashFlowCategory?: ErpCashFlowCategory | null; parentId?: string | null; isControlAccount: boolean; notes?: string | null; isActive: boolean }): AccountFormData {
+export function fromAccount(a: ErpAccount): AccountFormData {
   return {
     code: a.code,
     name: a.name,
@@ -152,13 +174,19 @@ export function fromAccount(a: { code: string; name: string; alias?: string | nu
     normalBalance: normalBalanceForAccountType(a.type),
     cashFlowCategory: a.cashFlowCategory ?? '',
     parentId: a.parentId ?? '',
+    parentLabel: a.parent ? `${a.parent.code} — ${a.parent.name}` : '',
+    currencyId: a.currencyId ?? '',
+    currencyLabel: a.currency ? `${a.currency.code} — ${a.currency.name}` : '',
     isControlAccount: a.isControlAccount,
+    bankName: a.bankName ?? '',
+    bankAccountNo: a.bankAccountNo ?? '',
     notes: a.notes ?? '',
     isActive: a.isActive,
   };
 }
 
 export function toAccountPayload(f: AccountFormData): CreateAccountPayload {
+  const shouldSendLeafDetails = f.accountKind === 'POSTABLE';
   return {
     code: f.code,
     name: f.name,
@@ -166,10 +194,12 @@ export function toAccountPayload(f: AccountFormData): CreateAccountPayload {
     accountType: f.accountType,
     accountKind: f.accountKind,
     normalBalance: normalBalanceForAccountType(f.accountType),
-    cashFlowCategory:
-      (f.cashFlowCategory as ErpCashFlowCategory) || undefined,
+    cashFlowCategory: (f.cashFlowCategory as ErpCashFlowCategory) || undefined,
     parentId: f.parentId || null,
+    currencyId: shouldSendLeafDetails ? f.currencyId || null : null,
     isControlAccount: f.isControlAccount,
+    bankName: shouldSendLeafDetails ? f.bankName || undefined : undefined,
+    bankAccountNo: shouldSendLeafDetails ? f.bankAccountNo || undefined : undefined,
     notes: f.notes || undefined,
     isActive: f.isActive,
   };
@@ -177,18 +207,25 @@ export function toAccountPayload(f: AccountFormData): CreateAccountPayload {
 
 async function loadParentOptions(
   search: string,
-  _page: number,
+  page: number,
   limit: number,
 ): Promise<{ data: SearchSelectOption[]; total: number }> {
-  const res = await listAccounts({ search: search || undefined, limit, isActive: true });
+  const res = await listAccounts({
+    search: search || undefined,
+    page,
+    limit,
+    isActive: true,
+    accountKind: 'HEADER',
+  });
   return {
-    data: res.data.map((a) => ({ value: a.id, label: a.name, code: a.code })),
+    data: res.data.map((a) => ({ value: a.id, label: a.name, code: a.code, meta: a.type })),
     total: res.meta?.total ?? res.data.length,
   };
 }
 
 export const validateAccount = (form: AccountFormData) => {
   const fmt = accountCodeFormatCache;
+  const isLeaf = isLeafAccountCode(form.code, fmt);
   return validateForm(form, [
     {
       field: 'code',
@@ -196,7 +233,7 @@ export const validateAccount = (form: AccountFormData) => {
       required: true,
       validate: (value) => {
         if (typeof value !== 'string') return undefined;
-        if (!fmt) return undefined; // server akan validasi; cache belum terisi
+        if (!fmt) return undefined;
         const re = buildAccountCodePattern(fmt.segments, fmt.separator);
         return re.test(value)
           ? undefined
@@ -204,6 +241,25 @@ export const validateAccount = (form: AccountFormData) => {
       },
     },
     { field: 'name', label: 'Nama', required: true },
+    {
+      field: 'currencyId',
+      label: 'Mata Uang',
+      validate: () => {
+        const hasDetails = Boolean(form.currencyId || form.bankName || form.bankAccountNo);
+        return fmt && hasDetails && !isLeaf
+          ? 'Mata uang/bank hanya boleh untuk kode segmen terakhir'
+          : undefined;
+      },
+    },
+    {
+      field: 'bankName',
+      label: 'Bank',
+      validate: () => {
+        if (form.bankAccountNo && !form.bankName) return 'Bank wajib diisi bila No. Rekening diisi';
+        if (form.bankName && !form.bankAccountNo) return 'No. Rekening wajib diisi bila Bank diisi';
+        return undefined;
+      },
+    },
   ]);
 };
 
@@ -216,36 +272,85 @@ export function AccountFormFields({
   onChange: (d: AccountFormData) => void;
   errors?: FormErrors<AccountFormData>;
 }) {
-  const set = (k: keyof AccountFormData, v: string | boolean) =>
-    onChange({ ...data, [k]: v });
   const format = useAccountCodeFormat();
   const codePlaceholder = format?.example ?? '1101.01.001';
-  const codeMaxLength = format?.maxLength ?? 11;
+  const codeMaxLength = format?.maxLength ?? 30;
+  const isChild = Boolean(data.parentId);
+  const isLeaf = isLeafAccountCode(data.code, format);
+  const canShowPostingDetails = data.accountKind === 'POSTABLE' && isLeaf;
+
+  const set = (k: keyof AccountFormData, v: string | boolean) => {
+    onChange({ ...data, [k]: v });
+  };
+
+  const setAccountType = (type: ErpAccountType) => {
+    onChange({ ...data, accountType: type, normalBalance: normalBalanceForAccountType(type) });
+  };
+
+  const setAccountKind = (kind: ErpAccountKind) => {
+    const patch: AccountFormData = { ...data, accountKind: kind };
+    if (kind === 'HEADER') {
+      patch.currencyId = '';
+      patch.currencyLabel = '';
+      patch.bankName = '';
+      patch.bankAccountNo = '';
+    }
+    onChange(patch);
+  };
+
+  const handleParentPick = (opt: { value: string; label: string; meta?: string }) => {
+    const parentType = opt.meta as ErpAccountType | undefined;
+    if (!parentType) return;
+    onChange({
+      ...data,
+      parentId: opt.value,
+      parentLabel: `${opt.label}`,
+      accountType: parentType,
+      normalBalance: normalBalanceForAccountType(parentType),
+    });
+  };
+
+  const clearParent = (value: string) => {
+    if (value) {
+      set('parentId', value);
+      return;
+    }
+    onChange({ ...data, parentId: '', parentLabel: '' });
+  };
 
   return (
     <div className="p-4">
+      <FormField label="Parent" htmlFor="ac-parent">
+        <SearchSelect
+          id="ac-parent"
+          placeholder="— Root —"
+          value={data.parentId}
+          initialLabel={data.parentLabel}
+          onValueChange={clearParent}
+          onPick={handleParentPick}
+          loadOptions={loadParentOptions}
+        />
+      </FormField>
       <FormField label="Kode" htmlFor="ac-code" required error={errors.code}>
         <Input id="ac-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder={codePlaceholder} aria-invalid={!!errors.code} maxLength={codeMaxLength} />
       </FormField>
       <FormField label="Nama" htmlFor="ac-name" required error={errors.name}>
-        <Input id="ac-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Cash on Hand" aria-invalid={!!errors.name} />
+        <Input id="ac-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Kas Kecil" aria-invalid={!!errors.name} />
       </FormField>
       <FormField label="Alias" htmlFor="ac-alias">
-        <Input id="ac-alias" value={data.alias} onChange={(e) => set('alias', e.target.value)} placeholder="Kas Besar" />
+        <Input id="ac-alias" value={data.alias} onChange={(e) => set('alias', e.target.value)} placeholder="Petty Cash" />
       </FormField>
       <FormField label="Tipe Akun" htmlFor="ac-type" required>
-        <Select value={data.accountType} onValueChange={(v) => {
-            const newType = v as ErpAccountType;
-            onChange({ ...data, accountType: newType, normalBalance: normalBalanceForAccountType(newType) });
-          }}>
+        <Select value={data.accountType} onValueChange={(v) => setAccountType(v as ErpAccountType)} disabled={isChild}>
           <SelectTrigger id="ac-type"><SelectValue /></SelectTrigger>
           <SelectContent>
             {ACCOUNT_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
           </SelectContent>
         </Select>
+        {isChild ? <p className="mt-1 text-xs text-muted-foreground italic">Mengikuti tipe parent.</p> : null}
       </FormField>
       <FormField label="Jenis" htmlFor="ac-kind" required>
-        <Select value={data.accountKind} onValueChange={(v) => set('accountKind', v as ErpAccountKind)}>
+        <Select value={data.accountKind} onValueChange={(v) => setAccountKind(v as ErpAccountKind)}>
           <SelectTrigger id="ac-kind"><SelectValue /></SelectTrigger>
           <SelectContent>
             {ACCOUNT_KINDS.map((k) => <SelectItem key={k} value={k}>{k}</SelectItem>)}
@@ -254,12 +359,8 @@ export function AccountFormFields({
       </FormField>
       <FormField label="Saldo Normal" htmlFor="ac-nb">
         <div className="flex items-center h-10">
-          <Badge variant={data.normalBalance === 'DEBIT' ? 'success' : 'info'}>
-            {data.normalBalance}
-          </Badge>
-          <span className="text-xs text-muted-foreground ml-3 italic">
-            * Ditentukan otomatis dari Tipe Akun
-          </span>
+          <Badge variant={data.normalBalance === 'DEBIT' ? 'success' : 'info'}>{data.normalBalance}</Badge>
+          <span className="text-xs text-muted-foreground ml-3 italic">* Ditentukan otomatis dari Tipe Akun</span>
         </div>
       </FormField>
       <FormField label="Kategori Arus Kas" htmlFor="ac-cf">
@@ -271,15 +372,34 @@ export function AccountFormFields({
           </SelectContent>
         </Select>
       </FormField>
-      <FormField label="Parent" htmlFor="ac-parent">
-        <SearchSelect
-          id="ac-parent"
-          placeholder="— Root —"
-          value={data.parentId}
-          onValueChange={(v) => set('parentId', v)}
-          loadOptions={loadParentOptions}
-        />
-      </FormField>
+
+      {canShowPostingDetails ? (
+        <div className="my-3 rounded-md border border-border bg-muted/20 p-3">
+          <p className="mb-3 text-sm font-medium text-foreground">Detail Akun Posting</p>
+          <FormField label="Mata Uang" htmlFor="ac-currency" error={errors.currencyId}>
+            <SearchSelect
+              id="ac-currency"
+              placeholder="Pilih mata uang"
+              value={data.currencyId}
+              initialLabel={data.currencyLabel}
+              onValueChange={(v) => set('currencyId', v)}
+              loadOptions={loadCurrencyOptions}
+              error={!!errors.currencyId}
+            />
+          </FormField>
+          <FormField label="Bank" htmlFor="ac-bank" error={errors.bankName}>
+            <Input id="ac-bank" value={data.bankName} onChange={(e) => set('bankName', e.target.value)} placeholder="Bank BCA" aria-invalid={!!errors.bankName} />
+          </FormField>
+          <FormField label="No. Rekening" htmlFor="ac-bank-no">
+            <Input id="ac-bank-no" value={data.bankAccountNo} onChange={(e) => set('bankAccountNo', e.target.value)} placeholder="123-456-7890" />
+          </FormField>
+        </div>
+      ) : (
+        <p className="mb-3 text-xs text-muted-foreground italic">
+          Mata uang, no. rekening, dan bank hanya tersedia untuk akun POSTABLE pada segmen kode terakhir.
+        </p>
+      )}
+
       <FormField label="Control Account" htmlFor="ac-ctrl">
         <BooleanRadio id="ac-ctrl" value={data.isControlAccount} onValueChange={(v) => set('isControlAccount', v)} trueLabel="Ya" falseLabel="Tidak" />
       </FormField>
