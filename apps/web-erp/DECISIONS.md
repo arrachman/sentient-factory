@@ -828,6 +828,31 @@ Implementasi:
 Konvensi entri: HEADER pakai trailing zero di segmen terakhir
 (`1100.00.000`); POSTABLE pakai non-zero (`1101.01.001`).
 
+### 2.24.4 CoA auto-kode sibling (increment / mulai 1) (2026-07-14)
+
+Saat **Tambah** akun di form Bagan Akun, field **Kode** diisi otomatis dengan
+cara **menyisipkan baris baru di bawah parent** dan **meneruskan format sibling**:
+
+- Ambil anak langsung parent (`listAccounts({ parentId })`; root =
+  `parentId='null'`), sort `code desc`, hitung max + step pada segmen urut.
+- Ada sibling → **increment** dengan step terinfer (GCD selisih multi, atau
+  trailing-zero single: `1100`→+100). Contoh di bawah `1000.00.000` dengan
+  `1100`/`1200`/`1300` → usul `1400.00.000`; leaf `1101.01.001`…`1110.01.001`
+  → `1111.01.001`.
+- Belum ada sibling → **mulai dari 1** pada segmen pertama setelah trailing zero
+  parent (contoh parent `1100.00.000` → `1100.01.000`; root kosong →
+  `1000.00.000`).
+- Parent dipilih ulang / dikosongkan → kode disarankan ulang. Tombol **Auto**
+  di samping field Kode memaksa re-generate (override manual).
+- Bukan transactional sequence; race dua user → backend unique `code` tetap
+  menolak. Pola mirror `lib/items-code-generator.ts`.
+
+**Implementasi FE:** `lib/accounts-code-generator.ts` (pure
+`suggestNextAccountCode` / `firstChildAccountCode` / `inferSequenceStep` +
+`generateNextAccountCode`) + wire di `components/pages/accounts-form.tsx`
+(`handleParentPick`, mount create kosong, tombol Auto). Parent option label =
+`code — name` agar parent code tersedia tanpa fetch ekstra.
+
 ---
 
 ### 2.25 Item master form redesign — quick-add + side-nav (2026-05-27)
@@ -1936,6 +1961,16 @@ keputusan backend/DB `validFrom`/`validTo` penuh. Perbaikan ikutan: rate
 memakai `NumInput` (§2.31), tampilan tanggal kurs pakai `formatDate()` dinamis
 (§2.39, sebelumnya melanggar via `slice(0, 10)`), kolom rate right-aligned
 `tabular-nums` (§2.9).
+
+**DateRangePicker: klik Mulai tidak menutup popover (2026-07-14):** bug UX di
+kalender range — klik tanggal awal langsung menutup popover sehingga user
+tidak sempat memilih tanggal akhir. Root cause: react-day-picker v9
+(`min = 0` default) mengembalikan `{ from, to }` **hari yang sama** pada
+klik pertama; `handleSelect` lama menutup popover begitu `from && to`.
+Fix di [`date-range-picker.tsx`](components/ui/date-range-picker.tsx): klik
+pertama = commit Mulai saja + popover tetap terbuka; klik kedua (hari sama
+atau beda) = commit Selesai + tutup. Berlaku di semua konsumen
+`DateRangePicker` (filter list, kurs mata uang, project, dll).
 
 ---
 
@@ -3583,3 +3618,21 @@ Saat delete/akses API 400/500 di master (contoh partner-types:
   (fallback branch) tampilkan raw message API, bukan title generik.
 
 Berlaku global untuk semua app yang pakai `createApiClient` (ERP/HR/MDP).
+
+### Stock Adjustment Types — rebrand + No Akun (2026-07-14)
+
+Master **Item Transaction Types** di-rebrand jadi **Stock Adjustment Types**
+(selaras label legacy MyERP+ "Tipe Penyesuaian Stok" / stocksadjustmenttype).
+
+- **DB:** tabel `md_item_transaction_types` → `md_stock_adjustment_types`;
+  model Prisma `ErpItemTransactionType` → `ErpStockAdjustmentType`;
+  kolom baru `account_id` (FK → `md_accounts`, POSTABLE, nullable) = **No Akun**.
+  Migrasi: `20260714_003_erp_stock_adjustment_types_rebrand`.
+- **API:** endpoint `/erp/stock-adjustment-types` (modul
+  `erp-stock-adjustment-types`); validasi akun postable di service
+  (pola Other Costs).
+- **UI:** page `stock-adjustment-types-page.tsx`, route
+  `/master/stock-adjustment-types` (alias legacy `/master/item-txn-types`
+  tetap dilayani). Form: SearchSelect CoA postable (label **No Akun**).
+- **Menu:** code `M1.REF.ITEM-TXN-TYPE` dipertahankan (stabilitas
+  `adm_role_menus`); title/path di-update lewat migrasi + seed.

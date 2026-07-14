@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import * as Popover from '@radix-ui/react-popover';
+import { isSameDay } from 'date-fns';
 import { DayPicker, type DateRange } from 'react-day-picker';
 import { id as idLocale } from 'react-day-picker/locale';
 import 'react-day-picker/style.css';
@@ -119,24 +120,59 @@ export function DateRangePicker({
   const navBounds = React.useMemo(calendarNavBounds, []);
   const [open, setOpen] = React.useState(false);
   const [month, setMonth] = React.useState<Date>(() => toDate(from) ?? new Date());
+  /**
+   * react-day-picker v9 (min=0) sets `{ from, to }` to the same day on the
+   * first click. We treat that as "start only" and keep the popover open so
+   * the user can pick the end date. Second click (same or different day)
+   * commits the full range and closes.
+   */
+  const awaitingEndRef = React.useRef(false);
 
-  // Saat popover dibuka, navigate ke bulan tanggal mulai (atau hari ini bila kosong)
+  // Saat popover dibuka, navigate ke bulan tanggal mulai (atau hari ini bila kosong).
+  // If only Mulai is already filled, stay in "awaiting end" so the next click
+  // completes the range instead of being treated as a new start.
   function handleOpenChange(next: boolean) {
-    if (next) setMonth(toDate(from) ?? new Date());
+    if (next) {
+      setMonth(toDate(from) ?? new Date());
+      awaitingEndRef.current = Boolean(from && !to);
+    }
     setOpen(next);
   }
 
   const selected: DateRange = { from: toDate(from), to: toDate(to) };
 
   function handleSelect(range: DateRange | undefined) {
-    onChangeFrom(toIso(range?.from));
-    onChangeTo(toIso(range?.to));
-    if (range?.from && range?.to) setOpen(false);
+    if (!range?.from) {
+      onChangeFrom('');
+      onChangeTo('');
+      awaitingEndRef.current = false;
+      return;
+    }
+
+    const fromDay = range.from;
+    const toDay = range.to;
+    // First click of a new range: rdp v9 (min=0) yields from===to, or only
+    // `from` when min>0. Treat both as "start only" and stay open for end.
+    const isStartOnly =
+      !toDay || (isSameDay(fromDay, toDay) && !awaitingEndRef.current);
+
+    if (isStartOnly) {
+      onChangeFrom(toIso(fromDay));
+      onChangeTo('');
+      awaitingEndRef.current = true;
+      return;
+    }
+
+    onChangeFrom(toIso(fromDay));
+    onChangeTo(toIso(toDay));
+    awaitingEndRef.current = false;
+    setOpen(false);
   }
 
   function handleClear() {
     onChangeFrom('');
     onChangeTo('');
+    awaitingEndRef.current = false;
   }
 
   return (
