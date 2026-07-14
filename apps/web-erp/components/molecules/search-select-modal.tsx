@@ -183,7 +183,7 @@ export function SearchSelectModal({
                 <span className="flex items-center gap-1"><Kbd>←</Kbd><Kbd>→</Kbd> halaman</span>
               )}
               {isMulti
-                ? <><span className="flex items-center gap-1"><Kbd>↵</Kbd> pilih</span><span className="flex items-center gap-1"><Kbd>⌘/Ctrl</Kbd><Kbd>↵</Kbd> submit</span></>
+                ? <><span className="flex items-center gap-1"><Kbd>Space</Kbd> pilih baris</span><span className="flex items-center gap-1"><Kbd>↵</Kbd> submit</span></>
                 : <span className="flex items-center gap-1"><Kbd>↵</Kbd> pilih</span>
               }
               <span className="flex items-center gap-1"><Kbd>ESC</Kbd> tutup</span>

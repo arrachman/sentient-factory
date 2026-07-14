@@ -111,7 +111,12 @@ export function useSearchSelectModalHandlers(ctx: ModalHandlersCtx) {
   };
 
   const toggleMulti = (val: string) =>
-    setLocalSelected((prev) => { const s = new Set(prev); s.has(val) ? s.delete(val) : s.add(val); return s; });
+    setLocalSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(val)) next.delete(val);
+      else next.add(val);
+      return next;
+    });
 
   const confirmRow = (opt: SearchSelectOption) => {
     if (isMulti) { toggleMulti(opt.value); return; }
@@ -176,11 +181,8 @@ export function useSearchSelectModalHandlers(ctx: ModalHandlersCtx) {
     } else if (e.key === 'Enter') {
       if (e.target instanceof HTMLButtonElement) return;
       e.preventDefault();
-      if (e.metaKey || e.ctrlKey) {
+      if (e.metaKey || e.ctrlKey || isMulti) {
         confirm();
-      } else if (isMulti) {
-        if (!tableActive || !displayOptions[focusedIdx]) return;
-        toggleMulti(displayOptions[focusedIdx].value);
       } else {
         if (!tableActive || !displayOptions[focusedIdx]) return;
         confirmRow(displayOptions[focusedIdx]);

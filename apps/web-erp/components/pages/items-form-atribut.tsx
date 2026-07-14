@@ -36,6 +36,9 @@ export function ItemAtributSection({
       </Section>
 
       <Section title="Klasifikasi Produk" hint="Atribut katalog (master data)">
+        <FormField label="Barcode" htmlFor="if-barcode">
+          <Input id="if-barcode" value={data.barcode} onChange={(e) => set('barcode', e.target.value)} placeholder="Opsional" />
+        </FormField>
         <LookupField id="if-color" label="Warna" value={data.colorId} onPick={(v) => set('colorId', v)} loader={loadColorOptions} placeholder="Pilih warna…" initialLabel={data.colorLabel} />
         <LookupField id="if-brand" label="Merk" value={data.brandId} onPick={(v) => set('brandId', v)} loader={loadBrandOptions} placeholder="Pilih merk…" initialLabel={data.brandLabel} />
         <LookupField id="if-size" label="Ukuran" value={data.sizeId} onPick={(v) => set('sizeId', v)} loader={loadSizeOptions} placeholder="Pilih ukuran…" initialLabel={data.sizeLabel} />

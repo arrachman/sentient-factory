@@ -80,7 +80,7 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
   switch (id) {
     case 'identitas':
       return (
-        <Section title="Identitas" icon="user" hint="Kode, nama, barcode, dan status item">
+        <Section title="Identitas" icon="user" hint="Kode, nama, dan status item">
           <FormField label="Kode" htmlFor="if-code" required error={errors.code}>
             <div className="flex w-full items-center gap-1.5">
               <Input id="if-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder={nextCodePreview(data.itemType)} aria-invalid={!!errors.code} />
@@ -91,9 +91,6 @@ export function SectionBody({ id, ...p }: SectionBodyProps & { id: SectionId }) 
           </FormField>
           <FormField label="Nama" htmlFor="if-name" required error={errors.name}>
             <Input id="if-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Baja Plat 2mm" aria-invalid={!!errors.name} />
-          </FormField>
-          <FormField label="Barcode" htmlFor="if-barcode">
-            <Input id="if-barcode" value={data.barcode} onChange={(e) => set('barcode', e.target.value)} placeholder="Opsional" />
           </FormField>
           <FormField label="Status" htmlFor="if-active">
             <BooleanRadio id="if-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
