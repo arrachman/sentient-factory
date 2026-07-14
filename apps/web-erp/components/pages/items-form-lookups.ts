@@ -29,6 +29,7 @@ import { listDesigners } from '@/lib/api/designers';
 import { listNozzles } from '@/lib/api/nozzles';
 import { listOems } from '@/lib/api/oems';
 import { listCurrencies } from '@/lib/api/currencies';
+import { listBanks } from '@/lib/api/banks';
 
 interface Listable { id: string; code?: string; name: string }
 type ListFn = (p: { search?: string; page: number; limit: number; isActive?: boolean }) => Promise<{ data: Listable[]; meta: { total: number } }>;
@@ -62,6 +63,7 @@ export const loadDepartmentOptions = makeLoader(listDepartments as unknown as Li
 export const loadSubDepartmentOptions = makeLoader(listSubDepartments as unknown as ListFn);
 export const loadBranchOptions = makeLoader(listBranches as unknown as ListFn);
 export const loadLocationOptions = makeLoader(listLocations as unknown as ListFn);
+export const loadBankOptions = makeLoader(listBanks as unknown as ListFn);
 export const loadItemLocationOptions = makeLoader(listStorageBins as unknown as ListFn);
 export const loadWarehouseOptions = makeLoader(listWarehouses as unknown as ListFn);
 export const loadProjectOptions = makeLoader(listProjects as unknown as ListFn);
