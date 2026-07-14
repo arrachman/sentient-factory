@@ -788,11 +788,40 @@ Backend `erp-accounts` adalah SSOT validasi hierarki:
 Field **Mata Uang**, **Bank**, dan **No. Rekening** hanya valid untuk akun di
 **segmen kode terakhir** sesuai format dinamis `sys_settings` (§2.24), yaitu
 segmen terakhir kode memiliki digit non-nol. FE menampilkan section "Detail
-Akun Posting" hanya saat `Jenis=POSTABLE` dan kode terdeteksi leaf; backend
+Akun Posting" hanya saat kode terdeteksi leaf (= POSTABLE); backend
 tetap menjadi penentu final dan menolak field tersebut pada akun non-leaf.
 `currencyId` wajib mengarah ke `md_currencies` aktif/non-deleted. Tidak ada
 migrasi DB karena `currencyId`, `bankName`, `bankAccountNo`, `level`, dan
 `parentId` sudah ada di `md_accounts`.
+
+### 2.24.3 CoA Jenis (POSTABLE/HEADER) otomatis dari kode leaf (2026-07-14)
+
+**Strict auto-kind** (opsi 1): field **Jenis** di form Bagan Akun **bukan lagi
+pilihan manual**. Backend `erp-accounts` adalah SSOT:
+
+| Kode (format dinamis `sys_settings`) | `kind` |
+| --- | --- |
+| Leaf — segmen terakhir punya digit `1–9` | `POSTABLE` |
+| Non-leaf — segmen terakhir semua `0` | `HEADER` |
+
+Aturan ini **format-agnostic**: diganti di halaman Format Kode Akun
+(`NNNN.NN.NNN`, `NNNN-NN`, compact tanpa separator, dll.) → deteksi leaf
+ikut `segments`+`separator` → POSTABLE ikut benar tanpa hardcode pattern.
+
+Implementasi:
+- Helper `accountKindFromCode(code, format)` di BE (`account-hierarchy.ts`)
+  dan FE (`accounts-form.tsx`) — mirror `isLeafAccountCode`.
+- `CreateErpAccountDto.accountKind` jadi **opsional**; service create/update
+  **selalu** menulis `kind` hasil derive (payload diabaikan).
+- Update: jika derive jadi POSTABLE tapi akun masih punya anak → ditolak
+  (`assertPostableHasNoChildren`).
+- FE: "Jenis" di-render read-only `Badge` + catatan otomatis (sama pola
+  Saldo Normal §2.24.1). Saat user mengetik kode, `accountKind` di form
+  state ikut; detail bank/mata uang tampil hanya untuk leaf.
+- `ACCOUNT_KINDS` di `lib/api/accounts.ts` tetap untuk filter list.
+
+Konvensi entri: HEADER pakai trailing zero di segmen terakhir
+(`1100.00.000`); POSTABLE pakai non-zero (`1101.01.001`).
 
 ---
 
@@ -3510,3 +3539,23 @@ Hutang** yatim di baris kedua.
   typecheck+lint bersih. (Test `__tests__/pages/partners-page.test.tsx` gagal
   pre-existing: mock `@/lib/api/partners` belum ekspor `bulkUpdatePartnerStatus`
   — di luar scope perubahan ini.)
+
+### API error toast — tampilkan `message` Nest, bukan "Bad Request" (2026-07-14)
+
+Saat delete/akses API 400/500 di master (contoh partner-types:
+`Cannot delete a protected partner type.`), toast hanya menampilkan
+"Bad Request" / statusText generik.
+
+**Akar:** `AllExceptionsFilter` Nest mengembalikan
+`{ success:false, statusCode, error: string, message: string, ... }`.
+`packages/ui-kit` `toApiError` menganggap `error` object `{ code, message }`
+→ string `"Bad Request"` jadi `error.message` undefined → fallback statusText.
+
+**Perbaikan:**
+- `packages/ui-kit/src/api/client.ts` — parse kedua envelope (Nest string
+  `error` + nested `ApiError`); prioritaskan `message` (string|string[]).
+- `apps/web-erp/lib/api/import.ts` — mirror parse yang sama.
+- `apps/web-erp/lib/error-message.ts` `toToastMessage` — untuk pesan bisnis
+  (fallback branch) tampilkan raw message API, bukan title generik.
+
+Berlaku global untuk semua app yang pakai `createApiClient` (ERP/HR/MDP).

@@ -65,11 +65,17 @@ export function presentError(raw: string): ErrorPresentation {
  * Compact one-line message for toast notifications.
  * Toast tidak punya ruang untuk deskripsi panjang — gabung title + hint
  * pendek bila ada.
+ *
+ * Prefer pesan bisnis dari API (mis. "Cannot delete a protected partner type.")
+ * daripada title generik — user harus melihat alasan 400/500 yang sebenarnya.
  */
 export function toToastMessage(raw: string): string {
-  const { title, description } = presentError(raw);
-  // Kalau description sama persis dengan raw (fallback branch),
-  // tampilkan title saja agar toast tetap pendek.
-  if (description === raw) return title;
+  const msg = (raw ?? '').trim();
+  if (!msg) return 'Terjadi kesalahan yang tidak diketahui.';
+
+  const { title, description } = presentError(msg);
+  // Fallback branch (bukan network/auth/404/5xx): description === raw message.
+  // Tampilkan pesan API apa adanya agar toast delete/validasi berguna.
+  if (description === msg) return msg;
   return `${title} · ${description}`;
 }

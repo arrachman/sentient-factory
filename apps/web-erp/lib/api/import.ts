@@ -69,15 +69,35 @@ export async function importFile(
   });
 
   if (!response.ok) {
+    // Mirror packages/ui-kit toApiError: Nest sends error as string + message at root.
     const fallbackMessage =
       response.statusText || `Impor gagal (HTTP ${response.status})`;
     let apiError: ApiError;
     try {
-      const payload = (await response.json()) as { error?: ApiError; message?: string };
-      apiError = payload.error ?? {
-        code: `HTTP_${response.status}`,
-        message: payload.message ?? fallbackMessage,
-      };
+      const payload = (await response.json()) as Record<string, unknown>;
+      const topMessage =
+        typeof payload.message === 'string'
+          ? payload.message
+          : Array.isArray(payload.message)
+            ? payload.message.filter((m): m is string => typeof m === 'string').join('; ')
+            : undefined;
+      if (payload.error && typeof payload.error === 'object') {
+        const nested = payload.error as ApiError;
+        apiError = {
+          code: nested.code || `HTTP_${response.status}`,
+          message: nested.message || topMessage || fallbackMessage,
+          details: nested.details,
+        };
+      } else {
+        apiError = {
+          code: `HTTP_${response.status}`,
+          message:
+            topMessage ||
+            (typeof payload.error === 'string' ? payload.error : undefined) ||
+            fallbackMessage,
+          details: payload.details,
+        };
+      }
     } catch {
       apiError = { code: `HTTP_${response.status}`, message: fallbackMessage };
     }

@@ -195,27 +195,88 @@ export function createApiClient(config: ApiClientConfig): ApiClient {
 
 // ─── Internal helpers ─────────────────────────────────────────────────────────
 
-/** Decode a failed Response into a SentiApiError using the { error } envelope. */
+/**
+ * Decode a failed Response into a SentiApiError.
+ *
+ * Supports both envelopes used across Senti products:
+ * 1. Nest AllExceptionsFilter:
+ *    { success: false, statusCode, error: string, message: string|string[], details? }
+ * 2. Nested ApiError object:
+ *    { error: { code, message, details? } }  or  { code, message }
+ *
+ * Prefer the human-readable `message` over HTTP status text ("Bad Request").
+ */
 async function toApiError(
   response: Response,
   fallbackMessage: string,
 ): Promise<SentiApiError> {
-  const message = response.statusText || fallbackMessage;
+  const statusFallback = response.statusText || fallbackMessage;
   let apiError: ApiError;
   try {
-    const payload = (await response.json()) as {
-      error?: ApiError;
-      message?: string;
-    };
-    const fromPayload = payload.error ?? {
-      code: `HTTP_${response.status}`,
-      message: payload.message ?? message,
-    };
-    apiError = { ...fromPayload, message: fromPayload.message || message };
+    const payload = (await response.json()) as Record<string, unknown>;
+    apiError = parseErrorPayload(payload, response.status, statusFallback);
   } catch {
-    apiError = { code: `HTTP_${response.status}`, message };
+    apiError = { code: `HTTP_${response.status}`, message: statusFallback };
   }
   return new SentiApiError(apiError);
+}
+
+/** Normalise Nest / nested / flat error JSON into { code, message, details? }. */
+function parseErrorPayload(
+  payload: Record<string, unknown>,
+  status: number,
+  statusFallback: string,
+): ApiError {
+  const topMessage = normaliseMessage(payload.message);
+  const topCode =
+    (typeof payload.code === 'string' && payload.code) ||
+    (typeof payload.statusCode === 'number' && `HTTP_${payload.statusCode}`) ||
+    `HTTP_${status}`;
+  const topDetails = payload.details;
+
+  // Nested: { error: { code, message, details? } }
+  if (payload.error && typeof payload.error === 'object') {
+    const nested = payload.error as Record<string, unknown>;
+    const nestedMessage = normaliseMessage(nested.message);
+    return {
+      code:
+        (typeof nested.code === 'string' && nested.code) ||
+        topCode,
+      message: nestedMessage || topMessage || statusFallback,
+      details: nested.details ?? topDetails,
+    };
+  }
+
+  // Nest filter: { error: "Bad Request", message: "Cannot delete…" }
+  if (typeof payload.error === 'string') {
+    return {
+      code: topCode,
+      message: topMessage || payload.error || statusFallback,
+      details: topDetails,
+    };
+  }
+
+  // Flat: { code?, message?, details? } or empty body
+  return {
+    code: topCode,
+    message: topMessage || statusFallback,
+    details: topDetails,
+  };
+}
+
+/** class-validator may return message as string[]. */
+function normaliseMessage(value: unknown): string | undefined {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed || undefined;
+  }
+  if (Array.isArray(value)) {
+    const parts = value
+      .map((v) => (typeof v === 'string' ? v.trim() : ''))
+      .filter(Boolean);
+    return parts.length ? parts.join('; ') : undefined;
+  }
+  return undefined;
 }
 
 /** Extract a filename from a Content-Disposition header, if present. */
