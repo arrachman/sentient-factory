@@ -30,7 +30,6 @@ import {
 import { MultiLookupField } from './items-form-parts';
 import {
   ACCOUNT_TYPES,
-  ACCOUNT_KINDS,
   CASH_FLOW_CATEGORIES,
   listAccounts,
   getAccountCodeFormat,
@@ -215,7 +214,8 @@ export const defaultAccountForm = (): AccountFormData => ({
   name: '',
   alias: '',
   accountType: 'ASSET',
-  accountKind: 'POSTABLE',
+  // Empty code is non-leaf until auto-suggest fills a leaf/header code.
+  accountKind: 'HEADER',
   normalBalance: 'DEBIT',
   cashFlowCategory: '',
   parentId: '',
@@ -259,14 +259,25 @@ export function fromAccount(a: ErpAccount): AccountFormData {
   };
 }
 
+function accountKindFromCode(
+  code: string,
+  format: AccountCodeFormat | null,
+): ErpAccountKind {
+  if (!format || !code) return 'HEADER';
+  return isLeafAccountCode(code, format) ? 'POSTABLE' : 'HEADER';
+}
+
 export function toAccountPayload(f: AccountFormData): CreateAccountPayload {
-  const shouldSendLeafDetails = f.accountKind === 'POSTABLE';
+  const kind = accountCodeFormatCache
+    ? accountKindFromCode(f.code, accountCodeFormatCache)
+    : f.accountKind;
+  const shouldSendLeafDetails = kind === 'POSTABLE';
   return {
     code: f.code,
     name: f.name,
     alias: f.alias || undefined,
     accountType: f.accountType,
-    accountKind: f.accountKind,
+    accountKind: kind,
     normalBalance: normalBalanceForAccountType(f.accountType),
     cashFlowCategory: (f.cashFlowCategory as ErpCashFlowCategory) || undefined,
     parentId: f.parentId || null,
@@ -361,14 +372,25 @@ export function AccountFormFields({
   const codePlaceholder = format?.example ?? '1101.01.001';
   const codeMaxLength = format?.maxLength ?? 30;
   const isChild = Boolean(data.parentId);
-  const isLeaf = isLeafAccountCode(data.code, format);
-  const canShowPostingDetails = data.accountKind === 'POSTABLE' && isLeaf;
+  const derivedKind = accountKindFromCode(data.code, format);
+  const isLeaf = derivedKind === 'POSTABLE';
+  const canShowPostingDetails = isLeaf;
   const [suggestingCode, setSuggestingCode] = React.useState(false);
   const dataRef = React.useRef(data);
   dataRef.current = data;
   const onChangeRef = React.useRef(onChange);
   onChangeRef.current = onChange;
   const suggestedForParentRef = React.useRef<string | null>(null);
+
+  const applyCode = React.useCallback((code: string, base?: AccountFormData) => {
+    const current = base ?? dataRef.current;
+    const nextKind = accountKindFromCode(code, accountCodeFormatCache);
+    const patch: AccountFormData = { ...current, code, accountKind: nextKind };
+    if (nextKind === 'HEADER') {
+      Object.assign(patch, emptyPostingDetails());
+    }
+    onChangeRef.current(patch);
+  }, []);
 
   const fillNextCode = React.useCallback(
     async (parentId: string, parentCode: string | null, base?: AccountFormData) => {
@@ -377,14 +399,13 @@ export function AccountFormFields({
       setSuggestingCode(true);
       try {
         const next = await generateNextAccountCode(parentId || null, parentCode, fmt);
-        const current = base ?? dataRef.current;
-        onChangeRef.current({ ...current, code: next });
+        applyCode(next, base);
         suggestedForParentRef.current = parentId || '__root__';
       } finally {
         setSuggestingCode(false);
       }
     },
-    [],
+    [applyCode],
   );
 
   // Create form (empty code): auto-suggest next sibling under parent / root.
@@ -395,20 +416,29 @@ export function AccountFormFields({
     void fillNextCode(data.parentId, parentCodeFromLabel(data.parentLabel), data);
   }, [format, data.code, data.parentId, data.parentLabel, data, fillNextCode]);
 
+  // When format loads after mount (or cache invalidates), re-derive kind from code.
+  React.useEffect(() => {
+    if (!data.code) return;
+    const nextKind = accountKindFromCode(data.code, format);
+    if (nextKind === data.accountKind) return;
+    const patch: AccountFormData = { ...data, accountKind: nextKind };
+    if (nextKind === 'HEADER') {
+      Object.assign(patch, emptyPostingDetails());
+    }
+    onChange(patch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- format-driven rederive only
+  }, [format]);
+
   const set = (k: keyof AccountFormData, v: string | boolean) => {
+    if (k === 'code' && typeof v === 'string') {
+      applyCode(v);
+      return;
+    }
     onChange({ ...data, [k]: v });
   };
 
   const setAccountType = (type: ErpAccountType) => {
     onChange({ ...data, accountType: type, normalBalance: normalBalanceForAccountType(type) });
-  };
-
-  const setAccountKind = (kind: ErpAccountKind) => {
-    const patch: AccountFormData = { ...data, accountKind: kind };
-    if (kind === 'HEADER') {
-      Object.assign(patch, emptyPostingDetails());
-    }
-    onChange(patch);
   };
 
   const handleParentPick = (opt: SearchSelectOption) => {
@@ -500,22 +530,13 @@ export function AccountFormFields({
           <p className="mt-1 text-xs text-muted-foreground italic">Mengikuti tipe parent.</p>
         ) : null}
       </FormField>
-      <FormField label="Jenis" htmlFor="ac-kind" required>
-        <Select
-          value={data.accountKind}
-          onValueChange={(v) => setAccountKind(v as ErpAccountKind)}
-        >
-          <SelectTrigger id="ac-kind">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ACCOUNT_KINDS.map((k) => (
-              <SelectItem key={k} value={k}>
-                {k}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <FormField label="Jenis" htmlFor="ac-kind">
+        <div className="flex items-center h-10">
+          <Badge variant={derivedKind === 'POSTABLE' ? 'success' : 'default'}>{derivedKind}</Badge>
+          <span className="text-xs text-muted-foreground ml-3 italic">
+            * Otomatis dari kode — leaf (segmen terakhir non-nol) = POSTABLE, else HEADER
+          </span>
+        </div>
       </FormField>
       <FormField label="Saldo Normal" htmlFor="ac-nb">
         <div className="flex items-center h-10">

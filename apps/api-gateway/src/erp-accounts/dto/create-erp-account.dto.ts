@@ -42,9 +42,15 @@ export class CreateErpAccountDto {
   @IsEnum(ErpAccountType)
   accountType!: ErpAccountType;
 
-  @ApiProperty({ enum: ErpAccountKind, example: ErpAccountKind.POSTABLE })
+  @ApiPropertyOptional({
+    enum: ErpAccountKind,
+    example: ErpAccountKind.POSTABLE,
+    description:
+      'Jenis akun. Opsional — backend menderivasinya dari kode: leaf (segmen terakhir ada digit 1–9) → POSTABLE; non-leaf → HEADER. Nilai payload diabaikan bila dikirim.',
+  })
+  @IsOptional()
   @IsEnum(ErpAccountKind)
-  accountKind!: ErpAccountKind;
+  accountKind?: ErpAccountKind;
 
   @ApiPropertyOptional({
     enum: ErpNormalBalance,

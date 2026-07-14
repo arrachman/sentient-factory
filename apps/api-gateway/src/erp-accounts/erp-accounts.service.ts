@@ -167,6 +167,7 @@ export class ErpAccountsService {
     const effectiveLevel = this.hierarchy.deriveLevel(parent);
 
     const isLeaf = this.hierarchy.isLeaf(dto.code, format);
+    const effectiveKind = this.hierarchy.kindFromCode(dto.code, format);
     const currencyIdBig = toOptionalBigIntId(dto.currencyId, 'currencyId');
     const bankIdBig = toOptionalBigIntId(dto.bankId, 'bankId');
     const hasDetails = Boolean(
@@ -177,7 +178,7 @@ export class ErpAccountsService {
     );
     this.hierarchy.assertLeafDetails(hasDetails, isLeaf);
 
-    if (currencyIdBig) {
+    if (currencyIdBig && isLeaf) {
       await this.hierarchy.validateCurrency(currencyIdBig);
     }
     if (bankIdBig && isLeaf) {
@@ -196,7 +197,7 @@ export class ErpAccountsService {
           name: dto.name,
           alias: dto.alias,
           type: effectiveType,
-          kind: dto.accountKind,
+          kind: effectiveKind,
           normalBalance: this.hierarchy.normalBalanceOf(effectiveType),
           cashFlowCategory: dto.cashFlowCategory,
           parentId: parent ? parent.id : null,
@@ -348,15 +349,14 @@ export class ErpAccountsService {
       ? this.hierarchy.assertTypeMatchesParent(dto.accountType, parentForType.type)
       : dto.accountType ?? existing.type;
 
-    const effectiveKind: ErpAccountKind = dto.accountKind ?? existing.kind;
-    if (dto.accountKind && dto.accountKind !== existing.kind) {
-      const childCount = await this.hierarchy.countChildren(id);
-      this.hierarchy.assertPostableHasNoChildren(dto.accountKind, childCount);
-    }
-
-    // Leaf check uses the effective code (new or existing) + active format.
+    // Leaf + kind derived from effective code (new or existing) + active format.
     const effectiveCode = dto.code ?? existing.code;
     const isLeaf = this.hierarchy.isLeaf(effectiveCode, format);
+    const effectiveKind = this.hierarchy.kindFromCode(effectiveCode, format);
+    if (effectiveKind === ErpAccountKind.POSTABLE) {
+      const childCount = await this.hierarchy.countChildren(id);
+      this.hierarchy.assertPostableHasNoChildren(effectiveKind, childCount);
+    }
 
     const currencyIdBig = toOptionalBigIntId(dto.currencyId, 'currencyId');
     const bankIdBig = toOptionalBigIntId(dto.bankId, 'bankId');
@@ -398,7 +398,7 @@ export class ErpAccountsService {
           name: dto.name,
           alias: dto.alias,
           type: effectiveType,
-          kind: dto.accountKind,
+          kind: effectiveKind,
           normalBalance: this.hierarchy.normalBalanceOf(effectiveType),
           cashFlowCategory: dto.cashFlowCategory,
           parentId: parentIdEffective,

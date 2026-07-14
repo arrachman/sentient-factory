@@ -98,7 +98,8 @@ export interface CreateAccountPayload {
   name: string;
   alias?: string;
   accountType: ErpAccountType;
-  accountKind: ErpAccountKind;
+  /** Opsional — backend menderivasi dari kode leaf (POSTABLE) / non-leaf (HEADER). */
+  accountKind?: ErpAccountKind;
   normalBalance?: ErpNormalBalance;
   cashFlowCategory?: ErpCashFlowCategory;
   parentId?: string | null;

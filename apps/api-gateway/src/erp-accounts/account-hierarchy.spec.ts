@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import {
+  accountKindFromCode,
   isLeafAccountCode,
   normalBalanceForAccountType,
   toBigIntId,
@@ -23,10 +24,17 @@ describe('account hierarchy helpers', () => {
     expect(isLeafAccountCode('1101.01.001', format)).toBe(true);
   });
 
+  it('derives account kind strictly from leaf code', () => {
+    expect(accountKindFromCode('1100.00.000', format)).toBe('HEADER');
+    expect(accountKindFromCode('1101.01.001', format)).toBe('POSTABLE');
+  });
+
   it('supports code formats without separators', () => {
     const compact = buildAccountCodeFormat([1, 2, 3], '');
     expect(isLeafAccountCode('100000', compact)).toBe(false);
     expect(isLeafAccountCode('101001', compact)).toBe(true);
+    expect(accountKindFromCode('100000', compact)).toBe('HEADER');
+    expect(accountKindFromCode('101001', compact)).toBe('POSTABLE');
   });
 
   it('parses numeric string IDs and rejects invalid IDs', () => {

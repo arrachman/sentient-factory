@@ -38,6 +38,14 @@ export function isLeafAccountCode(code: string, format: AccountCodeFormat): bool
   return /[1-9]/.test(last);
 }
 
+/** Strict CoA: leaf code → POSTABLE, non-leaf (trailing-zero last segment) → HEADER. */
+export function accountKindFromCode(
+  code: string,
+  format: AccountCodeFormat,
+): 'HEADER' | 'POSTABLE' {
+  return isLeafAccountCode(code, format) ? 'POSTABLE' : 'HEADER';
+}
+
 function splitAccountCode(code: string, format: AccountCodeFormat): string[] {
   if (format.separator) return code.split(format.separator);
 

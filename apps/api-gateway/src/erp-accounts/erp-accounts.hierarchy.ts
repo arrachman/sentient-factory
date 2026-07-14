@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ErpAccountType } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  accountKindFromCode,
   isLeafAccountCode,
   normalBalanceForAccountType,
 } from './account-hierarchy';
@@ -121,6 +122,10 @@ export class ErpAccountsHierarchy {
 
   isLeaf(code: string, format: AccountCodeFormat): boolean {
     return isLeafAccountCode(code, format);
+  }
+
+  kindFromCode(code: string, format: AccountCodeFormat): 'HEADER' | 'POSTABLE' {
+    return accountKindFromCode(code, format);
   }
 
   normalBalanceOf(type: ErpAccountType) {
