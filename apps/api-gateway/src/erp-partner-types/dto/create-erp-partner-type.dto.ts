@@ -13,9 +13,15 @@ export class CreateErpPartnerTypeDto {
   @MaxLength(150)
   name!: string;
 
-  @ApiProperty({ enum: ErpPartnerTypeKind, example: ErpPartnerTypeKind.CUSTOMER })
+  /** Optional; server always derives kind from `code` (CUST/SUP/SLS → role, else GENERAL). */
+  @ApiPropertyOptional({
+    enum: ErpPartnerTypeKind,
+    example: ErpPartnerTypeKind.CUSTOMER,
+    description: 'Ignored if sent — kind is derived from code',
+  })
+  @IsOptional()
   @IsEnum(ErpPartnerTypeKind)
-  kind!: ErpPartnerTypeKind;
+  kind?: ErpPartnerTypeKind;
 
   @ApiPropertyOptional({ example: true, default: true })
   @IsOptional()

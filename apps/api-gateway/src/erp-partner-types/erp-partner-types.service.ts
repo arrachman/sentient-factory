@@ -9,6 +9,15 @@ import { UpdateErpPartnerTypeDto } from './dto/update-erp-partner-type.dto';
 
 const PROTECTED_CODES = ['CUST', 'SUP', 'SLS'];
 
+/** System kind is derived from protected codes — not client-editable. */
+function deriveKindFromCode(code: string): 'CUSTOMER' | 'SUPPLIER' | 'SALESMAN' | 'GENERAL' {
+  const key = code.trim().toUpperCase();
+  if (key === 'CUST') return 'CUSTOMER';
+  if (key === 'SUP') return 'SUPPLIER';
+  if (key === 'SLS') return 'SALESMAN';
+  return 'GENERAL';
+}
+
 @Injectable()
 export class ErpPartnerTypesService {
   constructor(private readonly prisma: PrismaService) {}
@@ -27,6 +36,7 @@ export class ErpPartnerTypesService {
     }
 
     const actorBigInt = actorId ? BigInt(actorId) : null;
+    const kind = deriveKindFromCode(dto.code);
 
     let created;
     try {
@@ -34,7 +44,7 @@ export class ErpPartnerTypesService {
         data: {
           code: dto.code,
           name: dto.name,
-          kind: dto.kind,
+          kind,
           isActive: dto.isActive ?? true,
           createdById: actorBigInt,
           updatedById: actorBigInt,
@@ -132,6 +142,8 @@ export class ErpPartnerTypesService {
     }
 
     const actorBigInt = actorId ? BigInt(actorId) : null;
+    const nextCode = dto.code ?? existing.code;
+    const kind = deriveKindFromCode(nextCode);
 
     let updated;
     try {
@@ -140,7 +152,7 @@ export class ErpPartnerTypesService {
         data: {
           code: dto.code,
           name: dto.name,
-          kind: dto.kind,
+          kind,
           isActive: dto.isActive,
           updatedById: actorBigInt,
         },

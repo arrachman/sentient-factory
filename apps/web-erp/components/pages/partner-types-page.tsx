@@ -3,13 +3,6 @@
 import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { BooleanRadio } from '@/components/ui/radio-group';
 import { SimpleMasterPage, type ExtraFilterDef } from '@/components/organisms/simple-master-page';
 import {
@@ -21,8 +14,8 @@ import {
   bulkDeleteErpPartnerTypes,
   PARTNER_TYPE_KINDS,
   PARTNER_TYPE_KIND_LABEL,
+  derivePartnerTypeKindFromCode,
   type ErpPartnerType,
-  type ErpPartnerTypeKind,
   type CreatePartnerTypePayload,
 } from '@/lib/api/partner-types';
 import { validateForm, type FormErrors } from '@/lib/form-validation';
@@ -32,28 +25,25 @@ const PROTECTED_CODES = ['CUST', 'SUP', 'SLS'];
 interface FormData {
   code: string;
   name: string;
-  kind: ErpPartnerTypeKind;
   isActive: boolean;
 }
 
 const defaultForm = (): FormData => ({
   code: '',
   name: '',
-  kind: 'CUSTOMER',
   isActive: true,
 });
 
 const fromRecord = (r: ErpPartnerType): FormData => ({
   code: r.code,
   name: r.name,
-  kind: r.kind,
   isActive: r.isActive,
 });
 
 const toPayload = (f: FormData): CreatePartnerTypePayload => ({
   code: f.code,
   name: f.name,
-  kind: f.kind,
+  kind: derivePartnerTypeKindFromCode(f.code),
   isActive: f.isActive,
 });
 
@@ -61,7 +51,6 @@ const validatePartnerType = (form: FormData) =>
   validateForm(form, [
     { field: 'code', label: 'Kode', required: true },
     { field: 'name', label: 'Nama', required: true },
-    { field: 'kind', label: 'Jenis', required: true },
   ]);
 
 function FormFields({ data, onChange, errors = {}, isProtected = false }: { data: FormData; onChange: (d: FormData) => void; errors?: FormErrors<FormData>; isProtected?: boolean }) {
@@ -87,18 +76,6 @@ function FormFields({ data, onChange, errors = {}, isProtected = false }: { data
       )}
       <FormField label="Nama" htmlFor="pt-name" required error={errors.name}>
         <Input id="pt-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="Customer" aria-invalid={!!errors.name} />
-      </FormField>
-      <FormField label="Jenis" htmlFor="pt-kind" required error={errors.kind}>
-        <Select value={data.kind} onValueChange={(v) => set('kind', v as ErpPartnerTypeKind)} disabled={isProtected}>
-          <SelectTrigger id="pt-kind" aria-invalid={!!errors.kind}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {PARTNER_TYPE_KINDS.map((k) => (
-              <SelectItem key={k} value={k}>{PARTNER_TYPE_KIND_LABEL[k]}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </FormField>
       <FormField label="Status" htmlFor="pt-active">
         <BooleanRadio id="pt-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
@@ -157,7 +134,7 @@ export function ErpPartnerTypesPage() {
           key: 'protected',
           label: '',
           render: (row) => PROTECTED_CODES.includes(row.code)
-            ? <span title="Terkunci — kode & jenis tidak bisa diubah, tidak bisa dihapus" className="text-amber-600 text-[11px] font-medium">🔒 Terkunci</span>
+            ? <span title="Terkunci — kode tidak bisa diubah, tidak bisa dihapus" className="text-amber-600 text-[11px] font-medium">🔒 Terkunci</span>
             : null,
         },
       ]}

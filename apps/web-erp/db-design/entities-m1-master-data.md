@@ -272,14 +272,15 @@ Semua FK intra-domain `md` ditegakkan (named `@relation` + back-pointer di paren
 | id | BigInt PK | |
 | code 🔑 | String unique | e.g. `CUST`, `SUP`, `SLS`, `GEN` |
 | name | String | display label (Customer, Supplier, Salesman, General) |
-| kind ◆ | `PartnerTypeKind` | CUSTOMER/SUPPLIER/SALESMAN/GENERAL — drives lookup filtering |
+| kind ◆ | `PartnerTypeKind` | CUSTOMER/SUPPLIER/SALESMAN/GENERAL — **derived from code** (`CUST`→CUSTOMER, `SUP`→SUPPLIER, `SLS`→SALESMAN, else GENERAL); not a form input; drives lookup filtering |
 | isActive | Boolean | |
 
 > **✅ IMPLEMENTED 2026-07-11** — `Tipe Partner` yang sebelumnya hardcoded di UI
 > dan disimpan sebagai 3 boolean `isCustomer/isSupplier/isSalesman` kini menjadi
 > master data `md_partner_types` + FK tunggal `md_partners.partner_type_id`.
 > Keputusan user: 1 partner = 1 tipe; lookup Customer/Supplier/Salesman filter
-> via `partnerType.kind`.
+> via `partnerType.kind`. **Update 2026-07-14:** form tidak input `kind`; server
+> derive dari `code`.
 
 ### Partner  → `md_partners`  (legacy `m1_contact` — normalized)
 

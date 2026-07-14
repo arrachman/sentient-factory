@@ -26,6 +26,19 @@ export const PARTNER_TYPE_KIND_LABEL: Record<ErpPartnerTypeKind, string> = {
   GENERAL: 'General',
 };
 
+/** System kind is derived from protected codes — not user-editable. */
+const CODE_TO_KIND: Record<string, ErpPartnerTypeKind> = {
+  CUST: 'CUSTOMER',
+  SUP: 'SUPPLIER',
+  SLS: 'SALESMAN',
+};
+
+/** Map partner-type `code` → system `kind`. Unknown codes → GENERAL. */
+export function derivePartnerTypeKindFromCode(code: string): ErpPartnerTypeKind {
+  const key = code.trim().toUpperCase();
+  return CODE_TO_KIND[key] ?? 'GENERAL';
+}
+
 export interface ErpPartnerType {
   id: string;
   code: string;

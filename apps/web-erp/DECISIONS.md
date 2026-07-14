@@ -23,6 +23,11 @@ peran untuk filter lookup Customer/Supplier/Salesman di sales/purchase/inventory
 form Partner. `md_partner_categories` tetap terpisah sebagai kategori/sub-segmen
 partner (termasuk `salesTier`) — tipe ≠ kategori.
 
+**Update 2026-07-14:** field input **Jenis/kind di form dihapus**. `kind` **di-derive
+otomatis dari `code`** (server + FE payload): `CUST` → `CUSTOMER`, `SUP` → `SUPPLIER`,
+`SLS` → `SALESMAN`, kode lain → `GENERAL`. Kolom list/filter Kind tetap (read-only
+display). Client `kind` di body create/update diabaikan.
+
 ---
 
 ### Master Data Finance — Other Costs default GL + HPP flag (2026-07-14)
