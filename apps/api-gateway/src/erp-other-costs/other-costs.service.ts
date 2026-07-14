@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { ErpAccountKind, Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
 import { PrismaService } from '../prisma/prisma.service';
 import { ErpAuditService } from '../erp-audit/erp-audit.service';
@@ -14,6 +14,17 @@ const FIELD_LABEL = 'Other Cost code';
 const UNIQUE_KEY = 'md_other_costs_code_key';
 const LABEL_ID = 'Biaya Lain';
 
+export interface AccountSummary {
+  id: bigint;
+  code: string;
+  name: string;
+}
+
+interface AccountBackedOtherCost {
+  debitAccountId: bigint | null;
+  creditAccountId: bigint | null;
+}
+
 @Injectable()
 export class ErpOtherCostsService {
   constructor(
@@ -21,17 +32,94 @@ export class ErpOtherCostsService {
     private readonly audit: ErpAuditService,
   ) {}
 
+  private parseRequiredAccountId(value: string | bigint | null | undefined, message: string) {
+    if (value === null || value === undefined || value === '') {
+      throw new BadRequestException(message);
+    }
+
+    try {
+      return typeof value === 'bigint' ? value : BigInt(value);
+    } catch {
+      throw new BadRequestException(message);
+    }
+  }
+
+  private async assertPostableAccount(id: bigint, label: string) {
+    const account = await this.prisma.erpAccount.findFirst({
+      where: {
+        id,
+        deletedAt: null,
+        isActive: true,
+        kind: ErpAccountKind.POSTABLE,
+      },
+      select: { id: true },
+    });
+
+    if (!account) {
+      throw new BadRequestException(`${label} tidak valid atau bukan akun postable`);
+    }
+  }
+
+  private async prepareAccountIds(
+    dto: CreateErpOtherCostDto | UpdateErpOtherCostDto,
+    existing?: { debitAccountId: bigint | null; creditAccountId: bigint | null; isHPP: boolean },
+  ) {
+    const isHPP = dto.isHPP ?? existing?.isHPP ?? false;
+    const debitSource = dto.debitAccountId !== undefined ? dto.debitAccountId : existing?.debitAccountId;
+    const creditSource = dto.creditAccountId !== undefined ? dto.creditAccountId : existing?.creditAccountId;
+    const debitAccountId = isHPP
+      ? null
+      : this.parseRequiredAccountId(debitSource, 'Akun debit wajib diisi');
+    const creditAccountId = this.parseRequiredAccountId(creditSource, 'Akun kredit wajib diisi');
+
+    if (debitAccountId) {
+      await this.assertPostableAccount(debitAccountId, 'Akun debit');
+    }
+    await this.assertPostableAccount(creditAccountId, 'Akun kredit');
+
+    return { debitAccountId, creditAccountId, isHPP };
+  }
+
+  private async withAccounts<T extends AccountBackedOtherCost>(items: T[]) {
+    const ids = Array.from(new Set(
+      items.flatMap((item) => [item.debitAccountId, item.creditAccountId])
+        .filter((id): id is bigint => id !== null)
+        .map((id) => id.toString()),
+    )).map((id) => BigInt(id));
+
+    if (ids.length === 0) {
+      return items.map((item) => ({ ...item, debitAccount: null, creditAccount: null }));
+    }
+
+    const accounts = await this.prisma.erpAccount.findMany({
+      where: { id: { in: ids }, deletedAt: null },
+      select: { id: true, code: true, name: true },
+    });
+    const accountMap = new Map<string, AccountSummary>(
+      accounts.map((account) => [account.id.toString(), account]),
+    );
+
+    return items.map((item) => ({
+      ...item,
+      debitAccount: item.debitAccountId ? accountMap.get(item.debitAccountId.toString()) ?? null : null,
+      creditAccount: item.creditAccountId ? accountMap.get(item.creditAccountId.toString()) ?? null : null,
+    }));
+  }
+
   async create(dto: CreateErpOtherCostDto, actorId?: string) {
     const existing = await this.prisma.erpOtherCost.findFirst({ where: { code: dto.code }, select: { id: true, deletedAt: true } });
     if (existing) throwDuplicate({ fieldLabel: FIELD_LABEL, value: dto.code, isSoftDeleted: Boolean(existing.deletedAt) });
     const actorBigInt = actorId ? BigInt(actorId) : null;
+    const accountIds = await this.prepareAccountIds(dto);
     let created;
     try {
       created = await this.prisma.erpOtherCost.create({
         data: {
           code: dto.code,
           name: dto.name,
-
+          debitAccountId: accountIds.debitAccountId,
+          creditAccountId: accountIds.creditAccountId,
+          isHPP: accountIds.isHPP,
           isActive: dto.isActive ?? true,
           createdById: actorBigInt,
           updatedById: actorBigInt,
@@ -47,7 +135,8 @@ export class ErpOtherCostsService {
       action: 'CREATE', entityName: ENTITY, entityId: created.id,
       summary: `${LABEL_ID} ${created.code} dibuat`, actorId: actorBigInt ?? undefined,
     });
-    return { success: true, data: created };
+    const [data] = await this.withAccounts([created]);
+    return { success: true, data };
   }
 
   async findAll(query: QueryErpOtherCostDto) {
@@ -69,13 +158,15 @@ export class ErpOtherCostsService {
       this.prisma.erpOtherCost.findMany({ where, orderBy: [{ [sortBy]: sortDir }], skip, take: limit }),
       this.prisma.erpOtherCost.count({ where }),
     ]);
-    return { success: true, data: items, meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 } };
+    const data = await this.withAccounts(items);
+    return { success: true, data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 } };
   }
 
   async findOne(id: bigint) {
     const item = await this.prisma.erpOtherCost.findFirst({ where: { id, deletedAt: null } });
     if (!item) throw new NotFoundException(`${ENTITY} not found`);
-    return { success: true, data: item };
+    const [data] = await this.withAccounts([item]);
+    return { success: true, data };
   }
 
   async update(id: bigint, dto: UpdateErpOtherCostDto, actorId?: string) {
@@ -86,6 +177,7 @@ export class ErpOtherCostsService {
       if (duplicate) throwDuplicate({ fieldLabel: FIELD_LABEL, value: dto.code, isSoftDeleted: Boolean(duplicate.deletedAt) });
     }
     const actorBigInt = actorId ? BigInt(actorId) : null;
+    const accountIds = await this.prepareAccountIds(dto, existing);
     let updated;
     try {
       updated = await this.prisma.erpOtherCost.update({
@@ -93,7 +185,9 @@ export class ErpOtherCostsService {
         data: {
           code: dto.code,
           name: dto.name,
-
+          debitAccountId: accountIds.debitAccountId,
+          creditAccountId: accountIds.creditAccountId,
+          isHPP: accountIds.isHPP,
           isActive: dto.isActive,
           updatedById: actorBigInt,
         },
@@ -109,7 +203,8 @@ export class ErpOtherCostsService {
       action: 'UPDATE', entityName: ENTITY, entityId: id, changes,
       summary: `${LABEL_ID} ${updated.code} diperbarui`, actorId: actorBigInt ?? undefined,
     });
-    return { success: true, data: updated };
+    const [data] = await this.withAccounts([updated]);
+    return { success: true, data };
   }
 
   async bulkUpdateStatus(dto: BulkStatusErpOtherCostDto, actorId?: string) {

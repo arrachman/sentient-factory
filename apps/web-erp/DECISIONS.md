@@ -25,6 +25,22 @@ partner (termasuk `salesTier`) — tipe ≠ kategori.
 
 ---
 
+### Master Data Finance — Other Costs default GL + HPP flag (2026-07-14)
+
+Other Costs (`md_other_costs`, `/master/other-costs`) sekarang menyimpan default
+akun GL: **Akun Debit** dan **Akun Kredit**. Kedua picker wajib mengambil CoA
+**level terakhir / `POSTABLE`** saja; akun `HEADER` tidak boleh dipakai untuk
+posting default. Akun Kredit selalu wajib.
+
+`isHPP` menandai biaya lain yang debit-nya **dialokasikan proporsional ke barang
+transaksi**, bukan ke satu akun debit statis. Saat `isHPP=true`, field Akun Debit
+di form master dinonaktifkan dan disimpan `null`; Akun Kredit tetap wajib. Saat
+`isHPP=false`, Akun Debit dan Akun Kredit sama-sama wajib. Logika alokasi
+proporsional ke barang (purchase/sales posting) adalah follow-up di modul
+transaksi, bukan di master ini.
+
+---
+
 ### Report Engine — Custom PDF Report Engine (2026-06-06)
 
 Keputusan: Senti ERP membangun **custom report engine sendiri** — tanpa 3rd-party

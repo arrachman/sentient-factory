@@ -149,7 +149,7 @@ export function PartnerAddressFormFields({
           value={draft.areaId}
           onValueChange={(v) => setD('areaId', v)}
           onPick={(opt) => {
-            setDraft((d) => ({ ...d, areaId: opt.value, subAreaId: '', postalCode: opt.meta || d.postalCode }));
+            setDraft((d) => ({ ...d, areaId: opt.value, subAreaId: '', postalCode: opt.meta ? String(opt.meta) : d.postalCode }));
             setTimeout(() => document.getElementById('pa-subarea')?.focus(), 0);
           }}
           loadOptions={areaLoader}
@@ -166,7 +166,7 @@ export function PartnerAddressFormFields({
           value={draft.subAreaId}
           onValueChange={(v) => setD('subAreaId', v)}
           onPick={(opt) => {
-            setDraft((d) => ({ ...d, subAreaId: opt.value, postalCode: opt.meta || d.postalCode }));
+            setDraft((d) => ({ ...d, subAreaId: opt.value, postalCode: opt.meta ? String(opt.meta) : d.postalCode }));
           }}
           loadOptions={subAreaLoader}
           placeholder="Pilih kelurahan…"

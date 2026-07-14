@@ -81,6 +81,19 @@ export const loadAccountOptionsCoded = async (search: string, page: number, limi
   };
 };
 
+export const loadPostableAccountOptionsCoded = async (search: string, page: number, limit: number) => {
+  const res = await listAccounts({
+    search: search || undefined,
+    page,
+    limit,
+    isActive: true,
+    accountKind: 'POSTABLE',
+  });
+  return {
+    data: res.data.map((x) => ({ value: x.id, label: x.name, code: x.code })),
+    total: res.meta.total,
+  };
+};
 
 export const loadTaxOptions = makeLoader(listTaxes as unknown as ListFn);
 export const loadPartnerOptions = makeLoader(listPartners as unknown as ListFn);

@@ -133,6 +133,9 @@
   keputusan 2026-05-17).
 - Taxes: punya FK ke akun GL sale & purchase.
 - Payment Terms: tiered discount (discountPercent1/2, discountDays1/2) + penalty.
+- Other Costs: default Akun Debit + Akun Kredit (CoA `POSTABLE`), plus flag `isHPP`.
+  `isHPP=true` menonaktifkan Akun Debit karena debit dialokasikan proporsional ke barang
+  oleh modul transaksi; Akun Kredit tetap wajib.
 
 ---
 

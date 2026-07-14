@@ -459,6 +459,21 @@ Relations: self `parent`/`children`, `currency`.
 | penaltyPeriod ○ | String | per day/month (`trdendaper`) |
 | isActive | Boolean | `traktif` |
 
+### OtherCost  → `md_other_costs`  (legacy finance master "Other Cost")
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| id | BigInt PK | |
+| code 🔑 | String unique | semantic other-cost code |
+| name | String | display name |
+| debitAccountId ○ ➜ | BigInt → Account | default debit GL; required when `isHPP=false`; POSTABLE only |
+| creditAccountId ➜ | BigInt → Account | default credit GL; always required by API/UI; POSTABLE only |
+| isHPP | Boolean | true = debit allocated proportionally to transaction items; debit account stored null |
+| isActive | Boolean | |
+
+> `isHPP=true` is a master-data flag only; proportional allocation is performed
+> by transaction posting modules (purchase/sales follow-up), not by this master.
+
 ---
 
 ## Geographic Reference (`md_*`)
@@ -543,8 +558,8 @@ Relations: `area Area`.
 
 ---
 
-**Count:** 18 Master Data (`md_*`) core entities (3 org, 3 items, 6 partner, 5 finance¹ + ItemCategory/Unit).
-¹ finance = Currency, **CurrencyRate**, Account, Tax, PaymentTerm.
-Combined MVP total = **32 tables** (14 Administrator `sys_*`/`adm_*` + 18 `md_*`).
+**Count:** 19 Master Data (`md_*`) core entities (3 org, 3 items, 6 partner, 6 finance¹ + ItemCategory/Unit).
+¹ finance = Currency, **CurrencyRate**, Account, Tax, PaymentTerm, OtherCost.
+Combined MVP total = **33 tables** (14 Administrator `sys_*`/`adm_*` + 19 `md_*`).
 Geographic reference (4 tabel: Country, Province, City, Area) ditambahkan via §2.18 batch.
 Legacy field-mapping appendix: **[legacy-mapping.md](legacy-mapping.md)**.

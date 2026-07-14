@@ -2,11 +2,21 @@
 import { apiGet, apiPost, apiPatch, apiDelete } from './client';
 import type { ApiResponse, PaginatedResponse, PaginationParams } from './types';
 
+export interface OtherCostAccountSummary {
+  id: string;
+  code: string;
+  name: string;
+}
+
 export interface ErpOtherCost {
   id: string;
   code: string;
   name: string;
-
+  debitAccountId?: string | null;
+  creditAccountId?: string | null;
+  debitAccount?: OtherCostAccountSummary | null;
+  creditAccount?: OtherCostAccountSummary | null;
+  isHPP: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -15,7 +25,9 @@ export interface ErpOtherCost {
 export interface CreateErpOtherCostPayload {
   code: string;
   name: string;
-
+  debitAccountId?: string | null;
+  creditAccountId?: string | null;
+  isHPP?: boolean;
   isActive?: boolean;
 }
 

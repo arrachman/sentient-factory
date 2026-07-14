@@ -777,6 +777,8 @@ model ErpAccount {
   taxPurchase             ErpTax[]          @relation("TaxPurchaseAcct")
   partnerReceivable       ErpPartner[]      @relation("PartnerReceivableAcct")
   partnerPayable          ErpPartner[]      @relation("PartnerPayableAcct")
+  otherCostDebit          ErpOtherCost[]    @relation("OtherCostDebitAcct")
+  otherCostCredit         ErpOtherCost[]    @relation("OtherCostCreditAcct")
 
   @@index([parentId])
   @@index([currencyId])
@@ -1178,18 +1180,26 @@ model ErpExpedition {
 }
 
 model ErpOtherCost {
-  id          BigInt    @id @default(autoincrement())
-  code        String    @unique @map("code")
-  name        String    @map("name")
-  isActive    Boolean   @default(true) @map("is_active")
-  legacyCode  String?   @map("legacy_code")
-  metadata    Json?     @map("metadata")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById BigInt?   @map("created_by_id")
-  updatedById BigInt?   @map("updated_by_id")
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  id              BigInt    @id @default(autoincrement())
+  code            String    @unique @map("code")
+  name            String    @map("name")
+  debitAccountId  BigInt?   @map("debit_account_id") // FK -> md_accounts (POSTABLE), nullable when isHPP=true
+  creditAccountId BigInt?   @map("credit_account_id") // FK -> md_accounts (POSTABLE)
+  isHPP           Boolean   @default(false) @map("is_hpp")
+  isActive        Boolean   @default(true) @map("is_active")
+  legacyCode      String?   @map("legacy_code")
+  metadata        Json?     @map("metadata")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById     BigInt?   @map("created_by_id")
+  updatedById     BigInt?   @map("updated_by_id")
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
 
+  debitAccount  ErpAccount? @relation("OtherCostDebitAcct", fields: [debitAccountId], references: [id])
+  creditAccount ErpAccount? @relation("OtherCostCreditAcct", fields: [creditAccountId], references: [id])
+
+  @@index([debitAccountId])
+  @@index([creditAccountId])
   @@index([legacyCode])
   @@map("md_other_costs")
 }
