@@ -45,11 +45,10 @@ function enabledDays(): HTMLElement[] {
 
 describe('DateRangePicker range UX', () => {
   beforeEach(() => {
-    // Ensure a stable portal host for Radix
     document.body.innerHTML = '';
   });
 
-  it('keeps popover open after start date; closes after end date', async () => {
+  it('keeps popover open after picking start and end; commits only on Terapkan', async () => {
     render(<Harness />);
     openCalendar();
 
@@ -65,42 +64,60 @@ describe('DateRangePicker range UX', () => {
     expect(start).not.toBe(end);
 
     fireEvent.click(start);
-
-    // Start committed, end still empty, calendar still open
-    await waitFor(() => {
-      expect(screen.getByTestId('from').textContent).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    });
-    expect(screen.getByTestId('to').textContent).toBe('');
-    expect(enabledDays().length).toBeGreaterThan(0);
-
     fireEvent.click(end);
 
+    // Draft only — committed props still empty until Terapkan
+    expect(screen.getByTestId('from').textContent).toBe('');
+    expect(screen.getByTestId('to').textContent).toBe('');
+    // Calendar stays open
+    expect(enabledDays().length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Terapkan' }));
+
     await waitFor(() => {
+      expect(screen.getByTestId('from').textContent).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(screen.getByTestId('to').textContent).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
-    // Popover closes once both ends are set
+    // Popover closes after apply
     await waitFor(() => {
       expect(dayButtons().length).toBe(0);
     });
   });
 
-  it('allows same-day range on second click of the start date', async () => {
+  it('allows same-day range: second click on start, then Terapkan', async () => {
     render(<Harness />);
     openCalendar();
     await waitFor(() => expect(enabledDays().length).toBeGreaterThan(10));
 
     const day = enabledDays()[5];
     fireEvent.click(day);
-    await waitFor(() => {
-      expect(screen.getByTestId('from').textContent).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-    });
-    expect(screen.getByTestId('to').textContent).toBe('');
-
     fireEvent.click(day);
+
+    // Still draft
+    expect(screen.getByTestId('from').textContent).toBe('');
+    fireEvent.click(screen.getByRole('button', { name: 'Terapkan' }));
+
     await waitFor(() => {
-      expect(screen.getByTestId('to').textContent).toBe(
-        screen.getByTestId('from').textContent,
-      );
+      const from = screen.getByTestId('from').textContent;
+      const to = screen.getByTestId('to').textContent;
+      expect(from).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+      expect(to).toBe(from);
     });
+  });
+
+  it('does not commit draft until Terapkan is clicked', async () => {
+    render(<Harness />);
+    openCalendar();
+    await waitFor(() => expect(enabledDays().length).toBeGreaterThan(10));
+
+    fireEvent.click(enabledDays()[5]);
+    fireEvent.click(enabledDays()[10]);
+
+    // After both day clicks, committed props remain empty (draft only)
+    expect(screen.getByTestId('from').textContent).toBe('');
+    expect(screen.getByTestId('to').textContent).toBe('');
+    // Popover still open with Terapkan available
+    expect(screen.getByRole('button', { name: 'Terapkan' })).toBeInTheDocument();
+    expect(enabledDays().length).toBeGreaterThan(0);
   });
 });

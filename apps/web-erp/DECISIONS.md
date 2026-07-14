@@ -1980,9 +1980,13 @@ kalender range — klik tanggal awal langsung menutup popover sehingga user
 tidak sempat memilih tanggal akhir. Root cause: react-day-picker v9
 (`min = 0` default) mengembalikan `{ from, to }` **hari yang sama** pada
 klik pertama; `handleSelect` lama menutup popover begitu `from && to`.
-Fix di [`date-range-picker.tsx`](components/ui/date-range-picker.tsx): klik
-pertama = commit Mulai saja + popover tetap terbuka; klik kedua (hari sama
-atau beda) = commit Selesai + tutup. Berlaku di semua konsumen
+Fix awal: klik pertama = start saja, klik kedua = end + tutup.
+
+**DateRangePicker: tombol Terapkan (2026-07-14, follow-up user):** popover
+kalender **tidak auto-close** setelah pilih start/end. Selection di
+DayPicker = **draft** (state lokal); commit ke parent hanya lewat tombol
+**Terapkan** di footer popover (Hapus = clear draft). Input teks Mulai/
+Selesai di bar tetap live/langsung. Berlaku di semua konsumen
 `DateRangePicker` (filter list, kurs mata uang, project, dll).
 
 ---

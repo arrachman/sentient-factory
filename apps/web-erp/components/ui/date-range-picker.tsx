@@ -120,60 +120,75 @@ export function DateRangePicker({
   const navBounds = React.useMemo(calendarNavBounds, []);
   const [open, setOpen] = React.useState(false);
   const [month, setMonth] = React.useState<Date>(() => toDate(from) ?? new Date());
+  /** Draft range while the popover is open — committed only via Terapkan. */
+  const [draftFrom, setDraftFrom] = React.useState(from);
+  const [draftTo, setDraftTo] = React.useState(to);
   /**
    * react-day-picker v9 (min=0) sets `{ from, to }` to the same day on the
-   * first click. We treat that as "start only" and keep the popover open so
-   * the user can pick the end date. Second click (same or different day)
-   * commits the full range and closes.
+   * first click. We treat that as "start only" so the user can still pick
+   * the end date. Popover never auto-closes — only Terapkan closes it.
    */
   const awaitingEndRef = React.useRef(false);
 
-  // Saat popover dibuka, navigate ke bulan tanggal mulai (atau hari ini bila kosong).
-  // If only Mulai is already filled, stay in "awaiting end" so the next click
-  // completes the range instead of being treated as a new start.
   function handleOpenChange(next: boolean) {
     if (next) {
       setMonth(toDate(from) ?? new Date());
+      setDraftFrom(from);
+      setDraftTo(to);
       awaitingEndRef.current = Boolean(from && !to);
     }
     setOpen(next);
   }
 
-  const selected: DateRange = { from: toDate(from), to: toDate(to) };
+  const selected: DateRange = { from: toDate(draftFrom), to: toDate(draftTo) };
 
   function handleSelect(range: DateRange | undefined) {
     if (!range?.from) {
-      onChangeFrom('');
-      onChangeTo('');
+      setDraftFrom('');
+      setDraftTo('');
       awaitingEndRef.current = false;
       return;
     }
 
     const fromDay = range.from;
     const toDay = range.to;
-    // First click of a new range: rdp v9 (min=0) yields from===to, or only
-    // `from` when min>0. Treat both as "start only" and stay open for end.
+    // First click: rdp v9 (min=0) yields from===to. Keep draft start only.
     const isStartOnly =
       !toDay || (isSameDay(fromDay, toDay) && !awaitingEndRef.current);
 
     if (isStartOnly) {
-      onChangeFrom(toIso(fromDay));
-      onChangeTo('');
+      setDraftFrom(toIso(fromDay));
+      setDraftTo('');
       awaitingEndRef.current = true;
       return;
     }
 
-    onChangeFrom(toIso(fromDay));
-    onChangeTo(toIso(toDay));
+    setDraftFrom(toIso(fromDay));
+    setDraftTo(toIso(toDay));
+    awaitingEndRef.current = false;
+    // Stay open — user confirms with Terapkan.
+  }
+
+  function handleClearDraft() {
+    setDraftFrom('');
+    setDraftTo('');
+    awaitingEndRef.current = false;
+  }
+
+  function handleClearCommitted() {
+    onChangeFrom('');
+    onChangeTo('');
+    handleClearDraft();
+  }
+
+  function handleApply() {
+    onChangeFrom(draftFrom);
+    onChangeTo(draftTo);
     awaitingEndRef.current = false;
     setOpen(false);
   }
 
-  function handleClear() {
-    onChangeFrom('');
-    onChangeTo('');
-    awaitingEndRef.current = false;
-  }
+  const canApply = Boolean(draftFrom);
 
   return (
     <Popover.Root open={open} onOpenChange={handleOpenChange}>
@@ -190,7 +205,7 @@ export function DateRangePicker({
           gap: 6,
         }}
       >
-        {/* Manual-editable start date */}
+        {/* Manual-editable start date (live — outside calendar draft) */}
         <EditableDate
           id={id}
           iso={from}
@@ -213,11 +228,11 @@ export function DateRangePicker({
           style={endStyle}
         />
 
-        {/* Clear button — visible only when any date is set */}
+        {/* Clear button — visible only when any committed date is set */}
         {(from || to) && (
           <button
             type="button"
-            onClick={handleClear}
+            onClick={handleClearCommitted}
             title="Hapus tanggal"
             style={{
               background: 'none',
@@ -260,6 +275,7 @@ export function DateRangePicker({
         <Popover.Content
           align="start"
           sideOffset={4}
+          onOpenAutoFocus={(e) => e.preventDefault()}
           style={{
             background: 'var(--panel)',
             border: '1px solid var(--border)',
@@ -282,24 +298,46 @@ export function DateRangePicker({
             endMonth={navBounds.endMonth}
             locale={idLocale}
           />
-          {(from || to) && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
-              <button
-                type="button"
-                onClick={handleClear}
-                style={{
-                  fontSize: 'calc(12px * var(--font-scale, 1))',
-                  color: 'var(--danger)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '2px 6px',
-                }}
-              >
-                Hapus tanggal
-              </button>
-            </div>
-          )}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 8,
+              paddingTop: 8,
+              borderTop: '1px solid var(--border)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={handleClearDraft}
+              disabled={!draftFrom && !draftTo}
+              style={{
+                fontSize: 'calc(12px * var(--font-scale, 1))',
+                color: 'var(--danger)',
+                background: 'none',
+                border: 'none',
+                cursor: draftFrom || draftTo ? 'pointer' : 'not-allowed',
+                opacity: draftFrom || draftTo ? 1 : 0.45,
+                padding: '4px 6px',
+              }}
+            >
+              Hapus
+            </button>
+            <button
+              type="button"
+              onClick={handleApply}
+              disabled={!canApply}
+              className="btn primary sm"
+              style={{
+                cursor: canApply ? 'pointer' : 'not-allowed',
+                opacity: canApply ? 1 : 0.55,
+                minWidth: 88,
+              }}
+            >
+              Terapkan
+            </button>
+          </div>
         </Popover.Content>
       </Popover.Portal>
     </Popover.Root>
