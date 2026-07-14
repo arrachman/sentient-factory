@@ -14,12 +14,14 @@ export class QueryErpAccountDto {
   @Min(1)
   page?: number = 1;
 
-  @ApiPropertyOptional({ example: 10, default: 10 })
+  // CoA tree list loads the full chart client-side (expand/collapse); allow
+  // a high ceiling so FE can request limit=5000 without ValidationPipe 400.
+  @ApiPropertyOptional({ example: 10, default: 10, maximum: 5000 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(5000)
   limit?: number = 10;
 
   @ApiPropertyOptional({ example: 'Cash' })

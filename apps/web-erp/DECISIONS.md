@@ -28,6 +28,12 @@ otomatis dari `code`** (server + FE payload): `CUST` → `CUSTOMER`, `SUP` → `
 `SLS` → `SALESMAN`, kode lain → `GENERAL`. Kolom list/filter Kind tetap (read-only
 display). Client `kind` di body create/update diabaikan.
 
+**Update 2026-07-14 (sort):** list `/master/partner-types` **selalu pin** tipe
+terkunci di atas. `orderBy` API: `kind ASC` dulu (enum Postgres:
+`CUSTOMER` < `SUPPLIER` < `SALESMAN` < `GENERAL` → CUST/SUP/SLS di atas), lalu
+sort sekunder user (`sortBy`/`sortDir`, default `createdAt desc`). Berlaku di
+semua page/pagination — bukan sort klien.
+
 ---
 
 ### Master Data Finance — Other Costs default GL + HPP flag (2026-07-14)
@@ -762,10 +768,13 @@ Implementasi FE: helper `normalBalanceForAccountType()` dipakai di tiga jalur:
 `fromAccount()` (edit data lama dinormalisasi saat form dibuka), handler
 `onValueChange` "Tipe Akun" (satu `onChange`, immutable), dan
 `toAccountPayload()` (payload selalu derive ulang sebelum dikirim). Field
-"Saldo Normal" di-render **read-only** sebagai `Badge` + catatan "Ditentukan
-otomatis dari Tipe Akun" — bukan `Select`/radio. Payload tetap mengirim
-`normalBalance` (diturunkan), jadi kontrak API tidak berubah. `NORMAL_BALANCES`
-di `lib/api/accounts.ts` dipertahankan untuk filter list & lookup lain.
+auto/read-only (Jenis + Saldo Normal, dan hint tipe=parent bila child) di-render
+**compact** sebagai satu strip `FormField` label "Auto" berisi badge + help
+pendek — bukan baris penuh per field + teks italic panjang (keputusan UI
+2026-07-14: form Bagan Akun lebih minimalis untuk nilai otomatis). Payload
+tetap mengirim `normalBalance` (diturunkan), kontrak API tidak berubah.
+`NORMAL_BALANCES` di `lib/api/accounts.ts` dipertahankan untuk filter list &
+lookup lain.
 
 > Status 2026-07-14: backend `erp-accounts` sekarang juga menderivasi
 > `normalBalance` dari tipe akun efektif, sehingga payload yang mencoba
@@ -852,6 +861,27 @@ cara **menyisipkan baris baru di bawah parent** dan **meneruskan format sibling*
 `generateNextAccountCode`) + wire di `components/pages/accounts-form.tsx`
 (`handleParentPick`, mount create kosong, tombol Auto). Parent option label =
 `code — name` agar parent code tersedia tanpa fetch ekstra.
+
+### 2.24.5 CoA list = tree expand/collapse (2026-07-14)
+
+List **Bagan Akun** (`/master/accounts`) menampilkan hierarki `parentId`
+dengan **expand/collapse** per parent (chevron), indent depth, dan toolbar
+**Expand / Collapse** semua. Anak hanya terlihat saat parent dibuka.
+
+Bukan `TreeDndMasterPage` (§2.22): CoA **tidak** punya `sortOrder` /
+MODULE·GROUP·ITEM, dan user hanya minta tree view — bukan DnD reorder.
+`TreeDndMasterPage` tetap untuk menu/kategori ber-sortOrder.
+
+**Perilaku:**
+- Load full chart client-side (`limit=5000`; DTO accounts `@Max(5000)`).
+- Default: semua parent expanded. Search client-side agar match + ancestor
+  tetap di tree (API search leaf-only memutus hierarki).
+- Filter status / tipe / jenis tetap server-side. Footer count-only
+  (`footerSummary` di `ErpListLayout`), tanpa pagination baris.
+- Form create/edit/bulk/audit tetap (bukan SimpleMasterPage flat).
+
+**File:** `lib/accounts-tree.ts`, `components/pages/accounts-page.tsx`,
+`accounts-tree-table.tsx`, `accounts-page-actions.ts`.
 
 ---
 
@@ -1965,15 +1995,18 @@ Frontend (`components/pages/currencies-page.tsx` + `lib/api/currencies.ts`) tida
 berubah — list dibaca dari API `GET /api/erp/currencies`.
 
 **UI kurs nilai tukar (2026-07-14):** form tambah kurs di modal Edit Mata Uang
-(`components/pages/currencies-rates.tsx`) sekarang memakai input **Periode
-berlaku** (`DateRangePicker`, Mulai → Selesai) untuk UX, tetapi model data/API
-rate tetap **satu tanggal** (`rateDate`). Keputusan user: range saat ini
-**UI-only** — saat simpan, tanggal Mulai dikirim sebagai `rateDate` ke
-`POST /api/erp/currencies/:id/rates`; tanggal Selesai belum dipersist sampai ada
-keputusan backend/DB `validFrom`/`validTo` penuh. Perbaikan ikutan: rate
-memakai `NumInput` (§2.31), tampilan tanggal kurs pakai `formatDate()` dinamis
-(§2.39, sebelumnya melanggar via `slice(0, 10)`), kolom rate right-aligned
-`tabular-nums` (§2.9).
+(`components/pages/currencies-rates.tsx`) memakai input **Periode berlaku**
+(`DateRangePicker`, Mulai → Selesai). Model data/API rate tetap **satu baris
+per tanggal** (`md_currency_rates.rate_date` unique per currency).
+
+**Expand range → per-hari (2026-07-14, user):** saat user pilih Mulai→Selesai
+(mis. 08/07/2026 → 17/08/2026) + satu nilai rate, FE **me-expand rentang
+inklusif** jadi N baris (`expandRateDates`) dan `POST` upsert sequential per
+`rateDate` (reuse `addCurrencyRate` / backend upsert). Tanpa Selesai = 1 hari.
+Soft cap **366 hari** agar typo multi-tahun tidak membanjiri API. List rate
+limit dinaikkan ke 200 agar hasil bulk terlihat. Kolom tabel = **Tanggal**
+(satu hari per baris). Rate memakai `NumInput` (§2.31), display `formatDate()`
+(§2.39), angka right-aligned `tabular-nums` (§2.9).
 
 **DateRangePicker: klik Mulai tidak menutup popover (2026-07-14):** bug UX di
 kalender range — klik tanggal awal langsung menutup popover sehingga user

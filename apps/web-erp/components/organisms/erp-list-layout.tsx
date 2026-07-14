@@ -79,8 +79,15 @@ interface ErpListLayoutProps {
   filters?: FilterConfig[];
   summary?: SummaryConfig;
   pagination?: ListPaginationConfig;
+  /**
+   * Count-only footer for non-paginated lists (e.g. CoA tree). Mutually
+   * exclusive with `pagination` — when both set, pagination wins.
+   */
+  footerSummary?: { rowCount: number; totalRows: number };
   keyboardRows?: KeyboardRowConfig;
   keyboardHints?: boolean;
+  /** Show "X pilih" hint in footer. Default true; false for non-selectable trees. */
+  footerSelectable?: boolean;
   children: React.ReactNode;
 }
 
@@ -100,8 +107,10 @@ export function ErpListLayout({
   filters,
   summary,
   pagination,
+  footerSummary,
   keyboardRows,
   keyboardHints = true,
+  footerSelectable = true,
   children,
 }: ErpListLayoutProps) {
   const searchRef = React.useRef<HTMLInputElement>(null);
@@ -230,8 +239,8 @@ export function ErpListLayout({
               value={toSel(f.value)}
               onValueChange={(v) => f.onChange(fromSel(v))}
             >
-              <SelectTrigger style={{ width: 'auto', minWidth: '8rem' }}>
-                <span style={{ color: 'var(--fg-faint)', fontSize: 'calc(11px * var(--font-scale, 1))', marginRight: 2 }}>
+              <SelectTrigger style={{ width: 'auto', minWidth: '7rem', height: 24 }}>
+                <span style={{ color: 'var(--fg-faint)', fontSize: 'calc(10.5px * var(--font-scale, 1))', marginRight: 2 }}>
                   {tGlobal(f.label)}:
                 </span>
                 <SelectValue />
@@ -300,10 +309,12 @@ export function ErpListLayout({
         </div>
       </div>
 
-      {(pagination || keyboardHints) && (
+      {(pagination || footerSummary || keyboardHints) && (
         <ListFooter
           pagination={pagination}
+          summary={!pagination ? footerSummary : undefined}
           keyboardHints={keyboardHints}
+          selectable={footerSelectable}
           onAdd={onAdd}
         />
       )}
