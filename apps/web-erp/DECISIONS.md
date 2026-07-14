@@ -838,6 +838,29 @@ Implementasi:
 Konvensi entri: HEADER pakai trailing zero di segmen terakhir
 (`1100.00.000`); POSTABLE pakai non-zero (`1101.01.001`).
 
+### 2.24.3b CoA level-3 sub-grup HEADER (Kas/Bank/Piutang/…) (2026-07-14)
+
+Bagan Akun **wajib** punya parent **level 3 HEADER** di bawah tiap grup
+level 2, agar list tree bisa digroup (Kas, Bank, Piutang, Persediaan, …)
+bukan leaf langsung di bawah Aset Lancar.
+
+Hierarki seed kanonik (`prisma/seed-erp-accounts.ts`):
+
+| Level | kind | Contoh kode | Contoh nama |
+| --- | --- | --- | --- |
+| 1 | HEADER | `1000.00.000` | Aset |
+| 2 | HEADER | `1100.00.000` | Aset Lancar |
+| 3 | HEADER | `1101.00.000` / `1110.00.000` / `1120.00.000` | Kas / Bank / Piutang |
+| 4 | POSTABLE | `1101.01.001` | Kas Besar |
+
+- Kode HEADER L3 = prefix 4-digit sub-grup + `.00.000` (non-leaf).
+- Leaf postable dipindah `parentId` ke HEADER L3; `level` di-derive
+  server-side = 4 (seed set eksplisit; re-seed idempotent by code).
+- Tidak ada migrasi schema — hanya data seed. Re-apply:
+  `npm run db:seed:accounts` di `apps/api-gateway`.
+- UI tree list sudah parentId-driven (`lib/accounts-tree.ts`); tidak
+  perlu ubah FE — expand/collapse L3 muncul otomatis setelah seed.
+
 ### 2.24.4 CoA auto-kode sibling (increment / mulai 1) (2026-07-14)
 
 Saat **Tambah** akun di form Bagan Akun, field **Kode** diisi otomatis dengan
