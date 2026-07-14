@@ -3,13 +3,18 @@
 /**
  * Currency rates sub-panel — embedded inside the currency edit modal.
  * Lists existing dated rates and lets the user add a new dated rate.
+ *
+ * Input "Periode berlaku" memakai DateRangePicker (Mulai → Selesai) sesuai
+ * keputusan user (UI range saja): rentang dipilih di UI lalu tanggal Mulai
+ * disimpan ke field API `rateDate` (lihat apps/web-erp/CLAUDE.md §2.39).
+ *
  * Atomic tier: Organism sub-part.
  */
 
 import * as React from 'react';
-import { DateInput } from '@/components/ui/date-input';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { FormField } from '@/components/ui/form-field';
-import { Input } from '@/components/ui/input';
+import { NumInput } from '@/components/molecules/num-input';
 import {
   Table,
   TableHeader,
@@ -20,21 +25,37 @@ import {
   TableEmpty,
 } from '@/components/organisms/table';
 import { notify } from '@/lib/feedback';
+import { formatDate, parseIsoDate } from '@/lib/date-format';
+import { formatNumber } from '@/lib/format';
 import {
   listCurrencyRates,
   addCurrencyRate,
 } from '@/lib/api/currencies';
 import type { ErpCurrencyRate } from '@/lib/api/currencies';
 
-function formatDate(iso: string): string {
-  return iso.slice(0, 10);
+interface AddForm {
+  from: string;
+  to: string;
+  rate: string;
+}
+
+const emptyAddForm = (): AddForm => ({ from: '', to: '', rate: '' });
+
+/** Periode tampil: "dd/MM/yyyy" atau "dd/MM/yyyy → dd/MM/yyyy" bila ada akhir. */
+function periodeLabel(fromIso: string, toIso: string): string {
+  const from = formatDate(fromIso);
+  if (!from) return '—';
+  if (toIso) {
+    const to = formatDate(toIso);
+    if (to) return `${from} → ${to}`;
+  }
+  return from;
 }
 
 export function CurrencyRatesPanel({ currencyId }: { currencyId: string }) {
   const [rates, setRates] = React.useState<ErpCurrencyRate[]>([]);
   const [loading, setLoading] = React.useState(false);
-  const [rateDate, setRateDate] = React.useState('');
-  const [rate, setRate] = React.useState('');
+  const [form, setForm] = React.useState<AddForm>(emptyAddForm);
   const [adding, setAdding] = React.useState(false);
 
   const load = React.useCallback(async () => {
@@ -50,20 +71,27 @@ export function CurrencyRatesPanel({ currencyId }: { currencyId: string }) {
   }, [currencyId]);
 
   React.useEffect(() => {
-    load();
+    const task = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => window.clearTimeout(task);
   }, [load]);
 
   const handleAdd = async () => {
-    if (!rateDate || !rate) {
-      notify('Tanggal dan nilai rate wajib diisi', 'danger');
+    if (!form.from || !form.rate) {
+      notify('Tanggal mulai dan nilai rate wajib diisi', 'danger');
+      return;
+    }
+    if (form.to && form.from && parseIsoDate(form.to)! < parseIsoDate(form.from)!) {
+      notify('Tanggal selesai tidak boleh sebelum tanggal mulai', 'danger');
       return;
     }
     setAdding(true);
     try {
-      await addCurrencyRate(currencyId, { rateDate, rate });
+      // Opsi "UI range saja": simpan tanggal Mulai ke field `rateDate`.
+      await addCurrencyRate(currencyId, { rateDate: form.from, rate: form.rate });
       notify('Rate ditambahkan', 'success');
-      setRateDate('');
-      setRate('');
+      setForm(emptyAddForm());
       load();
     } catch (e: unknown) {
       notify(e instanceof Error ? e.message : 'Gagal menambah rate', 'danger');
@@ -74,37 +102,44 @@ export function CurrencyRatesPanel({ currencyId }: { currencyId: string }) {
 
   return (
     <div className="p-4">
-      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
-        <FormField label="Tanggal" htmlFor="cr-date">
-          <DateInput
-            id="cr-date"
-            value={rateDate}
-            onChange={(v) => setRateDate(v)}
+      <div className="flex flex-col gap-3">
+        <FormField label="Periode berlaku (mulai → selesai)" htmlFor="cr-from" required>
+          <DateRangePicker
+            id="cr-from"
+            from={form.from}
+            to={form.to}
+            onChangeFrom={(v) => setForm((f) => ({ ...f, from: v }))}
+            onChangeTo={(v) => setForm((f) => ({ ...f, to: v }))}
           />
         </FormField>
-        <FormField label="Rate" htmlFor="cr-rate">
-          <Input
-            id="cr-rate"
-            value={rate}
-            onChange={(e) => setRate(e.target.value)}
-            placeholder="15750.00"
-          />
-        </FormField>
-        <button
-          className="btn primary sm"
-          onClick={handleAdd}
-          disabled={adding}
-        >
-          {adding ? 'Menambah...' : 'Tambah Rate'}
-        </button>
+
+        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+          <FormField label="Rate / Kurs" htmlFor="cr-rate" required>
+            <NumInput
+              id="cr-rate"
+              value={form.rate}
+              onChange={(raw) => setForm((f) => ({ ...f, rate: raw }))}
+              placeholder="15.750,00"
+              style={{ maxWidth: 200 }}
+            />
+          </FormField>
+          <button
+            type="button"
+            className="btn primary sm"
+            onClick={handleAdd}
+            disabled={adding}
+          >
+            {adding ? 'Menambah...' : 'Tambah Rate'}
+          </button>
+        </div>
       </div>
 
-      <div className="lines" style={{ marginTop: 12 }}>
+      <div className="lines" style={{ marginTop: 16 }}>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Tanggal</TableHead>
-              <TableHead>Rate</TableHead>
+              <TableHead>Periode berlaku</TableHead>
+              <TableHead className="text-right">Rate</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -120,8 +155,10 @@ export function CurrencyRatesPanel({ currencyId }: { currencyId: string }) {
             ) : (
               rates.map((r) => (
                 <TableRow key={r.id}>
-                  <TableCell>{formatDate(r.rateDate)}</TableCell>
-                  <TableCell className="mono">{String(r.rate)}</TableCell>
+                  <TableCell>{periodeLabel(r.rateDate, '')}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {formatNumber(r.rate, 2)}
+                  </TableCell>
                   <TableCell className="muted">
                     {r.isActive ? 'Aktif' : 'Nonaktif'}
                   </TableCell>

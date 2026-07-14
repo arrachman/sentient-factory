@@ -8,6 +8,8 @@ const api = vi.hoisted(() => ({
   createCurrency: vi.fn(),
   updateCurrency: vi.fn(),
   deleteCurrency: vi.fn(),
+  bulkUpdateErpCurrencyStatus: vi.fn(),
+  bulkDeleteErpCurrencies: vi.fn(),
   listCurrencyRates: vi.fn(),
   upsertCurrencyRate: vi.fn(),
   deleteCurrencyRate: vi.fn(),

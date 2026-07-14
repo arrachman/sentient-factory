@@ -1842,6 +1842,17 @@ terpisah agar `seed-erp.ts` tetap ringkas (file seed exempt dari batas 400 baris
 Frontend (`components/pages/currencies-page.tsx` + `lib/api/currencies.ts`) tidak
 berubah — list dibaca dari API `GET /api/erp/currencies`.
 
+**UI kurs nilai tukar (2026-07-14):** form tambah kurs di modal Edit Mata Uang
+(`components/pages/currencies-rates.tsx`) sekarang memakai input **Periode
+berlaku** (`DateRangePicker`, Mulai → Selesai) untuk UX, tetapi model data/API
+rate tetap **satu tanggal** (`rateDate`). Keputusan user: range saat ini
+**UI-only** — saat simpan, tanggal Mulai dikirim sebagai `rateDate` ke
+`POST /api/erp/currencies/:id/rates`; tanggal Selesai belum dipersist sampai ada
+keputusan backend/DB `validFrom`/`validTo` penuh. Perbaikan ikutan: rate
+memakai `NumInput` (§2.31), tampilan tanggal kurs pakai `formatDate()` dinamis
+(§2.39, sebelumnya melanggar via `slice(0, 10)`), kolom rate right-aligned
+`tabular-nums` (§2.9).
+
 ---
 
 ## § Kustomisasi Grid — layout grid transaksi (2026-05-31)
