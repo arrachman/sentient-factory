@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { SearchSelectOption } from '../search-select-types';
 import { optLabel } from '../use-search-select-types';
+import { focusNextFrom } from './search-select-focus';
 
 /**
  * Context passed from the main `useSearchSelect` hook to the modal handler
@@ -61,9 +62,9 @@ export interface ModalHandlersCtx {
  * Modal handler group: open/close, trigger focus (multi), single/multi row
  * selection, select-all, confirm, and modal keyboard nav.
  *
- * Extracted from use-search-select.ts (original L129-166 + L306-392) — content
- * preserved exactly. `openModal` is the only `useCallback`-memoized handler;
- * the others are NOT memoized wholesale to preserve identity observed by effects.
+ * After a successful submit (confirm / confirmRow), focus advances to the
+ * next form field via `focusNextFrom` — same behavior as inline Enter auto-pick.
+ * Cancel / ESC still returns focus to the trigger.
  */
 export function useSearchSelectModalHandlers(ctx: ModalHandlersCtx) {
   const {
@@ -91,11 +92,49 @@ export function useSearchSelectModalHandlers(ctx: ModalHandlersCtx) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMulti, displayLabel]);
 
-  const closeModal = (refocusTrigger = false) => {
+  // When we setOpen(false), Radix also fires onOpenChange(false) → onClose(true).
+  // Coalesce those into a single focus action so submit's `'next'` is not
+  // overwritten by the subsequent cancel-style `'trigger'` from Radix.
+  const pendingFocusRef = React.useRef<'trigger' | 'next' | null>(null);
+  const focusTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * Close the search modal.
+   * - `refocus: true | 'trigger'` — cancel/ESC: return focus to the field that opened it.
+   * - `refocus: 'next'`           — submit/pilih: advance focus to the next form field
+   *   (same as inline Enter auto-pick). Modal closes and keyboard continues on
+   *   the next input (A → B).
+   * - `refocus: false`            — no focus move (unless a prior call already queued one).
+   */
+  const closeModal = (refocus: boolean | 'trigger' | 'next' = false) => {
     setOpen(false);
     setInputFocused(false);
+    // Prevent the trigger's onFocus from re-opening the modal when we bounce
+    // focus around after close (multi mode opens modal on focus).
     skipNextFocusRef.current = true;
-    if (refocusTrigger) setTimeout(() => triggerRef.current?.focus(), 60);
+
+    const mode: 'trigger' | 'next' | null =
+      refocus === 'next' ? 'next'
+        : (refocus === true || refocus === 'trigger') ? 'trigger'
+          : null;
+
+    // Priority: once `'next'` is queued, never downgrade to `'trigger'`.
+    if (mode === 'next') pendingFocusRef.current = 'next';
+    else if (mode === 'trigger' && pendingFocusRef.current !== 'next') {
+      pendingFocusRef.current = 'trigger';
+    }
+
+    if (focusTimerRef.current) return; // already scheduled for this close cycle
+    if (!pendingFocusRef.current) return;
+
+    focusTimerRef.current = setTimeout(() => {
+      const action = pendingFocusRef.current;
+      pendingFocusRef.current = null;
+      focusTimerRef.current = null;
+      skipNextFocusRef.current = true;
+      if (action === 'trigger') triggerRef.current?.focus();
+      else if (action === 'next') focusNextFrom(triggerRef.current);
+    }, 60);
   };
 
   // ── Multi trigger focus ───────────────────────────────────────────────────
@@ -123,7 +162,8 @@ export function useSearchSelectModalHandlers(ctx: ModalHandlersCtx) {
     onValueChange(opt.value);
     onPick?.({ ...opt, label: optLabel(opt), meta: String(opt.meta ?? '') });
     setDisplayLabel(optLabel(opt));
-    closeModal(true);
+    // Submit → advance to next field (A → B), not back to trigger.
+    closeModal('next');
   };
 
   const confirm = () => {
@@ -134,7 +174,8 @@ export function useSearchSelectModalHandlers(ctx: ModalHandlersCtx) {
       onPick?.({ value: localSingle, label: localSingleLabel, meta: localSingleMeta });
       setDisplayLabel(localSingleLabel);
     }
-    closeModal();
+    // Submit (tombol Pilih / Enter multi / Ctrl+Enter) → next field.
+    closeModal('next');
   };
 
   // ── Select-all for multi ──────────────────────────────────────────────────

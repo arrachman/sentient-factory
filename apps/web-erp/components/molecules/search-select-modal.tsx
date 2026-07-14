@@ -37,7 +37,8 @@ interface SearchSelectModalProps {
   onToggleMulti: (val: string) => void;
   onSelectSingle: (opt: SearchSelectOption, idx: number) => void;
   onConfirmRow: (opt: SearchSelectOption) => void;
-  onClose: (refocus?: boolean) => void;
+  /** Cancel/ESC pass `true`/`'trigger'`; submit handlers use `'next'`. */
+  onClose: (refocus?: boolean | 'trigger' | 'next') => void;
   onConfirm: () => void;
 }
 
@@ -55,6 +56,10 @@ export function SearchSelectModal({
         <DialogPrimitive.Overlay className="fixed inset-0 z-[900] bg-black/40 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
         <DialogPrimitive.Content
           onKeyDown={onKeyDown}
+          // We own post-close focus ourselves (trigger on cancel, next field on
+          // submit) via closeModal — suppress Radix's restore-to-trigger default
+          // so it doesn't race with focusNextFrom.
+          onCloseAutoFocus={(e) => e.preventDefault()}
           className="fixed left-1/2 top-1/2 z-[901] flex w-[640px] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-lg border border-border bg-card shadow-[var(--shadow-flyout)] outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95"
           style={{ maxHeight: 'min(680px, calc(100vh - 4rem))' }}
         >

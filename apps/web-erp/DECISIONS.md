@@ -1086,11 +1086,24 @@ user menavigasi halaman dgn `←`/`→`:
   **Space** saat baris fokus; `Ctrl/Cmd+Enter` tetap submit sebagai alias.
   Alasan: user mengharapkan Enter = tombol utama dialog, bukan no-op saat fokus
   masih di search box.
+- **Post-submit focus advance (2026-07-14):** setelah modal **submit**
+  (tombol Pilih / Enter / double-click baris / `confirm` / `confirmRow`),
+  fokus **wajib** pindah ke field focusable berikutnya di form (A → B),
+  lewat `focusNextFrom` di `search-select-focus.ts`. Cancel/ESC tetap
+  mengembalikan fokus ke trigger. Implementasi:
+  - `closeModal('next')` untuk submit, `closeModal(true|'trigger')` untuk
+    batal; queue digabung karena Radix juga memanggil `onClose(true)` saat
+    `open→false` — `'next'` tidak boleh di-downgrade jadi `'trigger'`.
+  - `DialogContent onCloseAutoFocus` di-prevent agar restore default Radix
+    tidak race dengan `focusNextFrom`.
+  - Paritas dengan inline Enter auto-pick (sudah `focusNextFrom` sejak dulu).
 
 Konsekuensi vibe coding: kalau menambah list modal-style baru di web-erp,
 **dilarang** pola "replace tbody dgn loader row" untuk transisi halaman —
 clone pola di atas. List page biasa (`SimpleMasterPage`) tetap pakai
-`ErpListLayout` (§2.9) yang punya state loading khusus.
+`ErpListLayout` (§2.9) yang punya state loading khusus. Setelah pilih dari
+modal lookup, **jangan** biarkan fokus kembali ke field yang sama — advance
+ke field berikutnya.
 
 ---
 

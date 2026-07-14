@@ -61,7 +61,8 @@ export interface SearchSelectState {
 
 export interface SearchSelectHandlers {
   openModal: (initialQuery?: string) => void;
-  closeModal: (refocusTrigger?: boolean) => void;
+  /** Cancel/ESC: true/'trigger'; submit/pilih: 'next' (advance to next field). */
+  closeModal: (refocus?: boolean | 'trigger' | 'next') => void;
   handleTriggerFocus: () => void;
   handleSingleFocus: () => void;
   handleSingleBlur: (e: React.FocusEvent) => void;
