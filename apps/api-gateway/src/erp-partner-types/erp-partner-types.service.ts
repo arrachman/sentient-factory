@@ -65,37 +65,90 @@ export class ErpPartnerTypesService {
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
 
-    const where: Prisma.ErpPartnerTypeWhereInput = { deletedAt: null };
+    // Pin locked system codes (CUST, SUP, SLS) to the top of every page,
+    // then apply the caller's secondary sort. CASE cannot be expressed in
+    // Prisma orderBy, so list uses $queryRaw with the same filters.
+    const sortBy = query.sortBy ?? 'createdAt';
+    const sortDir = query.sortDir ?? 'desc';
+    const colMap: Record<string, string> = {
+      code: 'code',
+      name: 'name',
+      isActive: 'is_active',
+      createdAt: 'created_at',
+    };
+    const sortCol = colMap[sortBy] ?? 'created_at';
+    const sortDirSql = sortDir === 'asc' ? Prisma.sql`ASC` : Prisma.sql`DESC`;
 
+    const filters: Prisma.Sql[] = [Prisma.sql`deleted_at IS NULL`];
     if (query.search?.trim()) {
       const q = query.search.trim();
-      where.OR = [
-        { code: { equals: q, mode: 'insensitive' } },
-        { name: { contains: q, mode: 'insensitive' } },
-      ];
+      filters.push(
+        Prisma.sql`(code ILIKE ${q} OR name ILIKE ${'%' + q + '%'})`,
+      );
     }
-
     if (query.kind !== undefined) {
-      where.kind = query.kind;
+      filters.push(Prisma.sql`kind = ${query.kind}::"ErpPartnerTypeKind"`);
     }
-
     if (query.isActive !== undefined) {
-      where.isActive = query.isActive;
+      filters.push(Prisma.sql`is_active = ${query.isActive}`);
     }
+    const whereSql = Prisma.join(filters, ' AND ');
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.erpPartnerType.findMany({
-        where,
-        orderBy: [{ [query.sortBy ?? 'createdAt']: query.sortDir ?? 'desc' }],
-        skip,
-        take: limit,
-      }),
-      this.prisma.erpPartnerType.count({ where }),
+    const [items, countRows] = await this.prisma.$transaction([
+      this.prisma.$queryRaw<
+        Array<{
+          id: bigint;
+          code: string;
+          name: string;
+          kind: 'CUSTOMER' | 'SUPPLIER' | 'SALESMAN' | 'GENERAL';
+          is_active: boolean;
+          legacy_code: string | null;
+          created_at: Date;
+          updated_at: Date;
+          created_by_id: bigint | null;
+          updated_by_id: bigint | null;
+          deleted_at: Date | null;
+        }>
+      >`
+        SELECT *
+        FROM md_partner_types
+        WHERE ${whereSql}
+        ORDER BY
+          CASE code
+            WHEN 'CUST' THEN 0
+            WHEN 'SUP'  THEN 1
+            WHEN 'SLS'  THEN 2
+            ELSE 3
+          END ASC,
+          ${Prisma.raw(`"${sortCol}"`)} ${sortDirSql}
+        OFFSET ${skip}
+        LIMIT ${limit}
+      `,
+      this.prisma.$queryRaw<Array<{ count: bigint }>>`
+        SELECT COUNT(*)::bigint AS count
+        FROM md_partner_types
+        WHERE ${whereSql}
+      `,
     ]);
+
+    const total = Number(countRows[0]?.count ?? 0);
+    const data = items.map((row) => ({
+      id: row.id,
+      code: row.code,
+      name: row.name,
+      kind: row.kind,
+      isActive: row.is_active,
+      legacyCode: row.legacy_code,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      createdById: row.created_by_id,
+      updatedById: row.updated_by_id,
+      deletedAt: row.deleted_at,
+    }));
 
     return {
       success: true,
-      data: items,
+      data,
       meta: {
         page,
         limit,
