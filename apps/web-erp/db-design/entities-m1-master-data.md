@@ -377,10 +377,13 @@ Relations: `partnerType`, `category`, `currency`, `receivableAccount`/`payableAc
 | code 🔑 | String unique | ISO 4217 recommended (`ckode`) |
 | name | String | `cnama` |
 | symbol ○ | String | `csimbol` |
+| decimalPlaces | Int default 2 | jumlah desimal tampilan/entry (0–6) |
+| isBase | Boolean default false | mata uang dasar org (maks 1 aktif) |
 | isActive | Boolean | `caktif` |
 
 > No `exchangeRate` snapshot column — rates are dated rows in `CurrencyRate`
 > (resolved §8 #8; replaces legacy single `ckurs`). Relations: `rates CurrencyRate[]`.
+> Base currency (`isBase=true`) is the home currency; rates are units of base per 1 unit of this currency.
 
 ### CurrencyRate  → `md_currency_rates`  (new — dated FX, resolved §8 #8)
 
@@ -426,16 +429,19 @@ pindah cabang recompute level keturunan; field `currencyId`/`bankName`/
 | level | Int | `clevel` |
 | cashFlowCategory ○ ◆ | `CashFlowCategory` | `caruskas` |
 | currencyId ○ ➜ | BigInt → Currency | `cmatauang` |
-| isControlAccount | Boolean | has sub-ledger (`cbukupembantu`) |
-| bankName ○ | String | for cash/bank accounts (`ckodebank`) |
+| isControlAccount | Boolean | legacy seed/AR-AP flag (`cbukupembantu`); **removed from form UI** (2026-07-14) |
+| bankId ○ ➜ | BigInt → Bank | master bank for cek/giro (`md_banks`) |
+| bankName ○ | String | free-text legacy bank name (`ckodebank`); prefer `bankId` |
 | bankAccountNo ○ | String | `cnorekbank` |
 | openingBalance | Decimal(19,4) | `csaldoawal` |
 | isActive | Boolean | `caktif` |
 | notes ○ | String | `ccatatan` |
 
-Relations: self `parent`/`children`, `currency`.
+Relations: self `parent`/`children`, `currency`, `bank`, multi-dim junctions
+`md_account_dim_branches` / `md_account_dim_locations` / `md_account_dim_divisions`
+(empty = no scope restriction).
 > Running balance `csaldoberjalan` is **derived** from journal entries (finance phase).
-> Multi-dimension (`ccabang`/`clokasi`/`cdivisi`) deferred — resolved §8 #9.
+> CoA multi-dimension scope on master account (cabang/lokasi/divisi) enabled 2026-07-14.
 
 ### Tax  → `md_taxes`  (legacy `m1_tax`)
 

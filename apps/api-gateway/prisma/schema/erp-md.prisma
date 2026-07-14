@@ -690,23 +690,28 @@ model ErpPartnerBankAccount {
 }
 
 model ErpCurrency {
-  id          BigInt    @id @default(autoincrement())
-  code        String    @unique @map("code")
-  name        String    @map("name")
-  symbol      String?   @map("symbol")
-  isActive    Boolean   @default(true) @map("is_active")
-  legacyCode  String?   @map("legacy_code")
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  createdById BigInt?   @map("created_by_id")
-  updatedById BigInt?   @map("updated_by_id")
-  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(6)
+  id             BigInt    @id @default(autoincrement())
+  code           String    @unique @map("code")
+  name           String    @map("name")
+  symbol         String?   @map("symbol")
+  /// Decimal places for display/entry of amounts in this currency (0–6).
+  decimalPlaces  Int       @default(2) @map("decimal_places")
+  /// At most one active base currency (org home currency); rates are relative to it.
+  isBase         Boolean   @default(false) @map("is_base")
+  isActive       Boolean   @default(true) @map("is_active")
+  legacyCode     String?   @map("legacy_code")
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById    BigInt?   @map("created_by_id")
+  updatedById    BigInt?   @map("updated_by_id")
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
 
   rates    ErpCurrencyRate[]
   partners ErpPartner[]
   accounts ErpAccount[]
 
   @@index([legacyCode])
+  @@index([isBase])
   @@map("md_currencies")
 }
 

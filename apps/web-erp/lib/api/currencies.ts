@@ -11,6 +11,10 @@ export interface ErpCurrency {
   code: string;
   name: string;
   symbol?: string | null;
+  /** Display/entry decimal places for amounts (0–6). */
+  decimalPlaces: number;
+  /** Org home currency — at most one active base. */
+  isBase: boolean;
   isActive: boolean;
   legacyCode?: string | null;
   createdAt: string;
@@ -21,6 +25,7 @@ export interface CreateCurrencyPayload {
   code: string;
   name: string;
   symbol?: string;
+  decimalPlaces?: number;
   isBase?: boolean;
   isActive?: boolean;
 }
@@ -29,6 +34,7 @@ export interface UpdateCurrencyPayload {
   code?: string;
   name?: string;
   symbol?: string;
+  decimalPlaces?: number;
   isBase?: boolean;
   isActive?: boolean;
 }

@@ -26,17 +26,30 @@ export class ErpCurrenciesService {
       });
     }
 
+    const isBase = dto.isBase ?? false;
+    const decimalPlaces = dto.decimalPlaces ?? 2;
+
     let created;
     try {
-      created = await this.prisma.erpCurrency.create({
-        data: {
-          code: dto.code,
-          name: dto.name,
-          symbol: dto.symbol,
-          isActive: dto.isActive ?? true,
-          createdById: toAuditUserId(actorId),
-          updatedById: toAuditUserId(actorId),
-        },
+      created = await this.prisma.$transaction(async (tx) => {
+        if (isBase) {
+          await tx.erpCurrency.updateMany({
+            where: { isBase: true, deletedAt: null },
+            data: { isBase: false, updatedById: toAuditUserId(actorId) },
+          });
+        }
+        return tx.erpCurrency.create({
+          data: {
+            code: dto.code,
+            name: dto.name,
+            symbol: dto.symbol,
+            decimalPlaces,
+            isBase,
+            isActive: dto.isActive ?? true,
+            createdById: toAuditUserId(actorId),
+            updatedById: toAuditUserId(actorId),
+          },
+        });
       });
     } catch (error) {
       if (isUniqueViolation(error, ['code'])) {
@@ -122,15 +135,25 @@ export class ErpCurrenciesService {
 
     let updated;
     try {
-      updated = await this.prisma.erpCurrency.update({
-        where: { id },
-        data: {
-          code: dto.code,
-          name: dto.name,
-          symbol: dto.symbol,
-          isActive: dto.isActive,
-          updatedById: toAuditUserId(actorId),
-        },
+      updated = await this.prisma.$transaction(async (tx) => {
+        if (dto.isBase === true) {
+          await tx.erpCurrency.updateMany({
+            where: { isBase: true, deletedAt: null, NOT: { id } },
+            data: { isBase: false, updatedById: toAuditUserId(actorId) },
+          });
+        }
+        return tx.erpCurrency.update({
+          where: { id },
+          data: {
+            code: dto.code,
+            name: dto.name,
+            symbol: dto.symbol,
+            decimalPlaces: dto.decimalPlaces,
+            isBase: dto.isBase,
+            isActive: dto.isActive,
+            updatedById: toAuditUserId(actorId),
+          },
+        });
       });
     } catch (error) {
       if (isUniqueViolation(error, ['code'])) {

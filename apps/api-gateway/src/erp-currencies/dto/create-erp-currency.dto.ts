@@ -1,5 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateErpCurrencyDto {
   @ApiProperty({ example: 'USD', description: 'ISO 4217 currency code' })
@@ -18,7 +27,23 @@ export class CreateErpCurrencyDto {
   @MaxLength(10)
   symbol?: string;
 
-  @ApiPropertyOptional({ example: false, default: false })
+  @ApiPropertyOptional({
+    example: 2,
+    default: 2,
+    description: 'Decimal places for amounts in this currency (0–6)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(6)
+  decimalPlaces?: number = 2;
+
+  @ApiPropertyOptional({
+    example: false,
+    default: false,
+    description: 'Org home/base currency (at most one active)',
+  })
   @IsOptional()
   @IsBoolean()
   isBase?: boolean = false;

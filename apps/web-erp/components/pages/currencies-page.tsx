@@ -4,6 +4,7 @@ import * as React from 'react';
 import { FormField } from '@/components/ui/form-field';
 import { Input } from '@/components/ui/input';
 import { BooleanRadio } from '@/components/ui/radio-group';
+import { NumInput } from '@/components/molecules/num-input';
 import { SimpleMasterPage } from '@/components/organisms/simple-master-page';
 import {
   listCurrencies,
@@ -23,16 +24,27 @@ interface CurrencyForm {
   code: string;
   name: string;
   symbol: string;
+  decimalPlaces: string;
+  isBase: boolean;
   isActive: boolean;
 }
 
-const defaultForm = (): CurrencyForm => ({ code: '', name: '', symbol: '', isActive: true });
+const defaultForm = (): CurrencyForm => ({
+  code: '',
+  name: '',
+  symbol: '',
+  decimalPlaces: '2',
+  isBase: false,
+  isActive: true,
+});
 
 const fromRecord = (r: ErpCurrency): CurrencyForm => ({
   id: r.id,
   code: r.code,
   name: r.name,
   symbol: r.symbol ?? '',
+  decimalPlaces: String(r.decimalPlaces ?? 2),
+  isBase: r.isBase ?? false,
   isActive: r.isActive,
 });
 
@@ -40,34 +52,96 @@ const toPayload = ({ id: _id, ...f }: CurrencyForm): CreateCurrencyPayload => ({
   code: f.code,
   name: f.name,
   symbol: f.symbol || undefined,
+  decimalPlaces: Number.parseInt(f.decimalPlaces, 10) || 0,
+  isBase: f.isBase,
   isActive: f.isActive,
 });
 
-const validateCurrency = (form: CurrencyForm) =>
-  validateForm(form, [
+const validateCurrency = (form: CurrencyForm) => {
+  const errors = validateForm(form, [
     { field: 'code', label: 'Kode', required: true },
     { field: 'name', label: 'Nama', required: true },
   ]);
+  const dec = Number.parseInt(form.decimalPlaces, 10);
+  if (form.decimalPlaces === '' || Number.isNaN(dec) || dec < 0 || dec > 6) {
+    errors.decimalPlaces = 'Desimal harus 0–6';
+  }
+  return errors;
+};
 
-function FormFields({ data, onChange, errors = {} }: { data: CurrencyForm; onChange: (d: CurrencyForm) => void; errors?: FormErrors<CurrencyForm> }) {
+function FormFields({
+  data,
+  onChange,
+  errors = {},
+}: {
+  data: CurrencyForm;
+  onChange: (d: CurrencyForm) => void;
+  errors?: FormErrors<CurrencyForm>;
+}) {
   const set = (k: keyof CurrencyForm, v: string | boolean) => onChange({ ...data, [k]: v });
+  // Wider label column so "Mata Uang Dasar" fits without wrapping and
+  // both columns share the same label/control baseline.
+  const fieldCls = 'grid-cols-[132px_1fr]';
   return (
     <div className="p-4">
-      <FormField label="Kode" htmlFor="cu-code" required error={errors.code}>
-        <Input id="cu-code" value={data.code} onChange={(e) => set('code', e.target.value)} placeholder="USD" aria-invalid={!!errors.code} />
-      </FormField>
-      <FormField label="Nama" htmlFor="cu-name" required error={errors.name}>
-        <Input id="cu-name" value={data.name} onChange={(e) => set('name', e.target.value)} placeholder="US Dollar" aria-invalid={!!errors.name} />
-      </FormField>
-      <FormField label="Simbol" htmlFor="cu-symbol">
-        <Input id="cu-symbol" value={data.symbol} onChange={(e) => set('symbol', e.target.value)} placeholder="$" />
-      </FormField>
-      <FormField label="Status" htmlFor="cu-active">
-        <BooleanRadio id="cu-active" value={data.isActive} onValueChange={(v) => set('isActive', v)} />
-      </FormField>
+      <div className="grid grid-cols-1 gap-x-6 gap-y-0 sm:grid-cols-2">
+        <FormField className={fieldCls} label="Kode" htmlFor="cu-code" required error={errors.code}>
+          <Input
+            id="cu-code"
+            value={data.code}
+            onChange={(e) => set('code', e.target.value)}
+            placeholder="USD"
+            aria-invalid={!!errors.code}
+          />
+        </FormField>
+        <FormField className={fieldCls} label="Nama" htmlFor="cu-name" required error={errors.name}>
+          <Input
+            id="cu-name"
+            value={data.name}
+            onChange={(e) => set('name', e.target.value)}
+            placeholder="US Dollar"
+            aria-invalid={!!errors.name}
+          />
+        </FormField>
+        <FormField className={fieldCls} label="Simbol" htmlFor="cu-symbol">
+          <Input
+            id="cu-symbol"
+            value={data.symbol}
+            onChange={(e) => set('symbol', e.target.value)}
+            placeholder="$"
+          />
+        </FormField>
+        <FormField className={fieldCls} label="Desimal" htmlFor="cu-decimal" error={errors.decimalPlaces}>
+          <NumInput
+            id="cu-decimal"
+            value={data.decimalPlaces}
+            onChange={(v) => set('decimalPlaces', v)}
+            decimals={0}
+            placeholder="2"
+            className="w-24"
+            aria-invalid={!!errors.decimalPlaces}
+          />
+        </FormField>
+        <FormField className={fieldCls} label="Mata Uang Dasar" htmlFor="cu-base">
+          <BooleanRadio
+            id="cu-base"
+            value={data.isBase}
+            onValueChange={(v) => set('isBase', v)}
+            trueLabel="Ya"
+            falseLabel="Tidak"
+          />
+        </FormField>
+        <FormField className={fieldCls} label="Status" htmlFor="cu-active">
+          <BooleanRadio
+            id="cu-active"
+            value={data.isActive}
+            onValueChange={(v) => set('isActive', v)}
+          />
+        </FormField>
+      </div>
       {data.id && (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ fontWeight: 600, marginBottom: 8 }}>Kurs Nilai Tukar</div>
+        <div className="mt-4">
+          <div className="mb-2 text-sm font-semibold">Kurs Nilai Tukar</div>
           <CurrencyRatesPanel currencyId={data.id} />
         </div>
       )}
@@ -94,7 +168,20 @@ export function ErpCurrenciesPage() {
       toPayload={toPayload}
       FormFields={FormFields}
       validate={validateCurrency}
-      extraColumns={[{ key: 'symbol', label: 'Simbol', render: (row) => row.symbol ?? '—' }]}
+      modalSize="lg"
+      extraColumns={[
+        { key: 'symbol', label: 'Simbol', render: (row) => row.symbol ?? '—' },
+        {
+          key: 'decimalPlaces',
+          label: 'Desimal',
+          render: (row) => String(row.decimalPlaces ?? 2),
+        },
+        {
+          key: 'isBase',
+          label: 'Dasar',
+          render: (row) => (row.isBase ? 'Ya' : '—'),
+        },
+      ]}
     />
   );
 }
