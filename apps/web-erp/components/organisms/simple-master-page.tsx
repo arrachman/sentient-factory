@@ -376,11 +376,11 @@ export function SimpleMasterPage<T extends BaseEntity, F>({
       />
 
       <Modal open={open} onOpenChange={setOpen}>
-        <ModalContent size={modalSize}>
-          <ModalHeader><ModalTitle>{editing ? `${tGlobal('Edit')} ${tGlobal(title)}` : `${tGlobal('Tambah')} ${tGlobal(title)}`}</ModalTitle></ModalHeader>
-          <FormErrorSummary errors={formErrors} />
-          <FormFields data={form} onChange={setForm} errors={formErrors} />
-          <ModalFooter>
+        <ModalContent size={modalSize} className="max-h-[84vh]">
+          <ModalHeader className="shrink-0"><ModalTitle>{editing ? `${tGlobal('Edit')} ${tGlobal(title)}` : `${tGlobal('Tambah')} ${tGlobal(title)}`}</ModalTitle></ModalHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <FormErrorSummary errors={formErrors} /><FormFields data={form} onChange={setForm} errors={formErrors} />
+          </div><ModalFooter className="shrink-0">
             <button className="btn ghost" onClick={() => setOpen(false)}>{tGlobal('Batal')}</button>
             {!editing && (
               <button className="btn ghost" onClick={() => handleSave(true)} disabled={saving} title="Ctrl+Enter">

@@ -47,7 +47,7 @@ export function RowActionsMenu({ items }: { items: RowActionItem[] }) {
             <Icon name="more-vertical" size={14} />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent>
+        <DropdownMenuContent className="z-[800]">
           {items.map((it, i) => (
             <React.Fragment key={`${it.label}-${i}`}>
               {it.separatorBefore && <DropdownMenuSeparator />}
@@ -81,7 +81,7 @@ export function RowContextMenu({
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
-      <ContextMenuContent>
+      <ContextMenuContent className="z-[800]">
         {items.map((it, i) => (
           <React.Fragment key={`${it.label}-${i}`}>
             {it.separatorBefore && <ContextMenuSeparator />}

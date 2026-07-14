@@ -543,6 +543,22 @@ judul, deskripsi user-friendly, dan tombol **Coba lagi** (memanggil
 
 ---
 
+### 2.10.1 Modal master = body scroll terpisah (WAJIB, 2026-07-14)
+
+Modal create/edit via organism `SimpleMasterPage` (dan semua dialog master
+`code+name+isActive`) **wajib** tetap muat viewport tanpa konten terpotong:
+
+- `ModalContent` dibatasi `max-h-[84vh]` + tetap `flex flex-col`.
+- Header/Footer `shrink-0`; region tengah (`FormErrorSummary` + `FormFields`)
+  dibungkus wrapper `min-h-0 flex-1 overflow-y-auto`.
+- Tujuan: form kaya (mis. Partner dengan tab Kontak/Alamat & nested kebab
+  §2.11) tetap bisa di-scroll ke bawah; footer (Batal/Simpan) selalu visible.
+
+Jangan biarkan region form tumpah ke luar dialog tanpa scroll — konten bawah
+menjadi tak terjangkau (bug Partner, 2026-07-14).
+
+---
+
 ### 2.10 Status boolean = kolom badge `Aktif/Nonaktif` (2026-05-20)
 
 Untuk entitas dengan status biner (`isActive`) di list page: tetap kolom
@@ -580,7 +596,9 @@ Konvensi item kebab:
 Implementasi wajib lewat molecule reusable
 [`components/molecules/row-actions-menu.tsx`](components/molecules/row-actions-menu.tsx)
 (`RowActionsMenu`) — **dilarang** rakit ad-hoc per halaman. Primitif Radix di
-[`components/ui/dropdown-menu.tsx`](components/ui/dropdown-menu.tsx).
+[`components/ui/dropdown-menu.tsx`](components/ui/dropdown-menu.tsx). **Menu row-action
+harus memakai z-index di atas modal (`z-[800]`)** agar kebab tetap clickable saat
+dipakai di tabel nested dalam dialog (bug Partner kontak/alamat, 2026-07-14).
 
 **Paritas right-click (WAJIB, 2026-05-20):** setiap baris list **wajib** juga
 membuka menu yang sama via klik-kanan (context menu). Bungkus `<TableRow>`
