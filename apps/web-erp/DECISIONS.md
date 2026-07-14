@@ -3462,16 +3462,35 @@ berada di field info utama partner. Form partner (`partners-page.tsx`, tetap
   kode pos, **no hp**, fax, utama) — organism
   [`partner-addresses-editor.tsx`](components/organisms/partner-addresses-editor.tsx).
 
-Sub-resource = **tambah + hapus saja** (paritas backend; tak ada update inline).
-Endpoint reuse yang sudah ada: `GET /partners/:id` (include contacts/addresses),
-`POST|DELETE /partners/:id/contacts[/:id]`, `POST|DELETE /partners/:id/addresses[/:id]`
-— API client di [`lib/api/partners.ts`](lib/api/partners.ts) (`getPartner`,
-`addPartnerContact`/`removePartnerContact`, `addPartnerAddress`/`removePartnerAddress`).
+Sub-resource = **tambah + edit + hapus**. Endpoint:
+`GET /partners/:id` (include contacts/addresses),
+`POST|PATCH|DELETE /partners/:id/contacts[/:id]`,
+`POST|PATCH|DELETE /partners/:id/addresses[/:id]`
+— API client di [`lib/api/partners.ts`](lib/api/partners.ts).
 Tab Kontak/Alamat butuh partner **tersimpan** (`PartnerForm.id`); saat create
 baru, tab menampilkan hint "Simpan partner dulu". Editor fetch slice-nya sendiri
 via `getPartner(id)` saat tab aktif (Radix Tabs unmount konten non-aktif).
 **Tidak** ada kolom `phone` di `md_partners` — no hp memang hidup di
 contacts/addresses, bukan di master partner.
+
+### Partner — UX list-or-form untuk Kontak & Alamat (2026-07-14)
+
+Masalah: tab Alamat (dan Kontak) menampilkan **list + form input bersamaan**
+(form kosong "Tambah alamat" selalu di bawah tabel) → membingungkan, seolah
+ada dua mode sekaligus. Screenshot user di `/app/master/partners`.
+
+**Perbaikan UX (list-or-form, bukan nested modal di dalam modal partner):**
+
+| Mode | Tampilan |
+| --- | --- |
+| **List** (default) | Toolbar `N alamat` + tombol **+ Tambah alamat**; tabel; empty-state dashed + CTA jika 0 baris |
+| **Form create** | Judul "Tambah alamat" + **Kembali ke daftar**; fieldset form; Batal / Simpan alamat. List **disembunyikan**. |
+| **Form edit** | Sama, judul "Edit alamat" + Simpan perubahan. Dibuka dari kebab row / context menu. |
+
+State: `formMode: null | 'new' | string(id)`. Simpan sukses / Batal →
+`formMode=null` kembali ke list. Paritas diterapkan ke
+`partner-contacts-editor.tsx` (kontak) agar tab Kontak/Alamat konsisten.
+Cascade geo + autofill kode pos dari kelurahan **tidak berubah**.
 
 ### Partner — dimensi Cabang/Gudang/Lokasi multi-select (2026-06-13)
 
