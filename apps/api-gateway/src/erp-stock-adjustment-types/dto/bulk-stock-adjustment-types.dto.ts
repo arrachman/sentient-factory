@@ -1,12 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsArray, IsBoolean, IsOptional, IsString, ArrayMinSize } from 'class-validator';
 
-export class BulkErpItemTransactionTypeDto {
+export class BulkErpStockAdjustmentTypeDto {
   @ApiProperty({ type: [String] }) @IsArray() @ArrayMinSize(1) @IsString({ each: true })
   ids!: string[];
 }
 
-export class BulkStatusErpItemTransactionTypeDto {
+export class BulkStatusErpStockAdjustmentTypeDto {
   @ApiProperty({ type: [String] }) @IsArray() @ArrayMinSize(1) @IsString({ each: true })
   ids!: string[];
 

@@ -153,7 +153,7 @@
 | M1.REF.AREA | Area | `/master/areas` | `areas-page.tsx` | `erp-areas` |
 | M1.REF.TXN-NOTE | Transaction Notes | `/master/transaction-notes` | `transaction-notes-page.tsx` | `erp-transaction-notes` |
 | M1.REF.TXN-NOTE-DETAIL | Txn Note Detail | `/master/txn-note-details` | `txn-note-details-page.tsx` | `erp-txn-note-details` |
-| M1.REF.ITEM-TXN-TYPE | Item Transaction Types | `/master/item-txn-types` | `item-transaction-types-page.tsx` | `erp-item-transaction-types` |
+| M1.REF.ITEM-TXN-TYPE | Stock Adjustment Types | `/master/stock-adjustment-types` | `stock-adjustment-types-page.tsx` | `erp-stock-adjustment-types` |
 | M1.REF.PRODUCTION-CAT | Production Categories | `/master/production-categories` | `production-categories-page.tsx` | `erp-production-categories` |
 | M1.REF.WORK-ESTIMATE | Work Estimate | `/master/work-estimates` | `work-estimates-page.tsx` | `erp-work-estimates` |
 | M1.REF.POINT-CAT | Point Categories | `/master/point-categories` | `point-categories-page.tsx` | `erp-point-categories` |
@@ -166,7 +166,7 @@
 - SubArea (Kelurahan): **tidak diimplementasi** (ditunda/deferred) —
   bukan bagian MVP; bisa ditambahkan sebagai `areas-page.tsx`-like dengan FK ke Area.
 - Transaction Notes & Txn Note Detail: referensi teks keterangan transaksi.
-- Item Transaction Types: enum tipe mutasi stok (referensi).
+- Stock Adjustment Types: enum tipe penyesuaian stok (referensi) + No Akun (CoA postable).
 
 ---
 

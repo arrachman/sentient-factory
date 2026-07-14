@@ -1,6 +1,6 @@
 /**
- * Seed 100 realistic item transaction types into md_item_transaction_types.
- * Run: npm run db:seed:item-txn-types
+ * Seed 100 realistic stock adjustment types into md_stock_adjustment_types.
+ * Run: npm run db:seed:stock-adjustment-types
  * Idempotent: skips if table already has >=1 row.
  */
 import { PrismaClient } from '@prisma/client';
@@ -101,13 +101,13 @@ const ITEM_TXN_TYPES: TxnType[] = [
 ];
 
 async function main() {
-  const count = await prisma.erpItemTransactionType.count({ where: { deletedAt: null } });
+  const count = await prisma.erpStockAdjustmentType.count({ where: { deletedAt: null } });
   if (count > 0) {
-    console.log(`md_item_transaction_types already has ${count} rows — skip.`);
+    console.log(`md_stock_adjustment_types already has ${count} rows — skip.`);
     return;
   }
-  console.log(`Inserting ${ITEM_TXN_TYPES.length} item transaction types…`);
-  const result = await prisma.erpItemTransactionType.createMany({
+  console.log(`Inserting ${ITEM_TXN_TYPES.length} stock adjustment types…`);
+  const result = await prisma.erpStockAdjustmentType.createMany({
     data: ITEM_TXN_TYPES.map(t => ({
       code: t.code,
       name: t.name,

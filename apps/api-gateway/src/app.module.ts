@@ -59,7 +59,7 @@ import { ErpDesignersModule } from './erp-designers/designers.module';
 import { ErpProductionActivitiesModule } from './erp-production-activities/production-activities.module';
 import { ErpProductionRoutesModule } from './erp-production-routes/production-routes.module';
 import { ErpCommissionsModule } from './erp-commissions/commissions.module';
-import { ErpItemTransactionTypesModule } from './erp-item-transaction-types/item-transaction-types.module';
+import { ErpStockAdjustmentTypesModule } from './erp-stock-adjustment-types/stock-adjustment-types.module';
 import { ErpCountriesModule } from './erp-countries/countries.module';
 import { ErpProvincesModule } from './erp-provinces/provinces.module';
 import { ErpCitiesModule } from './erp-cities/cities.module';
@@ -275,7 +275,7 @@ import { ErpPurPaymentSchedulesModule } from './erp-pur-payment-schedules/erp-pu
     ErpProductionActivitiesModule,
     ErpProductionRoutesModule,
     ErpCommissionsModule,
-    ErpItemTransactionTypesModule,
+    ErpStockAdjustmentTypesModule,
     ErpCountriesModule,
     ErpProvincesModule,
     ErpCitiesModule,

@@ -28,7 +28,7 @@ const ENTITIES = [
     extraFields: [{ name: 'amount', type: 'string', db: 'Decimal', desc: 'Commission amount (Decimal as string)', example: '0', decorators: ['@IsOptional()', '@IsString()'] }],
   },
   {
-    model: 'ErpItemTransactionType', table: 'md_item_transaction_types', kebab: 'item-transaction-types', plural: 'itemTransactionTypes', labelId: 'Tipe Trx Item', labelEn: 'Item Transaction Type', code: 'ITT',
+    model: 'ErpStockAdjustmentType', table: 'md_stock_adjustment_types', kebab: 'stock-adjustment-types', plural: 'stockAdjustmentTypes', labelId: 'Tipe Penyesuaian Stok', labelEn: 'Stock Adjustment Type', code: 'SAT',
     extraFields: [{ name: 'direction', type: 'string', db: 'string', desc: 'IN|OUT|TRANSFER', example: 'IN', decorators: ['@IsOptional()', "@IsIn(['IN','OUT','TRANSFER'])"] }],
   },
   {

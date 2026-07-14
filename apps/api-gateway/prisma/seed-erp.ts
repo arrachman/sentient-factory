@@ -1307,8 +1307,8 @@ async function seedMenus(): Promise<Map<string, bigint>> {
       },
       {
         code: 'M1.REF.ITEM-TXN-TYPE',
-        title: 'Item Transaction Types',
-        path: '/master/item-txn-types',
+        title: 'Stock Adjustment Types',
+        path: '/master/stock-adjustment-types',
         legacyCode: '1-30',
       },
       {

@@ -70,7 +70,7 @@ import { ErpBanksPage } from '@/components/pages/banks-page';
 import { ErpExpeditionsPage } from '@/components/pages/expeditions-page';
 import { ErpOtherCostsPage } from '@/components/pages/other-costs-page';
 import { ErpCommissionsPage } from '@/components/pages/commissions-page';
-import { ErpItemTransactionTypesPage } from '@/components/pages/item-transaction-types-page';
+import { ErpStockAdjustmentTypesPage } from '@/components/pages/stock-adjustment-types-page';
 import { ErpCountriesPage } from '@/components/pages/countries-page';
 import { ErpProvincesPage } from '@/components/pages/provinces-page';
 import { ErpCitiesPage } from '@/components/pages/cities-page';
@@ -200,7 +200,9 @@ export const ERP_PAGES: Record<string, (ctx: ErpPageCtx) => React.ReactNode> = {
   '/master/expeditions': () => <ErpExpeditionsPage />,
   '/master/other-costs': () => <ErpOtherCostsPage />,
   '/master/commissions': () => <ErpCommissionsPage />,
-  '/master/item-txn-types': () => <ErpItemTransactionTypesPage />,
+  '/master/stock-adjustment-types': () => <ErpStockAdjustmentTypesPage />,
+  // legacy path alias (menu may still be cached until seed/migrate)
+  '/master/item-txn-types': () => <ErpStockAdjustmentTypesPage />,
   '/master/countries': () => <ErpCountriesPage />,
   '/master/provinces': () => <ErpProvincesPage />,
   '/master/cities': () => <ErpCitiesPage />,
