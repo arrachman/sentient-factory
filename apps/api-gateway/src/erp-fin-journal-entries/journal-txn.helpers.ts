@@ -1,4 +1,8 @@
 import { Prisma } from '@prisma/client';
+import {
+  prismaDateFilter,
+  resolveDateRange,
+} from '../common/utils/date-range.util';
 import { CreateJournalLineDto } from './dto/create-journal-entry.dto';
 import { QueryJournalEntryDto } from './dto/query-journal-entry.dto';
 import { JournalTransitionAction as A } from './dto/transition-journal-entry.dto';
@@ -86,12 +90,19 @@ export function buildJournalWhere(
   if (query.branchId) where.branchId = BigInt(query.branchId);
   if (query.partnerId) where.partnerId = BigInt(query.partnerId);
   if (query.createdById) where.createdById = BigInt(query.createdById);
-  if (query.dateFrom || query.dateTo) {
-    where.entryDate = {
-      ...(query.dateFrom ? { gte: new Date(query.dateFrom) } : {}),
-      ...(query.dateTo ? { lte: new Date(query.dateTo) } : {}),
-    };
-  }
+
+  // Bounded date window: default last 31 days when caller omits range;
+  // max span 366 days when both ends provided (throws BadRequest).
+  const { from, to } = resolveDateRange({
+    dateFrom: query.dateFrom,
+    dateTo: query.dateTo,
+    requireRange: true,
+    defaultSpanDays: 31,
+    maxSpanDays: 366,
+    fieldLabel: 'Journal entryDate',
+  });
+  const dateFilter = prismaDateFilter(from, to);
+  if (dateFilter) where.entryDate = dateFilter;
   if (query.docNumberFrom || query.docNumberTo) {
     where.docNumber = {
       ...(query.docNumberFrom ? { gte: query.docNumberFrom } : {}),

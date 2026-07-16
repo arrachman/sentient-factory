@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { isUniqueViolation, throwDuplicate } from '../common/errors/duplicate.util';
+import { RefCacheService } from '../common/cache/ref-cache.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { toAuditUserId } from '../common/utils/audit-user.util';
 import { BulkErpCurrencyDto, BulkStatusErpCurrencyDto } from './dto/bulk-erp-currency.dto';
@@ -11,7 +12,10 @@ import { CreateErpCurrencyRateDto } from './dto/create-erp-currency-rate.dto';
 
 @Injectable()
 export class ErpCurrenciesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly refCache: RefCacheService,
+  ) {}
 
   async create(dto: CreateErpCurrencyDto, actorId?: string) {
     const existing = await this.prisma.erpCurrency.findFirst({
@@ -58,6 +62,7 @@ export class ErpCurrenciesService {
       throw error;
     }
 
+    await this.refCache.invalidateNs('currencies');
     return { success: true, data: created };
   }
 
@@ -65,6 +70,8 @@ export class ErpCurrenciesService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
+    const sortBy = query.sortBy ?? 'createdAt';
+    const sortDir = query.sortDir ?? 'desc';
 
     const where: Prisma.ErpCurrencyWhereInput = { deletedAt: null };
     if (query.search?.trim()) {
@@ -78,26 +85,40 @@ export class ErpCurrenciesService {
       where.isActive = query.isActive;
     }
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.erpCurrency.findMany({
-        where,
-        orderBy: [{ [query.sortBy ?? 'createdAt']: query.sortDir ?? 'desc' }],
-        skip,
-        take: limit,
-      }),
-      this.prisma.erpCurrency.count({ where }),
-    ]);
+    const cacheable =
+      !query.search?.trim() &&
+      page === 1 &&
+      limit <= 200 &&
+      sortBy === 'createdAt' &&
+      sortDir === 'desc';
+    const cachePart = `p1:l${limit}:a${query.isActive === undefined ? 'any' : query.isActive}`;
 
-    return {
-      success: true,
-      data: items,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit) || 1,
-      },
+    const load = async () => {
+      const [items, total] = await this.prisma.$transaction([
+        this.prisma.erpCurrency.findMany({
+          where,
+          orderBy: [{ [sortBy]: sortDir }],
+          skip,
+          take: limit,
+        }),
+        this.prisma.erpCurrency.count({ where }),
+      ]);
+      return {
+        success: true as const,
+        data: items,
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit) || 1,
+        },
+      };
     };
+
+    if (cacheable) {
+      return this.refCache.getOrLoad('currencies', load, 300, cachePart);
+    }
+    return load();
   }
 
   async findOne(id: bigint) {
@@ -162,6 +183,7 @@ export class ErpCurrenciesService {
       throw error;
     }
 
+    await this.refCache.invalidateNs('currencies');
     return { success: true, data: updated };
   }
 
@@ -171,6 +193,7 @@ export class ErpCurrenciesService {
       where: { id: { in: ids }, deletedAt: null },
       data: { isActive: dto.isActive, updatedById: toAuditUserId(actorId), updatedAt: new Date() },
     });
+    await this.refCache.invalidateNs('currencies');
     return { success: true, affected: count };
   }
 
@@ -180,6 +203,7 @@ export class ErpCurrenciesService {
       where: { id: { in: ids }, deletedAt: null },
       data: { deletedAt: new Date(), updatedById: toAuditUserId(actorId), updatedAt: new Date() },
     });
+    await this.refCache.invalidateNs('currencies');
     return { success: true, affected: count };
   }
 
@@ -200,6 +224,7 @@ export class ErpCurrenciesService {
       },
     });
 
+    await this.refCache.invalidateNs('currencies');
     return { success: true, message: 'Currency deleted' };
   }
 

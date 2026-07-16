@@ -108,6 +108,7 @@ export interface ListJournalEntriesParams extends PaginationParams {
   notes?: string;
   sortBy?: string;
   sortDir?: 'asc' | 'desc';
+  includeTotal?: boolean;
 }
 
 export async function listJournalEntries(

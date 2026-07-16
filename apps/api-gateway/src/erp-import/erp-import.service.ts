@@ -11,7 +11,7 @@ export interface UploadedFileLike {
   mimetype: string;
 }
 
-interface RowError {
+export interface RowError {
   row: number;
   message: string;
 }
@@ -22,6 +22,9 @@ export interface ImportSummary {
   ok: number;
   failed: number;
   errors: RowError[];
+  /** Present when processing continues after the HTTP response. */
+  status?: string;
+  async?: boolean;
 }
 
 const MAX_REPORTED_ERRORS = 200;
@@ -61,6 +64,7 @@ export class ErpImportService {
         rowsTotal: j.rowsTotal,
         rowsOk: j.rowsOk,
         rowsFailed: j.rowsFailed,
+        errors: (j.errors ?? []) as unknown as RowError[],
         createdAt: j.createdAt,
       })),
     };
@@ -77,7 +81,14 @@ export class ErpImportService {
       throw new BadRequestException('File tidak ditemukan atau kosong');
     }
 
-    const { headers, rows } = await parseFile(file.buffer, file.originalname);
+    // Cap rows to avoid unbounded sync/async work on one request payload.
+    const MAX_IMPORT_ROWS = 20_000;
+    const { headers, rows: parsedRows } = await parseFile(file.buffer, file.originalname);
+    if (parsedRows.length > MAX_IMPORT_ROWS) {
+      throw new BadRequestException(
+        `Maksimal ${MAX_IMPORT_ROWS} baris per impor (file punya ${parsedRows.length}).`,
+      );
+    }
 
     const missing = adapter.requiredHeaders.filter((h) => !headers.includes(h));
     if (missing.length > 0) {
@@ -86,14 +97,74 @@ export class ErpImportService {
       );
     }
 
+    // Create PENDING job immediately so the client can poll /import/jobs.
+    const job = await this.prisma.erpImportJob.create({
+      data: {
+        entity,
+        fileName: file.originalname,
+        status: 'PENDING',
+        rowsTotal: parsedRows.length,
+        rowsOk: 0,
+        rowsFailed: 0,
+        createdById: toAuditUserId(actorId),
+        updatedById: toAuditUserId(actorId),
+      },
+    });
+
+    const jobId = job.id;
+    const rows = parsedRows;
+
+    // Fire-and-forget worker (same process). For multi-instance, swap to BullMQ.
+    setImmediate(() => {
+      void this.runImportJob(jobId, entity, rows, actorId).catch(async (err) => {
+        await this.prisma.erpImportJob.update({
+          where: { id: jobId },
+          data: {
+            status: 'FAILED',
+            errors: [
+              { row: 0, message: err instanceof Error ? err.message : 'Import gagal' },
+            ] as unknown as Prisma.InputJsonValue,
+          },
+        });
+      });
+    });
+
+    return {
+      success: true,
+      data: {
+        jobId: jobId.toString(),
+        total: rows.length,
+        ok: 0,
+        failed: 0,
+        errors: [],
+        status: 'PENDING',
+        async: true,
+      } as ImportSummary & { status: string; async: boolean },
+    };
+  }
+
+  private async runImportJob(
+    jobId: bigint,
+    entity: string,
+    rows: Record<string, string>[],
+    actorId?: string,
+  ): Promise<void> {
+    const adapter = getAdapter(entity);
+    if (!adapter) return;
+
+    await this.prisma.erpImportJob.update({
+      where: { id: jobId },
+      data: { status: 'RUNNING' },
+    });
+
     const errors: RowError[] = [];
     let ok = 0;
+    const CHUNK = 100;
 
     for (let i = 0; i < rows.length; i += 1) {
-      const rowNumber = i + 2; // 1-based + header row
+      const rowNumber = i + 2;
       const row = rows[i];
       try {
-        // required-cell validation
         const emptyRequired = adapter.requiredHeaders.filter(
           (h) => (row[h] ?? '').trim() === '',
         );
@@ -106,36 +177,31 @@ export class ErpImportService {
       } catch (err) {
         errors.push({ row: rowNumber, message: this.toRowMessage(err) });
       }
+
+      // Progress every CHUNK rows
+      if ((i + 1) % CHUNK === 0 || i === rows.length - 1) {
+        await this.prisma.erpImportJob.update({
+          where: { id: jobId },
+          data: {
+            rowsOk: ok,
+            rowsFailed: errors.length,
+            errors: errors.slice(0, MAX_REPORTED_ERRORS) as unknown as Prisma.InputJsonValue,
+          },
+        });
+      }
     }
 
     const failed = errors.length;
-    const total = rows.length;
     const status = failed === 0 ? 'COMPLETED' : ok === 0 ? 'FAILED' : 'PARTIAL';
-
-    const job = await this.prisma.erpImportJob.create({
+    await this.prisma.erpImportJob.update({
+      where: { id: jobId },
       data: {
-        entity,
-        fileName: file.originalname,
         status,
-        rowsTotal: total,
         rowsOk: ok,
         rowsFailed: failed,
         errors: errors.slice(0, MAX_REPORTED_ERRORS) as unknown as Prisma.InputJsonValue,
-        createdById: toAuditUserId(actorId),
-        updatedById: toAuditUserId(actorId),
       },
     });
-
-    return {
-      success: true,
-      data: {
-        jobId: job.id.toString(),
-        total,
-        ok,
-        failed,
-        errors: errors.slice(0, MAX_REPORTED_ERRORS),
-      },
-    };
   }
 
   private toRowMessage(err: unknown): string {

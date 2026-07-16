@@ -119,6 +119,30 @@ export type UpdateAccountPayload = Partial<CreateAccountPayload>;
 
 // ─── API functions ────────────────────────────────────────────────────────────
 
+export interface AccountTreeNode extends ErpAccount {
+  hasChildren: boolean;
+}
+
+/** One level of CoA (omit parentId for roots). */
+export async function listAccountTree(params?: {
+  parentId?: string | null;
+  accountType?: ErpAccountType;
+  accountKind?: ErpAccountKind;
+  isActive?: boolean;
+}): Promise<ApiResponse<AccountTreeNode[]>> {
+  const q: Record<string, string | number | boolean | undefined> = {
+    accountType: params?.accountType,
+    accountKind: params?.accountKind,
+    isActive: params?.isActive,
+    // Backend treats omit / 'null' as roots
+    parentId:
+      params?.parentId === undefined || params?.parentId === null || params?.parentId === ''
+        ? 'null'
+        : params.parentId,
+  };
+  return apiGet<ApiResponse<AccountTreeNode[]>>('/accounts/tree', q);
+}
+
 export async function listAccounts(
   params?: PaginationParams & {
     accountType?: ErpAccountType;

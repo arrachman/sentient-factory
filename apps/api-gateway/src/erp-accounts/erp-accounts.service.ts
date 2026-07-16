@@ -232,7 +232,7 @@ export class ErpAccountsService {
 
   async findAll(query: QueryErpAccountDto) {
     const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
+    const limit = Math.min(query.limit ?? 10, 500);
     const skip = (page - 1) * limit;
 
     const where: Prisma.ErpAccountWhereInput = { deletedAt: null };
@@ -244,30 +244,38 @@ export class ErpAccountsService {
         { alias: { contains: q, mode: 'insensitive' } },
       ];
     }
-    if (query.accountType) {
-      where.type = query.accountType;
-    }
-    if (query.accountKind) {
-      where.kind = query.accountKind;
-    }
-    if (query.normalBalance) {
-      where.normalBalance = query.normalBalance;
-    }
+    if (query.accountType) where.type = query.accountType;
+    if (query.accountKind) where.kind = query.accountKind;
+    if (query.normalBalance) where.normalBalance = query.normalBalance;
     if (query.parentId !== undefined) {
       where.parentId = query.parentId === 'null' ? null : toBigIntId(query.parentId, 'parentId');
     }
-    if (query.isActive !== undefined) {
-      where.isActive = query.isActive;
-    }
+    if (query.isActive !== undefined) where.isActive = query.isActive;
 
+    // List: thin select (dims only on findOne / form).
     const [items, total] = await this.prisma.$transaction([
       this.prisma.erpAccount.findMany({
         where,
         orderBy: [{ [query.sortBy ?? 'code']: query.sortDir ?? 'asc' }],
         skip,
         take: limit,
-        include: {
-          ...ACCOUNT_DIM_INCLUDE,
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          alias: true,
+          type: true,
+          kind: true,
+          normalBalance: true,
+          cashFlowCategory: true,
+          parentId: true,
+          currencyId: true,
+          bankId: true,
+          level: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          parent: { select: { id: true, code: true, name: true } },
         },
       }),
       this.prisma.erpAccount.count({ where }),
@@ -283,6 +291,57 @@ export class ErpAccountsService {
         totalPages: Math.ceil(total / limit) || 1,
       },
     };
+  }
+
+  /**
+   * One level of the CoA tree (roots when parentId omitted/null).
+   * Each row includes hasChildren for expand chevron without loading siblings.
+   */
+  async findTreeChildren(query: {
+    parentId?: string;
+    accountType?: import('@prisma/client').ErpAccountType;
+    accountKind?: import('@prisma/client').ErpAccountKind;
+    isActive?: boolean;
+  }) {
+    const where: Prisma.ErpAccountWhereInput = { deletedAt: null };
+    if (query.parentId === undefined || query.parentId === '' || query.parentId === 'null') {
+      where.parentId = null;
+    } else {
+      where.parentId = toBigIntId(query.parentId, 'parentId');
+    }
+    if (query.accountType) where.type = query.accountType;
+    if (query.accountKind) where.kind = query.accountKind;
+    if (query.isActive !== undefined) where.isActive = query.isActive;
+
+    const items = await this.prisma.erpAccount.findMany({
+      where,
+      orderBy: [{ code: 'asc' }],
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        alias: true,
+        type: true,
+        kind: true,
+        normalBalance: true,
+        cashFlowCategory: true,
+        parentId: true,
+        currencyId: true,
+        bankId: true,
+        level: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: { select: { children: { where: { deletedAt: null } } } },
+      },
+    });
+
+    const data = items.map(({ _count, ...row }) => ({
+      ...row,
+      hasChildren: _count.children > 0,
+    }));
+
+    return { success: true, data };
   }
 
   async findOne(id: bigint) {

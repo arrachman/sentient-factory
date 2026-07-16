@@ -14,6 +14,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import * as path from 'path';
+import { makeDiskStorage } from '../common/upload/disk-upload';
 import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { ErpItemMediaKind } from '@prisma/client';
@@ -40,7 +42,17 @@ export class ErpItemMediaController {
   @Post()
   @ApiOperation({ summary: 'Upload gambar produk / video pendek (multipart "file" + "kind")' })
   @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: ITEM_MEDIA_MAX_UPLOAD_BYTES } }))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: ITEM_MEDIA_MAX_UPLOAD_BYTES },
+      storage: makeDiskStorage({
+        dest:
+          process.env.ERP_UPLOAD_DIR ??
+          path.join(process.cwd(), 'uploads', 'erp-items'),
+        prefix: 'media',
+      }),
+    }),
+  )
   upload(
     @Param('itemId') itemId: string,
     @Body('kind') kind: string,

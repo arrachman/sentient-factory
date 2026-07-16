@@ -14,14 +14,13 @@ export class QueryErpAccountDto {
   @Min(1)
   page?: number = 1;
 
-  // CoA tree list loads the full chart client-side (expand/collapse); allow
-  // a high ceiling so FE can request limit=5000 without ValidationPipe 400.
-  @ApiPropertyOptional({ example: 10, default: 10, maximum: 5000 })
+  // Prefer GET /accounts/tree for hierarchy. List max 500 for search/export only.
+  @ApiPropertyOptional({ example: 10, default: 10, maximum: 500 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(5000)
+  @Max(500)
   limit?: number = 10;
 
   @ApiPropertyOptional({ example: 'Cash' })
@@ -68,4 +67,35 @@ export class QueryErpAccountDto {
   @IsOptional()
   @IsIn(['asc', 'desc'])
   sortDir?: 'asc' | 'desc';
+}
+
+
+/** Children of one parent for lazy CoA tree (no pagination — one level only). */
+export class QueryAccountTreeDto {
+  @ApiPropertyOptional({
+    description: "Parent id, or omit/'null' for roots",
+  })
+  @IsOptional()
+  @IsString()
+  parentId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEnum(ErpAccountType)
+  accountType?: ErpAccountType;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEnum(ErpAccountKind)
+  accountKind?: ErpAccountKind;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'true') return true;
+    if (value === 'false') return false;
+    return value;
+  })
+  @IsBoolean()
+  isActive?: boolean;
 }

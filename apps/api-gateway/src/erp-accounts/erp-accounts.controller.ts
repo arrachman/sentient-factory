@@ -15,7 +15,7 @@ import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagg
 import { ErpJwtAuthGuard } from '../erp-auth/guards/erp-jwt-auth.guard';
 import { BulkErpAccountDto, BulkStatusErpAccountDto } from './dto/bulk-erp-account.dto';
 import { CreateErpAccountDto } from './dto/create-erp-account.dto';
-import { QueryErpAccountDto } from './dto/query-erp-account.dto';
+import { QueryAccountTreeDto, QueryErpAccountDto } from './dto/query-erp-account.dto';
 import { UpdateAccountCodeFormatDto } from './dto/update-account-code-format.dto';
 import { UpdateErpAccountDto } from './dto/update-erp-account.dto';
 import { toBigIntId } from './account-hierarchy';
@@ -40,6 +40,15 @@ export class ErpAccountsController {
   @ApiResponse({ status: 200, description: 'List of accounts' })
   findAll(@Query() query: QueryErpAccountDto) {
     return this.service.findAll(query);
+  }
+
+  @Get('tree')
+  @ApiOperation({
+    summary: 'Lazy CoA tree: children of one parent (omit parentId for roots)',
+  })
+  @ApiResponse({ status: 200, description: 'One level of accounts with hasChildren' })
+  findTree(@Query() query: QueryAccountTreeDto) {
+    return this.service.findTreeChildren(query);
   }
 
   @Get('code-format')

@@ -109,27 +109,50 @@ export class ErpFinJournalEntriesService {
   }
 
   async findAll(query: QueryJournalEntryDto) {
-    const page = query.page ?? 1;
-    const limit = query.limit ?? 10;
+    const page = Math.max(1, query.page ?? 1);
+    const limit = Math.min(Math.max(1, query.limit ?? 10), 100);
+    const includeTotal = query.includeTotal !== false;
+    // Default last 31 days + max 366 when range set (see buildJournalWhere).
     const where = buildJournalWhere(query);
     const sortBy = query.sortBy ?? 'entryDate';
     const sortDir = query.sortDir ?? 'desc';
 
-    const [items, total] = await this.prisma.$transaction([
-      this.prisma.erpFinJournalEntry.findMany({
-        where,
-        orderBy: [{ [sortBy]: sortDir }, { id: 'desc' }],
-        skip: (page - 1) * limit,
-        take: limit,
-        include: { lines: { orderBy: { lineNo: 'asc' } } },
-      }),
-      this.prisma.erpFinJournalEntry.count({ where }),
-    ]);
+    // List includes only line ids so existing grid can show count without
+    // shipping full line payload; edit still fetches detail before opening.
+    const items = await this.prisma.erpFinJournalEntry.findMany({
+      where,
+      orderBy: [{ [sortBy]: sortDir }, { id: 'desc' }],
+      skip: (page - 1) * limit,
+      take: limit,
+      include: { lines: { select: { id: true } } },
+    });
 
+    let total: number | null = null;
+    if (includeTotal) {
+      total = await this.prisma.erpFinJournalEntry.count({ where });
+    }
+
+    const hasMore =
+      total != null ? page * limit < total : items.length >= limit;
+    const approxTotal =
+      total ??
+      (page - 1) * limit + items.length + (hasMore ? 1 : 0);
     return {
       success: true,
       data: items,
-      meta: { page, limit, total, totalPages: Math.ceil(total / limit) || 1 },
+      meta: {
+        page,
+        limit,
+        total: approxTotal,
+        totalPages:
+          total != null
+            ? Math.ceil(total / limit) || 1
+            : hasMore
+              ? page + 1
+              : page,
+        hasMore,
+        totalExact: total != null,
+      },
     };
   }
 

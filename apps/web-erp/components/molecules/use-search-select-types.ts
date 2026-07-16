@@ -76,6 +76,7 @@ export interface SearchSelectHandlers {
   confirm: () => void;
   toggleAll: () => void;
   handleKeyDown: (e: React.KeyboardEvent) => void;
+  goToPage: (page: number) => void;
   setQuery: React.Dispatch<React.SetStateAction<string>>;
   setPage: React.Dispatch<React.SetStateAction<number>>;
 }

@@ -5,6 +5,9 @@
  */
 
 import { BadRequestException, Injectable } from '@nestjs/common';
+
+/** Hard cap for sync in-memory export (xlsx/pdf/docx). */
+const MAX_EXPORT_ROWS = 5_000;
 import { ReportDataset, ReportFormat } from './report-types';
 import { buildFilename } from './report-export.format';
 import { renderXlsx } from './report-export.xlsx';
@@ -30,6 +33,12 @@ export class ReportExportService {
   constructor(private readonly engine: ReportEngineService) {}
 
   async render(dataset: ReportDataset, format: ReportFormat): Promise<RenderedReport> {
+    if (dataset.rows.length > MAX_EXPORT_ROWS) {
+      throw new BadRequestException(
+        `Export dibatasi ${MAX_EXPORT_ROWS} baris (dataset: ${dataset.rows.length}). ` +
+          `Persempit filter atau ekspor bertahap.`,
+      );
+    }
     let buffer: Buffer;
     switch (format) {
       case 'xlsx':

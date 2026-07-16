@@ -1,6 +1,15 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsEnum, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 import {
   ErpDocumentStatusDto,
   ErpJournalTypeDto,
@@ -23,6 +32,19 @@ export class QueryJournalEntryDto {
   @Min(1)
   @Max(100)
   limit?: number = 10;
+
+  @ApiPropertyOptional({
+    default: true,
+    description: 'false = skip COUNT(*), return hasMore only',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === 'false' || value === false) return false;
+    if (value === 'true' || value === true) return true;
+    return value;
+  })
+  @IsBoolean()
+  includeTotal?: boolean = true;
 
   @ApiPropertyOptional()
   @IsOptional()

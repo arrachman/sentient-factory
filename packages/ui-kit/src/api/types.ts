@@ -17,8 +17,17 @@ export interface ApiResponse<T> {
 export interface PaginatedMeta {
   page: number;
   limit: number;
+  /**
+   * Exact row count when totalExact !== false.
+   * When COUNT(*) was skipped (includeTotal=false), this is a lower-bound
+   * hint (page*limit or page*limit-1) — prefer `hasMore` for navigation.
+   */
   total: number;
   totalPages: number;
+  /** True when another page likely exists. */
+  hasMore?: boolean;
+  /** false when the server skipped COUNT(*) (total is approximate). */
+  totalExact?: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -40,4 +49,6 @@ export interface PaginationParams {
    * wrapper before forwarding when the endpoint does not support it.
    */
   isActive?: boolean;
+  /** When false, server may skip COUNT(*) and set hasMore/totalExact. */
+  includeTotal?: boolean;
 }

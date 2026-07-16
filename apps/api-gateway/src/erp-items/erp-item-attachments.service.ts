@@ -9,7 +9,9 @@ export interface UploadedAttachmentFile {
   originalname: string;
   mimetype: string;
   size: number;
-  buffer: Buffer;
+  buffer?: Buffer;
+  path?: string;
+  filename?: string;
 }
 
 // Whitelisted document/image mime types → on-disk extension. Extension derives
@@ -65,6 +67,15 @@ export class ErpItemAttachmentsService {
     }
   }
 
+  private async unlinkPathQuiet(filePath?: string) {
+    if (!filePath) return;
+    try {
+      await fs.unlink(filePath);
+    } catch {
+      // temporary upload already moved/removed
+    }
+  }
+
   async list(itemId: bigint) {
     await this.assertItem(itemId);
     const rows = await this.prisma.erpItemAttachment.findMany({
@@ -80,16 +91,20 @@ export class ErpItemAttachmentsService {
     note: string | undefined,
     userId?: bigint,
   ) {
-    if (!file?.buffer?.length) throw new BadRequestException('File tidak ditemukan di request');
+    if (!file || (!file.buffer?.length && !file.path)) {
+      throw new BadRequestException('File tidak ditemukan di request');
+    }
     await this.assertItem(itemId);
 
     const ext = ATTACHMENT_MIME_EXT[file.mimetype];
     if (!ext) {
+      await this.unlinkPathQuiet(file.path);
       throw new BadRequestException(
         `Tipe file ${file.mimetype} tidak didukung (dukung: PDF, gambar, Word, Excel, PowerPoint, CSV, teks, ZIP)`,
       );
     }
     if (file.size > MAX_ATTACHMENT_BYTES) {
+      await this.unlinkPathQuiet(file.path);
       throw new BadRequestException(
         `Ukuran file melebihi batas ${Math.round(MAX_ATTACHMENT_BYTES / 1024 / 1024)} MB`,
       );
@@ -100,12 +115,21 @@ export class ErpItemAttachmentsService {
       select: { sortOrder: true },
     });
     if (existing.length >= MAX_ATTACHMENTS_PER_ITEM) {
+      await this.unlinkPathQuiet(file.path);
       throw new BadRequestException(`Maksimal ${MAX_ATTACHMENTS_PER_ITEM} lampiran per item`);
     }
 
     const storedName = `att-${itemId}-${randomUUID()}.${ext}`;
     await fs.mkdir(this.uploadDir, { recursive: true });
-    await fs.writeFile(this.absPath(storedName), file.buffer);
+    const dest = this.absPath(storedName);
+    if (file.path) {
+      await fs.rename(file.path, dest).catch(async () => {
+        await fs.copyFile(file.path!, dest);
+        await fs.unlink(file.path!).catch(() => undefined);
+      });
+    } else {
+      await fs.writeFile(dest, file.buffer!);
+    }
 
     try {
       const created = await this.prisma.erpItemAttachment.create({

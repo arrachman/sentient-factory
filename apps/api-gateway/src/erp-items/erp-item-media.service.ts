@@ -10,7 +10,11 @@ export interface UploadedMediaFile {
   originalname: string;
   mimetype: string;
   size: number;
-  buffer: Buffer;
+  /** Present for memoryStorage uploads. */
+  buffer?: Buffer;
+  /** Present for diskStorage uploads (preferred — no full-file RAM). */
+  path?: string;
+  filename?: string;
 }
 
 // Whitelisted mime types → on-disk extension (extension derives from the mime,
@@ -61,6 +65,15 @@ export class ErpItemMediaService {
     }
   }
 
+  private async unlinkPathQuiet(filePath?: string) {
+    if (!filePath) return;
+    try {
+      await fs.unlink(filePath);
+    } catch {
+      // temporary upload already moved/removed
+    }
+  }
+
   async list(itemId: bigint) {
     await this.assertItem(itemId);
     const rows = await this.prisma.erpItemMedia.findMany({
@@ -76,13 +89,16 @@ export class ErpItemMediaService {
     file: UploadedMediaFile | undefined,
     userId?: bigint,
   ) {
-    if (!file?.buffer?.length) throw new BadRequestException('File tidak ditemukan di request');
+    if (!file || (!file.buffer?.length && !file.path)) {
+      throw new BadRequestException('File tidak ditemukan di request');
+    }
     await this.assertItem(itemId);
 
     const isImage = kind === ErpItemMediaKind.IMAGE;
     const extMap = isImage ? IMAGE_MIME_EXT : VIDEO_MIME_EXT;
     const ext = extMap[file.mimetype];
     if (!ext) {
+      await this.unlinkPathQuiet(file.path);
       const allowed = Object.keys(extMap).join(', ');
       throw new BadRequestException(
         `Tipe file ${file.mimetype} tidak didukung untuk ${isImage ? 'gambar' : 'video'} (dukung: ${allowed})`,
@@ -91,6 +107,7 @@ export class ErpItemMediaService {
 
     const maxBytes = isImage ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES;
     if (file.size > maxBytes) {
+      await this.unlinkPathQuiet(file.path);
       throw new BadRequestException(
         `Ukuran file melebihi batas ${Math.round(maxBytes / 1024 / 1024)} MB`,
       );
@@ -101,12 +118,22 @@ export class ErpItemMediaService {
       select: { id: true, storedName: true, sortOrder: true },
     });
     if (isImage && existing.length >= MAX_IMAGES_PER_ITEM) {
+      await this.unlinkPathQuiet(file.path);
       throw new BadRequestException(`Maksimal ${MAX_IMAGES_PER_ITEM} gambar per item`);
     }
 
     const storedName = `${itemId}-${randomUUID()}.${ext}`;
     await fs.mkdir(this.uploadDir, { recursive: true });
-    await fs.writeFile(this.absPath(storedName), file.buffer);
+    const dest = this.absPath(storedName);
+    if (file.path) {
+      // diskStorage already streamed to temp path — move into final name
+      await fs.rename(file.path, dest).catch(async () => {
+        await fs.copyFile(file.path!, dest);
+        await fs.unlink(file.path!).catch(() => undefined);
+      });
+    } else {
+      await fs.writeFile(dest, file.buffer!);
+    }
 
     try {
       const created = await this.prisma.$transaction(async (tx) => {

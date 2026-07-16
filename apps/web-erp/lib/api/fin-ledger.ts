@@ -30,6 +30,9 @@ export interface ErpLedgerEntry {
 export interface ListLedgerParams extends PaginationParams {
   accountId?: string;
   partnerId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  includeTotal?: boolean;
 }
 
 export async function listLedgerEntries(

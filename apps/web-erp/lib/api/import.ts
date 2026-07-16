@@ -28,6 +28,8 @@ export interface ImportResult {
   ok: number;
   failed: number;
   errors: ImportRowError[];
+  status?: string;
+  async?: boolean;
 }
 
 export interface ImportJob {
@@ -38,6 +40,7 @@ export interface ImportJob {
   rowsTotal: number;
   rowsOk: number;
   rowsFailed: number;
+  errors?: ImportRowError[];
   createdAt: string;
 }
 

@@ -3,7 +3,7 @@
 /**
  * F3 Master Data — Chart of Accounts page.
  * Hierarchical list by parentId: parent rows expand/collapse; children nest
- * with depth indent. Full chart loaded client-side so the tree stays coherent.
+ * with depth indent. Lazy tree: roots first, children loaded on expand.
  * Atomic tier: Page.
  */
 
@@ -25,12 +25,10 @@ import {
   type KeyboardRowConfig,
 } from '@/components/organisms/erp-list-layout';
 import {
-  listAccounts,
   ACCOUNT_TYPES,
   type ErpAccount,
 } from '@/lib/api/accounts';
 import {
-  defaultExpandedIds,
   filterAccountTreeIds,
   flattenAccountTree,
   type FlatAccountRow,
@@ -38,7 +36,7 @@ import {
 import { notify } from '@/lib/feedback';
 import type { FormErrors } from '@/lib/form-validation';
 import { tGlobal } from '@/lib/mock';
-import { useErpList } from '@/lib/use-erp-list';
+import { useAccountTree } from '@/lib/use-account-tree';
 import { useModalShortcuts } from '@/lib/use-modal-shortcuts';
 import {
   AccountFormFields,
@@ -53,24 +51,6 @@ import {
   confirmBulkDelete,
 } from './accounts-page-actions';
 import { AccountsTreeTable } from './accounts-tree-table';
-
-async function loadAllAccounts(params: {
-  isActive?: boolean;
-  accountType?: string;
-  accountKind?: string;
-}) {
-  // Search is client-side so parents of matches stay in the tree (API search
-  // would return leaf-only rows and break hierarchy).
-  return listAccounts({
-    page: 1,
-    limit: 5000,
-    sortBy: 'code',
-    sortDir: 'asc',
-    isActive: params.isActive,
-    accountType: params.accountType as ErpAccount['type'] | undefined,
-    accountKind: params.accountKind as ErpAccount['kind'] | undefined,
-  });
-}
 
 export function ErpAccountsPage() {
   const [search, setSearch] = React.useState('');
@@ -89,56 +69,61 @@ export function ErpAccountsPage() {
   const isActiveParam =
     statusFilter === 'active' ? true : statusFilter === 'inactive' ? false : undefined;
 
-  const { rows, meta, loading, fetching, error, reload } = useErpList(
-    () =>
-      loadAllAccounts({
-        isActive: isActiveParam,
-        accountType: accountType || undefined,
-        accountKind: accountKind || undefined,
-      }),
-    [isActiveParam, accountType, accountKind],
-  );
+  const {
+    rows,
+    hasChildrenMap,
+    loading,
+    fetching,
+    error,
+    reload,
+    ensureChildren,
+  } = useAccountTree({
+    isActive: isActiveParam,
+    accountType: accountType || undefined,
+    accountKind: accountKind || undefined,
+  });
 
-  // Expand-all on first load; auto-expand brand-new parents after reload.
+  // Roots start collapsed; first expand fetches children.
   React.useEffect(() => {
     if (rows.length === 0) return;
-    const parents = defaultExpandedIds(rows);
     if (knownIdsRef.current.size === 0) {
-      setExpanded(parents);
+      setExpanded(new Set());
       knownIdsRef.current = new Set(rows.map((r) => r.id));
       return;
     }
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      for (const id of parents) {
-        if (!knownIdsRef.current.has(id)) next.add(id);
-      }
-      return next;
-    });
     knownIdsRef.current = new Set(rows.map((r) => r.id));
   }, [rows]);
 
-  const toggleExpand = (id: string) =>
+  const toggleExpand = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+        void ensureChildren(id);
+      }
       return next;
     });
+  };
 
   const visibleFlat = React.useMemo(() => {
     const q = debouncedSearch.trim();
     let source = rows;
     let expandSet = expanded;
     if (q) {
+      // Server search not used for tree coherence; filter loaded subset only.
       const keep = filterAccountTreeIds(rows, q);
       source = rows.filter((r) => keep.has(r.id));
       expandSet = new Set([...expanded, ...keep]);
     }
     const out: FlatAccountRow<ErpAccount>[] = [];
     flattenAccountTree(source, null, 0, out, expandSet);
-    return out;
-  }, [rows, expanded, debouncedSearch]);
+    return out.map((n) => ({
+      ...n,
+      hasChildren: hasChildrenMap.get(n.row.id) ?? n.hasChildren,
+    }));
+  }, [rows, expanded, debouncedSearch, hasChildrenMap]);
 
   const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
   const [focusedIndex, setFocusedIndex] = React.useState(-1);
@@ -161,7 +146,7 @@ export function ErpAccountsPage() {
   }, [focusedIndex]);
 
   const visibleRows = visibleFlat.map((f) => f.row);
-  const totalRows = meta?.total ?? rows.length;
+  const totalRows = rows.length;
 
   const toggleRow = (id: string) =>
     setSelectedIds((prev) => {
@@ -271,12 +256,20 @@ export function ErpAccountsPage() {
   const clearSelection = () => setSelectedIds(new Set());
   const selectedArr = Array.from(selectedIds);
 
+  const expandAll = () => {
+    const parents = [...hasChildrenMap.entries()]
+      .filter(([, h]) => h)
+      .map(([id]) => id);
+    setExpanded(new Set(parents));
+    for (const id of parents) void ensureChildren(id);
+  };
+
   const treeToolbar = (
     <div className="flex items-center gap-1">
       <button
         type="button"
         className="btn ghost"
-        onClick={() => setExpanded(defaultExpandedIds(rows))}
+        onClick={expandAll}
         title={tGlobal('Expand semua')}
       >
         {tGlobal('Expand')}

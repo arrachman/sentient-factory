@@ -37,6 +37,7 @@ import {
   createJournalEntry,
   updateJournalEntry,
   deleteJournalEntry,
+  getJournalEntry,
 } from '@/lib/api/fin-journal-entries';
 import type {
   ErpJournalEntry,
@@ -55,10 +56,22 @@ const JOURNAL_TYPES: ErpJournalType[] = [
   'GENERAL', 'MEMORIAL', 'ADJUSTMENT', 'OPENING_BALANCE', 'CLOSING',
 ];
 
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function defaultDateFrom(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 30);
+  return d.toISOString().slice(0, 10);
+}
+
 export function ErpJournalEntriesPage() {
   const [search, setSearch] = React.useState('');
   const [typeFilter, setTypeFilter] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState('');
+  const [dateFrom, setDateFrom] = React.useState(() => defaultDateFrom());
+  const [dateTo, setDateTo] = React.useState(() => todayIso());
   const { page, pageSize, setPage, setPageSize } = useListPagination('fin-journal-entries');
 
   const [debouncedSearch, setDebouncedSearch] = React.useState(search);
@@ -78,11 +91,13 @@ export function ErpJournalEntriesPage() {
         search: debouncedSearch || undefined,
         journalType: typeParam,
         status: statusParam,
+        dateFrom,
+        dateTo,
       }),
-    [page, pageSize, debouncedSearch, typeParam, statusParam],
+    [page, pageSize, debouncedSearch, typeParam, statusParam, dateFrom, dateTo],
   );
 
-  React.useEffect(() => { setPage(1); }, [debouncedSearch, typeFilter, statusFilter, pageSize]);
+  React.useEffect(() => { setPage(1); }, [debouncedSearch, typeFilter, statusFilter, dateFrom, dateTo, pageSize]);
 
   const [open, setOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<ErpJournalEntry | null>(null);
@@ -104,6 +119,10 @@ export function ErpJournalEntriesPage() {
         { label: 'Void', value: 'VOID' },
         { label: 'Cancelled', value: 'CANCELLED' },
       ] },
+    { key: 'dateFrom', label: 'Dari', value: dateFrom, onChange: setDateFrom,
+      options: [{ label: dateFrom, value: dateFrom }] },
+    { key: 'dateTo', label: 'Sampai', value: dateTo, onChange: setDateTo,
+      options: [{ label: dateTo, value: dateTo }] },
   ];
   const summary: SummaryConfig = { metricLabel: 'Σ jurnal', rowCount: totalRows, totalCount: totalRows };
   const pagination: ListPaginationConfig = { page, pageCount, pageSize, totalRows, onPage: setPage, onPageSize: setPageSize };
@@ -114,10 +133,15 @@ export function ErpJournalEntriesPage() {
     setOpen(true);
   };
 
-  const openEdit = (r: ErpJournalEntry) => {
-    setEditing(r);
-    setForm(fromEntry(r));
-    setOpen(true);
+  const openEdit = async (r: ErpJournalEntry) => {
+    try {
+      const detail = await getJournalEntry(r.id);
+      setEditing(detail);
+      setForm(fromEntry(detail));
+      setOpen(true);
+    } catch (e: unknown) {
+      notify(e instanceof Error ? e.message : 'Gagal memuat detail jurnal', 'danger');
+    }
   };
 
   const handleSave = async () => {
@@ -201,7 +225,7 @@ export function ErpJournalEntriesPage() {
                     </TableCell>
                     <TableCell>
                       <div style={{ display: 'flex', gap: 4 }}>
-                        <button className="btn sm" onClick={() => openEdit(r)}>Edit</button>
+                        <button className="btn sm" onClick={() => void openEdit(r)}>Edit</button>
                         <button className="btn sm danger" onClick={() => handleDelete(r)}>Hapus</button>
                       </div>
                     </TableCell>

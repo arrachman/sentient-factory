@@ -91,11 +91,45 @@ export function ErpImportPage() {
     try {
       const res = await importFile(entity, file);
       setResult(res.data);
-      const { ok, failed, total } = res.data;
-      if (failed === 0) notify(`${ok} dari ${total} baris berhasil diimpor`, 'success');
-      else if (ok === 0) notify(`Impor gagal: ${failed} baris bermasalah`, 'danger');
-      else notify(`${ok} baris berhasil, ${failed} gagal`, 'warn');
-      await loadJobs();
+      const { ok, failed, total, async: isAsync, jobId } = res.data;
+
+      if (isAsync || res.data.status === 'PENDING' || res.data.status === 'RUNNING') {
+        notify(
+          `Impor dijadwalkan (${total} baris). Job #${jobId} — pantau riwayat di bawah.`,
+          'success',
+        );
+        // Poll job list until terminal status (max ~2 min)
+        const terminal = new Set(['COMPLETED', 'FAILED', 'PARTIAL']);
+        for (let i = 0; i < 60; i += 1) {
+          await new Promise((r) => setTimeout(r, 2000));
+          const jobs = await listImportJobs();
+          const job = (jobs.data ?? []).find((j) => j.id === jobId);
+          if (job && terminal.has(job.status)) {
+            setResult({
+              jobId,
+              total: job.rowsTotal,
+              ok: job.rowsOk,
+              failed: job.rowsFailed,
+              errors: job.errors ?? res.data.errors,
+              status: job.status,
+            });
+            if (job.status === 'COMPLETED') {
+              notify(`${job.rowsOk} dari ${job.rowsTotal} baris berhasil diimpor`, 'success');
+            } else if (job.status === 'FAILED') {
+              notify(`Impor gagal: ${job.rowsFailed} baris bermasalah`, 'danger');
+            } else {
+              notify(`${job.rowsOk} baris berhasil, ${job.rowsFailed} gagal`, 'warn');
+            }
+            break;
+          }
+        }
+        await loadJobs();
+      } else {
+        if (failed === 0) notify(`${ok} dari ${total} baris berhasil diimpor`, 'success');
+        else if (ok === 0) notify(`Impor gagal: ${failed} baris bermasalah`, 'danger');
+        else notify(`${ok} baris berhasil, ${failed} gagal`, 'warn');
+        await loadJobs();
+      }
     } catch (err) {
       notify(err instanceof Error ? err.message : 'Impor gagal', 'danger');
     } finally {
