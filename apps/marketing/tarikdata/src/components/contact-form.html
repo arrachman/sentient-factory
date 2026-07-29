@@ -1,0 +1,69 @@
+<section class="contact-form" aria-labelledby="form-title">
+  <div>
+    <p class="eyebrow">Mulai percakapan</p>
+    <h2 id="form-title">Ceritakan kebutuhan institusi Anda</h2>
+    <p class="lead">Informasi ini membantu menyiapkan pembahasan awal. Bidang bertanda <span aria-hidden="true">*</span><span class="visually-hidden">wajib</span> wajib diisi.</p>
+  </div>
+
+  <form data-contact-form novalidate>
+    <div class="form-grid">
+      <div class="field">
+        <label for="nama">Nama lengkap <span aria-hidden="true">*</span></label>
+        <input id="nama" name="nama" type="text" autocomplete="name" aria-describedby="nama-error" required>
+        <span class="error" id="nama-error" data-error-for="nama"></span>
+      </div>
+      <div class="field">
+        <label for="email">Email kerja <span aria-hidden="true">*</span></label>
+        <input id="email" name="email" type="email" autocomplete="email" aria-describedby="email-error" required>
+        <span class="error" id="email-error" data-error-for="email"></span>
+      </div>
+      <div class="field">
+        <label for="institusi">Nama institusi <span aria-hidden="true">*</span></label>
+        <input id="institusi" name="institusi" type="text" autocomplete="organization" aria-describedby="institusi-error" required>
+        <span class="error" id="institusi-error" data-error-for="institusi"></span>
+      </div>
+      <div class="field">
+        <label for="jabatan">Jabatan atau peran</label>
+        <input id="jabatan" name="jabatan" type="text" autocomplete="organization-title">
+      </div>
+      <div class="field">
+        <label for="whatsapp">Nomor WhatsApp atau telepon</label>
+        <input id="whatsapp" name="whatsapp" type="tel" autocomplete="tel" aria-describedby="whatsapp-error">
+        <span class="error" id="whatsapp-error" data-error-for="whatsapp"></span>
+      </div>
+      <div class="field">
+        <label for="sektor">Sektor <span aria-hidden="true">*</span></label>
+        <select id="sektor" name="sektor" required aria-describedby="sektor-hint sektor-error">
+          <option value="">Pilih sektor</option>
+          <option value="kesehatan">Kesehatan</option>
+          <option value="pendidikan">Pendidikan</option>
+          <option value="bisnis">Bisnis, manufaktur, atau retail</option>
+          <option value="lainnya">Lainnya</option>
+        </select>
+        <span class="hint" id="sektor-hint">Pilihan sektor mengubah daftar kebutuhan di bawah.</span>
+        <span class="error" id="sektor-error" data-error-for="sektor"></span>
+      </div>
+      <div class="field">
+        <label for="kebutuhan">Kebutuhan utama</label>
+        <select id="kebutuhan" name="kebutuhan" disabled>
+          <option value="">Pilih sektor terlebih dahulu</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="pesan">Ringkasan kebutuhan <span aria-hidden="true">*</span></label>
+      <textarea id="pesan" name="pesan" rows="6" required aria-describedby="pesan-hint pesan-error" placeholder="Contoh: proses yang ingin diperbaiki, sistem yang dipakai sekarang, atau jumlah lokasi."></textarea>
+      <span class="hint" id="pesan-hint">Jangan sertakan data pasien, data siswa, kata sandi, atau informasi pribadi sensitif.</span>
+      <span class="error" id="pesan-error" data-error-for="pesan"></span>
+    </div>
+
+    <p class="form-note">Tombol berikut membuka aplikasi WhatsApp atau email di perangkat Anda. Pesan belum terkirim sampai Anda meninjaunya dan menekan kirim di aplikasi tersebut.</p>
+    <div class="form-actions">
+      <button type="submit" class="btn btn--primary">Lanjutkan ke WhatsApp</button>
+      <button type="button" class="btn btn--secondary" data-send-email>Lanjutkan ke email</button>
+    </div>
+    <p class="small muted">Jika tombol tidak membuka aplikasi: <a href="mailto:halo@tarikdata.digital">kirim email</a> atau <a href="https://wa.me/6285607550989" rel="noopener noreferrer">buka WhatsApp</a>.</p>
+    <p class="form-status" data-form-status role="status" aria-live="polite"></p>
+  </form>
+</section>

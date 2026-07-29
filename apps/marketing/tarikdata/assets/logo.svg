@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 128" role="img" aria-labelledby="title">
+  <title id="title">PT Tarik Data Digital</title>
+  <rect x="4" y="4" width="120" height="120" rx="24" fill="#0B2E26"/>
+  <path d="M34 42h60M34 64h38M34 86h60" fill="none" stroke="#F6F7F5" stroke-linecap="round" stroke-width="8"/>
+  <circle cx="86" cy="64" r="8" fill="#F6F7F5"/>
+  <text x="152" y="61" fill="#0B2E26" font-family="Arial, sans-serif" font-size="42" font-weight="700">Tarik Data</text>
+  <text x="154" y="94" fill="#4A5A55" font-family="Arial, sans-serif" font-size="24">Digital</text>
+</svg>

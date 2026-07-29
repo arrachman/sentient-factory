@@ -1,0 +1,68 @@
+<main id="konten" data-page="solusi-kesehatan">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap hero__grid">
+      <div class="hero__copy">
+        <span class="eyebrow">Senti Health · rumah sakit & klinik</span>
+        <span class="status status--dev">Program pengembangan</span>
+        <h1 id="hero-title">Rancang sistem kesehatan dari alur layanan yang benar-benar dijalankan.</h1>
+        <p class="lead">Senti Health adalah program pengembangan bersama mitra desain awal. Kami memulai dari proses yang perlu ditelusuri—rekam medis, layanan, farmasi, kasir, dan pelaporan—bukan dari janji bahwa produk siap dipasang.</p>
+        <div class="hero__actions"><a class="btn btn--primary" href="/kontak/?sektor=kesehatan">Diskusikan kebutuhan RS atau klinik</a></div>
+      </div>
+      <div class="rail-mini" aria-label="Fondasi platform yang relevan untuk Senti Health">
+        <span class="rail-mini__label">Fondasi yang dibahas</span><span class="rail-mini__seg" data-on="true">Akun & RBAC</span><span class="rail-mini__seg" data-on="true">Dashboard & alert</span><span class="rail-mini__seg">Senti AI</span><span class="rail-mini__seg">HR & absensi</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--surface" aria-labelledby="problems-title">
+    <div class="wrap"><div class="section-head"><span class="eyebrow">Masalah yang dikenali</span><h2 id="problems-title">Ketika catatan layanan, klaim, dan laporan berjalan sendiri-sendiri.</h2></div>
+      <div class="grid grid--2">
+        <article class="card"><h3>Data klinis sulit ditelusuri</h3><p>Petugas perlu melihat riwayat yang tepat saat pelayanan berlangsung, sementara kelengkapan dan otorisasi rekam medis harus tetap terjaga.</p></article>
+        <article class="card"><h3>Alur antarunit putus</h3><p>Pendaftaran, poli, penunjang, farmasi, kasir, dan administrasi dapat memakai catatan atau daftar kerja yang berbeda.</p></article>
+        <article class="card"><h3>Pelaporan menjadi pekerjaan ulang</h3><p>Data operasional perlu disiapkan kembali untuk SIRS, akreditasi, atau kebutuhan manajemen karena struktur sumbernya belum selaras.</p></article>
+        <article class="card"><h3>Integrasi butuh tata kelola</h3><p>Koneksi ke layanan eksternal menyangkut kredensial fasyankes, pemetaan data, pengujian, dan persetujuan proses—bukan sekadar tombol integrasi.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="modules-title">
+    <div class="wrap"><div class="section-head"><span class="eyebrow">Ruang lingkup pengembangan</span><h2 id="modules-title">Modul diprioritaskan setelah alur dan data awal dipetakan.</h2><p class="lead">Daftar ini adalah arah desain, bukan daftar fitur yang sudah tersedia untuk produksi.</p></div>
+      <div class="grid grid--2">
+        <article class="card"><span class="status status--dev">Pengembangan</span><h3>Rekam medis & layanan</h3><p>Pemetaan pendaftaran, antrian, dokumentasi layanan, ringkasan klinis, dan otorisasi sesuai peran pengguna.</p></article>
+        <article class="card"><span class="status status--dev">Pengembangan</span><h3>Farmasi, kasir & administrasi</h3><p>Rancangan proses resep, stok terkait layanan, transaksi, dan rekonsiliasi administrasi ditentukan bersama institusi.</p></article>
+        <article class="card"><span class="status status--live">Fondasi tersedia</span><h3>Akun, peran & jejak audit</h3><p>RBAC dan jejak audit dapat dibahas sebagai fondasi, dengan konfigurasi dan penerapan pada data kesehatan ditetapkan dalam proyek.</p></article>
+        <article class="card"><span class="status status--live">Fondasi tersedia</span><h3>Dashboard & alert</h3><p>Dashboard dan peringatan dapat dirancang untuk indikator operasional yang disepakati; indikator tidak diasumsikan tersedia sebelum discovery.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--surface" aria-labelledby="compliance-title">
+    <div class="wrap"><div class="section-head"><span class="eyebrow">Kepatuhan & integrasi</span><h2 id="compliance-title">Kewajiban menjadi daftar kerja implementasi, bukan klaim sertifikasi.</h2></div>
+      <div class="table-wrap"><table><thead><tr><th>Rujukan</th><th>Yang perlu dibahas</th></tr></thead><tbody>
+        <tr><td>Permenkes No. 24 Tahun 2022 tentang Rekam Medis</td><td>RME wajib sejak 31 Desember 2023; kebutuhan isi, akses, retensi, dan proses institusi perlu dipetakan bersama.</td></tr>
+        <tr><td>SATUSEHAT Platform</td><td>Platform HIE dengan standar HL7 FHIR. Kesiapan konektor, pemetaan data, dan uji pada lingkungan yang sesuai adalah target implementasi, bukan integrasi yang telah diklaim tersedia.</td></tr>
+        <tr><td>SIRS Revisi 6.3 / SIRS Online v3</td><td>Pelaporan wajib sejak Januari 2025 tetap perlu diperhitungkan; SATUSEHAT tidak menggantikannya.</td></tr>
+        <tr><td>STARKES</td><td>KMK HK.01.07/MENKES/1596/2024 dan bab MRMIK menjadi konteks penilaian kesiapan data serta proses.</td></tr>
+        <tr><td>BPJS Kesehatan</td><td>VClaim, Antrean Online, Aplicares, PCare, iCare, dan Apotek memerlukan mekanisme TrustMark serta kredensial per-fasyankes; kelayakan bridging diverifikasi per institusi.</td></tr>
+        <tr><td>Kode & privasi</td><td>ICD-10 dan ICD-9-CM dipertimbangkan sesuai proses. Pengelolaan data dirancang selaras dengan UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi.</td></tr>
+      </tbody></table></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="implementation-title">
+    <div class="wrap"><div class="section-head"><span class="eyebrow">Model implementasi</span><h2 id="implementation-title">Tahapan dan waktu ditetapkan setelah kebutuhan dapat diuji.</h2><p class="lead">Kami tidak menjanjikan durasi seragam sebelum kompleksitas unit layanan, data, dan pihak integrasi diketahui.</p></div>
+      <ol class="steps"><li class="step"><h3>Pemetaan layanan & data</h3><p>Menentukan proses prioritas, peran, sumber data, kewajiban pelaporan, dan batas fase awal.</p></li><li class="step"><h3>Prototipe alur prioritas</h3><p>Menguji satu alur dengan data tersamarkan atau lingkungan yang disetujui sebelum cakupan diperluas.</p></li><li class="step"><h3>Pilot, evaluasi & perluasan</h3><p>Rencana migrasi, pelatihan, integrasi, dan perluasan disusun berdasarkan hasil pilot; keputusan setiap tahap tetap berada pada institusi.</p></li></ol>
+    </div>
+  </section>
+
+  <section class="section section--surface" aria-labelledby="faq-title">
+    <div class="wrap"><div class="section-head"><span class="eyebrow">FAQ pengadaan</span><h2 id="faq-title">Pertanyaan sebelum memulai kemitraan desain.</h2></div><div class="faq">
+      <details><summary>Apakah Senti Health sudah siap untuk produksi?</summary><p>Belum. Senti Health berstatus program pengembangan dan mencari mitra desain awal. Kesiapan setiap modul ditentukan setelah discovery, pengujian, dan kesepakatan ruang lingkup.</p></details>
+      <details><summary>Apakah integrasi SATUSEHAT atau BPJS sudah tersedia?</summary><p>Tidak diklaim sebagai layanan yang sudah tersedia. Kebutuhan teknis, kredensial, mekanisme resmi, pemetaan data, dan pengujian dinilai per-fasyankes.</p></details>
+      <details><summary>Bagaimana akses data dan audit dibahas?</summary><p>Peran, otorisasi, jejak audit, ekspor data, dan tata kelola lingkungan dibahas pada desain solusi dan dokumen pengadaan sesuai kebutuhan institusi.</p></details>
+      <details><summary>Apakah dapat dimulai dari satu unit?</summary><p>Ya, proses prioritas dapat dipilih untuk prototipe atau pilot. Urutan dan kriteria evaluasinya disepakati bersama, tanpa janji hasil atau jadwal baku.</p></details>
+    </div></div>
+  </section>
+
+  <section class="section--ink closing" aria-labelledby="cta-title"><div class="wrap closing__grid"><div><span class="eyebrow">Mitra desain awal</span><h2 id="cta-title">Bawa satu alur layanan yang perlu dibenahi.</h2><p class="lead" style="margin-top:var(--s3)">Kami akan menilai bersama apakah alur tersebut layak dijadikan fase awal pengembangan Senti Health.</p></div><div class="closing__actions"><a class="btn btn--onink" href="/kontak/?sektor=kesehatan">Jadwalkan diskusi</a></div></div></section>
+</main>

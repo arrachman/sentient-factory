@@ -57,7 +57,7 @@ detect_services() {
       apps/marketing/sentient-*)
         add_service sentient-marketing
         ;;
-      apps/marketing/tarik-data-digital-*)
+      apps/marketing/tarik-data-digital-*|apps/marketing/tarikdata/*)
         add_service tarik-data-digital
         ;;
       docs/*)
@@ -117,8 +117,8 @@ if [[ ${#services[@]} -eq 0 ]]; then
   if [[ -n "$before" ]] && git rev-parse --verify "$before^{commit}" >/dev/null 2>&1 && git rev-parse --verify "$after^{commit}" >/dev/null 2>&1; then
     detect_services "$before" "$after"
   else
-    echo "Could not determine changed files; deploying web-dashboard." >&2
-    services=("web-dashboard")
+    echo "Could not determine changed files; provide DEPLOY_BEFORE or explicit services." >&2
+    exit 5
   fi
 fi
 
@@ -141,4 +141,20 @@ if [[ " ${services[*]} " == *" api-gateway "* ]]; then
   npm --prefix apps/api-gateway run build
 fi
 
+if [[ " ${services[*]} " == *" tarik-data-digital "* ]]; then
+  python3 -m unittest discover -s apps/marketing/tarikdata/tests -v
+  python3 apps/marketing/tarikdata/tools/site_builder.py
+fi
+
 "$ROOT_DIR/scripts/activate-build.sh" "${services[@]}"
+
+if [[ " ${services[*]} " == *" tarik-data-digital "* ]]; then
+  for path in / /solusi/kesehatan/ /sitemap.xml /health; do
+    curl --fail --silent --show-error "http://127.0.0.1:3211$path" >/dev/null
+  done
+  missing_status="$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3211/route-yang-tidak-ada/)"
+  if [[ "$missing_status" != "404" ]]; then
+    echo "Expected Tarik Data missing route to return 404, got $missing_status" >&2
+    exit 4
+  fi
+fi

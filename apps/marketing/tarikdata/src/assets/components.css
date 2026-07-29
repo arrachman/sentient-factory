@@ -1,0 +1,351 @@
+/* ---------- 6. KOMPONEN ------------------------------------------------- */
+
+/* Tombol */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s2);
+  padding: var(--s3) var(--s5);
+  min-height: 46px;
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  text-align: center;
+  transition: background-color var(--t) ease-out, border-color var(--t) ease-out,
+              color var(--t) ease-out;
+}
+
+.btn--primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn--primary:hover { background: var(--ink); }
+
+.btn--secondary {
+  background: transparent;
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.btn--secondary:hover { background: var(--accent-tint); }
+
+.btn--onink {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.btn--onink:hover { background: #fff; }
+
+.btn--ghost-onink {
+  background: transparent;
+  border-color: rgba(246, 247, 245, .38);
+  color: var(--paper);
+}
+
+.btn--ghost-onink:hover { border-color: var(--paper); }
+
+.btn--block { width: 100%; }
+
+/* Kartu */
+.card {
+  padding: var(--s5);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--e1);
+}
+
+.card h3 { margin-bottom: var(--s2); }
+.card p { color: var(--muted); font-size: var(--fs-sm); }
+
+.card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px; height: 40px;
+  margin-bottom: var(--s4);
+  color: var(--accent);
+}
+
+/* Kartu sektor — elemen navigasi utama beranda, bukan daftar fitur */
+.sector {
+  display: flex;
+  flex-direction: column;
+  padding: var(--s6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent);
+  border-radius: var(--r-md);
+  box-shadow: var(--e1);
+  transition: box-shadow var(--t) ease-out, transform var(--t) ease-out;
+}
+
+.sector:hover {
+  box-shadow: var(--e2);
+  transform: translateY(-2px);
+}
+
+.sector__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin-bottom: var(--s4);
+}
+
+.sector h3 {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sector__sub {
+  display: block;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: var(--s1);
+}
+
+.sector__list {
+  margin: var(--s4) 0 var(--s5);
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+.sector__list li {
+  position: relative;
+  padding-left: var(--s4);
+  margin-bottom: var(--s2);
+}
+
+.sector__list li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0.62em;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.sector__cta {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.sector:hover .sector__cta svg { transform: translateX(3px); }
+.sector__cta svg { transition: transform var(--t) ease-out; }
+
+/* Lencana status — inti kebijakan klaim, lihat DESIGN-PLAN §11.1 */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  padding: 3px var(--s3) 3px var(--s2);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 999px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.status::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status--live { color: var(--status-live); border-color: #B6D4CC; background: #ECF5F2; }
+.status--dev  { color: var(--status-dev);  border-color: #BDD3E2; background: #EDF3F8; }
+.status--plan { color: var(--status-plan); border-color: var(--line); background: var(--paper); }
+
+/* Baris fakta — dipakai blok kredibilitas & legalitas */
+.facts {
+  border-top: 1px solid var(--line);
+}
+
+.fact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s5);
+  justify-content: space-between;
+  align-items: baseline;
+  padding: var(--s4) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.fact dt { font-size: var(--fs-sm); color: var(--muted); }
+.fact dd { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+
+.section--ink .facts,
+.section--ink .fact { border-color: rgba(246, 247, 245, .16); }
+
+.section--ink .fact dt { color: rgba(246, 247, 245, .72); }
+
+/* Langkah bernomor — "cara kami bekerja" */
+.steps { counter-reset: step; }
+
+.step {
+  position: relative;
+  counter-increment: step;
+  padding-left: var(--s8);
+  padding-bottom: var(--s6);
+}
+
+.step:last-child { padding-bottom: 0; }
+
+.step::before {
+  content: counter(step, decimal-leading-zero);
+  position: absolute;
+  left: 0; top: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--paper);
+  padding-bottom: var(--s2);
+}
+
+.step::after {
+  content: '';
+  position: absolute;
+  left: 13px; top: 26px; bottom: 0;
+  width: 1px;
+  background: var(--line);
+}
+
+.step:last-child::after { display: none; }
+
+.section--surface .step::before { background: var(--surface); }
+
+.step h3 { margin-bottom: var(--s2); }
+.step p { color: var(--muted); font-size: var(--fs-sm); max-width: 60ch; }
+
+/* Placeholder data yang belum ada — sengaja terlihat, lihat TODO-DATA.md */
+.token {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  padding: 1px var(--s2);
+  background: #FDF3E0;
+  border: 1px dashed #C9A15C;
+  border-radius: var(--r-sm);
+  color: #6E4712;
+  white-space: nowrap;
+}
+
+/* FAQ */
+.faq { border-top: 1px solid var(--line); }
+
+.faq details { border-bottom: 1px solid var(--line); }
+
+.faq summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s4);
+  padding: var(--s5) 0;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq summary::-webkit-details-marker { display: none; }
+
+.faq summary::after {
+  content: '';
+  flex-shrink: 0;
+  width: 12px; height: 12px;
+  margin-top: 6px;
+  border-right: 1.5px solid var(--accent);
+  border-bottom: 1.5px solid var(--accent);
+  transform: rotate(45deg);
+  transition: transform var(--t) ease-out;
+}
+
+.faq details[open] summary::after { transform: rotate(-135deg); margin-top: 10px; }
+
+.faq p { padding-bottom: var(--s5); color: var(--muted); max-width: 68ch; }
+.faq p + p { padding-bottom: var(--s5); margin-top: calc(var(--s4) * -1 + var(--s2)); }
+
+/* Tabel */
+.table-wrap { overflow-x: auto; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+th, td {
+  padding: var(--s3) var(--s4);
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+th {
+  font-weight: 600;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+td .num, td.num { font-variant-numeric: tabular-nums; }
+
+/* Notice / catatan */
+.notice {
+  padding: var(--s5);
+  background: var(--accent-tint);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--r-md) var(--r-md) 0;
+}
+
+.notice h3 { margin-bottom: var(--s2); }
+.notice p { font-size: var(--fs-sm); }
+
+/* Ilustrasi UI — representasi antarmuka, BUKAN screenshot produk */
+.ui-shot {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: var(--e2);
+  overflow: hidden;
+}
+
+.ui-shot__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+
+.ui-shot__body { padding: var(--s5); }
+
+.ui-shot__caption {
+  padding: var(--s3) var(--s4);
+  border-top: 1px solid var(--line);
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  background: var(--paper);
+}
+

@@ -310,39 +310,13 @@ services:
     ports:
       - "3211:80"
     volumes:
-      - ../apps/marketing/tarik-data-digital.html:/tmp/tarik-data-digital-source.html:ro
-      - ../apps/marketing/tarik-data-digital-robots.txt:/tmp/robots.txt:ro
-      - ../apps/marketing/tarik-data-digital-sitemap.xml:/tmp/sitemap.xml:ro
-      - ../apps/marketing/tarik-data-digital-og.svg:/tmp/og-image.svg:ro
-      - ../apps/web-dashboard/public/media/app/favicon.ico:/tmp/favicon.ico:ro
+      - ../apps/marketing/tarikdata/dist:/usr/share/nginx/html:ro
+      - ../apps/marketing/tarikdata/nginx.conf:/etc/nginx/conf.d/default.conf:ro
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health >/dev/null 2>&1 || exit 1"]
       interval: 20s
       timeout: 10s
       retries: 5
-    command: >
-      /bin/sh -c "mkdir -p /usr/share/nginx/html/media/app /usr/share/nginx/html/og &&
-      sync_assets() {
-        awk 'found || /^<!DOCTYPE html>/{found=1; print}' /tmp/tarik-data-digital-source.html > /usr/share/nginx/html/index.html.tmp &&
-        mv /usr/share/nginx/html/index.html.tmp /usr/share/nginx/html/index.html &&
-        cp /tmp/favicon.ico /usr/share/nginx/html/media/app/favicon.ico &&
-        cp /tmp/robots.txt /usr/share/nginx/html/robots.txt &&
-        cp /tmp/sitemap.xml /usr/share/nginx/html/sitemap.xml &&
-        cp /tmp/og-image.svg /usr/share/nginx/html/og/tarik-data-digital-og.svg;
-      } &&
-      sync_assets &&
-      (
-        last_state='' ;
-        while true; do
-          next_state=\"$$(stat -c '%Y:%s' /tmp/tarik-data-digital-source.html /tmp/favicon.ico /tmp/robots.txt /tmp/sitemap.xml /tmp/og-image.svg 2>/dev/null | tr '\n' '|')\" ;
-          if [ \"$$next_state\" != \"$$last_state\" ]; then
-            sync_assets ;
-            last_state=\"$$next_state\" ;
-          fi ;
-          sleep 1 ;
-        done
-      ) &
-      exec nginx -g 'daemon off;'"
 
 
 

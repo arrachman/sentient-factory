@@ -1,0 +1,83 @@
+/* Form kontak dan validasi */
+.contact-form {
+  display: grid;
+  gap: var(--s7);
+  max-width: 920px;
+  margin-inline: auto;
+}
+
+@media (min-width: 820px) {
+  .contact-form { grid-template-columns: minmax(240px, .65fr) minmax(0, 1.35fr); }
+}
+
+.form-grid { display: grid; gap: var(--s4); }
+
+@media (min-width: 640px) {
+  .form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.field { margin-bottom: var(--s5); }
+.field > label { display: block; margin-bottom: var(--s2); font-size: var(--fs-sm); font-weight: 600; }
+
+.field .hint {
+  display: block;
+  margin-top: var(--s1);
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  font-weight: 400;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  min-height: 46px;
+  padding: var(--s3) var(--s4);
+  background: var(--surface);
+  border: 1px solid var(--muted);
+  border-radius: var(--r-sm);
+  transition: border-color var(--t) ease-out, box-shadow var(--t) ease-out;
+}
+
+.field textarea { min-height: 140px; resize: vertical; }
+.field select:disabled { color: var(--muted); background: var(--paper); cursor: not-allowed; }
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+
+.field input[aria-invalid="true"],
+.field select[aria-invalid="true"],
+.field textarea[aria-invalid="true"] { border-color: #9B2C2C; }
+
+.error {
+  display: none;
+  margin-top: var(--s2);
+  color: #9B2C2C;
+  font-size: var(--fs-sm);
+}
+
+.error[data-show="true"] { display: block; }
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s3);
+  margin: var(--s5) 0 var(--s3);
+}
+
+.form-status {
+  display: none;
+  margin-top: var(--s4);
+  padding: var(--s4);
+  background: var(--accent-tint);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-sm);
+}
+
+.form-status[data-show="true"] { display: block; }

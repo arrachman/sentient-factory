@@ -1,0 +1,67 @@
+    /* Layout yang hanya milik beranda. Semua token & komponen umum di base.css. */
+    .hero { padding-block: var(--s8) var(--s9); }
+    .hero__grid { display: grid; gap: var(--s7); align-items: center; }
+    .hero__copy { max-width: 760px; }
+    .hero__copy .lead { margin-top: var(--s5); max-width: 64ch; }
+    .hero__actions { margin-top: var(--s6); display: flex; flex-wrap: wrap; gap: var(--s3); }
+
+    .hero__proof {
+      display: grid;
+      gap: var(--s2);
+      padding: var(--s5);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--r-md);
+      box-shadow: var(--e1);
+    }
+    .hero__proof li {
+      display: flex;
+      align-items: center;
+      gap: var(--s3);
+      padding: var(--s2) 0;
+      font-size: var(--fs-sm);
+      color: var(--muted);
+    }
+    .hero__proof svg { flex: 0 0 20px; color: var(--ink); }
+
+    @media (min-width: 900px) {
+      .hero { padding-block: var(--s10); }
+      .hero__grid { grid-template-columns: minmax(0, 1.8fr) minmax(280px, .7fr); gap: var(--s9); }
+    }
+
+    .architecture { background: var(--surface); }
+    .architecture__intro { display: grid; gap: var(--s5); align-items: end; }
+    @media (min-width: 800px) {
+      .architecture__intro { grid-template-columns: 1.1fr .9fr; }
+    }
+
+    .modules { margin-top: var(--s7); }
+    .module-line {
+      display: grid;
+      gap: var(--s2);
+      padding: var(--s4) 0;
+      border-top: 1px solid var(--line);
+    }
+    .module-line:last-child { border-bottom: 1px solid var(--line); }
+    .module-line h3 { display: flex; align-items: center; gap: var(--s3); }
+    .module-line svg { color: var(--accent); flex: 0 0 24px; }
+    .module-line p { color: var(--muted); font-size: var(--fs-sm); }
+    @media (min-width: 700px) {
+      .module-line { grid-template-columns: minmax(200px, .55fr) 1fr; align-items: baseline; }
+    }
+
+    .credibility__grid { display: grid; gap: var(--s7); }
+    @media (min-width: 850px) {
+      .credibility__grid { grid-template-columns: .8fr 1.2fr; }
+    }
+
+    .case-placeholder { min-height: 235px; display: flex; flex-direction: column; }
+    .case-placeholder .token { align-self: flex-start; margin-bottom: var(--s5); }
+    .case-placeholder p { margin-top: auto; }
+
+    .closing { padding-block: var(--s9); }
+    .closing__grid { display: grid; gap: var(--s6); align-items: center; }
+    @media (min-width: 780px) {
+      .closing__grid { grid-template-columns: 1.15fr .85fr; }
+      .closing__actions { justify-self: end; }
+    }

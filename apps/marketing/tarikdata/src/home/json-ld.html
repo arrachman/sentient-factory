@@ -1,0 +1,49 @@
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://tarikdata.digital/#organization",
+        "name": "PT Tarik Data Digital",
+        "url": "https://tarikdata.digital/",
+        "logo": "https://tarikdata.digital/assets/logo.svg",
+        "email": "halo@tarikdata.digital",
+        "telephone": "+62-856-0755-0989",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Malang",
+          "addressRegion": "Jawa Timur",
+          "addressCountry": "ID"
+        },
+        "areaServed": { "@type": "Country", "name": "Indonesia" }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://tarikdata.digital/#website",
+        "url": "https://tarikdata.digital/",
+        "name": "PT Tarik Data Digital",
+        "inLanguage": "id-ID",
+        "publisher": { "@id": "https://tarikdata.digital/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Senti ERP",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "Sistem ERP modular untuk akuntansi, persediaan, penjualan, pembelian, dan manufaktur.",
+        "provider": { "@id": "https://tarikdata.digital/#organization" },
+        "areaServed": "ID"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Senti HR",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web",
+        "description": "Sistem absensi dengan pengenalan wajah, geofence GPS, shift, cuti, dan timesheet.",
+        "provider": { "@id": "https://tarikdata.digital/#organization" },
+        "areaServed": "ID"
+      }
+    ]
+  }
+  </script>
