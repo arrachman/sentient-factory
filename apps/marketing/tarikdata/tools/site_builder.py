@@ -20,6 +20,7 @@ TOKEN = re.compile(r"{{\s*([A-Za-z_][A-Za-z0-9_]*)\s*}}")
 INCLUDE = re.compile(r"\[\[([A-Z][A-Z0-9_]*)\]\]")
 REQUIRED = ("route", "page", "title", "description", "canonical", "lang", "og_image", "twitter_card", "indexable")
 INCLUDE_FILES = {"CONTACT_FORM": "components/contact-form.html"}
+SITEMAP_NS = "http://www.sitemaps.org/schemas/sitemap/0.9"
 
 
 class BuildError(ValueError):
@@ -102,7 +103,14 @@ def compose_document(template: str, body: str, header: str, footer: str, route: 
 def destination(dist: Path, route: str) -> Path:
     if route == "/":
         return dist / "index.html"
+    if route.endswith(".html"):
+        return dist / route.strip("/")
     return dist / route.strip("/") / "index.html"
+
+
+def normalise_route(path: str) -> str:
+    """Directory routes carry a trailing slash; file routes keep their extension."""
+    return path if path.endswith(".html") else path.rstrip("/") + "/"
 
 
 def local_path(value: str) -> str | None:
@@ -148,7 +156,7 @@ def validate_document(document: str, route: dict[str, Any], source: Path, output
             path = local_path(href)
             if href == "":
                 errors.append(f"{name}: empty local link")
-            elif path and path.startswith("/") and path.rstrip("/") not in ("",) and path.rstrip("/") + "/" not in outputs:
+            elif path and path.startswith("/") and path.rstrip("/") not in ("",) and normalise_route(path) not in outputs:
                 errors.append(f"{name}: dead local link {href}")
         asset_value = attrs.get("href") if tag == "link" else attrs.get("src")
         if tag in ("img", "script", "link") and asset_value:
@@ -173,7 +181,7 @@ def build_site(root: Path) -> None:
     route_paths = [route.get("route", "") for route in routes]
     if len(route_paths) != len(set(route_paths)):
         errors.append("route registry contains duplicate routes")
-    outputs = {path.rstrip("/") + "/" for path in route_paths}
+    outputs = {path if path.endswith(".html") else path.rstrip("/") + "/" for path in route_paths}
     output_documents: list[tuple[Path, str]] = []
     try:
         document_template = (source / "fragments" / "document.html").read_text()
@@ -241,7 +249,11 @@ def build_site(root: Path) -> None:
         shutil.copy2(source_script, assets_dist / "site.js")
 
     indexable = [route for route in routes if route["indexable"]]
-    sitemap = "\n".join(["<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "<urlset>"] + [f"  <url><loc>{html.escape(route['canonical'])}</loc></url>" for route in indexable] + ["</urlset>", ""])
+    sitemap = "\n".join(
+        ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>", f'<urlset xmlns="{SITEMAP_NS}">']
+        + [f"  <url><loc>{html.escape(route['canonical'])}</loc></url>" for route in indexable]
+        + ["</urlset>", ""]
+    )
     (dist / "sitemap.xml").write_text(sitemap)
     (dist / "robots.txt").write_text(
         "User-agent: *\nAllow: /\nDisallow:\n\nSitemap: https://tarikdata.digital/sitemap.xml\n"

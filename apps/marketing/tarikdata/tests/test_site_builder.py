@@ -4,6 +4,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from xml.etree import ElementTree
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
@@ -43,6 +44,32 @@ class SiteBuilderTests(unittest.TestCase):
             "]\n"
         )
 
+    def test_file_route_writes_flat_document_and_stays_linkable(self) -> None:
+        """A /404.html route must land at dist/404.html, not dist/404.html/index.html."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.write_source(root, page=VALID_PAGE.replace('href="/about/"', 'href="/404.html"'))
+            registry = root / "src" / "data" / "routes.py"
+            registry.write_text(
+                registry.read_text().replace(
+                    "]\n",
+                    "    {'route': '/404.html', 'page': 'notfound.html', 'title': 'Not found', "
+                    "'description': 'Not found description', "
+                    "'canonical': 'https://example.test/404.html', "
+                    "'lang': 'id', 'heading': 'Not found', 'og_image': '/assets/logo.svg', "
+                    "'twitter_card': 'summary', 'indexable': False},\n]\n",
+                )
+            )
+            (root / "src" / "pages" / "notfound.html").write_text(
+                '<main id="nf"><h1 id="nf-title">Not found</h1></main>'
+            )
+
+            build_site(root)
+
+            self.assertTrue((root / "dist" / "404.html").is_file())
+            self.assertFalse((root / "dist" / "404.html" / "index.html").exists())
+            self.assertNotIn("404.html", (root / "dist" / "sitemap.xml").read_text())
+
     def test_builds_deterministic_routes_and_sitemap_from_metadata(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
@@ -61,6 +88,8 @@ class SiteBuilderTests(unittest.TestCase):
             sitemap = (root / "dist" / "sitemap.xml").read_text()
             self.assertIn("https://example.test/", sitemap)
             self.assertIn("https://example.test/about/", sitemap)
+            urlset = ElementTree.fromstring(sitemap)
+            self.assertEqual(urlset.tag, "{http://www.sitemaps.org/schemas/sitemap/0.9}urlset")
             document = (root / "dist" / "index.html").read_text()
             self.assertIn("<header>Header</header>", document)
             self.assertIn("<footer>Footer</footer>", document)

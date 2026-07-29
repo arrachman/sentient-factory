@@ -127,6 +127,12 @@ ROUTES = [
         "Cara PT Tarik Data Digital memperlakukan informasi yang dikirim melalui situs, email, dan WhatsApp.",
     ),
     route(
+        "/404.html", "404.html",
+        "Halaman tidak ditemukan | PT Tarik Data Digital",
+        "Alamat yang dibuka tidak tersedia. Gunakan tautan yang tersedia untuk melanjutkan ke bagian situs yang relevan.",
+        indexable=False,
+    ),
+    route(
         "/ketentuan/", "ketentuan.html",
         "Syarat dan ketentuan | PT Tarik Data Digital",
         "Ketentuan umum penggunaan situs dan awal percakapan dengan PT Tarik Data Digital.",
