@@ -51,3 +51,9 @@ npm run db:studio
 - `prisma/migrations/` (yang sudah ada).
 - File backup `*_backup_*`, `*_locked_*`.
 - `reset-db.ts` — destruktif.
+
+## Worktree Policy (VPS-wide)
+
+- **Do not use Git worktrees on this VPS.** Work directly in the active workspace/checkout.
+- Do not create, enter, recommend, or require a worktree for any task, including background jobs.
+- Use the current branch, or create a normal Git branch in the same checkout when isolation is needed.

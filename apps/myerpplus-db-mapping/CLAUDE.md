@@ -39,3 +39,9 @@ Akses cepat: `npm run db:mysql` (dari root) → shell. `npm run db:mysql:query` 
 ## Jangan disentuh tanpa diminta
 - Kredensial MySQL di Vault path `sentient-factory/dev/myerpplus-db-mapping`.
 - `plan.md` bagian yang sudah ditandai `LOCKED`.
+
+## Worktree Policy (VPS-wide)
+
+- **Do not use Git worktrees on this VPS.** Work directly in the active workspace/checkout.
+- Do not create, enter, recommend, or require a worktree for any task, including background jobs.
+- Use the current branch, or create a normal Git branch in the same checkout when isolation is needed.

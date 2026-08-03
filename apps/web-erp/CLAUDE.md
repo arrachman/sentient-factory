@@ -780,7 +780,7 @@ working tree atau feature branch.
 - **Commit** conventional & atomik (`feat:`/`fix:`/`refactor:`/`docs:`/
   `chore:`), pesan jelas, scope `web-erp` bila relevan. Jangan tumpuk
   ratusan baris dalam satu commit (root `CLAUDE.md §7`).
-- **Merge ke `dev`:** kalau kerja di feature branch/worktree → merge atau
+- **Merge ke `dev`:** kalau kerja di feature branch pada checkout aktif → merge atau
   fast-forward/rebase ke `dev`. Kalau memang sedang di `dev` → cukup commit
   (sudah "di dev"); jangan biarkan perubahan uncommitted.
 - **DILARANG** `--no-verify`, amend commit yang sudah dipush, atau
@@ -797,3 +797,9 @@ working tree atau feature branch.
 
 Tanya user. Aturan-aturan di atas tidak punya pengecualian diam-diam —
 kalau ada kebutuhan menyimpang, eskalasi dulu.
+
+## Worktree Policy (VPS-wide)
+
+- **Do not use Git worktrees on this VPS.** Work directly in the active workspace/checkout.
+- Do not create, enter, recommend, or require a worktree for any task, including background jobs.
+- Use the current branch, or create a normal Git branch in the same checkout when isolation is needed.

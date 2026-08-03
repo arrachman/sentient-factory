@@ -172,7 +172,7 @@ Env internal-API per app (rewrite `/api/*` → api-gateway 3203, dibake saat bui
 - **Eksplorasi besar** → pakai sub-agent `Explore` atau `general-purpose`, jangan grep manual berulang.
 - **Spec/milestone/phase** → driver-nya **GSD** (`/gsd-new-milestone`, `/gsd-plan-phase`, `/gsd-execute-phase`).
 - **Eksekusi mendalam (TDD, refactor, debug)** → driver-nya **Superpowers**. Jangan campur driver di satu fase.
-- **Branch baru** sebelum eksekusi besar: `git checkout -b feat/<nama>` (atau pakai worktree).
+- **Branch baru** sebelum eksekusi besar: `git checkout -b feat/<nama>` di checkout aktif. Jangan gunakan worktree.
 - **Commit per langkah** kecil, pesan jelas. Jangan tumpuk 500 baris dalam satu commit.
 - **PR template**: ringkasan + test plan; pakai `gh pr create`.
 
@@ -181,7 +181,7 @@ Env internal-API per app (rewrite `/api/*` → api-gateway 3203, dibake saat bui
 - Membuka dua dev server di port 3101 → konflik. Selalu `npm run ports:check` dulu.
 - Edit `apps/myerpplus-db-mapping` tanpa render ulang Vault env (`vault:render:myerp`) → koneksi MySQL gagal.
 - Update `packages/shared-types` di TS saja → runtime ai-engine error karena Pydantic tertinggal.
-- **Worktree ≠ live dev server**: edit di feature worktree tidak langsung terlihat di browser sampai di-cherry-pick/merge ke branch yang ditonton server. Sebelum fix UI, konfirmasi dulu branch mana yang sedang dijalankan dev server, lalu tawarkan cherry-pick jika fix perlu langsung tampil.
+- **Jangan gunakan worktree**: lakukan edit di checkout aktif yang ditonton dev server. Sebelum fix UI, konfirmasi branch yang sedang dijalankan.
 
 ## 9. Jangan disentuh tanpa diminta
 
@@ -227,3 +227,9 @@ Tambahkan ke `.claude/settings.json` untuk catch typo/error lebih awal:
 
 **Sebelum fix UI — selalu verifikasi checkout**
 Tanya dulu: *"Branch mana yang ditonton dev server sekarang, dan kita sedang edit di branch mana?"* — jika beda, propose cherry-pick terlebih dahulu.
+
+## Worktree Policy (VPS-wide)
+
+- **Do not use Git worktrees on this VPS.** Work directly in the active workspace/checkout.
+- Do not create, enter, recommend, or require a worktree for any task, including background jobs.
+- Use the current branch, or create a normal Git branch in the same checkout when isolation is needed.

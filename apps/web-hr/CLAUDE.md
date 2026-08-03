@@ -353,3 +353,9 @@ dulu. (3) `git push --force` atau push ke branch selain `dev` = tetap tanya user
 (4) Catatan: `next.config.mjs` set `output: 'standalone'` → `next start` memberi
 warning "use node .next/standalone/server.js"; tetap serve normal — lihat
 follow-up bila ingin selaras penuh.
+
+## Worktree Policy (VPS-wide)
+
+- **Do not use Git worktrees on this VPS.** Work directly in the active workspace/checkout.
+- Do not create, enter, recommend, or require a worktree for any task, including background jobs.
+- Use the current branch, or create a normal Git branch in the same checkout when isolation is needed.

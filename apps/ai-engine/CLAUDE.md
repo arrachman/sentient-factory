@@ -65,3 +65,9 @@ poetry run mypy sentient_factory_ai
 ## Jangan disentuh tanpa diminta
 - `audit_store.py` skema — perubahan = breaking untuk konsumen audit.
 - `codex_config.py` default values produksi.
+
+## Worktree Policy (VPS-wide)
+
+- **Do not use Git worktrees on this VPS.** Work directly in the active workspace/checkout.
+- Do not create, enter, recommend, or require a worktree for any task, including background jobs.
+- Use the current branch, or create a normal Git branch in the same checkout when isolation is needed.

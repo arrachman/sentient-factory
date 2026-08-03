@@ -65,3 +65,9 @@ e2e/                # Playwright tests
 - `next.config.mjs` (sudah dituning untuk TF.js + workspaces).
 - `middleware.ts` (logic auth global).
 - Tema Metronic core di `components/` yang nggak ada eksten kita.
+
+## Worktree Policy (VPS-wide)
+
+- **Do not use Git worktrees on this VPS.** Work directly in the active workspace/checkout.
+- Do not create, enter, recommend, or require a worktree for any task, including background jobs.
+- Use the current branch, or create a normal Git branch in the same checkout when isolation is needed.

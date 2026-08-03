@@ -184,3 +184,9 @@ branch lain selain `dev` atau `git push --force` = tanya user dulu.
 Tanya user. Tidak ada pengecualian diam-diam. `apps/web-mdp/CLAUDE.md` +
 `db-design/` adalah otoritas untuk MDP; kalau bertentangan dengan asumsi, file
 ini yang menang.
+
+## Worktree Policy (VPS-wide)
+
+- **Do not use Git worktrees on this VPS.** Work directly in the active workspace/checkout.
+- Do not create, enter, recommend, or require a worktree for any task, including background jobs.
+- Use the current branch, or create a normal Git branch in the same checkout when isolation is needed.
