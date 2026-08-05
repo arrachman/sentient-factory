@@ -186,7 +186,7 @@
       <p style="font-size:16px;line-height:1.65;color:#57616E;margin:0;max-width:680px;">Setiap produk dibangun untuk kebutuhan vertikal yang berbeda, dengan Senti.id sebagai holding dan pintu utama seluruh ekosistem.</p>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:44px;">
       <a href="https://klinik.senti.id/" style="display:block;background:#FFFFFF;border:1px solid #E7E7DF;border-radius:24px;padding:28px;color:#101720;" style-hover="border-color:#2D5FE3;color:#101720;">
         <div style="font-size:13px;font-weight:700;color:#2D5FE3;text-transform:uppercase;letter-spacing:0.1em;">Kesehatan</div>
         <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:25px;margin:14px 0 8px;">Senti Klinik</h3>
@@ -203,6 +203,12 @@
         <div style="font-size:13px;font-weight:700;color:#2D5FE3;text-transform:uppercase;letter-spacing:0.1em;">Hospitality</div>
         <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:25px;margin:14px 0 8px;">Senti Hotel</h3>
         <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:0;">Sederhanakan reservasi, layanan tamu, dan operasional hotel dalam satu sistem.</p>
+        <span style="display:inline-block;margin-top:22px;font-weight:700;color:#2D5FE3;">Jelajahi produk →</span>
+      </a>
+      <a href="https://erp.senti.id/" style="display:block;background:#FFFFFF;border:1px solid #E7E7DF;border-radius:24px;padding:28px;color:#101720;" style-hover="border-color:#2D5FE3;color:#101720;">
+        <div style="font-size:13px;font-weight:700;color:#2D5FE3;text-transform:uppercase;letter-spacing:0.1em;">ERP Bisnis</div>
+        <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:25px;margin:14px 0 8px;">Senti Biz</h3>
+        <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:0;">Kelola Kas &amp; Bank, Pembelian, dan Penjualan dalam satu sistem ERP terintegrasi.</p>
         <span style="display:inline-block;margin-top:22px;font-weight:700;color:#2D5FE3;">Jelajahi produk →</span>
       </a>
     </div>
@@ -477,7 +483,7 @@
     <div style="display:flex;flex-direction:column;gap:10px;">
       <details style="background:#FFFFFF;border:1px solid #E7E7DF;border-radius:16px;padding:20px 24px;">
         <summary style="display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:16.5px;font-weight:700;">Apa itu Senti? <span class="faq-chev" style="color:#2D5FE3;font-size:20px;transition:transform 0.2s;">+</span></summary>
-        <p style="font-size:15px;line-height:1.65;color:#57616E;margin:14px 0 0;">Senti adalah holding dan pusat ekosistem produk digital untuk berbagai industri. Melalui Senti.id, pengguna dapat menemukan produk khusus seperti Senti Klinik untuk layanan kesehatan, Senti Edu untuk pendidikan, dan Senti Hotel untuk hospitality.</p>
+        <p style="font-size:15px;line-height:1.65;color:#57616E;margin:14px 0 0;">Senti adalah holding dan pusat ekosistem produk digital untuk berbagai industri. Melalui Senti.id, pengguna dapat menemukan produk khusus seperti Senti Klinik untuk layanan kesehatan, Senti Edu untuk pendidikan, Senti Hotel untuk hospitality, dan Senti Biz untuk pengelolaan bisnis terintegrasi.</p>
       </details>
       <details style="background:#FFFFFF;border:1px solid #E7E7DF;border-radius:16px;padding:20px 24px;">
         <summary style="display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:16.5px;font-weight:700;">Apa saja solusi yang ditawarkan oleh Senti? <span class="faq-chev" style="color:#2D5FE3;font-size:20px;transition:transform 0.2s;">+</span></summary>
@@ -491,6 +497,7 @@
             <li><a href="https://klinik.senti.id/">Senti Klinik</a> : Operasional dan layanan klinik</li>
             <li><a href="https://edu.senti.id/">Senti Edu</a> : Akademik dan administrasi pendidikan</li>
             <li><a href="https://hotel.senti.id/">Senti Hotel</a> : Reservasi dan operasional hotel</li>
+            <li><a href="https://erp.senti.id/">Senti Biz</a> : ERP Kas &amp; Bank, Pembelian, dan Penjualan</li>
           </ul>
           <p style="margin:0;">Ekosistem akan terus berkembang untuk melayani kebutuhan berbagai industri melalui produk Senti yang terhubung.</p>
         </div>
@@ -586,6 +593,7 @@ class Component extends DCLogic {
       {name:'Senti Klinik', desc:'Operasional dan layanan klinik terintegrasi', href:'https://klinik.senti.id/', img:'assets/ic-protection.webp'},
       {name:'Senti Edu', desc:'Akademik dan administrasi pendidikan', href:'https://edu.senti.id/', img:'assets/ic-people.webp'},
       {name:'Senti Hotel', desc:'Reservasi dan operasional hospitality', href:'https://hotel.senti.id/', img:'assets/ic-system.webp'},
+      {name:'Senti Biz', desc:'ERP Kas & Bank, Pembelian, dan Penjualan', href:'https://erp.senti.id/', img:'assets/ic-chart.webp'},
     ];
     const SB = 'https://senti.com/solusi/';
     const solusiGroups = [
@@ -680,6 +688,7 @@ class Component extends DCLogic {
     const modTabsData = [
       {label:'Cloud-based software', items:[
         {name:'Senti Talenta', tag:'HR & payroll', href:P+'talenta/', img:lm('talenta')},
+        {name:'Senti Biz', tag:'ERP Kas & Bank, Pembelian & Penjualan', href:'https://erp.senti.id/', img:'assets/ic-chart.webp'},
         {name:'Senti Jurnal', tag:'Akuntansi & supply chain', href:P+'jurnal/', img:lm('jurnal')},
         {name:'Senti Qontak', tag:'Customer relation', href:P+'qontak/', img:lm('qontak')},
         {name:'Senti Klikpajak', tag:'Perpajakan', href:P+'klikpajak/', img:lm('klikpajak')},
@@ -722,6 +731,7 @@ class Component extends DCLogic {
       footerCols: [
         {title:'Produk', links:[
           {name:'Senti Talenta', href:'https://www.talenta.co/'},
+          {name:'Senti Biz', href:'https://erp.senti.id/'},
           {name:'Senti Jurnal', href:'https://www.jurnal.id/id/'},
           {name:'Senti Qontak', href:'https://qontak.com/'},
           {name:'Senti Sign', href:'https://sentisign.com/'},
