@@ -33,6 +33,13 @@ Jika user menyebut domain/URL deployment **`erp.fr-labs.my.id`** dalam bentuk ap
 atau mengubah kode terkait. URL itu diperlakukan sebagai konteks
 `apps/web-erp`.
 
+### 2.2 Trigger skill Senti.id
+
+Jika task menyentuh **`apps/marketing/senti.id/**`** atau user menyebut
+**`Senti.id`**, **`senti.id`**, website holding Senti, maupun ekosistem produk
+Senti, agent **WAJIB membaca `.claude/skills/sentiid/SKILL.md` terlebih dahulu**
+sebelum menjawab, menginspeksi, atau mengubah kode terkait.
+
 ## 3. Perintah yang sering dipakai
 
 ```bash
