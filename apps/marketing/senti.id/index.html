@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  html,body{margin:0;padding:0;background:#FAFAF7;color:#101720;font-family:'Instrument Sans',sans-serif;-webkit-font-smoothing:antialiased;}
+  a{color:#2D5FE3;text-decoration:none;}
+  a:hover{color:#1E44AC;}
+  *{box-sizing:border-box;}
+  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  details>summary{list-style:none;cursor:pointer;}
+  details>summary::-webkit-details-marker{display:none;}
+  details[open] .faq-chev{transform:rotate(45deg);}
+</style>
+</helmet>
+
+<header style="position:sticky;top:0;z-index:60;background:rgba(250,250,247,0.92);backdrop-filter:blur(14px);border-bottom:1px solid #E7E7DF;">
+  <div style="max-width:1240px;margin:0 auto;padding:0 24px;height:66px;display:flex;align-items:center;gap:28px;">
+    <a href="https://senti.com/" style="display:flex;align-items:center;"><img src="assets/logo-senti.svg" alt="Senti" style="height:26px;display:block;"></a>
+    <nav style="display:flex;align-items:center;gap:4px;flex:1;">
+      <button onClick="{{ toggleProduk }}" style="{{ navBtnProduk }}">Produk &amp; Layanan <span style="font-size:10px;opacity:0.6;">▾</span></button>
+      <button onClick="{{ toggleSolusi }}" style="{{ navBtnSolusi }}">Solusi <span style="font-size:10px;opacity:0.6;">▾</span></button>
+      <button onClick="{{ toggleResources }}" style="{{ navBtnResources }}">Resources <span style="font-size:10px;opacity:0.6;">▾</span></button>
+      <a href="https://senti.com/harga/" style="padding:8px 14px;border-radius:999px;font-size:14.5px;font-weight:600;color:#101720;" style-hover="background:#EFEFE8;color:#101720;">Harga</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="display:flex;align-items:center;gap:2px;font-size:13px;font-weight:600;color:#57616E;">
+        <a href="https://senti.com/#" style="padding:4px 8px;border-radius:8px;color:#101720;background:#EFEFE8;">ID</a>
+        <a href="https://senti.com/en/" style="padding:4px 8px;border-radius:8px;color:#57616E;" style-hover="color:#101720;">EN</a>
+      </div>
+      <a href="https://account.senti.com/users/sign_in/" style="font-size:14.5px;font-weight:600;color:#101720;" style-hover="color:#2D5FE3;">Sign in</a>
+      <a href="https://api.whatsapp.com/send/?phone=6281392770506&amp;text=Halo,%20Saya%20tertarik%20dengan%20produk%20Senti" style="background:#2D5FE3;color:#FFFFFF;font-size:14.5px;font-weight:600;padding:10px 20px;border-radius:999px;" style-hover="background:#1E44AC;color:#FFFFFF;">WhatsApp kami</a>
+    </div>
+  </div>
+
+  <sc-if value="{{ showProduk }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:0;right:0;top:66px;background:#FFFFFF;border-bottom:1px solid #E7E7DF;box-shadow:0 24px 48px -24px rgba(16,23,32,0.18);">
+      <div style="max-width:1240px;margin:0 auto;padding:28px 24px 20px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#8A94A2;margin-bottom:16px;">Produk &amp; Layanan</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+          <sc-for list="{{ produkMenu }}" as="item" hint-placeholder-count="12">
+            <a href="{{ item.href }}" style="display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:14px;color:#101720;" style-hover="background:#F4F4EE;color:#101720;">
+              <sc-if value="{{ item.img }}" hint-placeholder-val="{{ false }}"><img src="{{ item.img }}" alt="{{ item.name }}" style="width:34px;height:34px;border-radius:9px;object-fit:contain;background:#F4F4EE;padding:4px;flex-shrink:0;"></sc-if>
+              <span style="display:block;">
+                <span style="display:block;font-size:14.5px;font-weight:700;">{{ item.name }}</span>
+                <span style="display:block;font-size:12.5px;color:#57616E;line-height:1.45;margin-top:2px;">{{ item.desc }}</span>
+              </span>
+            </a>
+          </sc-for>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #EDEDE5;margin-top:18px;padding-top:14px;">
+          <div style="font-size:13.5px;color:#57616E;">Inovasi software-as-a-service Senti untuk manajemen bisnis</div>
+          <a href="https://senti.com/produk/" style="font-size:14px;font-weight:700;color:#2D5FE3;">Lihat semua produk Senti →</a>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showSolusi }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:0;right:0;top:66px;background:#FFFFFF;border-bottom:1px solid #E7E7DF;box-shadow:0 24px 48px -24px rgba(16,23,32,0.18);">
+      <div style="max-width:1240px;margin:0 auto;padding:28px 24px 20px;display:grid;grid-template-columns:240px 1fr;gap:28px;">
+        <div style="display:flex;flex-direction:column;gap:4px;border-right:1px solid #EDEDE5;padding-right:20px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#8A94A2;margin-bottom:10px;">Solusi</div>
+          <sc-for list="{{ solusiTabs }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.label }}</button>
+          </sc-for>
+        </div>
+        <div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:380px;overflow-y:auto;">
+            <sc-for list="{{ solusiItems }}" as="item" hint-placeholder-count="6">
+              <a href="{{ item.href }}" style="display:block;padding:12px;border-radius:14px;color:#101720;" style-hover="background:#F4F4EE;color:#101720;">
+                <span style="display:block;font-size:14.5px;font-weight:700;">{{ item.name }}</span>
+                <span style="display:block;font-size:12.5px;color:#57616E;line-height:1.45;margin-top:2px;">{{ item.desc }}</span>
+              </a>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #EDEDE5;margin-top:18px;padding-top:14px;">
+            <div style="font-size:13.5px;color:#57616E;">Jawaban tepat untuk kebutuhan bisnis Anda</div>
+            <a href="https://senti.com/solusi/" style="font-size:14px;font-weight:700;color:#2D5FE3;">Pelajari solusi Senti →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ showResources }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:0;right:0;top:66px;background:#FFFFFF;border-bottom:1px solid #E7E7DF;box-shadow:0 24px 48px -24px rgba(16,23,32,0.18);">
+      <div style="max-width:1240px;margin:0 auto;padding:28px 24px 20px;display:grid;grid-template-columns:240px 1fr;gap:28px;">
+        <div style="display:flex;flex-direction:column;gap:4px;border-right:1px solid #EDEDE5;padding-right:20px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#8A94A2;margin-bottom:10px;">Resources</div>
+          <sc-for list="{{ resourceTabs }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.label }}</button>
+          </sc-for>
+        </div>
+        <div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-height:380px;overflow-y:auto;">
+            <sc-for list="{{ resourceItems }}" as="item" hint-placeholder-count="6">
+              <a href="{{ item.href }}" style="display:block;padding:12px;border-radius:14px;color:#101720;" style-hover="background:#F4F4EE;color:#101720;">
+                <span style="display:block;font-size:14.5px;font-weight:700;">{{ item.name }}</span>
+                <span style="display:block;font-size:12.5px;color:#57616E;line-height:1.45;margin-top:2px;">{{ item.desc }}</span>
+              </a>
+            </sc-for>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid #EDEDE5;margin-top:18px;padding-top:14px;">
+            <div style="font-size:13.5px;color:#57616E;">Kisah klien, berita terbaru, &amp; berbagai event serta Community</div>
+            <a href="https://senti.com/resources/" style="font-size:14px;font-weight:700;color:#2D5FE3;">Lihat semua resources →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</header>
+
+<main>
+  <!-- HERO -->
+  <section data-screen-label="Hero" style="max-width:1240px;margin:0 auto;padding:72px 24px 40px;">
+    <div style="display:grid;grid-template-columns:1.05fr 0.95fr;gap:56px;align-items:center;">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:8px;border:1px solid #D9DCD2;background:#FFFFFF;border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;color:#2D5FE3;">
+          <span style="width:7px;height:7px;border-radius:999px;background:#2D5FE3;display:inline-block;"></span>
+          Holding dan pusat ekosistem Senti
+        </div>
+        <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:56px;line-height:1.04;letter-spacing:-0.02em;margin:22px 0 0;text-wrap:pretty;">Satu ekosistem digital untuk berbagai kebutuhan industri</h1>
+        <p style="font-size:17.5px;line-height:1.6;color:#57616E;margin:20px 0 0;max-width:540px;text-wrap:pretty;">Senti.id adalah pusat dari berbagai produk Senti yang membantu operasional klinik, institusi pendidikan, hotel, dan industri lainnya dalam satu ekosistem yang terhubung.</p>
+        <div style="display:flex;align-items:center;gap:20px;margin-top:30px;">
+          <a href="https://api.whatsapp.com/send/?phone=6281392770506&amp;text=Halo,%20Saya%20tertarik%20dengan%20produk%20Senti" style="background:#101720;color:#FFFFFF;font-size:15.5px;font-weight:600;padding:14px 26px;border-radius:999px;" style-hover="background:#2D5FE3;color:#FFFFFF;">WhatsApp sekarang</a>
+          <a href="#senti-ecosystem" style="font-size:15.5px;font-weight:700;color:#101720;display:inline-flex;align-items:center;gap:8px;" style-hover="color:#2D5FE3;">Pelajari ekosistem Senti <span style="font-size:17px;">→</span></a>
+        </div>
+        <div style="margin-top:44px;border-top:1px solid #E7E7DF;padding-top:20px;display:flex;flex-wrap:wrap;align-items:center;gap:16px;">
+          <div style="display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;"><span style="color:#E8A413;letter-spacing:2px;">★★★★</span> 4,5/5</div>
+          <div style="font-size:13px;color:#8A94A2;">Produk Senti ditampilkan dalam</div>
+          <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+            <img src="assets/badge-g2.webp" alt="Rating Badge" style="height:30px;">
+            <img src="assets/badge-gartner-1.webp" alt="Rating Badge" style="height:30px;">
+            <img src="assets/badge-captera.webp" alt="Rating Badge" style="height:30px;">
+            <img src="assets/badge-getapp.webp" alt="Rating Badge" style="height:30px;">
+            <img src="assets/badge-software-advice.webp" alt="Rating Badge" style="height:30px;">
+            <img src="assets/badge-crozdesk.webp" alt="Rating Badge" style="height:30px;">
+          </div>
+        </div>
+      </div>
+      <div style="position:relative;">
+        <div style="position:absolute;inset:-40px -60px auto auto;width:280px;height:280px;background:radial-gradient(closest-side,rgba(45,95,227,0.14),transparent);border-radius:50%;"></div>
+        <img src="assets/img-senti-ecosytem-base-1.webp" alt="Ekosistem Senti" style="width:100%;display:block;">
+      </div>
+    </div>
+  </section>
+
+  <!-- VIDEO -->
+  <section data-screen-label="Video" style="max-width:1240px;margin:0 auto;padding:24px 24px 64px;">
+    <a href="https://senti.com/#" style="position:relative;display:block;border-radius:24px;overflow:hidden;color:#FFFFFF;" style-hover="color:#FFFFFF;">
+      <img src="assets/senti-video-cover-1.webp" alt="Sekilas tentang Senti" style="width:100%;display:block;">
+      <span style="position:absolute;inset:0;background:linear-gradient(to top,rgba(12,20,36,0.55),rgba(12,20,36,0.05) 50%);"></span>
+      <span style="position:absolute;left:28px;bottom:24px;display:flex;align-items:center;gap:14px;">
+        <span style="width:52px;height:52px;border-radius:999px;background:#FFFFFF;color:#101720;display:grid;place-items:center;font-size:18px;padding-left:3px;">▶</span>
+        <span style="font-size:16px;font-weight:700;">Sekilas tentang senti</span>
+      </span>
+    </a>
+  </section>
+
+  <!-- CLIENTS -->
+  <section data-screen-label="Klien" style="border-top:1px solid #E7E7DF;border-bottom:1px solid #E7E7DF;background:#FFFFFF;padding:44px 0;">
+    <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:22px;text-align:center;margin:0 24px 30px;color:#101720;">Telah dipercaya oleh 55.000+ bisnis Indonesia dari berbagai industri</h2>
+    <div style="overflow:hidden;position:relative;">
+      <div style="{{ marqueeStyle }}">
+        <sc-for list="{{ clientLogos }}" as="logo" hint-placeholder-count="12">
+          <sc-if value="{{ logo.src }}" hint-placeholder-val="{{ false }}"><img src="{{ logo.src }}" alt="Client Logo" style="height:34px;opacity:0.75;filter:grayscale(1);flex-shrink:0;"></sc-if>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUSI -->
+  <section id="senti-ecosystem" data-screen-label="Solusi Senti" style="max-width:1240px;margin:0 auto;padding:88px 24px 40px;">
+    <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;">
+      <div style="font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#2D5FE3;">Ekosistem produk Senti</div>
+      <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:40px;letter-spacing:-0.015em;margin:0;max-width:700px;text-wrap:pretty;">Temukan produk khusus untuk industri Anda</h2>
+      <p style="font-size:16px;line-height:1.65;color:#57616E;margin:0;max-width:680px;">Setiap produk dibangun untuk kebutuhan vertikal yang berbeda, dengan Senti.id sebagai holding dan pintu utama seluruh ekosistem.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:44px;">
+      <a href="https://klinik.senti.id/" style="display:block;background:#FFFFFF;border:1px solid #E7E7DF;border-radius:24px;padding:28px;color:#101720;" style-hover="border-color:#2D5FE3;color:#101720;">
+        <div style="font-size:13px;font-weight:700;color:#2D5FE3;text-transform:uppercase;letter-spacing:0.1em;">Kesehatan</div>
+        <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:25px;margin:14px 0 8px;">Senti Klinik</h3>
+        <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:0;">Kelola layanan pasien, administrasi, dan operasional klinik secara terintegrasi.</p>
+        <span style="display:inline-block;margin-top:22px;font-weight:700;color:#2D5FE3;">Jelajahi produk →</span>
+      </a>
+      <a href="https://edu.senti.id/" style="display:block;background:#FFFFFF;border:1px solid #E7E7DF;border-radius:24px;padding:28px;color:#101720;" style-hover="border-color:#2D5FE3;color:#101720;">
+        <div style="font-size:13px;font-weight:700;color:#2D5FE3;text-transform:uppercase;letter-spacing:0.1em;">Pendidikan</div>
+        <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:25px;margin:14px 0 8px;">Senti Edu</h3>
+        <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:0;">Hubungkan kegiatan akademik, administrasi, dan layanan institusi pendidikan.</p>
+        <span style="display:inline-block;margin-top:22px;font-weight:700;color:#2D5FE3;">Jelajahi produk →</span>
+      </a>
+      <a href="https://hotel.senti.id/" style="display:block;background:#FFFFFF;border:1px solid #E7E7DF;border-radius:24px;padding:28px;color:#101720;" style-hover="border-color:#2D5FE3;color:#101720;">
+        <div style="font-size:13px;font-weight:700;color:#2D5FE3;text-transform:uppercase;letter-spacing:0.1em;">Hospitality</div>
+        <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:25px;margin:14px 0 8px;">Senti Hotel</h3>
+        <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:0;">Sederhanakan reservasi, layanan tamu, dan operasional hotel dalam satu sistem.</p>
+        <span style="display:inline-block;margin-top:22px;font-weight:700;color:#2D5FE3;">Jelajahi produk →</span>
+      </a>
+      <a href="https://erp.senti.id/" style="display:block;background:#FFFFFF;border:1px solid #E7E7DF;border-radius:24px;padding:28px;color:#101720;" style-hover="border-color:#2D5FE3;color:#101720;">
+        <div style="font-size:13px;font-weight:700;color:#2D5FE3;text-transform:uppercase;letter-spacing:0.1em;">ERP Bisnis</div>
+        <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-size:25px;margin:14px 0 8px;">Senti Biz</h3>
+        <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:0;">Kelola Kas &amp; Bank, Pembelian, dan Penjualan dalam satu sistem ERP terintegrasi.</p>
+        <span style="display:inline-block;margin-top:22px;font-weight:700;color:#2D5FE3;">Jelajahi produk →</span>
+      </a>
+    </div>
+
+    <div style="background:#FFFFFF;border:1px solid #E7E7DF;border-radius:28px;padding:36px;margin-top:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;">
+        <div>
+          <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:26px;margin:0;">Solusi pendukung</h3>
+          <p style="font-size:15.5px;color:#57616E;margin:6px 0 0;">Software siap pakai untuk berbagai fungsi bisnis</p>
+        </div>
+        <div style="display:flex;gap:6px;background:#F4F4EE;border-radius:999px;padding:5px;">
+          <sc-for list="{{ modTabs }}" as="t" hint-placeholder-count="3">
+            <button onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:28px;">
+        <sc-for list="{{ modItems }}" as="item" hint-placeholder-count="9">
+          <a href="{{ item.href }}" style="display:flex;align-items:center;gap:14px;border:1px solid #EDEDE5;border-radius:18px;padding:16px 18px;color:#101720;background:#FAFAF7;" style-hover="border-color:#2D5FE3;background:#FFFFFF;color:#101720;">
+            <sc-if value="{{ item.img }}" hint-placeholder-val="{{ false }}"><img src="{{ item.img }}" alt="{{ item.name }}" style="width:40px;height:40px;object-fit:contain;border-radius:10px;background:#FFFFFF;border:1px solid #EDEDE5;padding:5px;flex-shrink:0;"></sc-if>
+            <span style="display:block;flex:1;">
+              <span style="display:block;font-size:15.5px;font-weight:700;">{{ item.name }}</span>
+              <span style="display:block;font-size:13px;color:#57616E;margin-top:1px;">{{ item.tag }}</span>
+            </span>
+            <span style="color:#2D5FE3;font-size:16px;">→</span>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="background:#0C1424;border-radius:28px;padding:44px;margin-top:20px;color:#FFFFFF;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;">
+      <div>
+        <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:26px;margin:0;">Solusi enterprise</h3>
+        <p style="font-size:15.5px;color:#98A4B8;margin:6px 0 0;">Didesain untuk mengikuti pertumbuhan bisnis</p>
+        <p style="font-size:15px;line-height:1.65;color:#C7CFDC;margin:22px 0 0;">Solusi custom oleh Senti Officeless yang dirancang sesuai kebutuhan bisnis untuk menghubungkan sistem internal perusahaan dengan ekosistem Senti secara fleksibel.</p>
+        <ul style="margin:18px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px;">
+          <li style="display:flex;gap:11px;font-size:14.5px;line-height:1.55;color:#E4E9F1;"><span style="color:#6E92F0;font-weight:700;">—</span>Alur kerja dan integrasi terkustomisasi</li>
+          <li style="display:flex;gap:11px;font-size:14.5px;line-height:1.55;color:#E4E9F1;"><span style="color:#6E92F0;font-weight:700;">—</span>Menghubungkan sistem internal yang telah ada dengan ekosistem Senti</li>
+          <li style="display:flex;gap:11px;font-size:14.5px;line-height:1.55;color:#E4E9F1;"><span style="color:#6E92F0;font-weight:700;">—</span>Dibangun untuk kebutuhan operasional enterprise yang lebih kompleks</li>
+          <li style="display:flex;gap:11px;font-size:14.5px;line-height:1.55;color:#E4E9F1;"><span style="color:#6E92F0;font-weight:700;">—</span>Keamanan data tingkat enterprise dengan sumber data terpusat</li>
+        </ul>
+        <a href="https://officeless.senti.com/" style="display:inline-flex;align-items:center;gap:8px;margin-top:26px;background:#FFFFFF;color:#101720;font-size:14.5px;font-weight:700;padding:12px 22px;border-radius:999px;" style-hover="background:#6E92F0;color:#FFFFFF;">Pelajari lebih lanjut →</a>
+      </div>
+      <div>
+        <img src="assets/kv__suite.webp" alt="Solusi enterprise Senti" style="width:100%;display:block;border-radius:18px;">
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section data-screen-label="Integrasi" style="max-width:1240px;margin:0 auto;padding:88px 24px;">
+    <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:40px;letter-spacing:-0.015em;margin:0;max-width:760px;text-wrap:pretty;">Percepat pertumbuhan dengan software bisnis yang saling terintegrasi</h2>
+    <div style="display:flex;flex-direction:column;margin-top:48px;border-top:1px solid #E7E7DF;">
+      <div style="display:grid;grid-template-columns:64px 260px 1fr;gap:28px;padding:32px 0;border-bottom:1px solid #E7E7DF;">
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:600;color:#8A94A2;">01</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2D5FE3;">Platform Senti</div>
+          <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;line-height:1.25;margin:10px 0 0;text-wrap:pretty;">Kelola ekosistem secara terpadu dengan kustomisasi tanpa batas</h3>
+        </div>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;">
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Jalankan seluruh infrastruktur digital bisnis sebagai satu kesatuan.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Bangun aplikasi enterprise custom, alur kerja spesifik, dan hubungkan produk Senti dengan sistem eksternal melalui Senti Officeless.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Kelola identitas secara terpusat dan aman dengan Senti Access, serta ambil keputusan lebih tepat dengan AI berbasis data oleh Senti Airene.</li>
+        </ul>
+      </div>
+      <div style="display:grid;grid-template-columns:64px 260px 1fr;gap:28px;padding:32px 0;border-bottom:1px solid #E7E7DF;">
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:600;color:#8A94A2;">02</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2D5FE3;">People</div>
+          <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;line-height:1.25;margin:10px 0 0;text-wrap:pretty;">Optimalkan produktivitas dan kesejahteraan karyawan</h3>
+        </div>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;">
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Kurangi kesalahan akibat sistem manual dan bangun lingkungan kerja lebih produktif.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Automasikan payroll, pajak PPh 21, dan absensi dengan Senti Talenta.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Tingkatkan loyalitas karyawan dengan tunjangan fleksibel dari Senti Flex.</li>
+        </ul>
+      </div>
+      <div style="display:grid;grid-template-columns:64px 260px 1fr;gap:28px;padding:32px 0;border-bottom:1px solid #E7E7DF;">
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:600;color:#8A94A2;">03</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2D5FE3;">Operasional &amp; digitalisasi</div>
+          <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;line-height:1.25;margin:10px 0 0;text-wrap:pretty;">Akselerasikan pertumbuhan melalui digitalisasi end-to-end</h3>
+        </div>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;">
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Percepat operasional bisnis dengan mengeliminasi sistem manual.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Pastikan legalitas kontrak secara instan dengan tanda tangan digital dan e-Meterai resmi dengan Senti Sign.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Sinkronisasikan pengelolaan inventaris multi-channel dengan Senti Desty.</li>
+        </ul>
+      </div>
+      <div style="display:grid;grid-template-columns:64px 260px 1fr;gap:28px;padding:32px 0;border-bottom:1px solid #E7E7DF;">
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:600;color:#8A94A2;">04</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2D5FE3;">Akuntansi &amp; keuangan</div>
+          <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;line-height:1.25;margin:10px 0 0;text-wrap:pretty;">Tingkatkan transparansi finansial dan kepatuhan pajak</h3>
+        </div>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;">
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Kendalikan keuangan perusahaan secara real-time untuk jaga profitabilitas dan dapatkan laporan keuangan otomatis dengan Senti Jurnal.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Dapatkan kontrol penuh atas setiap pengeluaran biaya operasional dengan Senti Expense.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Pastikan kepatuhan pajak yang terintegrasi langsung dengan DJP dengan Senti Klikpajak.</li>
+        </ul>
+      </div>
+      <div style="display:grid;grid-template-columns:64px 260px 1fr;gap:28px;padding:32px 0;border-bottom:1px solid #E7E7DF;">
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:600;color:#8A94A2;">05</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2D5FE3;">Customer</div>
+          <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;line-height:1.25;margin:10px 0 0;text-wrap:pretty;">Transformasikan engagement menjadi penjualan</h3>
+        </div>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;">
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Bangun hubungan pelanggan yang lebih kuat di setiap kanal komunikasi.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Konsolidasikan interaksi dari WhatsApp, media sosial, dan email ke dalam satu dasbor CRM Senti Qontak.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Dapatkan dukungan chatbot AI dan automasi sales pipeline untuk tingkatkan konversi penjualan.</li>
+        </ul>
+      </div>
+      <div style="display:grid;grid-template-columns:64px 260px 1fr;gap:28px;padding:32px 0;border-bottom:1px solid #E7E7DF;">
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:15px;font-weight:600;color:#8A94A2;">06</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#2D5FE3;">Integrasi ekosistem Senti</div>
+          <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;line-height:1.25;margin:10px 0 0;text-wrap:pretty;">Satu sumber data terpadu berbasis AI</h3>
+        </div>
+        <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;">
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Integrasikan fungsi bisnis sebagai ekosistem yang dapat digunakan satuan, komprehensif, atau dikombinasikan dengan sistem internal perusahaan.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Dukungan AI real-time untuk automasikan laporan dan deteksi anomali.</li>
+          <li style="display:flex;gap:11px;font-size:15px;line-height:1.6;color:#57616E;"><span style="color:#2D5FE3;font-weight:700;">—</span>Standar keamanan ISO 27001 dengan infrastruktur lokal untuk pengambilan keputusan lebih cepat, aman, dan presisi.</li>
+        </ul>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;margin-top:32px;background:#FFFFFF;border:1px solid #E7E7DF;border-radius:20px;padding:22px 28px;">
+      <div style="font-size:16px;font-weight:600;max-width:520px;">Akselerasikan operasional antarsistem dengan integrasi ekosistem Senti</div>
+      <a href="https://senti.com/integrasi/" style="background:#2D5FE3;color:#FFFFFF;font-size:14.5px;font-weight:700;padding:12px 22px;border-radius:999px;" style-hover="background:#1E44AC;color:#FFFFFF;">Pelajari lebih lanjut</a>
+    </div>
+  </section>
+
+  <!-- WHY SENTI -->
+  <section data-screen-label="Mengapa Senti" style="background:#FFFFFF;border-top:1px solid #E7E7DF;border-bottom:1px solid #E7E7DF;">
+    <div style="max-width:1240px;margin:0 auto;padding:88px 24px;">
+      <div style="display:flex;flex-direction:column;gap:14px;max-width:640px;">
+        <div style="font-size:13px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#2D5FE3;">Mengapa Senti</div>
+        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:40px;letter-spacing:-0.015em;margin:0;text-wrap:pretty;">Fondasi yang kokoh untuk pertumbuhan bisnis berkelanjutan</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:44px;">
+        <div style="grid-column:span 2;background:#FAFAF7;border:1px solid #EDEDE5;border-radius:22px;padding:28px;display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center;">
+          <div>
+            <img src="assets/ic-workflow.webp" alt="Icon" style="width:44px;height:44px;">
+            <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-top:16px;">Ekosistem terintegrasi</div>
+            <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:8px 0 0;">Konsolidasikan berbagai fungsi bisnis dalam satu ekosistem terpadu untuk mengeliminasi kerja manual dan hambatan data.</p>
+          </div>
+          <img src="assets/kv__home-usp-01-1.webp" alt="Ekosistem terintegrasi" style="width:100%;border-radius:14px;">
+        </div>
+        <div style="background:#FAFAF7;border:1px solid #EDEDE5;border-radius:22px;padding:28px;">
+          <img src="assets/ic-protection.webp" alt="Icon" style="width:44px;height:44px;">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-top:16px;">Keamanan dan compliance</div>
+          <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:8px 0 0;">Solusi kepatuhan pajak dan keamanan data yang tersertifikasi ISO 27001 berstandar internasional dan diakui oleh Gartner.</p>
+        </div>
+        <div style="background:#FAFAF7;border:1px solid #EDEDE5;border-radius:22px;padding:28px;">
+          <img src="assets/ic-system.webp" alt="Icon" style="width:44px;height:44px;">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-top:16px;">Operasional efisien</div>
+          <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:8px 0 0;">Automasikan pekerjaan repetitif dan memakan waktu, seperti pembukuan dan payroll, untuk proses lebih cepat dan akurat.</p>
+          <img src="assets/kv__home-usp-02-1.webp" alt="Operasional efisien" style="width:100%;border-radius:14px;margin-top:18px;">
+        </div>
+        <div style="background:#FAFAF7;border:1px solid #EDEDE5;border-radius:22px;padding:28px;">
+          <img src="assets/ic-chart.webp" alt="Icon" style="width:44px;height:44px;">
+          <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-top:16px;">Insight berbasis data</div>
+          <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:8px 0 0;">Dapatkan visibilitas real-time dan insight mendalam berbasis AI untuk keuangan, customer engagement, dan keseluruhan operasional.</p>
+          <img src="assets/kv__home-usp-03-1.webp" alt="Insight berbasis data" style="width:100%;border-radius:14px;margin-top:18px;">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <div style="background:#FAFAF7;border:1px solid #EDEDE5;border-radius:22px;padding:28px;flex:1;">
+            <img src="assets/ic-structure-1.webp" alt="Icon" style="width:44px;height:44px;">
+            <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-top:16px;">Sistem yang scalable</div>
+            <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:8px 0 0;">Software yang siap beradaptasi sesuai pertumbuhan bisnis, dari startup yang sedang berkembang hingga large enterprise.</p>
+          </div>
+          <div style="background:#FAFAF7;border:1px solid #EDEDE5;border-radius:22px;padding:28px;flex:1;">
+            <img src="assets/ic-people.webp" alt="Icon" style="width:44px;height:44px;">
+            <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;margin-top:16px;">Sistem berbasis lokal</div>
+            <p style="font-size:14.5px;line-height:1.6;color:#57616E;margin:8px 0 0;">Software buatan Indonesia yang memahami regulasi dan pasar lokal dengan baik serta didukung customer support terdedikasi.</p>
+          </div>
+        </div>
+        <div style="grid-column:span 3;background:#0C1424;border-radius:22px;padding:32px 36px;color:#FFFFFF;display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center;">
+          <div>
+            <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;">Transformasi digital</div>
+            <p style="font-size:14.5px;line-height:1.6;color:#98A4B8;margin:8px 0 0;max-width:480px;">Solusi praktis yang memfasilitasi bisnis untuk beradaptasi dan mengoptimalkan peluang di tengah digitalisasi Indonesia.</p>
+          </div>
+          <div style="display:flex;gap:44px;">
+            <div>
+              <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:34px;font-weight:700;">55k+</div>
+              <div style="font-size:13px;color:#98A4B8;margin-top:2px;">Pelanggan</div>
+            </div>
+            <div>
+              <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:34px;font-weight:700;">3jt+</div>
+              <div style="font-size:13px;color:#98A4B8;margin-top:2px;">Pengguna Aplikasi</div>
+            </div>
+            <div>
+              <div style="font-family:'Bricolage Grotesque',sans-serif;font-size:34px;font-weight:700;">Rp 51T+</div>
+              <div style="font-size:13px;color:#98A4B8;margin-top:2px;">Transaksi Bisnis</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIALS -->
+  <section data-screen-label="Testimoni" style="background:#0C1424;color:#FFFFFF;padding:88px 0;">
+    <div style="max-width:1240px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap;">
+      <div style="max-width:560px;">
+        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:40px;letter-spacing:-0.015em;margin:0;text-wrap:pretty;">Insight nyata dari klien kami</h2>
+        <p style="font-size:16px;line-height:1.6;color:#98A4B8;margin:14px 0 0;">Lihat bagaimana Senti membantu bisnis dari berbagai industri dalam mengelola operasional dan mendorong pertumbuhan.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="border:1px solid #2A3A57;color:#C7CFDC;font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;">Logistik</span>
+        <span style="border:1px solid #2A3A57;color:#C7CFDC;font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;">Kesehatan</span>
+        <span style="border:1px solid #2A3A57;color:#C7CFDC;font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;">FMCG</span>
+        <span style="border:1px solid #2A3A57;color:#C7CFDC;font-size:13px;font-weight:600;padding:8px 16px;border-radius:999px;">F&amp;B</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:20px;overflow-x:auto;padding:44px 24px 8px;max-width:1240px;margin:0 auto;scrollbar-width:thin;">
+      <article style="flex:0 0 640px;background:#131E33;border:1px solid #22304C;border-radius:24px;overflow:hidden;display:grid;grid-template-columns:260px 1fr;">
+        <img src="assets/test-biteship.webp" alt="Tim Biteship" style="width:100%;height:100%;object-fit:cover;">
+        <div style="padding:28px;display:flex;flex-direction:column;gap:16px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6E92F0;">Logistik</div>
+          <div style="display:flex;gap:28px;">
+            <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:30px;font-weight:700;">34%</div><div style="font-size:12.5px;color:#98A4B8;line-height:1.4;">meningkatkan produktivitas agen CS</div></div>
+            <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:30px;font-weight:700;">20%</div><div style="font-size:12.5px;color:#98A4B8;line-height:1.4;">lebih banyak chat yang terjawab per hari</div></div>
+          </div>
+          <p style="font-size:14.5px;line-height:1.6;color:#E4E9F1;margin:0;flex:1;">“Senti bagaikan swiss army knife untuk bisnis. Senti Qontak membantu pengelolaan CRM, dan Senti Talenta meningkatkan produktivitas operasional karyawan.”</p>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;">
+            <div><div style="font-size:14px;font-weight:700;">Mirsa Sadikin</div><div style="font-size:12.5px;color:#98A4B8;">CEO, Biteship.</div></div>
+            <img src="assets/img-logo-biteshipr-148x56-1.webp" alt="Biteship" style="height:26px;background:#FFFFFF;border-radius:8px;padding:4px 8px;">
+          </div>
+        </div>
+      </article>
+      <article style="flex:0 0 640px;background:#131E33;border:1px solid #22304C;border-radius:24px;overflow:hidden;display:grid;grid-template-columns:260px 1fr;">
+        <img src="assets/Adi-Puta-JNE-1.webp" alt="Indra Adi Putra, JNE" style="width:100%;height:100%;object-fit:cover;">
+        <div style="padding:28px;display:flex;flex-direction:column;gap:16px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6E92F0;">Logistik</div>
+          <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:30px;font-weight:700;">67%</div><div style="font-size:12.5px;color:#98A4B8;line-height:1.4;">JNE tingkatkan average billing speed hingga 67% dari sistem ERP lama</div></div>
+          <p style="font-size:14.5px;line-height:1.6;color:#E4E9F1;margin:0;flex:1;">"Senti Officeless mendigitalkan pekerjaan manual yang memakan waktu, sehingga proses bisnis menjadi 67% lebih cepat."</p>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;">
+            <div><div style="font-size:14px;font-weight:700;">Indra Adi Putra</div><div style="font-size:12.5px;color:#98A4B8;">Head of Management Control System, JNE.</div></div>
+            <img src="assets/logo-148x56-x2-jne.webp" alt="JNE" style="height:26px;background:#FFFFFF;border-radius:8px;padding:4px 8px;">
+          </div>
+        </div>
+      </article>
+      <article style="flex:0 0 420px;background:#131E33;border:1px solid #22304C;border-radius:24px;padding:28px;display:flex;flex-direction:column;gap:16px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6E92F0;">Kesehatan</div>
+        <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:30px;font-weight:700;">100%</div><div style="font-size:12.5px;color:#98A4B8;line-height:1.4;">menghemat waktu pengelolaan e-Faktur &amp; pelaporan pajak</div></div>
+        <p style="font-size:14.5px;line-height:1.6;color:#E4E9F1;margin:0;flex:1;">"Senti Klikpajak membantu kami mengelola hingga ribuan e-Faktur per bulan dengan lebih efisien sekaligus menghemat waktu pelaporan pajak hingga 100%."</p>
+        <div><div style="font-size:14px;font-weight:700;">Maudya Mandasari</div><div style="font-size:12.5px;color:#98A4B8;">Tax Officer, PT Global Pharma Indonesia.</div></div>
+      </article>
+      <article style="flex:0 0 420px;background:#131E33;border:1px solid #22304C;border-radius:24px;padding:28px;display:flex;flex-direction:column;gap:16px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6E92F0;">FMCG</div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;">
+          <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:30px;font-weight:700;">2500+</div><div style="font-size:12.5px;color:#98A4B8;line-height:1.4;">karyawan dikelola dalam satu sistem</div></div>
+          <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:30px;font-weight:700;">40%</div><div style="font-size:12.5px;color:#98A4B8;line-height:1.4;">efisiensi cara pembayaran payroll</div></div>
+          <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:30px;font-weight:700;">99%</div><div style="font-size:12.5px;color:#98A4B8;line-height:1.4;">lebih cepat memproses payroll</div></div>
+        </div>
+        <p style="font-size:14.5px;line-height:1.6;color:#E4E9F1;margin:0;flex:1;">"Kami berhasil mengelola &gt;2.500 karyawan dari berbagai daerah secara efisien dengan Senti Talenta, sehingga operasional HR menjadi lebih praktis dan produktif."</p>
+        <div><div style="font-size:14px;font-weight:700;">Sheila</div><div style="font-size:12.5px;color:#98A4B8;">Assistant Director HR &amp; GA, PT Victoria Care Indonesia Tbk.</div></div>
+      </article>
+      <article style="flex:0 0 420px;background:#131E33;border:1px solid #22304C;border-radius:24px;padding:28px;display:flex;flex-direction:column;gap:16px;">
+        <div style="font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6E92F0;">F&amp;B</div>
+        <div><div style="font-family:'Bricolage Grotesque',sans-serif;font-size:30px;font-weight:700;">95%</div><div style="font-size:12.5px;color:#98A4B8;line-height:1.4;">mempercepat pembuatan laporan</div></div>
+        <p style="font-size:14.5px;line-height:1.6;color:#E4E9F1;margin:0;flex:1;">"Pembuatan laporan 95% lebih cepat berkat Senti Jurnal. Kini, tim bisa lebih fokus pada perencanaan bisnis."</p>
+        <div><div style="font-size:14px;font-weight:700;">Michael Chrisyanto</div><div style="font-size:12.5px;color:#98A4B8;">Co-founder, Eatlah.</div></div>
+      </article>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section data-screen-label="FAQ" style="max-width:880px;margin:0 auto;padding:88px 24px;">
+    <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:40px;letter-spacing:-0.015em;margin:0 0 36px;text-align:center;">FAQ seputar Senti</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <details style="background:#FFFFFF;border:1px solid #E7E7DF;border-radius:16px;padding:20px 24px;">
+        <summary style="display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:16.5px;font-weight:700;">Apa itu Senti? <span class="faq-chev" style="color:#2D5FE3;font-size:20px;transition:transform 0.2s;">+</span></summary>
+        <p style="font-size:15px;line-height:1.65;color:#57616E;margin:14px 0 0;">Senti adalah holding dan pusat ekosistem produk digital untuk berbagai industri. Melalui Senti.id, pengguna dapat menemukan produk khusus seperti Senti Klinik untuk layanan kesehatan, Senti Edu untuk pendidikan, Senti Hotel untuk hospitality, dan Senti Biz untuk pengelolaan bisnis terintegrasi.</p>
+      </details>
+      <details style="background:#FFFFFF;border:1px solid #E7E7DF;border-radius:16px;padding:20px 24px;">
+        <summary style="display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:16.5px;font-weight:700;">Apa saja solusi yang ditawarkan oleh Senti? <span class="faq-chev" style="color:#2D5FE3;font-size:20px;transition:transform 0.2s;">+</span></summary>
+        <p style="font-size:15px;line-height:1.65;color:#57616E;margin:14px 0 0;">Senti menyediakan berbagai solusi software berbasis cloud untuk mendukung operasional bisnis, mulai dari HR dan payroll, akuntansi dan operasional, CRM dan omnichannel, hingga pembuatan aplikasi kustom. Seluruh solusi ini terintegrasi untuk membantu bisnis bekerja lebih efisien dalam alur kerja yang saling terhubung.</p>
+      </details>
+      <details style="background:#FFFFFF;border:1px solid #E7E7DF;border-radius:16px;padding:20px 24px;">
+        <summary style="display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:16.5px;font-weight:700;">Produk apa saja yang dimiliki Senti? <span class="faq-chev" style="color:#2D5FE3;font-size:20px;transition:transform 0.2s;">+</span></summary>
+        <div style="font-size:15px;line-height:1.65;color:#57616E;margin:14px 0 0;">
+          <p style="margin:0;">Produk utama dalam ekosistem holding Senti antara lain:</p>
+          <ul style="margin:10px 0;padding-left:20px;display:flex;flex-direction:column;gap:5px;">
+            <li><a href="https://klinik.senti.id/">Senti Klinik</a> : Operasional dan layanan klinik</li>
+            <li><a href="https://edu.senti.id/">Senti Edu</a> : Akademik dan administrasi pendidikan</li>
+            <li><a href="https://hotel.senti.id/">Senti Hotel</a> : Reservasi dan operasional hotel</li>
+            <li><a href="https://erp.senti.id/">Senti Biz</a> : ERP Kas &amp; Bank, Pembelian, dan Penjualan</li>
+          </ul>
+          <p style="margin:0;">Ekosistem akan terus berkembang untuk melayani kebutuhan berbagai industri melalui produk Senti yang terhubung.</p>
+        </div>
+      </details>
+      <details style="background:#FFFFFF;border:1px solid #E7E7DF;border-radius:16px;padding:20px 24px;">
+        <summary style="display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:16.5px;font-weight:700;">Siapa saja yang dapat menggunakan Senti? <span class="faq-chev" style="color:#2D5FE3;font-size:20px;transition:transform 0.2s;">+</span></summary>
+        <p style="font-size:15px;line-height:1.65;color:#57616E;margin:14px 0 0;">Senti dapat digunakan oleh berbagai jenis bisnis, mulai dari UMKM hingga perusahaan enterprise di berbagai industri.</p>
+      </details>
+      <details style="background:#FFFFFF;border:1px solid #E7E7DF;border-radius:16px;padding:20px 24px;">
+        <summary style="display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:16.5px;font-weight:700;">Apakah semua produk Senti saling terintegrasi? <span class="faq-chev" style="color:#2D5FE3;font-size:20px;transition:transform 0.2s;">+</span></summary>
+        <p style="font-size:15px;line-height:1.65;color:#57616E;margin:14px 0 0;">Ya. Seluruh produk Senti dirancang untuk bisa diintegrasikan secara optimal, baik antar produk Senti maupun dengan aplikasi pihak ketiga. Integrasi ini meningkatkan efisiensi alur kerja bisnis tanpa perlu berpindah sistem.</p>
+      </details>
+      <details style="background:#FFFFFF;border:1px solid #E7E7DF;border-radius:16px;padding:20px 24px;">
+        <summary style="display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:16.5px;font-weight:700;">Bagaimana Senti membantu meningkatkan efisiensi bisnis? <span class="faq-chev" style="color:#2D5FE3;font-size:20px;transition:transform 0.2s;">+</span></summary>
+        <p style="font-size:15px;line-height:1.65;color:#57616E;margin:14px 0 0;">Dengan mengintegrasikan berbagai fungsi bisnis dalam satu platform, Senti membantu menyederhanakan proses kerja, mengurangi tugas manual, serta memberikan visibilitas data secara real-time untuk pengambilan keputusan yang lebih baik.</p>
+      </details>
+      <details style="background:#FFFFFF;border:1px solid #E7E7DF;border-radius:16px;padding:20px 24px;">
+        <summary style="display:flex;justify-content:space-between;align-items:center;gap:16px;font-size:16.5px;font-weight:700;">Bagaimana cara mulai menggunakan Senti? <span class="faq-chev" style="color:#2D5FE3;font-size:20px;transition:transform 0.2s;">+</span></summary>
+        <p style="font-size:15px;line-height:1.65;color:#57616E;margin:14px 0 0;">Anda dapat <a href="https://api.whatsapp.com/send/?phone=6281392770506&amp;text=Halo,%20Saya%20tertarik%20dengan%20produk%20Senti">menghubungi tim Senti</a> atau <a href="https://senti.com/hubungi-kami/">menjadwalkan demo</a> untuk mengetahui solusi yang paling sesuai dengan kebutuhan bisnis Anda.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section data-screen-label="CTA" style="max-width:1240px;margin:0 auto;padding:0 24px 88px;">
+    <div style="background:linear-gradient(120deg,#2D5FE3,#1E44AC);border-radius:28px;padding:64px;text-align:center;color:#FFFFFF;">
+      <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:42px;letter-spacing:-0.015em;margin:0;">Siap untuk akselerasikan pertumbuhan?</h2>
+      <p style="font-size:17px;line-height:1.6;color:rgba(255,255,255,0.85);margin:16px auto 0;max-width:560px;text-wrap:pretty;">Tingkatkan efisiensi bisnis, kolaborasi lintas fungsi, dan ambil keputusan lebih cepat dan tepat bersama Senti.</p>
+      <a href="https://senti.com/hubungi-kami/" style="display:inline-block;margin-top:30px;background:#FFFFFF;color:#101720;font-size:16px;font-weight:700;padding:15px 32px;border-radius:999px;" style-hover="background:#101720;color:#FFFFFF;">Konsultasi sekarang</a>
+    </div>
+  </section>
+</main>
+
+<footer data-screen-label="Footer" style="background:#0C1424;color:#C7CFDC;padding:72px 0 40px;">
+  <div style="max-width:1240px;margin:0 auto;padding:0 24px;">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:32px;">
+      <sc-for list="{{ footerCols }}" as="col" hint-placeholder-count="5">
+        <div>
+          <div style="font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#FFFFFF;margin-bottom:16px;">{{ col.title }}</div>
+          <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;">
+            <sc-for list="{{ col.links }}" as="l" hint-placeholder-count="6">
+              <li><a href="{{ l.href }}" style="font-size:13.5px;color:#98A4B8;" style-hover="color:#FFFFFF;">{{ l.name }}</a></li>
+            </sc-for>
+          </ul>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:24px;border-top:1px solid #22304C;margin-top:44px;padding-top:32px;">
+      <sc-for list="{{ offices }}" as="o" hint-placeholder-count="4">
+        <div>
+          <div style="font-size:14px;font-weight:700;color:#FFFFFF;margin-bottom:6px;">{{ o.city }}</div>
+          <a href="{{ o.href }}" style="font-size:12.5px;line-height:1.55;color:#98A4B8;display:block;" style-hover="color:#FFFFFF;">{{ o.addr }}</a>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;border-top:1px solid #22304C;margin-top:36px;padding-top:28px;">
+      <a href="https://senti.com/"><img src="assets/logo-senti.svg" alt="Logo senti" style="height:24px;filter:brightness(0) invert(1);"></a>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <a href="https://id.linkedin.com/company/senti"><img src="assets/icf-linkedin.svg" alt="ICF LinkedIn" style="height:20px;filter:brightness(0) invert(0.7);"></a>
+        <a href="https://www.instagram.com/senticom/"><img src="assets/icf-instagram.svg" alt="ICF Instagram" style="height:20px;filter:brightness(0) invert(0.7);"></a>
+        <a href="https://twitter.com/senticom"><img src="assets/icf-twitter.svg" alt="ICF Twitter" style="height:20px;filter:brightness(0) invert(0.7);"></a>
+        <a href="https://www.facebook.com/senticom"><img src="assets/icf-facebook.svg" alt="ICF Facebook" style="height:20px;filter:brightness(0) invert(0.7);"></a>
+        <a href="https://www.tiktok.com/@senticom"><img src="assets/icf-tiktok.svg" alt="ICF TikTok" style="height:20px;filter:brightness(0) invert(0.7);"></a>
+        <a href="https://www.youtube.com/channel/UClgJG7J-GrEbqNBSaMi-cWQ"><img src="assets/icf-youtube.svg" alt="ICF YouTube" style="height:20px;filter:brightness(0) invert(0.7);"></a>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <a href="https://pajak.go.id/id/pt-jurnal-consulting-indonesia"><img src="assets/qr-code-jurnal_EDIT.webp" alt="Kode QR pajak" style="height:44px;border-radius:6px;background:#FFFFFF;padding:3px;"></a>
+        <a href="https://pse.komdigi.go.id/pse"><img src="assets/pse-terdaftar.webp" alt="PSE Terdaftar" style="height:44px;"></a>
+        <a href="https://www.bsigroup.com/en-ID/products-and-services/assessment-and-certification/validation-and-verification/client-directory-certificate/IS%20656453"><img src="assets/logo-iso-1.svg" alt="logo iso" style="height:44px;"></a>
+        <a href="https://www.dmca.com/Protection/Status.aspx?ID=459c42a8-c6f5-4526-b758-b0d83cc72d90&amp;refurl=https://senti.com/"><img src="assets/dmca-badge.png" alt="DMCA.com Protection Status" style="height:22px;"></a>
+      </div>
+    </div>
+    <div style="font-size:12.5px;color:#57616E;margin-top:28px;">© Copyright 2026 - PT Mid Solusi Nusantara.</div>
+  </div>
+</footer>
+
+<a href="https://api.whatsapp.com/send/?phone=6281392770506&amp;text=Halo,%20Saya%20tertarik%20dengan%20produk%20Senti" style="position:fixed;right:22px;bottom:22px;z-index:70;display:flex;align-items:center;gap:10px;background:#25D366;color:#FFFFFF;font-size:14.5px;font-weight:700;padding:12px 20px;border-radius:999px;box-shadow:0 12px 28px -8px rgba(16,23,32,0.4);" style-hover="background:#1DA851;color:#FFFFFF;">
+  <img src="assets/ic-waba.webp" alt="WhatsApp" style="height:22px;">WhatsApp kami
+</a>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;marqueeSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:35,&quot;min&quot;:10,&quot;max&quot;:90,&quot;step&quot;:5,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Perilaku&quot;}}">
+class Component extends DCLogic {
+  state = { menu: null, solGroup: 0, resGroup: 0, modTab: 0 };
+  renderVals() {
+    const s = this.state;
+    const set = (patch) => () => this.setState(patch);
+    const navBtn = (key) => "border:none;cursor:pointer;font-family:'Instrument Sans',sans-serif;padding:8px 14px;border-radius:999px;font-size:14.5px;font-weight:600;display:inline-flex;align-items:center;gap:6px;" + (s.menu===key ? 'background:#101720;color:#FFFFFF;' : 'background:transparent;color:#101720;');
+    const toggle = (key) => () => this.setState({ menu: this.state.menu===key ? null : key });
+    const P = 'https://senti.com/produk/';
+    const lm = (n) => 'assets/logomark-senti-' + n + '.webp';
+    const produkMenu = [
+      {name:'Senti Klinik', desc:'Operasional dan layanan klinik terintegrasi', href:'https://klinik.senti.id/', img:'assets/ic-protection.webp'},
+      {name:'Senti Edu', desc:'Akademik dan administrasi pendidikan', href:'https://edu.senti.id/', img:'assets/ic-people.webp'},
+      {name:'Senti Hotel', desc:'Reservasi dan operasional hospitality', href:'https://hotel.senti.id/', img:'assets/ic-system.webp'},
+      {name:'Senti Biz', desc:'ERP Kas & Bank, Pembelian, dan Penjualan', href:'https://erp.senti.id/', img:'assets/ic-chart.webp'},
+    ];
+    const SB = 'https://senti.com/solusi/';
+    const solusiGroups = [
+      {label:'Skala Bisnis', items:[
+        {name:'Senti untuk Startup', desc:'Mempercepat pertumbuhan startup Anda', href:SB+'bisnis/skala-startup/'},
+        {name:'Senti untuk UMKM', desc:'Solusi sederhana untuk UMKM berkembang', href:SB+'bisnis/skala-umkm/'},
+        {name:'Large Enterprise', desc:'Efisiensi maksimal untuk korporasi besar', href:SB+'bisnis/skala-enterprise/'},
+      ]},
+      {label:'Lingkup Kerja', items:[
+        {name:'Senti untuk HR', desc:'Optimalkan manajemen SDM Anda', href:SB+'divisi-hr/'},
+        {name:'Senti untuk Keuangan', desc:'Kelola keuangan dengan lebih mudah', href:SB+'divisi-keuangan/'},
+        {name:'Senti untuk Penjualan', desc:'Tingkatkan kinerja tim penjualan', href:SB+'divisi-sales/'},
+        {name:'Senti untuk Pemasaran', desc:'Maksimalkan efektivitas pemasaran', href:SB+'divisi-marketing/'},
+        {name:'Senti untuk Legal', desc:'Kelola kepatuhan dan dokumen hukum', href:SB+'divisi-legal/'},
+        {name:'Senti untuk IT', desc:'Solusi teknologi untuk tim IT Anda', href:SB+'divisi-it/'},
+        {name:'Senti untuk Procurement', desc:'Software Senti pilihan untuk dukung tim procurement', href:SB+'divisi-procurement/'},
+      ]},
+      {label:'Industri', items:[
+        {name:'Senti untuk Logistik', desc:'Optimalkan rantai pasok dan distribusi', href:SB+'bisnis/industri-logistik/'},
+        {name:'Senti untuk Manufaktur', desc:'Tingkatkan efisiensi produksi', href:SB+'bisnis/industri-manufaktur/'},
+        {name:'Senti untuk Perdagangan', desc:'Kelola transaksi dan inventaris dengan mudah', href:SB+'bisnis/industri-trading/'},
+        {name:'Senti untuk Hospitality', desc:'Solusi untuk layanan dan operasional hotel', href:SB+'bisnis/industri-hospitality/'},
+        {name:'Senti untuk Kesehatan', desc:'Kelola layanan dan administrasi kesehatan', href:SB+'bisnis/industri-kesehatan/'},
+        {name:'Senti untuk Retail', desc:'Tingkatkan manajemen toko dan pelanggan', href:SB+'bisnis/industri-ritel/'},
+        {name:'Senti untuk Migas', desc:'Solusi untuk industri minyak dan gas', href:SB+'bisnis/industri-migas/'},
+        {name:'Senti untuk Pertanian', desc:'Optimalkan produksi dan distribusi pertanian', href:SB+'bisnis/industri-pertanian/'},
+        {name:'Senti untuk F&B', desc:'Solusi manajemen bisnis makanan dan minuman', href:SB+'bisnis/industri-fnb/'},
+        {name:'Senti untuk Pertambangan', desc:'Berbagai solusi untuk operasional industri tambang lebih terkendali', href:SB+'bisnis/industri-pertambangan/'},
+        {name:'Senti untuk Pendidikan', desc:'Berbagai solusi untuk jalankan bisnis pendidikan lebih yakin', href:SB+'bisnis/industri-pendidikan/'},
+        {name:'Senti untuk Perbankan', desc:'Berbagai solusi untuk operasional industri tambang lebih terkendali', href:SB+'bisnis/industri-bank/'},
+        {name:'Senti untuk Sektor Pemerintah', desc:'Berbagai solusi untuk digitalisasikan operasional sektor pemerintah', href:SB+'bisnis/industri-publik/'},
+        {name:'Senti untuk Media Entertainment', desc:'Berbagai solusi untuk sederhanakan sisi bisnis kreativitas', href:SB+'bisnis/industri-media-entertainment/'},
+        {name:'Senti untuk Asuransi', desc:'Berbagai solusi untuk lancarkan operasional bisnis asuransi', href:SB+'bisnis/industri-asuransi/'},
+        {name:'Senti untuk Beauty, Salon, & Gym', desc:'Berbagai solusi untuk jalankan salon & gym lebih gesit', href:SB+'bisnis/industri-salon-dan-gym/'},
+        {name:'Senti untuk Outsourcing', desc:'Berbagai solusi untuk industri outsourcing yang lebih terkendali', href:SB+'bisnis/industri-outsourcing/'},
+        {name:'Senti untuk Catering & Bakery', desc:'Berbagai solusi untuk sederhanakan operasional catering & bakery', href:SB+'bisnis/industri-bakery-dan-catering/'},
+        {name:'Solusi untuk Ritel Offline', desc:'Software Senti pilihan untuk optimalkan performa ritel offline', href:SB+'bisnis/industri-ritel-offline/'},
+        {name:'Senti untuk Firma Hukum', desc:'Software Senti pilihan untuk automasikan operasional firma hukum', href:SB+'bisnis/industri-firma-hukum/'},
+        {name:'Senti untuk Perusahaan Fintech', desc:'Software Senti pilihan untuk operasional fintech lebih efisien', href:SB+'bisnis/industri-fintech/'},
+      ]},
+      {label:'Alternatif Sistem', items:[
+        {name:'Alternatif LMS', desc:'Sistem pembelajaran yang efektif dan efisien', href:SB+'alternatif/learning-management-system/'},
+        {name:'Alternatif ERP', desc:'Sistem ERP yang fleksibel dan mudah digunakan', href:'https://senti.com/sistem-software-erp/'},
+        {name:'Aplikasi Sales CRM', desc:'Alternatif CRM Penjualan all-in-one untuk pertumbuhan bisnis', href:P+'qontak/sales-crm/'},
+        {name:'Software Payroll', desc:'Alternatif software payroll yang cepat dan akurat', href:P+'talenta/payroll/'},
+        {name:'Aplikasi WA Blast', desc:'Kirim ribuan pesan WhatsApp tanpa diblokir, terintegrasi dengan CRM dan chatbot', href:P+'qontak/whatsapp-blast/'},
+        {name:'WhatsApp Business API', desc:'Solusi WhatsApp API Resmi dari BSP Meta Indonesia', href:P+'qontak/whatsapp-business-api/'},
+        {name:'Aplikasi HRIS', desc:'Alternatif HRIS modern untuk bisnis Indonesia', href:P+'talenta/modul/hris/'},
+      ]},
+    ];
+    const resourceGroups = [
+      {label:'Panduan & literasi', items:[
+        {name:'Blog', desc:'Wawasan, tips, dan cerita untuk membantu bisnis Anda berkembang.', href:'https://senti.com/blog/'},
+        {name:'Event', desc:'Ikuti webinar, workshop, dan konferensi untuk tetap terdepan.', href:'https://senti.com/event/'},
+        {name:'Berita', desc:'Informasi terbaru tentang produk, kemitraan, dan pencapaian kami.', href:'https://senti.com/news/'},
+        {name:'Studi Kasus', desc:'Kisah sukses nyata dari bisnis yang menggunakan solusi kami.', href:'https://senti.com/case-study/'},
+        {name:'Komunitas', desc:'Terhubung, berbagi, dan tumbuh bersama para profesional bisnis.', href:'https://senti.com/community/'},
+        {name:'Podcast', desc:'Dengarkan para ahli industri membahas tren, tantangan, dan strategi.', href:'https://senti.com/podcast/'},
+        {name:'Ebook', desc:'Panduan mendalam dan kerangka kerja untuk perjalanan bisnis Anda', href:'https://senti.com/ebook/'},
+        {name:'Kamus Bisnis', desc:'Definisi sederhana untuk istilah dan konsep bisnis yang kompleks.', href:'https://senti.com/glossary/'},
+        {name:'Pusat Bantuan', desc:'Temukan jawaban, panduan, dan tutorial penggunaan produk.', href:'https://senti.com/customer-service/'},
+      ]},
+      {label:'Integrasi & Kemitraan', items:[
+        {name:'Program partnership', desc:'Akselerasi pertumbuhan bisnis dengan program partnership Senti Jurnal', href:'https://senti.com/partnership/'},
+        {name:'Program Referral', desc:'Rekomendasikan Senti ke jaringan Anda dan dapatkan insentif menarik.', href:'https://senti.com/partnership/referral/'},
+        {name:'Program Reseller', desc:'Bergabunglah sebagai mitra reseller dan kembangkan bisnis Anda bersama Senti', href:'https://senti.com/partnership/reseller/'},
+        {name:'Program System Integrator', desc:'Wujudkan solusi yang terintegrasi dan skalabel untuk klien Anda bersama Senti.', href:'https://senti.com/partnership/sistem-integrasi/'},
+        {name:'Temukan Jasa Konsultan', desc:'Jelajahi partner resmi untuk maksimalkan penggunaan Senti', href:'https://senti.com/partnership/partner-directory/'},
+      ]},
+      {label:'Program & Promosi', items:[
+        {name:'Senti x UOB', desc:'Kelola penggajian bisnis Anda secara otomatis dan efisien dengan dukungan UOB dan Senti', href:'https://senti.com/partner/uob/'},
+        {name:'Senti x Rimba House', desc:'Bangun situs web profesional untuk bisnis Anda dengan solusi dari Senti dan Rimba House', href:'https://senti.com/partner/rimba-house/'},
+        {name:'Senti x East Ventures', desc:'Akses solusi bisnis eksklusif untuk mempercepat skala startup portofolio Anda bersama East Ventures', href:'https://senti.com/partner/east-ventures/'},
+        {name:'Senti x Visa', desc:'Tingkatkan keterlibatan pelanggan dan kendalikan keuangan bisnis dengan dukungan dari Visa dan Senti', href:'https://senti.com/partner/visa/'},
+        {name:'Senti x BNI Ventures', desc:'Dorong inovasi dan pertumbuhan startup lokal dengan solusi digital dari Senti dan BNI Ventures', href:'https://senti.com/partner/bni-ventures/'},
+        {name:'Senti x Trihill Capital', desc:'Percepat pertumbuhan startup Anda dengan solusi digital dari Senti dan dukungan strategis dari Trihill Capital', href:'https://senti.com/partner/trihill-capital/'},
+        {name:'Senti x Bank Raya', desc:'Solusi penggajian modern untuk bisnis digital yang ingin tumbuh lebih cepat bersama Bank Raya', href:'https://senti.com/partner/bank-raya/'},
+        {name:'Senti x Canva', desc:'Dapatkan Diskon Canva Hingga 30% Lewat Demo Produk Senti', href:'https://senti.com/partner/canva/'},
+        {name:'Senti Talenta x Mandiri', desc:'Nikmati kemudahan payroll & HR dengan Mandiri dan Senti Talenta.', href:'https://senti.com/partner/mandiri/'},
+        {name:'Senti Talenta x BRI', desc:'Nikmati kemudahan payroll dan HR dengan Senti Talenta x BRI', href:'https://senti.com/partner/bri/'},
+        {name:'Senti Talenta x Bank Saqu', desc:'Nikmati kemudahan payroll dan HR dengan Senti Talenta x Bank Saqu.', href:'https://senti.com/partner/bank-saqu/'},
+      ]},
+      {label:'Tentang Senti', items:[
+        {name:'Mengapa Senti', desc:'Alasan memilih Senti untuk pertumbuhan bisnis Anda', href:'https://senti.com/mengapa-senti/'},
+        {name:'Karir', desc:'Bergabunglah dan kembangkan karir Anda bersama Senti', href:'https://senti.com/careers/'},
+        {name:'Hubungi kami', desc:'Hubungi tim Senti untuk informasi dan dukungan', href:'https://senti.com/hubungi-kami/'},
+        {name:'Pemberitahuan Privasi', desc:'Ketahui bagaimana Senti melindungi data Anda', href:'https://senti.com/privacy/'},
+        {name:'Persyaratan Layanan', desc:'Syarat dan ketentuan penggunaan layanan Senti', href:'https://senti.com/persyaratan-layanan/'},
+      ]},
+    ];
+    const groupTabStyle = (active) => "border:none;cursor:pointer;text-align:left;font-family:'Instrument Sans',sans-serif;padding:10px 14px;border-radius:12px;font-size:14px;font-weight:600;" + (active ? 'background:#101720;color:#FFFFFF;' : 'background:transparent;color:#57616E;');
+    const modTabsData = [
+      {label:'Cloud-based software', items:[
+        {name:'Senti Talenta', tag:'HR & payroll', href:P+'talenta/', img:lm('talenta')},
+        {name:'Senti Biz', tag:'ERP Kas & Bank, Pembelian & Penjualan', href:'https://erp.senti.id/', img:'assets/ic-chart.webp'},
+        {name:'Senti Jurnal', tag:'Akuntansi & supply chain', href:P+'jurnal/', img:lm('jurnal')},
+        {name:'Senti Qontak', tag:'Customer relation', href:P+'qontak/', img:lm('qontak')},
+        {name:'Senti Klikpajak', tag:'Perpajakan', href:P+'klikpajak/', img:lm('klikpajak')},
+        {name:'Senti Flex', tag:'Benefit karyawan', href:P+'flex/', img:lm('flex')},
+        {name:'Senti Expense', tag:'Manajemen pengeluaran', href:P+'expense/', img:lm('expense')},
+        {name:'Senti Sign', tag:'Legal', href:P+'sign/', img:lm('sign')},
+        {name:'Senti Desty', tag:'Manajemen marketplace', href:P+'desty/', img:lm('desty')},
+        {name:'Senti POS', tag:'Kasir terintegrasi', href:'https://pos.senti.com/', img:'assets/senti-pos-logo.webp'},
+      ]},
+      {label:'Platform', items:[
+        {name:'Senti Officeless', tag:'Pengembangan aplikasi custom', href:P+'officeless/', img:lm('officeless')},
+        {name:'Senti Airene', tag:'Dukungan AI', href:P+'airene/', img:'assets/ic-tips.webp'},
+        {name:'Senti Access', tag:'Manajemen identitas & akses', href:P+'access/', img:'assets/ic-protection.webp'},
+        {name:'Senti Flow', tag:'Automasi arus kerja', href:P+'flow/', img:'assets/ic-workflow.webp'},
+      ]},
+      {label:'Service', items:[
+        {name:'Senti University', tag:'Corporate knowledge', href:'https://univ.senti.com/', img:lm('university')},
+        {name:'Senti Partner', tag:'Platform partner', href:'https://senti.com/partnership/', img:'assets/ic-team.webp'},
+        {name:'Senti Referral Agent', tag:' ', href:'https://senti.com/partnership/reseller/', img:'assets/ic-payslip.webp'},
+        {name:'Senti Community', tag:' ', href:'https://community.senti.com/', img:'assets/ic-people.webp'},
+        {name:'Senti Customer Care', tag:'Dukungan', href:'https://help-center.senti.com/hc/id', img:'assets/ic-system.webp'},
+      ]},
+    ];
+    const modTabBtn = (active) => "border:none;cursor:pointer;font-family:'Instrument Sans',sans-serif;padding:9px 18px;border-radius:999px;font-size:14px;font-weight:600;" + (active ? 'background:#101720;color:#FFFFFF;' : 'background:transparent;color:#57616E;');
+    const clients = ['meratus','shell','mayapada-hospital','puma','oppo','mitsubishi','hyundai','tupperware','dhl','bcainsurance','alodokter','agung-sedayu-group'];
+    const logos = clients.concat(clients).map(c => ({src:'assets/logo-home-'+c+'.webp'}));
+    const speed = this.props.marqueeSpeed ?? 35;
+    return {
+      navBtnProduk: navBtn('produk'), navBtnSolusi: navBtn('solusi'), navBtnResources: navBtn('resources'),
+      toggleProduk: toggle('produk'), toggleSolusi: toggle('solusi'), toggleResources: toggle('resources'),
+      showProduk: s.menu==='produk', showSolusi: s.menu==='solusi', showResources: s.menu==='resources',
+      produkMenu,
+      solusiTabs: solusiGroups.map((g,i)=>({label:g.label, style:groupTabStyle(i===s.solGroup), pick:set({solGroup:i})})),
+      solusiItems: solusiGroups[s.solGroup].items,
+      resourceTabs: resourceGroups.map((g,i)=>({label:g.label, style:groupTabStyle(i===s.resGroup), pick:set({resGroup:i})})),
+      resourceItems: resourceGroups[s.resGroup].items,
+      modTabs: modTabsData.map((g,i)=>({label:g.label, style:modTabBtn(i===s.modTab), pick:set({modTab:i})})),
+      modItems: modTabsData[s.modTab].items,
+      clientLogos: logos,
+      footerCols: [
+        {title:'Produk', links:[
+          {name:'Senti Talenta', href:'https://www.talenta.co/'},
+          {name:'Senti Biz', href:'https://erp.senti.id/'},
+          {name:'Senti Jurnal', href:'https://www.jurnal.id/id/'},
+          {name:'Senti Qontak', href:'https://qontak.com/'},
+          {name:'Senti Sign', href:'https://sentisign.com/'},
+          {name:'Senti Expense', href:'https://expense.senti.com/'},
+          {name:'Senti Officeless', href:'https://officeless.senti.com/'},
+          {name:'Senti Klikpajak', href:'https://klikpajak.id/'},
+          {name:'Senti Desty', href:'https://desty.senti.com/'},
+          {name:'Senti University', href:'https://univ.senti.com/'},
+          {name:'Senti Flex', href:P+'flex/'},
+          {name:'Senti Pay', href:P+'pay/'},
+          {name:'Senti Capital', href:P+'capital/'},
+          {name:'Senti POS', href:'https://pos.senti.com/'},
+        ]},
+        {title:'Solusi', links:[
+          {name:'Solusi untuk Startup', href:SB+'bisnis/skala-startup/'},
+          {name:'Solusi untuk UMKM', href:SB+'bisnis/skala-umkm/'},
+          {name:'Solusi untuk Large Enterprise', href:SB+'bisnis/skala-enterprise/'},
+          {name:'Solusi untuk HR', href:SB+'divisi-hr/'},
+          {name:'Solusi untuk Keuangan', href:SB+'divisi-keuangan/'},
+          {name:'Solusi untuk Penjualan', href:SB+'divisi-sales/'},
+          {name:'Solusi untuk Pemasaran', href:SB+'divisi-marketing/'},
+          {name:'Solusi untuk Manufaktur', href:SB+'bisnis/industri-manufaktur/'},
+          {name:'Solusi untuk Logistik', href:SB+'bisnis/industri-logistik/'},
+          {name:'Alternatif ERP', href:'https://senti.com/sistem-software-erp/'},
+          {name:'Alternatif LMS', href:SB+'alternatif/learning-management-system/'},
+        ]},
+        {title:'Resources', links:[
+          {name:'Studi kasus', href:'https://senti.com/case-study/'},
+          {name:'Blog Artikel', href:'https://senti.com/blog/'},
+          {name:'Ebook', href:'https://senti.com/ebook/'},
+          {name:'News', href:'https://senti.com/news/'},
+          {name:'Event', href:'https://senti.com/event/'},
+          {name:'Podcast', href:'https://senti.com/podcast/'},
+          {name:'Community', href:'https://senti.com/community/'},
+        ]},
+        {title:'Service & bantuan', links:[
+          {name:'Pusat bantuan', href:'https://help-center.senti.com/hc/id'},
+          {name:'Hubungi Senti', href:'https://senti.com/hubungi-kami/'},
+          {name:'Senti Community', href:'https://senti.com/community/'},
+          {name:'Program Referral', href:'https://senti.com/partnership/referral/'},
+          {name:'Program Reseller', href:'https://senti.com/partnership/reseller/'},
+        ]},
+        {title:'Perusahaan', links:[
+          {name:'Tentang Senti', href:'https://senti.com/tentang-senti/'},
+          {name:'Mengapa Senti', href:'https://senti.com/mengapa-senti/'},
+          {name:'Klien kami', href:'https://senti.com/case-study/'},
+          {name:"Karir - We're Hiring", href:'https://senti.com/careers/'},
+          {name:'Pemberitahuan Privasi', href:'https://senti.com/privacy/'},
+          {name:'Persyaratan Layanan', href:'https://senti.com/persyaratan-layanan/'},
+        ]},
+      ],
+      offices: [
+        {city:'Jakarta', addr:'Mid Plaza 2, Jl. Jenderal Sudirman No.4, Kel. Karet Tengsin, Kec. Tanah Abang, Kota Jakarta Pusat, Jakarta 10220', href:'https://goo.gl/maps/6NDSbm6tpKHCxSRd6'},
+        {city:'Surabaya', addr:'Jl. Ngagel Jaya Selatan No.158, Kel. Pucang Sewu, Kec. Gubeng, Kota Surabaya, Jawa Timur 60284', href:'https://goo.gl/maps/h7KUDBSJ8SQYKsaq9'},
+        {city:'Bandung', addr:'Jl. A. Yani No.271A, Cihapit, Kec. Bandung Wetan, Kota Bandung, Jawa Barat 40114', href:'https://maps.app.goo.gl/mv3FEZb1eaD21JNq8'},
+        {city:'Medan', addr:'Jl. KH. Zainul Arifin No.152, Kel. Madras Hulu, Kec. Medan Polonia, Kota Medan, Sumatera Utara 20151', href:'https://maps.app.goo.gl/rC9bj9Zhz63ZxaD66'},
+      ],
+      marqueeStyle: 'display:flex;align-items:center;gap:64px;width:max-content;padding:0 32px;animation:marquee '+speed+'s linear infinite;',
+    };
+  }
+}
+</script>
+</body>
+</html>
