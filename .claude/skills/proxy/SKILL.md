@@ -73,19 +73,30 @@ scripts/proxy-provision.sh --domain x.fr-labs.my.id --port 3101 --no-dns
 Script **idempoten**: DNS record, sertifikat, dan proxy host yang sudah ada akan
 di-update, bukan diduplikasi. Menjalankan ulang perintah yang sama aman.
 
+**SSL wajib untuk setiap domain.** Provisioning tidak dianggap selesai hanya karena
+proxy host berstatus Online. Domain harus memakai sertifikat yang mencakup FQDN
+tersebut, `ssl_forced` dan HTTP/2 harus aktif, serta verifikasi HTTPS harus lolos
+tanpa `-k` (`ssl_verify_result = 0`). Jangan tinggalkan host dalam kondisi
+**HTTP Only**.
+
 ## 4. Yang dilakukan skill, berurutan
 
 1. **Login NPM** — `POST /api/tokens` menukar identity/secret jadi bearer token.
 2. **DNS Cloudflare** — cari zone yang cocok sebagai suffix domain, lalu
    `POST`/`PUT /zones/{id}/dns_records`. Default `proxied: false` (DNS only),
    supaya Let's Encrypt dan NPM bicara langsung ke origin.
-3. **Sertifikat** — `POST /api/nginx/certificates` dengan
-   `dns_challenge: true`, `dns_provider: cloudflare`. DNS-01 dipilih karena
-   tidak menuntut port 80 terbuka ke publik dan mendukung wildcard.
-4. **Proxy host** — `POST`/`PUT /api/nginx/proxy-hosts` dengan `ssl_forced`,
-   `http2_support`, `block_exploits`, dan `allow_websocket_upgrade` menyala.
-   WebSocket penting untuk app Next.js dan dev server.
-5. **Verifikasi** — `curl` ke `https://<domain>/` dan laporkan status HTTP.
+3. **Sertifikat wajib** — cari sertifikat yang benar-benar mencakup FQDN target.
+   Jika belum ada, `POST /api/nginx/certificates` menggunakan DNS-01 Cloudflare
+   dengan metadata yang didukung NPM aktif: `dns_challenge`, `dns_provider`,
+   `dns_provider_credentials`, dan `propagation_seconds`. DNS-01 tidak menuntut
+   port 80 publik dan mendukung wildcard.
+4. **Proxy host HTTPS** — `POST`/`PUT /api/nginx/proxy-hosts` dengan sertifikat
+   tersebut, `ssl_forced`, `http2_support`, `block_exploits`, dan
+   `allow_websocket_upgrade` menyala. WebSocket penting untuk app Next.js dan
+   dev server. Host **HTTP Only tidak boleh dianggap selesai**.
+5. **Verifikasi wajib** — `curl` tanpa `-k` ke `https://<domain>/`; pastikan
+   respons reachable dan `ssl_verify_result = 0`. Provisioning harus gagal
+   (exit non-zero) bila HTTPS atau validasi sertifikat gagal.
 
 ## 5. Setelah provisioning
 

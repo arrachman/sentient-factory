@@ -100,7 +100,8 @@ if [[ "$SKIP_DNS" -eq 0 ]]; then
   # tidak selalu benar untuk ccTLD bertingkat, jadi cari zone yang cocok sebagai suffix)
   echo "==> Mencari zone Cloudflare untuk ${DOMAIN}"
   ZONE_ID=$(cf GET "/zones?per_page=50" | jq -r --arg d "$DOMAIN" '
-    [.result[] | select($d == .name or ($d | endswith("." + .name)))]
+    [.result[] | . as $zone
+      | select($d == $zone.name or ($d | endswith("." + $zone.name)))]
     | sort_by(.name | length) | last | .id // empty')
   [[ -n "$ZONE_ID" ]] || die "zone Cloudflare untuk ${DOMAIN} tidak ditemukan (cek scope token)"
 
@@ -133,11 +134,10 @@ CERT_ID=$(api GET /api/nginx/certificates | jq -r --arg d "$DOMAIN" \
 if [[ -z "$CERT_ID" ]]; then
   echo "==> Request sertifikat Let's Encrypt (DNS-01 / Cloudflare)"
   CERT_BODY=$(jq -n \
-    --arg d "$DOMAIN" --arg e "$LETSENCRYPT_EMAIL" \
+    --arg d "$DOMAIN" \
     --arg cred "dns_cloudflare_api_token = ${CLOUDFLARE_API_TOKEN}" \
     --argjson prop "$PROPAGATION" \
     '{provider:"letsencrypt", domain_names:[$d], meta:{
-        letsencrypt_email:$e, letsencrypt_agree:true,
         dns_challenge:true, dns_provider:"cloudflare",
         dns_provider_credentials:$cred, propagation_seconds:$prop}}')
   CERT_ID=$(api POST /api/nginx/certificates "$CERT_BODY" | jq -r '.id // empty')
@@ -174,13 +174,20 @@ fi
 # ---------- 5. verifikasi ----------
 echo "==> Verifikasi https://${DOMAIN}"
 sleep 3
-CODE=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 15 "https://${DOMAIN}/" || echo "000")
+VERIFY_RESULT=$(curl -sS -o /dev/null \
+  -w '%{http_code} %{ssl_verify_result}' --max-time 15 "https://${DOMAIN}/" || true)
+CODE="${VERIFY_RESULT%% *}"
+SSL_VERIFY_RESULT="${VERIFY_RESULT##* }"
+
 echo
 echo "Selesai."
 echo "  domain      : https://${DOMAIN}"
 echo "  upstream    : ${FORWARD_SCHEME}://${FORWARD_HOST}:${PORT}"
 echo "  cert id     : ${CERT_ID}"
 echo "  proxy host  : ${HOST_ID}"
-echo "  HTTP status : ${CODE}"
-[[ "$CODE" == "000" ]] && echo "  (status 000 = belum reachable; cek UFW port ${PORT} dan propagasi DNS)"
+echo "  HTTP status : ${CODE:-000}"
+echo "  SSL verify  : ${SSL_VERIFY_RESULT:-unknown}"
+
+[[ "${CODE:-000}" != "000" ]] || die "HTTPS belum reachable; cek UFW port 443, DNS, dan service upstream"
+[[ "${SSL_VERIFY_RESULT:-unknown}" == "0" ]] || die "sertifikat SSL ${DOMAIN} belum valid"
 exit 0
