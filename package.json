@@ -38,6 +38,7 @@
     "vault:render:api": "./scripts/render-vault-env.sh sentient-factory/dev/api-gateway apps/api-gateway/.env.vault",
     "vault:render:web": "./scripts/render-vault-env.sh sentient-factory/dev/web-dashboard apps/web-dashboard/.env.vault",
     "vault:render:myerp": "./scripts/render-vault-env.sh sentient-factory/dev/myerpplus-db-mapping apps/myerpplus-db-mapping/.env.vault",
+    "vault:render:proxy": "./scripts/render-vault-env.sh sentient-factory/dev/proxy .env.proxy",
     "vault:render:all": "npm run vault:render:root && npm run vault:render:infra && npm run vault:render:api && npm run vault:render:web && npm run vault:render:myerp",
     "env:cleanup:plain": "./scripts/cleanup-plain-env.sh",
     "db:backup": "./scripts/backup-postgres.sh",

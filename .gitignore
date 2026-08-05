@@ -293,3 +293,6 @@ insight/
 apps/web-erp/preferensi
 # Claude Code local worktrees (registered git worktrees, never commit)
 .claude/worktrees/
+
+# proxy provisioning secrets (rendered from Vault)
+.env.proxy
