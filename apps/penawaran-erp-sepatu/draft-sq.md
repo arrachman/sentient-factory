@@ -57,19 +57,19 @@ margin, rekap absensi. Export Excel/PDF.
 
 | No | Uraian Pekerjaan | Biaya (Rp) |
 | --- | --- | ---: |
-| 1 | Analisis proses bisnis, perancangan sistem & database | 15.000.000 |
-| 2 | Modul Master Data & Manajemen Pengguna | 14.000.000 |
-| 3 | Modul E-Katalog & Order (sales + online) | 26.000.000 |
-| 4 | Modul Produksi In-House (BOM, WO, HPP) | 30.000.000 |
-| 5 | Modul Subkontrak Tukang (SPK, setor BOM, rekonsiliasi) | 26.000.000 |
-| 6 | Modul Distribusi & Penjualan (SO/DO/Invoice/Piutang) | 24.000.000 |
-| 7 | Modul POS Toko (offline-sync, monitoring, SPG) | 25.000.000 |
-| 8 | Modul Absensi (GPS/geofence, shift, rekap) | 15.000.000 |
-| 9 | Laporan & Dashboard Manajemen | 8.000.000 |
-| 10 | Deployment, migrasi data awal, pelatihan & dokumentasi | 6.000.000 |
-| | **Total** | **189.000.000** |
+| 1 | Analisis proses bisnis, perancangan sistem & database | 16.000.000 |
+| 2 | Modul Master Data & Manajemen Pengguna | 15.000.000 |
+| 3 | Modul E-Katalog & Order (sales + online) | 29.000.000 |
+| 4 | Modul Produksi In-House (BOM, WO, HPP) | 33.000.000 |
+| 5 | Modul Subkontrak Tukang (SPK, setor BOM, rekonsiliasi) | 29.000.000 |
+| 6 | Modul Distribusi & Penjualan (SO/DO/Invoice/Piutang) | 27.000.000 |
+| 7 | Modul POS Toko (offline-sync, monitoring, SPG) | 28.000.000 |
+| 8 | Modul Absensi (GPS/geofence, shift, rekap) | 17.000.000 |
+| 9 | Laporan & Dashboard Manajemen | 9.000.000 |
+| 10 | Deployment, migrasi data awal, pelatihan & dokumentasi | 7.000.000 |
+| | **Total** | **210.000.000** |
 
-**Terbilang**: *Seratus delapan puluh sembilan juta rupiah*
+**Terbilang**: *Dua ratus sepuluh juta rupiah*
 
 > Harga belum termasuk PPN.
 > Belum termasuk biaya server/hosting, domain, dan perangkat keras POS
@@ -79,24 +79,27 @@ margin, rekap absensi. Export Excel/PDF.
 
 | Termin | Tahap | Porsi | Nilai (Rp) |
 | --- | --- | ---: | ---: |
-| I | Kontrak / DP | 30% | 56.700.000 |
-| II | Serah terima Master Data, E-Katalog & Order | 25% | 47.250.000 |
-| III | Serah terima Produksi & Subkontrak Tukang | 25% | 47.250.000 |
-| IV | Serah terima Distribusi, POS, Absensi & Go-Live | 20% | 37.800.000 |
-| | **Total** | **100%** | **189.000.000** |
+| I | Kontrak / DP | 30% | 63.000.000 |
+| II | Serah terima Master Data, E-Katalog & Order | 25% | 52.500.000 |
+| III | Serah terima Produksi & Subkontrak Tukang | 25% | 52.500.000 |
+| IV | Serah terima Distribusi, POS, Absensi & Go-Live | 20% | 42.000.000 |
+| | **Total** | **100%** | **210.000.000** |
 
 ## 4. Jangka Waktu
 
-Estimasi **5 (lima) bulan** kalender sejak kontrak ditandatangani dan data awal
+Estimasi **4 (empat) bulan** kalender sejak kontrak ditandatangani dan data awal
 diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
 
 | Bulan | Fokus |
 | --- | --- |
-| 1 | Analisis, desain, master data |
-| 2 | E-Katalog & Order |
-| 3 | Produksi in-house & subkontrak tukang |
-| 4 | Distribusi, penjualan & POS |
-| 5 | Absensi, laporan, pelatihan, go-live |
+| 1 | Analisis, desain, master data, E-Katalog & Order |
+| 2 | Produksi in-house & subkontrak tukang |
+| 3 | Distribusi, penjualan & POS |
+| 4 | Absensi, laporan, pelatihan, go-live |
+
+> Timeline 4 bulan dicapai dengan penambahan personel dan pengerjaan modul secara
+> paralel. Ketepatan jadwal bergantung pada ketersediaan narasumber proses bisnis
+> dari pihak klien dan kecepatan approval pada setiap serah terima modul.
 
 ## 5. Yang Kami Serahkan
 
