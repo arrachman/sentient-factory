@@ -160,10 +160,7 @@ diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
 3. Klien menyediakan narasumber proses bisnis dan data master awal.
 4. Server/hosting produksi disediakan klien, atau kami sediakan dengan biaya
    berlangganan terpisah.
-5. Integrasi ke sistem ekspedisi/kurir (cek ongkir otomatis, generate resi,
-   pelacakan pengiriman) tidak termasuk; sistem hanya mencatat ekspedisi, nomor
-   resi, dan ongkir secara manual.
-6. Perpanjangan support & maintenance setelah 3 bulan pertama ditawarkan terpisah.
+5. Perpanjangan support & maintenance setelah 3 bulan pertama ditawarkan terpisah.
 
 Demikian penawaran ini kami sampaikan. Kami siap mendiskusikan penyesuaian lingkup
 maupun tahapan implementasi sesuai prioritas Bapak/Ibu.
