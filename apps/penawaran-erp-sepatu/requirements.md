@@ -120,7 +120,21 @@ POS dapat berdiri sendiri **atau** tersambung (nempel) ke sistem pusat.
 ❓ Konfirmasi: berapa titik toko/POS di tahap awal, dan perangkatnya
 (Android tablet / PC kasir / printer thermal)?
 
-### M6 — Absensi (Admin, SPG, Sales)
+### M6 — Finance & Accounting
+
+- **Chart of Account (CoA)** berjenjang + input **Opening Balance** saldo awal.
+- Transaksi kas & bank: Cash Receipt, Cash Disbursement, Bank Receipt, Bank Disbursement, Cash/Bank Transfer.
+- Jurnal: General Journal, Adjustment Journal, Memorial Journal.
+- Giro: Receipt Giro, Send Giro, beserta Receipt/Send Giro Clearing (kliring).
+- Memo: Receipt Memo, Send Memo.
+- **FX Revaluation** — revaluasi saldo mata uang asing.
+- Laporan keuangan: Buku Besar, Neraca Saldo, Neraca, Laba Rugi, Arus Kas, kartu hutang & piutang.
+- Integrasi otomatis: invoice penjualan → piutang, hutang ongkos tukang, pembelian bahan → hutang, HPP produksi → persediaan.
+
+❓ Konfirmasi: apakah perlu multi-currency penuh, dan apakah ada periode akuntansi
+berjalan yang harus dimigrasi (saldo awal per tanggal cut-off)?
+
+### M7 — Absensi (Admin, SPG, Sales)
 
 - Absensi masuk/pulang untuk **admin** (kantor), **SPG** (di toko), **sales** (lapangan).
 - Metode: selfie + **GPS / geofence** (SPG terkunci di lokasi toko, sales mobile),
@@ -137,6 +151,7 @@ POS dapat berdiri sendiri **atau** tersambung (nempel) ke sistem pusat.
 | Peran | Akses utama |
 | --- | --- |
 | Owner / Manajemen | Dashboard, semua laporan |
+| Finance / Akuntansi | CoA, kas/bank, jurnal, giro, laporan keuangan |
 | Admin Kantor | Master data, order, invoice, absensi |
 | Kepala Produksi | WO, BOM, SPK tukang, hasil produksi |
 | Gudang | Terima/keluar bahan & barang jadi, stok opname |
@@ -155,6 +170,7 @@ POS dapat berdiri sendiri **atau** tersambung (nempel) ke sistem pusat.
 - Piutang & umur piutang.
 - HPP dan margin per artikel.
 - Rekap absensi & kehadiran.
+- Buku Besar, Neraca Saldo, Neraca, Laba Rugi, Arus Kas.
 
 ## 6. Non-Fungsional
 
@@ -168,7 +184,6 @@ POS dapat berdiri sendiri **atau** tersambung (nempel) ke sistem pusat.
 ## 7. Di Luar Lingkup (kecuali diminta)
 
 - Payroll penuh (sistem hanya menyediakan data jam kerja).
-- Akuntansi umum / jurnal & neraca lengkap.
 - Integrasi marketplace (Shopee/Tokopedia).
 - Aplikasi mobile native (dipakai web mobile).
 

@@ -2,7 +2,7 @@
 
 **Nomor**: SQ/____/____/2026
 **Tanggal**: ____________
-**Kepada Yth.**: ____________________
+**Kepada Yth.**: Bapak Anil (0816 665 500)
 **Perihal**: Penawaran Pengembangan Sistem ERP Sepatu, E-Katalog, POS & Absensi
 
 ---
@@ -11,7 +11,7 @@ Dengan hormat,
 
 Menindaklanjuti diskusi kebutuhan sistem, berikut kami sampaikan penawaran
 pengembangan **Sistem Terintegrasi ERP Produksi Sepatu, E-Katalog, POS Toko, dan
-Absensi**. Sistem dirancang mengikuti proses bisnis aktual: produksi in-house,
+Finance & Accounting, dan Absensi**. Sistem dirancang mengikuti proses bisnis aktual: produksi in-house,
 subkontrak tukang, distribusi ke toko/sekolah, penjualan online, serta pengawasan
 tim lapangan (sales & SPG).
 
@@ -48,7 +48,14 @@ real-time, shift & tutup kasir, cetak struk, modul SPG (stok opname & laporan).
 Absensi admin, SPG, dan sales dengan selfie + GPS/geofence, jadwal & shift,
 izin/cuti/lembur, check-in kunjungan sales, dan rekap jam kerja untuk payroll.
 
-### H. Laporan & Dashboard
+### H. Finance & Accounting
+Chart of Account & saldo awal; transaksi Cash/Bank Receipt & Disbursement, General
+Journal, Adjustment Journal, Memorial Journal, Receipt/Send Giro & kliring,
+Receipt/Send Memo, Cash/Bank Transfer, FX Revaluation. Laporan: Buku Besar, Neraca
+Saldo, Neraca, Laba Rugi, Arus Kas, kartu hutang & piutang. Terintegrasi dengan
+invoice penjualan, hutang tukang, pembelian bahan, dan HPP.
+
+### I. Laporan & Dashboard
 Stok per artikel × nomor × warna, kartu stok bahan, outstanding SPK & saldo bahan
 tukang, penjualan per sales/toko/area, rekap POS & konsinyasi, umur piutang, HPP &
 margin, rekap absensi. Export Excel/PDF.
@@ -63,12 +70,14 @@ margin, rekap absensi. Export Excel/PDF.
 | 4 | Modul Subkontrak Tukang (SPK, setor BOM, rekonsiliasi) | 32.000.000 |
 | 5 | Modul Distribusi & Penjualan (SO/DO/Invoice/Piutang) | 29.000.000 |
 | 6 | Modul POS Toko (offline-sync, monitoring, SPG) | 30.000.000 |
-| 7 | Modul Absensi (GPS/geofence, shift, rekap) | 18.000.000 |
-| 8 | Laporan & Dashboard Manajemen | 10.000.000 |
-| 9 | Deployment, migrasi data awal, pelatihan & dokumentasi | 7.000.000 |
-| | **Total** | **210.000.000** |
+| 7 | Modul Finance & Accounting (CoA, kas/bank, jurnal, giro, laporan keuangan) | 42.000.000 |
+| 8 | Modul Absensi (GPS/geofence, shift, rekap) | 18.000.000 |
+| 9 | Laporan & Dashboard Manajemen | 10.000.000 |
+| 10 | Deployment, migrasi data awal, pelatihan & dokumentasi | 7.000.000 |
+| 11 | Support & maintenance bulanan (3 bulan, sudah termasuk) | 8.000.000 |
+| | **Total** | **260.000.000** |
 
-**Terbilang**: *Dua ratus sepuluh juta rupiah*
+**Terbilang**: *Dua ratus enam puluh juta rupiah*
 
 > Harga belum termasuk PPN.
 > Belum termasuk biaya server/hosting, domain, dan perangkat keras POS
@@ -78,11 +87,11 @@ margin, rekap absensi. Export Excel/PDF.
 
 | Termin | Tahap | Porsi | Nilai (Rp) |
 | --- | --- | ---: | ---: |
-| I | Kontrak / DP | 30% | 63.000.000 |
-| II | Serah terima Master Data, E-Katalog & Order | 25% | 52.500.000 |
-| III | Serah terima Produksi & Subkontrak Tukang | 25% | 52.500.000 |
-| IV | Serah terima Distribusi, POS, Absensi & Go-Live | 20% | 42.000.000 |
-| | **Total** | **100%** | **210.000.000** |
+| I | Kontrak / DP | 30% | 78.000.000 |
+| II | Serah terima Master Data, E-Katalog & Order | 25% | 65.000.000 |
+| III | Serah terima Produksi & Subkontrak Tukang | 25% | 65.000.000 |
+| IV | Serah terima Distribusi, POS, Finance, Absensi & Go-Live | 20% | 52.000.000 |
+| | **Total** | **100%** | **260.000.000** |
 
 ## 4. Jangka Waktu
 
@@ -94,7 +103,7 @@ diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
 | 1 | Analisis, desain, master data, E-Katalog & Order |
 | 2 | Produksi in-house & subkontrak tukang |
 | 3 | Distribusi, penjualan & POS |
-| 4 | Absensi, laporan, pelatihan, go-live |
+| 4 | Finance & Accounting, absensi, laporan, pelatihan, go-live |
 
 > Timeline 4 bulan dicapai dengan penambahan personel dan pengerjaan modul secara
 > paralel. Ketepatan jadwal bergantung pada ketersediaan narasumber proses bisnis
@@ -106,7 +115,8 @@ diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
 - Aplikasi POS toko.
 - Dokumentasi teknis & manual pengguna.
 - Pelatihan untuk admin, produksi, gudang, sales, dan kasir (2 sesi).
-- **Garansi & pendampingan 3 bulan** pasca go-live untuk perbaikan bug.
+- **Support & maintenance bulanan 3 bulan** pasca go-live (sudah termasuk): perbaikan
+  bug, pendampingan pengguna, monitoring sistem, backup terjadwal.
 
 ## 6. Ketentuan
 
@@ -116,7 +126,7 @@ diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
 3. Klien menyediakan narasumber proses bisnis dan data master awal.
 4. Server/hosting produksi disediakan klien, atau kami sediakan dengan biaya
    berlangganan terpisah.
-5. Biaya pemeliharaan setelah masa garansi ditawarkan terpisah.
+5. Perpanjangan support & maintenance setelah 3 bulan pertama ditawarkan terpisah.
 
 Demikian penawaran ini kami sampaikan. Kami siap mendiskusikan penyesuaian lingkup
 maupun tahapan implementasi sesuai prioritas Bapak/Ibu.
