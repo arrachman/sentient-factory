@@ -66,6 +66,8 @@
   th.c-no, td.c-no { width: 34px; text-align: center; }
   th.c-amt, td.c-amt { width: 130px; text-align: right; white-space: nowrap; }
   th.c-pct, td.c-pct { width: 58px; text-align: center; }
+  table.termin th.c-amt, table.termin td.c-amt { width: 92px; font-size: 9.5px; }
+  table.termin th, table.termin td { padding-left: 6px; padding-right: 6px; }
   tbody td { font-size: 11px; padding: 7px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
   tbody tr { break-inside: avoid; }
   tbody tr:nth-child(even) td { background: #f7faf7; }
@@ -152,7 +154,7 @@
   <div class="box">
     <div class="row"><div class="k">Lingkup modul</div><div class="v"><b>ERP penuh — 11 modul.</b> Master Data, E-Katalog &amp; Order, <b>Produksi</b> (in-house &amp; subkontrak tukang), <b>Purchasing</b>, <b>Warehouse &amp; Inventory</b>, <b>Sales</b> &amp; Distribusi, POS Toko, <b>Finance &amp; Accounting</b>, Absensi, Laporan &amp; Dashboard.</div></div>
     <div class="row"><div class="k">Estimasi waktu</div><div class="v">5 (lima) bulan kalender sejak kontrak &amp; data awal diterima.</div></div>
-    <div class="row"><div class="k">Nilai penawaran</div><div class="v"><b>Rp 316.000.000</b> (belum termasuk PPN). Sudah termasuk <b>support &amp; maintenance bulanan 3 bulan</b> pasca go-live.</div></div>
+    <div class="row"><div class="k">Nilai penawaran</div><div class="v"><b>Rp 210.000.000</b> belum termasuk pajak. Dengan PPN 11% sebesar Rp 23.100.000, <b>total Rp 233.100.000</b>. Sudah termasuk <b>support &amp; maintenance bulanan 3 bulan</b> pasca go-live.</div></div>
   </div>
 
   <!-- ===================== LINGKUP ===================== -->
@@ -244,29 +246,32 @@
   <table>
     <thead><tr><th class="c-no">No</th><th>Uraian Pekerjaan</th><th class="c-amt">Jumlah</th></tr></thead>
     <tbody>
-      <tr><td class="c-no">1</td><td><span class="scn">Modul Master Data &amp; Manajemen Pengguna</span><br />Artikel, warna, tukang, sales, bahan, ukuran, toko/sekolah, gudang, SPG, hak akses.</td><td class="c-amt">Rp 16.000.000</td></tr>
-      <tr><td class="c-no">2</td><td><span class="scn">Modul E-Katalog &amp; Order</span><br />Katalog online, order sales (mobile), order online toko, keranjang size run, approval.</td><td class="c-amt">Rp 32.000.000</td></tr>
-      <tr><td class="c-no">3</td><td><span class="scn">Modul Produksi In-House</span><br />BOM per nomor, Perintah Produksi, tahapan produksi &amp; QC, potong bahan otomatis, HPP.</td><td class="c-amt">Rp 36.000.000</td></tr>
-      <tr><td class="c-no">4</td><td><span class="scn">Modul Subkontrak Tukang</span><br />SPK, setor BOM, saldo bahan di tukang, penerimaan hasil, rekonsiliasi, hutang ongkos.</td><td class="c-amt">Rp 32.000.000</td></tr>
-      <tr><td class="c-no">5</td><td><span class="scn">Modul Purchasing</span><br />Supplier, PR, PO &amp; approval, goods receipt, retur beli, invoice pembelian &amp; hutang supplier.</td><td class="c-amt">Rp 26.000.000</td></tr>
-      <tr><td class="c-no">6</td><td><span class="scn">Modul Warehouse &amp; Inventory</span><br />Multi-gudang, terima/keluar, transfer antar gudang, kartu stok, stok opname, penilaian persediaan.</td><td class="c-amt">Rp 30.000.000</td></tr>
-      <tr><td class="c-no">7</td><td><span class="scn">Modul Sales &mdash; Distribusi &amp; Penjualan</span><br />SO, Surat Jalan, Invoice, piutang, konsinyasi, retur, komisi sales.</td><td class="c-amt">Rp 29.000.000</td></tr>
-      <tr><td class="c-no">8</td><td><span class="scn">Modul POS Toko</span><br />Kasir toko, mode offline &amp; sinkronisasi, monitoring stok titipan, shift kasir, modul SPG.</td><td class="c-amt">Rp 30.000.000</td></tr>
-      <tr><td class="c-no">9</td><td><span class="scn">Modul Finance &amp; Accounting</span><br />CoA &amp; saldo awal, kas/bank, jurnal, giro &amp; kliring, memo, FX revaluation, laporan keuangan.</td><td class="c-amt">Rp 42.000.000</td></tr>
-      <tr><td class="c-no">10</td><td><span class="scn">Modul Absensi</span><br />Selfie + GPS/geofence, shift &amp; jadwal, izin/cuti/lembur, kunjungan sales, rekap jam kerja.</td><td class="c-amt">Rp 18.000.000</td></tr>
-      <tr><td class="c-no">11</td><td><span class="scn">Laporan &amp; Dashboard Manajemen</span><br />Laporan stok, produksi, penjualan, piutang, HPP &amp; absensi; export Excel/PDF.</td><td class="c-amt">Rp 10.000.000</td></tr>
-      <tr><td class="c-no">12</td><td><span class="scn">Deployment, migrasi data awal, pelatihan &amp; dokumentasi</span><br />Instalasi produksi, import master data, pelatihan 2 sesi, manual pengguna.</td><td class="c-amt">Rp 7.000.000</td></tr>
-      <tr><td class="c-no">13</td><td><span class="scn">Support &amp; maintenance bulanan &mdash; 3 bulan</span><br />Sudah termasuk dalam penawaran ini: perbaikan bug, pendampingan pengguna, monitoring sistem &amp; backup terjadwal pasca go-live.</td><td class="c-amt">Rp 8.000.000</td></tr>
-      <tr class="total"><td class="c-no"></td><td>TOTAL PENAWARAN</td><td class="c-amt">Rp 316.000.000</td></tr>
+      <tr><td class="c-no">1</td><td><span class="scn">Modul Master Data &amp; Manajemen Pengguna</span><br />Artikel, warna, tukang, sales, bahan, ukuran, toko/sekolah, gudang, SPG, hak akses.</td><td class="c-amt">Rp 11.000.000</td></tr>
+      <tr><td class="c-no">2</td><td><span class="scn">Modul E-Katalog &amp; Order</span><br />Katalog online, order sales (mobile), order online toko, keranjang size run, approval.</td><td class="c-amt">Rp 21.000.000</td></tr>
+      <tr><td class="c-no">3</td><td><span class="scn">Modul Produksi In-House</span><br />BOM per nomor, Perintah Produksi, tahapan produksi &amp; QC, potong bahan otomatis, HPP.</td><td class="c-amt">Rp 24.000.000</td></tr>
+      <tr><td class="c-no">4</td><td><span class="scn">Modul Subkontrak Tukang</span><br />SPK, setor BOM, saldo bahan di tukang, penerimaan hasil, rekonsiliasi, hutang ongkos.</td><td class="c-amt">Rp 21.000.000</td></tr>
+      <tr><td class="c-no">5</td><td><span class="scn">Modul Purchasing</span><br />Supplier, PR, PO &amp; approval, goods receipt, retur beli, invoice pembelian &amp; hutang supplier.</td><td class="c-amt">Rp 17.000.000</td></tr>
+      <tr><td class="c-no">6</td><td><span class="scn">Modul Warehouse &amp; Inventory</span><br />Multi-gudang, terima/keluar, transfer antar gudang, kartu stok, stok opname, penilaian persediaan.</td><td class="c-amt">Rp 20.000.000</td></tr>
+      <tr><td class="c-no">7</td><td><span class="scn">Modul Sales &mdash; Distribusi &amp; Penjualan</span><br />SO, Surat Jalan, Invoice, piutang, konsinyasi, retur, komisi sales.</td><td class="c-amt">Rp 19.000.000</td></tr>
+      <tr><td class="c-no">8</td><td><span class="scn">Modul POS Toko</span><br />Kasir toko, mode offline &amp; sinkronisasi, monitoring stok titipan, shift kasir, modul SPG.</td><td class="c-amt">Rp 20.000.000</td></tr>
+      <tr><td class="c-no">9</td><td><span class="scn">Modul Finance &amp; Accounting</span><br />CoA &amp; saldo awal, kas/bank, jurnal, giro &amp; kliring, memo, FX revaluation, laporan keuangan.</td><td class="c-amt">Rp 28.000.000</td></tr>
+      <tr><td class="c-no">10</td><td><span class="scn">Modul Absensi</span><br />Selfie + GPS/geofence, shift &amp; jadwal, izin/cuti/lembur, kunjungan sales, rekap jam kerja.</td><td class="c-amt">Rp 12.000.000</td></tr>
+      <tr><td class="c-no">11</td><td><span class="scn">Laporan &amp; Dashboard Manajemen</span><br />Laporan stok, produksi, penjualan, piutang, HPP &amp; absensi; export Excel/PDF.</td><td class="c-amt">Rp 7.000.000</td></tr>
+      <tr><td class="c-no">12</td><td><span class="scn">Deployment, migrasi data awal, pelatihan &amp; dokumentasi</span><br />Instalasi produksi, import master data, pelatihan 2 sesi, manual pengguna.</td><td class="c-amt">Rp 5.000.000</td></tr>
+      <tr><td class="c-no">13</td><td><span class="scn">Support &amp; maintenance bulanan &mdash; 3 bulan</span><br />Sudah termasuk dalam penawaran ini: perbaikan bug, pendampingan pengguna, monitoring sistem &amp; backup terjadwal pasca go-live.</td><td class="c-amt">Rp 5.000.000</td></tr>
+      <tr class="total"><td class="c-no"></td><td>SUBTOTAL (sebelum pajak)</td><td class="c-amt">Rp 210.000.000</td></tr>
+      <tr class="total"><td class="c-no"></td><td>PPN 11%</td><td class="c-amt">Rp 23.100.000</td></tr>
+      <tr class="total"><td class="c-no"></td><td>TOTAL SETELAH PPN</td><td class="c-amt">Rp 233.100.000</td></tr>
     </tbody>
   </table>
 
   <div class="grand">
     <div>
-      <div class="lbl">Total Penawaran</div>
-      <div class="say">Terbilang: dua ratus sepuluh juta rupiah</div>
+      <div class="lbl">Total setelah PPN 11%</div>
+      <div class="say">Terbilang: dua ratus tiga puluh tiga juta seratus ribu rupiah</div>
+      <div class="say">Nilai pekerjaan Rp 210.000.000 + PPN 11% Rp 23.100.000</div>
     </div>
-    <div class="val">Rp 316.000.000</div>
+    <div class="val">Rp 233.100.000</div>
   </div>
   <p class="lead" style="margin-top:8px; color:var(--muted); font-size:10.5px">
     Harga belum termasuk PPN. Belum termasuk biaya server/hosting, domain, serta perangkat keras POS
@@ -275,14 +280,14 @@
 
   <!-- ===================== TERMIN ===================== -->
   <h2 class="sec"><span class="n">C</span>Tahapan Pembayaran</h2>
-  <table>
-    <thead><tr><th>Termin</th><th>Deskripsi</th><th class="c-pct">Porsi</th><th class="c-amt">Jumlah</th></tr></thead>
+  <table class="termin">
+    <thead><tr><th>Termin</th><th>Deskripsi</th><th class="c-pct">Porsi</th><th class="c-amt">Nilai</th><th class="c-amt">PPN 11%</th><th class="c-amt">Ditagihkan</th></tr></thead>
     <tbody>
-      <tr><td><span class="scn">Termin 1</span><br />DP</td><td>Dibayar saat persetujuan penawaran. Pengerjaan dimulai setelah pembayaran diterima.</td><td class="c-pct">30%</td><td class="c-amt">Rp 95.000.000</td></tr>
-      <tr><td><span class="scn">Termin 2</span><br />Serah terima I</td><td>Dibayar saat serah terima Master Data, E-Katalog &amp; Order, Purchasing dan Warehouse &amp; Inventory serta sign-off UAT tahap 1.</td><td class="c-pct">25%</td><td class="c-amt">Rp 79.000.000</td></tr>
-      <tr><td><span class="scn">Termin 3</span><br />Serah terima II</td><td>Dibayar saat serah terima modul Produksi In-House &amp; Subkontrak Tukang dan sign-off UAT tahap 2.</td><td class="c-pct">25%</td><td class="c-amt">Rp 79.000.000</td></tr>
-      <tr><td><span class="scn">Termin 4</span><br />Pelunasan</td><td>Dibayar saat serah terima Sales, POS, Finance &amp; Accounting, Absensi &amp; Laporan. Sistem go-live setelah pelunasan.</td><td class="c-pct">20%</td><td class="c-amt">Rp 63.000.000</td></tr>
-      <tr class="total"><td>TOTAL</td><td></td><td class="c-pct">100%</td><td class="c-amt">Rp 316.000.000</td></tr>
+      <tr><td><span class="scn">Termin 1</span><br />DP</td><td>Dibayar saat persetujuan penawaran. Pengerjaan dimulai setelah pembayaran diterima.</td><td class="c-pct">30%</td><td class="c-amt">Rp 63.000.000</td><td class="c-amt">Rp 6.930.000</td><td class="c-amt">Rp 69.930.000</td></tr>
+      <tr><td><span class="scn">Termin 2</span><br />Serah terima I</td><td>Dibayar saat serah terima Master Data, E-Katalog &amp; Order, Purchasing dan Warehouse &amp; Inventory serta sign-off UAT tahap 1.</td><td class="c-pct">25%</td><td class="c-amt">Rp 52.500.000</td><td class="c-amt">Rp 5.775.000</td><td class="c-amt">Rp 58.275.000</td></tr>
+      <tr><td><span class="scn">Termin 3</span><br />Serah terima II</td><td>Dibayar saat serah terima modul Produksi In-House &amp; Subkontrak Tukang dan sign-off UAT tahap 2.</td><td class="c-pct">25%</td><td class="c-amt">Rp 52.500.000</td><td class="c-amt">Rp 5.775.000</td><td class="c-amt">Rp 58.275.000</td></tr>
+      <tr><td><span class="scn">Termin 4</span><br />Pelunasan</td><td>Dibayar saat serah terima Sales, POS, Finance &amp; Accounting, Absensi &amp; Laporan. Sistem go-live setelah pelunasan.</td><td class="c-pct">20%</td><td class="c-amt">Rp 42.000.000</td><td class="c-amt">Rp 4.620.000</td><td class="c-amt">Rp 46.620.000</td></tr>
+      <tr class="total"><td>TOTAL</td><td></td><td class="c-pct">100%</td><td class="c-amt">Rp 210.000.000</td><td class="c-amt">Rp 23.100.000</td><td class="c-amt">Rp 233.100.000</td></tr>
     </tbody>
   </table>
 
@@ -319,6 +324,7 @@
   <h2 class="sec pagebreak"><span class="n">F</span>Ketentuan Penawaran</h2>
   <ul class="notes">
     <li><b>Validitas:</b> Penawaran ini berlaku 30 hari sejak tanggal penerbitan (s.d. 5 September 2026).</li>
+    <li><b>Pajak:</b> Seluruh nilai pekerjaan Rp 210.000.000 belum termasuk pajak. Atas transaksi ini dikenakan <b>PPN 11%</b> sebesar Rp 23.100.000, sehingga total yang ditagihkan menjadi <b>Rp 233.100.000</b>. Faktur pajak diterbitkan pada setiap termin. PPh atas jasa (bila klien berstatus pemotong) dipotong sesuai ketentuan yang berlaku dan bukti potong diserahkan ke kami.</li>
     <li><b>Pembayaran:</b> 4 termin sesuai bagian C. Pembayaran via transfer ke BCA 0113202448 a.n. Fatchur Rachman, Founder.</li>
     <li><b>Serah terima bertahap:</b> Setiap termin didahului demo modul dan sign-off UAT oleh klien sebelum tagihan diterbitkan.</li>
     <li><b>Revisi:</b> Maksimal 2&times; revisi per modul pasca sign-off UAT. Catatan yang ditemukan sebelum sign-off tidak dihitung sebagai revisi.</li>

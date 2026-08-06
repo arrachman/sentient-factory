@@ -74,36 +74,39 @@ margin, rekap absensi. Export Excel/PDF.
 
 | No | Uraian Pekerjaan | Biaya (Rp) |
 | --- | --- | ---: |
-| 1 | Modul Master Data & Manajemen Pengguna | 16.000.000 |
-| 2 | Modul E-Katalog & Order (sales + online) | 32.000.000 |
-| 3 | Modul Produksi In-House (BOM, WO, HPP) | 36.000.000 |
-| 4 | Modul Subkontrak Tukang (SPK, setor BOM, rekonsiliasi) | 32.000.000 |
-| 5 | Modul Purchasing (supplier, PR, PO, goods receipt, hutang) | 26.000.000 |
-| 6 | Modul Warehouse & Inventory (multi-gudang, kartu stok, opname) | 30.000.000 |
-| 7 | Modul Sales — Distribusi & Penjualan (SO/DO/Invoice/Piutang) | 29.000.000 |
-| 8 | Modul POS Toko (offline-sync, monitoring, SPG) | 30.000.000 |
-| 9 | Modul Finance & Accounting (CoA, kas/bank, jurnal, giro, laporan keuangan) | 42.000.000 |
-| 10 | Modul Absensi (GPS/geofence, shift, rekap) | 18.000.000 |
-| 11 | Laporan & Dashboard Manajemen | 10.000.000 |
-| 12 | Deployment, migrasi data awal, pelatihan & dokumentasi | 7.000.000 |
-| 13 | Support & maintenance bulanan (3 bulan, sudah termasuk) | 8.000.000 |
-| | **Total** | **316.000.000** |
+| 1 | Modul Master Data & Manajemen Pengguna | 11.000.000 |
+| 2 | Modul E-Katalog & Order (sales + online) | 21.000.000 |
+| 3 | Modul Produksi In-House (BOM, WO, HPP) | 24.000.000 |
+| 4 | Modul Subkontrak Tukang (SPK, setor BOM, rekonsiliasi) | 21.000.000 |
+| 5 | Modul Purchasing (supplier, PR, PO, goods receipt, hutang) | 17.000.000 |
+| 6 | Modul Warehouse & Inventory (multi-gudang, kartu stok, opname) | 20.000.000 |
+| 7 | Modul Sales — Distribusi & Penjualan (SO/DO/Invoice/Piutang) | 19.000.000 |
+| 8 | Modul POS Toko (offline-sync, monitoring, SPG) | 20.000.000 |
+| 9 | Modul Finance & Accounting (CoA, kas/bank, jurnal, giro, laporan keuangan) | 28.000.000 |
+| 10 | Modul Absensi (GPS/geofence, shift, rekap) | 12.000.000 |
+| 11 | Laporan & Dashboard Manajemen | 7.000.000 |
+| 12 | Deployment, migrasi data awal, pelatihan & dokumentasi | 5.000.000 |
+| 13 | Support & maintenance bulanan (3 bulan, sudah termasuk) | 5.000.000 |
+| | **Subtotal (sebelum pajak)** | **210.000.000** |
+| | **PPN 11%** | **23.100.000** |
+| | **Total setelah PPN** | **233.100.000** |
 
-**Terbilang**: *Tiga ratus enam belas juta rupiah*
+**Terbilang**: *Dua ratus tiga puluh tiga juta seratus ribu rupiah* (termasuk PPN 11%)
 
-> Harga belum termasuk PPN.
+> Nilai pekerjaan Rp 210.000.000 belum termasuk pajak; PPN 11% ditambahkan
+> menjadi Rp 233.100.000. Faktur pajak diterbitkan tiap termin.
 > Belum termasuk biaya server/hosting, domain, dan perangkat keras POS
 > (tablet/PC kasir, printer thermal, barcode scanner).
 
 ## 3. Termin Pembayaran
 
-| Termin | Tahap | Porsi | Nilai (Rp) |
-| --- | --- | ---: | ---: |
-| I | Kontrak / DP | 30% | 95.000.000 |
-| II | Serah terima Master Data, E-Katalog, Purchasing & Inventory | 25% | 79.000.000 |
-| III | Serah terima Produksi & Subkontrak Tukang | 25% | 79.000.000 |
-| IV | Serah terima Sales, POS, Finance, Absensi & Go-Live | 20% | 63.000.000 |
-| | **Total** | **100%** | **316.000.000** |
+| Termin | Tahap | Porsi | Nilai (Rp) | PPN 11% | Ditagihkan |
+| --- | --- | ---: | ---: | ---: | ---: |
+| I | Kontrak / DP | 30% | 63.000.000 | 6.930.000 | 69.930.000 |
+| II | Serah terima Master Data, E-Katalog, Purchasing & Inventory | 25% | 52.500.000 | 5.775.000 | 58.275.000 |
+| III | Serah terima Produksi & Subkontrak Tukang | 25% | 52.500.000 | 5.775.000 | 58.275.000 |
+| IV | Serah terima Sales, POS, Finance, Absensi & Go-Live | 20% | 42.000.000 | 4.620.000 | 46.620.000 |
+| | **Total** | **100%** | **210.000.000** | **23.100.000** | **233.100.000** |
 
 ## 4. Jangka Waktu
 
