@@ -57,16 +57,15 @@ margin, rekap absensi. Export Excel/PDF.
 
 | No | Uraian Pekerjaan | Biaya (Rp) |
 | --- | --- | ---: |
-| 1 | Analisis proses bisnis, perancangan sistem & database | 16.000.000 |
-| 2 | Modul Master Data & Manajemen Pengguna | 15.000.000 |
-| 3 | Modul E-Katalog & Order (sales + online) | 29.000.000 |
-| 4 | Modul Produksi In-House (BOM, WO, HPP) | 33.000.000 |
-| 5 | Modul Subkontrak Tukang (SPK, setor BOM, rekonsiliasi) | 29.000.000 |
-| 6 | Modul Distribusi & Penjualan (SO/DO/Invoice/Piutang) | 27.000.000 |
-| 7 | Modul POS Toko (offline-sync, monitoring, SPG) | 28.000.000 |
-| 8 | Modul Absensi (GPS/geofence, shift, rekap) | 17.000.000 |
-| 9 | Laporan & Dashboard Manajemen | 9.000.000 |
-| 10 | Deployment, migrasi data awal, pelatihan & dokumentasi | 7.000.000 |
+| 1 | Modul Master Data & Manajemen Pengguna | 16.000.000 |
+| 2 | Modul E-Katalog & Order (sales + online) | 32.000.000 |
+| 3 | Modul Produksi In-House (BOM, WO, HPP) | 36.000.000 |
+| 4 | Modul Subkontrak Tukang (SPK, setor BOM, rekonsiliasi) | 32.000.000 |
+| 5 | Modul Distribusi & Penjualan (SO/DO/Invoice/Piutang) | 29.000.000 |
+| 6 | Modul POS Toko (offline-sync, monitoring, SPG) | 30.000.000 |
+| 7 | Modul Absensi (GPS/geofence, shift, rekap) | 18.000.000 |
+| 8 | Laporan & Dashboard Manajemen | 10.000.000 |
+| 9 | Deployment, migrasi data awal, pelatihan & dokumentasi | 7.000.000 |
 | | **Total** | **210.000.000** |
 
 **Terbilang**: *Dua ratus sepuluh juta rupiah*
