@@ -94,6 +94,26 @@ Kasus: tukang **tidak punya stok**; mereka hanya mengerjakan produksi. Bahan bis
 ❓ Konfirmasi: apakah pembayaran tukang mingguan borongan per pasang, atau ada
 komponen lain (uang makan, potongan bahan rusak)?
 
+### M3b — Purchasing
+
+- Master supplier, daftar harga beli, termin pembayaran.
+- Permintaan Pembelian (PR) dari kebutuhan bahan produksi/stok minimum.
+- Purchase Order (PO) dengan approval berjenjang.
+- Penerimaan barang (Goods Receipt) dengan pencocokan terhadap PO; selisih dicatat.
+- Retur pembelian; invoice pembelian → hutang supplier di modul Finance.
+- Laporan: outstanding PO, riwayat harga beli, evaluasi ketepatan kirim supplier.
+
+### M3c — Warehouse & Inventory
+
+- Multi-gudang: gudang bahan, gudang barang jadi, gudang tukang, stok titipan di toko.
+- Penerimaan & pengeluaran barang, transfer antar gudang, mutasi stok.
+- Kartu stok per item sampai level varian **artikel × nomor × warna**.
+- Stok opname berkala + penyesuaian selisih (dengan approval).
+- Penilaian persediaan (FIFO/Average — disepakati saat analisis) terhubung ke jurnal persediaan.
+- Peringatan stok minimum / reorder point.
+
+❓ Konfirmasi: metode penilaian persediaan yang dipakai saat ini (FIFO atau Average)?
+
 ### M4 — Distribusi & Sales
 
 - Stok jadi milik kita dipasarkan ke toko-toko.
@@ -154,7 +174,8 @@ berjalan yang harus dimigrasi (saldo awal per tanggal cut-off)?
 | Finance / Akuntansi | CoA, kas/bank, jurnal, giro, laporan keuangan |
 | Admin Kantor | Master data, order, invoice, absensi |
 | Kepala Produksi | WO, BOM, SPK tukang, hasil produksi |
-| Gudang | Terima/keluar bahan & barang jadi, stok opname |
+| Gudang | Terima/keluar bahan & barang jadi, transfer, stok opname |
+| Purchasing | Supplier, PR, PO, penerimaan barang, retur beli |
 | Sales | Katalog, order, kunjungan, piutang toko sendiri |
 | SPG | Absensi, penjualan toko, stok opname toko |
 | Kasir Toko | POS saja |

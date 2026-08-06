@@ -11,7 +11,7 @@ Dengan hormat,
 
 Menindaklanjuti diskusi kebutuhan sistem, berikut kami sampaikan penawaran
 pengembangan **Sistem Terintegrasi ERP Produksi Sepatu, E-Katalog, POS Toko, dan
-Finance & Accounting, dan Absensi**. Sistem dirancang mengikuti proses bisnis aktual: produksi in-house,
+Finance & Accounting, Warehouse & Inventory, Purchasing, Sales, dan Absensi**. Sistem dirancang mengikuti proses bisnis aktual: produksi in-house,
 subkontrak tukang, distribusi ke toko/sekolah, penjualan online, serta pengawasan
 tim lapangan (sales & SPG).
 
@@ -35,27 +35,37 @@ pencatatan saldo bahan di tukang, penerimaan barang jadi, rekonsiliasi pemakaian
 bahan, serta perhitungan ongkos/hutang tukang. Mendukung dua mode: bahan disediakan
 perusahaan, atau bahan milik tukang sendiri.
 
-### E. Distribusi & Penjualan
+### E. Purchasing
+Master supplier & harga beli, Permintaan Pembelian (PR), Purchase Order dengan
+approval, penerimaan barang (goods receipt) dengan pencocokan PO, retur pembelian,
+invoice pembelian → hutang supplier. Laporan outstanding PO & riwayat harga beli.
+
+### F. Warehouse & Inventory
+Multi-gudang (bahan, barang jadi, gudang tukang, titipan toko), penerimaan &
+pengeluaran, transfer antar gudang, mutasi & kartu stok, stok opname beserta
+penyesuaian selisih, penilaian persediaan terhubung jurnal, peringatan stok minimum.
+
+### G. Sales — Distribusi & Penjualan
 SO → Surat Jalan → Invoice → Piutang. Pencatatan sales penanggung jawab dan tujuan
 kirim, mode jual putus & konsinyasi, retur, komisi sales, laporan penjualan.
 
-### F. POS Toko
+### H. POS Toko
 Aplikasi kasir untuk toko (berdiri sendiri maupun tersambung ke pusat), mode
 offline dengan sinkronisasi, monitoring stok titipan milik perusahaan secara
 real-time, shift & tutup kasir, cetak struk, modul SPG (stok opname & laporan).
 
-### G. Absensi
+### J. Absensi
 Absensi admin, SPG, dan sales dengan selfie + GPS/geofence, jadwal & shift,
 izin/cuti/lembur, check-in kunjungan sales, dan rekap jam kerja untuk payroll.
 
-### H. Finance & Accounting
+### I. Finance & Accounting
 Chart of Account & saldo awal; transaksi Cash/Bank Receipt & Disbursement, General
 Journal, Adjustment Journal, Memorial Journal, Receipt/Send Giro & kliring,
 Receipt/Send Memo, Cash/Bank Transfer, FX Revaluation. Laporan: Buku Besar, Neraca
 Saldo, Neraca, Laba Rugi, Arus Kas, kartu hutang & piutang. Terintegrasi dengan
 invoice penjualan, hutang tukang, pembelian bahan, dan HPP.
 
-### I. Laporan & Dashboard
+### K. Laporan & Dashboard
 Stok per artikel × nomor × warna, kartu stok bahan, outstanding SPK & saldo bahan
 tukang, penjualan per sales/toko/area, rekap POS & konsinyasi, umur piutang, HPP &
 margin, rekap absensi. Export Excel/PDF.
@@ -68,16 +78,18 @@ margin, rekap absensi. Export Excel/PDF.
 | 2 | Modul E-Katalog & Order (sales + online) | 32.000.000 |
 | 3 | Modul Produksi In-House (BOM, WO, HPP) | 36.000.000 |
 | 4 | Modul Subkontrak Tukang (SPK, setor BOM, rekonsiliasi) | 32.000.000 |
-| 5 | Modul Distribusi & Penjualan (SO/DO/Invoice/Piutang) | 29.000.000 |
-| 6 | Modul POS Toko (offline-sync, monitoring, SPG) | 30.000.000 |
-| 7 | Modul Finance & Accounting (CoA, kas/bank, jurnal, giro, laporan keuangan) | 42.000.000 |
-| 8 | Modul Absensi (GPS/geofence, shift, rekap) | 18.000.000 |
-| 9 | Laporan & Dashboard Manajemen | 10.000.000 |
-| 10 | Deployment, migrasi data awal, pelatihan & dokumentasi | 7.000.000 |
-| 11 | Support & maintenance bulanan (3 bulan, sudah termasuk) | 8.000.000 |
-| | **Total** | **260.000.000** |
+| 5 | Modul Purchasing (supplier, PR, PO, goods receipt, hutang) | 26.000.000 |
+| 6 | Modul Warehouse & Inventory (multi-gudang, kartu stok, opname) | 30.000.000 |
+| 7 | Modul Sales — Distribusi & Penjualan (SO/DO/Invoice/Piutang) | 29.000.000 |
+| 8 | Modul POS Toko (offline-sync, monitoring, SPG) | 30.000.000 |
+| 9 | Modul Finance & Accounting (CoA, kas/bank, jurnal, giro, laporan keuangan) | 42.000.000 |
+| 10 | Modul Absensi (GPS/geofence, shift, rekap) | 18.000.000 |
+| 11 | Laporan & Dashboard Manajemen | 10.000.000 |
+| 12 | Deployment, migrasi data awal, pelatihan & dokumentasi | 7.000.000 |
+| 13 | Support & maintenance bulanan (3 bulan, sudah termasuk) | 8.000.000 |
+| | **Total** | **316.000.000** |
 
-**Terbilang**: *Dua ratus enam puluh juta rupiah*
+**Terbilang**: *Tiga ratus enam belas juta rupiah*
 
 > Harga belum termasuk PPN.
 > Belum termasuk biaya server/hosting, domain, dan perangkat keras POS
@@ -87,25 +99,26 @@ margin, rekap absensi. Export Excel/PDF.
 
 | Termin | Tahap | Porsi | Nilai (Rp) |
 | --- | --- | ---: | ---: |
-| I | Kontrak / DP | 30% | 78.000.000 |
-| II | Serah terima Master Data, E-Katalog & Order | 25% | 65.000.000 |
-| III | Serah terima Produksi & Subkontrak Tukang | 25% | 65.000.000 |
-| IV | Serah terima Distribusi, POS, Finance, Absensi & Go-Live | 20% | 52.000.000 |
-| | **Total** | **100%** | **260.000.000** |
+| I | Kontrak / DP | 30% | 95.000.000 |
+| II | Serah terima Master Data, E-Katalog, Purchasing & Inventory | 25% | 79.000.000 |
+| III | Serah terima Produksi & Subkontrak Tukang | 25% | 79.000.000 |
+| IV | Serah terima Sales, POS, Finance, Absensi & Go-Live | 20% | 63.000.000 |
+| | **Total** | **100%** | **316.000.000** |
 
 ## 4. Jangka Waktu
 
-Estimasi **4 (empat) bulan** kalender sejak kontrak ditandatangani dan data awal
+Estimasi **5 (lima) bulan** kalender sejak kontrak ditandatangani dan data awal
 diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
 
 | Bulan | Fokus |
 | --- | --- |
 | 1 | Analisis, desain, master data, E-Katalog & Order |
-| 2 | Produksi in-house & subkontrak tukang |
-| 3 | Distribusi, penjualan & POS |
-| 4 | Finance & Accounting, absensi, laporan, pelatihan, go-live |
+| 2 | Purchasing & Warehouse/Inventory |
+| 3 | Produksi in-house & subkontrak tukang |
+| 4 | Sales, distribusi & POS |
+| 5 | Finance & Accounting, absensi, laporan, pelatihan, go-live |
 
-> Timeline 4 bulan dicapai dengan penambahan personel dan pengerjaan modul secara
+> Timeline 5 bulan dicapai dengan penambahan personel dan pengerjaan modul secara
 > paralel. Ketepatan jadwal bergantung pada ketersediaan narasumber proses bisnis
 > dari pihak klien dan kecepatan approval pada setiap serah terima modul.
 

@@ -141,8 +141,8 @@
   <!-- ===================== PERIHAL ===================== -->
   <h2 class="sec">Perihal Penawaran</h2>
   <p class="lead">
-    Penawaran resmi pengembangan <b>Sistem ERP Terintegrasi Produksi Sepatu &mdash; Finance &amp; Accounting,
-    E-Katalog, POS Toko, dan Absensi</b>. Sistem dirancang mengikuti proses bisnis aktual perusahaan: produksi <i>in-house</i>,
+    Penawaran resmi pengembangan <b>Sistem ERP Penuh untuk Produksi Sepatu</b> &mdash; mencakup Finance &amp; Accounting,
+    Warehouse &amp; Inventory, Purchasing, Sales, Produksi, E-Katalog, POS Toko, dan Absensi. Sistem dirancang mengikuti proses bisnis aktual perusahaan: produksi <i>in-house</i>,
     subkontrak ke tukang, distribusi ke toko dan sekolah, penjualan online, serta pengawasan tim
     lapangan (sales &amp; SPG). Seluruh data produk dikelola pada level varian
     <b>artikel &times; nomor &times; warna</b>, sehingga stok, BOM, harga, dan penjualan terlacak sampai
@@ -150,9 +150,9 @@
   </p>
 
   <div class="box">
-    <div class="row"><div class="k">Lingkup modul</div><div class="v">9 modul — Master Data, E-Katalog &amp; Order, Produksi In-House, Subkontrak Tukang, Distribusi &amp; Penjualan, POS Toko, <b>Finance &amp; Accounting</b>, Absensi, Laporan &amp; Dashboard.</div></div>
-    <div class="row"><div class="k">Estimasi waktu</div><div class="v">4 (empat) bulan kalender sejak kontrak &amp; data awal diterima.</div></div>
-    <div class="row"><div class="k">Nilai penawaran</div><div class="v"><b>Rp 260.000.000</b> (belum termasuk PPN). Sudah termasuk <b>support &amp; maintenance bulanan 3 bulan</b> pasca go-live.</div></div>
+    <div class="row"><div class="k">Lingkup modul</div><div class="v"><b>ERP penuh — 11 modul.</b> Master Data, E-Katalog &amp; Order, <b>Produksi</b> (in-house &amp; subkontrak tukang), <b>Purchasing</b>, <b>Warehouse &amp; Inventory</b>, <b>Sales</b> &amp; Distribusi, POS Toko, <b>Finance &amp; Accounting</b>, Absensi, Laporan &amp; Dashboard.</div></div>
+    <div class="row"><div class="k">Estimasi waktu</div><div class="v">5 (lima) bulan kalender sejak kontrak &amp; data awal diterima.</div></div>
+    <div class="row"><div class="k">Nilai penawaran</div><div class="v"><b>Rp 316.000.000</b> (belum termasuk PPN). Sudah termasuk <b>support &amp; maintenance bulanan 3 bulan</b> pasca go-live.</div></div>
   </div>
 
   <!-- ===================== LINGKUP ===================== -->
@@ -187,20 +187,36 @@
       <b>bahan milik tukang sendiri</b> (beli jadi per pasang).</div>
     </div>
     <div class="item">
-      <div class="t">5 &nbsp;Distribusi &amp; Penjualan <span class="tag">Distribusi</span></div>
+      <div class="t">5 &nbsp;Purchasing <span class="tag">Pembelian</span></div>
+      <div class="d">Master supplier dan daftar harga beli. Permintaan Pembelian (PR) dari kebutuhan
+      bahan produksi, Purchase Order (PO) dengan approval berjenjang, penerimaan barang
+      (Goods Receipt) dengan pencocokan PO, retur pembelian, serta invoice pembelian yang
+      otomatis membentuk hutang supplier di modul Finance. Laporan outstanding PO,
+      riwayat harga beli, dan evaluasi supplier.</div>
+    </div>
+    <div class="item">
+      <div class="t">6 &nbsp;Warehouse &amp; Inventory <span class="tag">Gudang</span></div>
+      <div class="d">Multi-gudang (bahan, barang jadi, gudang tukang, stok titipan di toko).
+      Penerimaan &amp; pengeluaran barang, transfer antar gudang, mutasi stok, kartu stok, dan
+      <i>stock opname</i> beserta penyesuaian selisih. Penilaian persediaan (metode disepakati
+      saat analisis) yang terhubung ke jurnal persediaan di Finance. Stok dilacak sampai level
+      varian <b>artikel &times; nomor &times; warna</b>, dengan peringatan stok minimum.</div>
+    </div>
+    <div class="item">
+      <div class="t">7 &nbsp;Sales &mdash; Distribusi &amp; Penjualan <span class="tag">Penjualan</span></div>
       <div class="d">Alur SO &rarr; Surat Jalan (DO) &rarr; Invoice &rarr; Piutang. Setiap pengiriman mencatat
       <b>sales penanggung jawab</b> dan <b>tujuan kirim</b> berikut ekspedisi &amp; ongkir. Mendukung
       <i>jual putus</i> dan <i>konsinyasi</i>, retur penjualan, serta perhitungan komisi sales.</div>
     </div>
     <div class="item">
-      <div class="t">6 &nbsp;POS Toko <span class="tag">Ritel</span></div>
+      <div class="t">8 &nbsp;POS Toko <span class="tag">Ritel</span></div>
       <div class="d">Aplikasi kasir untuk toko — dapat <b>berdiri sendiri</b> maupun <b>tersambung</b> ke pusat.
       Kasir dioperasikan pihak toko, sementara pusat memantau stok titipan milik perusahaan secara
       real-time. Dilengkapi <b>mode offline</b> dengan sinkronisasi otomatis saat kembali online, shift &amp;
       tutup kasir harian, cetak struk, serta modul SPG untuk stok opname dan laporan display.</div>
     </div>
     <div class="item">
-      <div class="t">7 &nbsp;Finance &amp; Accounting <span class="tag">Keuangan</span></div>
+      <div class="t">9 &nbsp;Finance &amp; Accounting <span class="tag">Keuangan</span></div>
       <div class="d">Modul akuntansi penuh: <i>Chart of Account</i> dan saldo awal (<i>Opening Balance</i>).
       <b>Transaksi</b> &mdash; Cash Receipt &amp; Disbursement, Bank Receipt &amp; Disbursement, General Journal,
       Adjustment Journal, Memorial Journal, Receipt/Send Giro beserta kliringnya, Receipt/Send Memo,
@@ -209,13 +225,13 @@
       Terintegrasi otomatis dengan invoice penjualan, hutang ongkos tukang, pembelian bahan, dan HPP produksi.</div>
     </div>
     <div class="item">
-      <div class="t">8 &nbsp;Absensi — Admin, SPG &amp; Sales <span class="tag">SDM</span></div>
+      <div class="t">10 &nbsp;Absensi — Admin, SPG &amp; Sales <span class="tag">SDM</span></div>
       <div class="d">Absensi masuk/pulang dengan <i>selfie</i> + GPS/<i>geofence</i> — SPG terkunci di lokasi toko,
       sales mobile di lapangan, admin di kantor. Mencakup jadwal &amp; shift, izin/cuti/lembur,
       <i>check-in</i> kunjungan sales yang terhubung ke order, serta rekap jam kerja sebagai dasar payroll.</div>
     </div>
     <div class="item">
-      <div class="t">9 &nbsp;Laporan &amp; Dashboard Manajemen <span class="tag">Analitik</span></div>
+      <div class="t">11 &nbsp;Laporan &amp; Dashboard Manajemen <span class="tag">Analitik</span></div>
       <div class="d">Stok per artikel &times; nomor &times; warna (gudang, tukang, toko), kartu stok &amp; mutasi bahan,
       outstanding SPK dan saldo bahan di tukang, penjualan per sales/toko/area/periode, rekap POS &amp;
       konsinyasi, umur piutang, HPP &amp; margin per artikel, serta rekap absensi. Seluruh laporan dapat
@@ -232,14 +248,16 @@
       <tr><td class="c-no">2</td><td><span class="scn">Modul E-Katalog &amp; Order</span><br />Katalog online, order sales (mobile), order online toko, keranjang size run, approval.</td><td class="c-amt">Rp 32.000.000</td></tr>
       <tr><td class="c-no">3</td><td><span class="scn">Modul Produksi In-House</span><br />BOM per nomor, Perintah Produksi, tahapan produksi &amp; QC, potong bahan otomatis, HPP.</td><td class="c-amt">Rp 36.000.000</td></tr>
       <tr><td class="c-no">4</td><td><span class="scn">Modul Subkontrak Tukang</span><br />SPK, setor BOM, saldo bahan di tukang, penerimaan hasil, rekonsiliasi, hutang ongkos.</td><td class="c-amt">Rp 32.000.000</td></tr>
-      <tr><td class="c-no">5</td><td><span class="scn">Modul Distribusi &amp; Penjualan</span><br />SO, Surat Jalan, Invoice, piutang, konsinyasi, retur, komisi sales.</td><td class="c-amt">Rp 29.000.000</td></tr>
-      <tr><td class="c-no">6</td><td><span class="scn">Modul POS Toko</span><br />Kasir toko, mode offline &amp; sinkronisasi, monitoring stok titipan, shift kasir, modul SPG.</td><td class="c-amt">Rp 30.000.000</td></tr>
-      <tr><td class="c-no">7</td><td><span class="scn">Modul Finance &amp; Accounting</span><br />CoA &amp; saldo awal, kas/bank, jurnal, giro &amp; kliring, memo, FX revaluation, laporan keuangan.</td><td class="c-amt">Rp 42.000.000</td></tr>
-      <tr><td class="c-no">8</td><td><span class="scn">Modul Absensi</span><br />Selfie + GPS/geofence, shift &amp; jadwal, izin/cuti/lembur, kunjungan sales, rekap jam kerja.</td><td class="c-amt">Rp 18.000.000</td></tr>
-      <tr><td class="c-no">9</td><td><span class="scn">Laporan &amp; Dashboard Manajemen</span><br />Laporan stok, produksi, penjualan, piutang, HPP &amp; absensi; export Excel/PDF.</td><td class="c-amt">Rp 10.000.000</td></tr>
-      <tr><td class="c-no">10</td><td><span class="scn">Deployment, migrasi data awal, pelatihan &amp; dokumentasi</span><br />Instalasi produksi, import master data, pelatihan 2 sesi, manual pengguna.</td><td class="c-amt">Rp 7.000.000</td></tr>
-      <tr><td class="c-no">11</td><td><span class="scn">Support &amp; maintenance bulanan &mdash; 3 bulan</span><br />Sudah termasuk dalam penawaran ini: perbaikan bug, pendampingan pengguna, monitoring sistem &amp; backup terjadwal pasca go-live.</td><td class="c-amt">Rp 8.000.000</td></tr>
-      <tr class="total"><td class="c-no"></td><td>TOTAL PENAWARAN</td><td class="c-amt">Rp 260.000.000</td></tr>
+      <tr><td class="c-no">5</td><td><span class="scn">Modul Purchasing</span><br />Supplier, PR, PO &amp; approval, goods receipt, retur beli, invoice pembelian &amp; hutang supplier.</td><td class="c-amt">Rp 26.000.000</td></tr>
+      <tr><td class="c-no">6</td><td><span class="scn">Modul Warehouse &amp; Inventory</span><br />Multi-gudang, terima/keluar, transfer antar gudang, kartu stok, stok opname, penilaian persediaan.</td><td class="c-amt">Rp 30.000.000</td></tr>
+      <tr><td class="c-no">7</td><td><span class="scn">Modul Sales &mdash; Distribusi &amp; Penjualan</span><br />SO, Surat Jalan, Invoice, piutang, konsinyasi, retur, komisi sales.</td><td class="c-amt">Rp 29.000.000</td></tr>
+      <tr><td class="c-no">8</td><td><span class="scn">Modul POS Toko</span><br />Kasir toko, mode offline &amp; sinkronisasi, monitoring stok titipan, shift kasir, modul SPG.</td><td class="c-amt">Rp 30.000.000</td></tr>
+      <tr><td class="c-no">9</td><td><span class="scn">Modul Finance &amp; Accounting</span><br />CoA &amp; saldo awal, kas/bank, jurnal, giro &amp; kliring, memo, FX revaluation, laporan keuangan.</td><td class="c-amt">Rp 42.000.000</td></tr>
+      <tr><td class="c-no">10</td><td><span class="scn">Modul Absensi</span><br />Selfie + GPS/geofence, shift &amp; jadwal, izin/cuti/lembur, kunjungan sales, rekap jam kerja.</td><td class="c-amt">Rp 18.000.000</td></tr>
+      <tr><td class="c-no">11</td><td><span class="scn">Laporan &amp; Dashboard Manajemen</span><br />Laporan stok, produksi, penjualan, piutang, HPP &amp; absensi; export Excel/PDF.</td><td class="c-amt">Rp 10.000.000</td></tr>
+      <tr><td class="c-no">12</td><td><span class="scn">Deployment, migrasi data awal, pelatihan &amp; dokumentasi</span><br />Instalasi produksi, import master data, pelatihan 2 sesi, manual pengguna.</td><td class="c-amt">Rp 7.000.000</td></tr>
+      <tr><td class="c-no">13</td><td><span class="scn">Support &amp; maintenance bulanan &mdash; 3 bulan</span><br />Sudah termasuk dalam penawaran ini: perbaikan bug, pendampingan pengguna, monitoring sistem &amp; backup terjadwal pasca go-live.</td><td class="c-amt">Rp 8.000.000</td></tr>
+      <tr class="total"><td class="c-no"></td><td>TOTAL PENAWARAN</td><td class="c-amt">Rp 316.000.000</td></tr>
     </tbody>
   </table>
 
@@ -248,7 +266,7 @@
       <div class="lbl">Total Penawaran</div>
       <div class="say">Terbilang: dua ratus sepuluh juta rupiah</div>
     </div>
-    <div class="val">Rp 260.000.000</div>
+    <div class="val">Rp 316.000.000</div>
   </div>
   <p class="lead" style="margin-top:8px; color:var(--muted); font-size:10.5px">
     Harga belum termasuk PPN. Belum termasuk biaya server/hosting, domain, serta perangkat keras POS
@@ -260,11 +278,11 @@
   <table>
     <thead><tr><th>Termin</th><th>Deskripsi</th><th class="c-pct">Porsi</th><th class="c-amt">Jumlah</th></tr></thead>
     <tbody>
-      <tr><td><span class="scn">Termin 1</span><br />DP</td><td>Dibayar saat persetujuan penawaran. Pengerjaan dimulai setelah pembayaran diterima.</td><td class="c-pct">30%</td><td class="c-amt">Rp 78.000.000</td></tr>
-      <tr><td><span class="scn">Termin 2</span><br />Serah terima I</td><td>Dibayar saat serah terima Master Data, E-Katalog &amp; Order dan klien sign-off UAT tahap 1.</td><td class="c-pct">25%</td><td class="c-amt">Rp 65.000.000</td></tr>
-      <tr><td><span class="scn">Termin 3</span><br />Serah terima II</td><td>Dibayar saat serah terima modul Produksi In-House &amp; Subkontrak Tukang dan sign-off UAT tahap 2.</td><td class="c-pct">25%</td><td class="c-amt">Rp 65.000.000</td></tr>
-      <tr><td><span class="scn">Termin 4</span><br />Pelunasan</td><td>Dibayar saat serah terima Distribusi, POS, Finance &amp; Accounting, Absensi &amp; Laporan. Sistem go-live setelah pelunasan.</td><td class="c-pct">20%</td><td class="c-amt">Rp 52.000.000</td></tr>
-      <tr class="total"><td>TOTAL</td><td></td><td class="c-pct">100%</td><td class="c-amt">Rp 260.000.000</td></tr>
+      <tr><td><span class="scn">Termin 1</span><br />DP</td><td>Dibayar saat persetujuan penawaran. Pengerjaan dimulai setelah pembayaran diterima.</td><td class="c-pct">30%</td><td class="c-amt">Rp 95.000.000</td></tr>
+      <tr><td><span class="scn">Termin 2</span><br />Serah terima I</td><td>Dibayar saat serah terima Master Data, E-Katalog &amp; Order, Purchasing dan Warehouse &amp; Inventory serta sign-off UAT tahap 1.</td><td class="c-pct">25%</td><td class="c-amt">Rp 79.000.000</td></tr>
+      <tr><td><span class="scn">Termin 3</span><br />Serah terima II</td><td>Dibayar saat serah terima modul Produksi In-House &amp; Subkontrak Tukang dan sign-off UAT tahap 2.</td><td class="c-pct">25%</td><td class="c-amt">Rp 79.000.000</td></tr>
+      <tr><td><span class="scn">Termin 4</span><br />Pelunasan</td><td>Dibayar saat serah terima Sales, POS, Finance &amp; Accounting, Absensi &amp; Laporan. Sistem go-live setelah pelunasan.</td><td class="c-pct">20%</td><td class="c-amt">Rp 63.000.000</td></tr>
+      <tr class="total"><td>TOTAL</td><td></td><td class="c-pct">100%</td><td class="c-amt">Rp 316.000.000</td></tr>
     </tbody>
   </table>
 
@@ -273,14 +291,15 @@
   <table>
     <thead><tr><th class="c-no">Bln</th><th>Fase</th><th>Kegiatan</th></tr></thead>
     <tbody>
-      <tr><td class="c-no">1</td><td><span class="scn">Analisis, Fondasi &amp; Penjualan</span></td><td>Pemetaan proses bisnis, desain database varian nomor &times; warna, pembangunan master data &amp; hak akses, E-Katalog dan modul Order (sales + online).</td></tr>
-      <tr><td class="c-no">2</td><td><span class="scn">Produksi</span></td><td>BOM per nomor, Perintah Produksi &amp; tahapan produksi, perhitungan HPP, modul subkontrak tukang: SPK, setor BOM, saldo bahan, rekonsiliasi &amp; hutang ongkos.</td></tr>
-      <tr><td class="c-no">3</td><td><span class="scn">Distribusi &amp; Ritel</span></td><td>SO/Surat Jalan/Invoice/piutang, konsinyasi &amp; retur, komisi sales, aplikasi POS toko dengan mode offline-sinkronisasi dan monitoring stok titipan.</td></tr>
-      <tr><td class="c-no">4</td><td><span class="scn">Finance, Absensi, Laporan &amp; Go-Live</span></td><td>Modul Finance &amp; Accounting (CoA, kas/bank, jurnal, giro, laporan keuangan), modul absensi (GPS/geofence, shift, kunjungan sales), laporan &amp; dashboard, migrasi data awal, pengujian menyeluruh, pelatihan, sign-off UAT &amp; go-live.</td></tr>
+      <tr><td class="c-no">1</td><td><span class="scn">Analisis &amp; Fondasi</span></td><td>Pemetaan proses bisnis, desain database varian nomor &times; warna, pembangunan master data &amp; hak akses, E-Katalog dan modul Order (sales + online).</td></tr>
+      <tr><td class="c-no">2</td><td><span class="scn">Purchasing &amp; Inventory</span></td><td>Modul Purchasing (PR, PO, goods receipt, hutang supplier) dan Warehouse &amp; Inventory (multi-gudang, mutasi, kartu stok, stok opname, penilaian persediaan).</td></tr>
+      <tr><td class="c-no">3</td><td><span class="scn">Produksi</span></td><td>BOM per nomor, Perintah Produksi &amp; tahapan produksi, perhitungan HPP, modul subkontrak tukang: SPK, setor BOM, saldo bahan, rekonsiliasi &amp; hutang ongkos.</td></tr>
+      <tr><td class="c-no">4</td><td><span class="scn">Sales &amp; Ritel</span></td><td>SO/Surat Jalan/Invoice/piutang, konsinyasi &amp; retur, komisi sales, aplikasi POS toko dengan mode offline-sinkronisasi dan monitoring stok titipan.</td></tr>
+      <tr><td class="c-no">5</td><td><span class="scn">Finance, Absensi, Laporan &amp; Go-Live</span></td><td>Modul Finance &amp; Accounting (CoA, kas/bank, jurnal, giro, laporan keuangan), modul absensi (GPS/geofence, shift, kunjungan sales), laporan &amp; dashboard, migrasi data awal, pengujian menyeluruh, pelatihan, sign-off UAT &amp; go-live.</td></tr>
     </tbody>
   </table>
   <p class="lead" style="margin-top:8px; font-size:10.5px; color:var(--muted)">
-    Timeline 4 bulan dicapai dengan penambahan personel dan pengerjaan modul secara paralel. Ketepatan
+    Timeline 5 bulan dicapai dengan penambahan personel dan pengerjaan modul secara paralel. Ketepatan
     jadwal bergantung pada ketersediaan narasumber proses bisnis dari pihak klien serta kecepatan
     approval pada setiap serah terima modul.
   </p>
