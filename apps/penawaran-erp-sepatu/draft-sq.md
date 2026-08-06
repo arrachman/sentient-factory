@@ -1,0 +1,127 @@
+# DRAFT SURAT PENAWARAN (SQ)
+
+**Nomor**: SQ/____/____/2026
+**Tanggal**: ____________
+**Kepada Yth.**: ____________________
+**Perihal**: Penawaran Pengembangan Sistem ERP Sepatu, E-Katalog, POS & Absensi
+
+---
+
+Dengan hormat,
+
+Menindaklanjuti diskusi kebutuhan sistem, berikut kami sampaikan penawaran
+pengembangan **Sistem Terintegrasi ERP Produksi Sepatu, E-Katalog, POS Toko, dan
+Absensi**. Sistem dirancang mengikuti proses bisnis aktual: produksi in-house,
+subkontrak tukang, distribusi ke toko/sekolah, penjualan online, serta pengawasan
+tim lapangan (sales & SPG).
+
+## 1. Lingkup Pekerjaan
+
+### A. Master Data & Fondasi
+Master artikel (nomor & warna sebagai varian), **master warna**, **master tukang**,
+**master sales**, master bahan, toko/sekolah, gudang, SPG, pengguna & hak akses.
+
+### B. E-Katalog & Order
+Katalog online per warna & nomor, order oleh sales (mobile-friendly), order online
+oleh toko, keranjang berbasis *size run*, approval, dan pelacakan status pesanan.
+
+### C. Produksi (In-House)
+BOM per artikel × nomor, perintah produksi, tahapan cutting → upper → assembling →
+finishing → QC, pemotongan stok bahan otomatis, pencatatan reject, perhitungan HPP.
+
+### D. Produksi Subkontrak (Tukang)
+SPK ke tukang, **setor BOM** & pengeluaran bahan ke tukang dengan pemotongan stok,
+pencatatan saldo bahan di tukang, penerimaan barang jadi, rekonsiliasi pemakaian
+bahan, serta perhitungan ongkos/hutang tukang. Mendukung dua mode: bahan disediakan
+perusahaan, atau bahan milik tukang sendiri.
+
+### E. Distribusi & Penjualan
+SO → Surat Jalan → Invoice → Piutang. Pencatatan sales penanggung jawab dan tujuan
+kirim, mode jual putus & konsinyasi, retur, komisi sales, laporan penjualan.
+
+### F. POS Toko
+Aplikasi kasir untuk toko (berdiri sendiri maupun tersambung ke pusat), mode
+offline dengan sinkronisasi, monitoring stok titipan milik perusahaan secara
+real-time, shift & tutup kasir, cetak struk, modul SPG (stok opname & laporan).
+
+### G. Absensi
+Absensi admin, SPG, dan sales dengan selfie + GPS/geofence, jadwal & shift,
+izin/cuti/lembur, check-in kunjungan sales, dan rekap jam kerja untuk payroll.
+
+### H. Laporan & Dashboard
+Stok per artikel × nomor × warna, kartu stok bahan, outstanding SPK & saldo bahan
+tukang, penjualan per sales/toko/area, rekap POS & konsinyasi, umur piutang, HPP &
+margin, rekap absensi. Export Excel/PDF.
+
+## 2. Rincian Biaya
+
+| No | Uraian Pekerjaan | Biaya (Rp) |
+| --- | --- | ---: |
+| 1 | Analisis proses bisnis, perancangan sistem & database | 15.000.000 |
+| 2 | Modul Master Data & Manajemen Pengguna | 14.000.000 |
+| 3 | Modul E-Katalog & Order (sales + online) | 26.000.000 |
+| 4 | Modul Produksi In-House (BOM, WO, HPP) | 30.000.000 |
+| 5 | Modul Subkontrak Tukang (SPK, setor BOM, rekonsiliasi) | 26.000.000 |
+| 6 | Modul Distribusi & Penjualan (SO/DO/Invoice/Piutang) | 24.000.000 |
+| 7 | Modul POS Toko (offline-sync, monitoring, SPG) | 25.000.000 |
+| 8 | Modul Absensi (GPS/geofence, shift, rekap) | 15.000.000 |
+| 9 | Laporan & Dashboard Manajemen | 8.000.000 |
+| 10 | Deployment, migrasi data awal, pelatihan & dokumentasi | 6.000.000 |
+| | **Total** | **189.000.000** |
+
+**Terbilang**: *Seratus delapan puluh sembilan juta rupiah*
+
+> Harga belum termasuk PPN.
+> Belum termasuk biaya server/hosting, domain, dan perangkat keras POS
+> (tablet/PC kasir, printer thermal, barcode scanner).
+
+## 3. Termin Pembayaran
+
+| Termin | Tahap | Porsi | Nilai (Rp) |
+| --- | --- | ---: | ---: |
+| I | Kontrak / DP | 30% | 56.700.000 |
+| II | Serah terima Master Data, E-Katalog & Order | 25% | 47.250.000 |
+| III | Serah terima Produksi & Subkontrak Tukang | 25% | 47.250.000 |
+| IV | Serah terima Distribusi, POS, Absensi & Go-Live | 20% | 37.800.000 |
+| | **Total** | **100%** | **189.000.000** |
+
+## 4. Jangka Waktu
+
+Estimasi **5 (lima) bulan** kalender sejak kontrak ditandatangani dan data awal
+diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
+
+| Bulan | Fokus |
+| --- | --- |
+| 1 | Analisis, desain, master data |
+| 2 | E-Katalog & Order |
+| 3 | Produksi in-house & subkontrak tukang |
+| 4 | Distribusi, penjualan & POS |
+| 5 | Absensi, laporan, pelatihan, go-live |
+
+## 5. Yang Kami Serahkan
+
+- Aplikasi web ERP siap pakai (source code menjadi milik klien setelah lunas).
+- Aplikasi POS toko.
+- Dokumentasi teknis & manual pengguna.
+- Pelatihan untuk admin, produksi, gudang, sales, dan kasir (2 sesi).
+- **Garansi & pendampingan 3 bulan** pasca go-live untuk perbaikan bug.
+
+## 6. Ketentuan
+
+1. Penawaran berlaku **30 hari** sejak tanggal surat.
+2. Perubahan lingkup di luar dokumen requirement dikenakan biaya tambahan
+   berdasarkan kesepakatan tertulis (*change request*).
+3. Klien menyediakan narasumber proses bisnis dan data master awal.
+4. Server/hosting produksi disediakan klien, atau kami sediakan dengan biaya
+   berlangganan terpisah.
+5. Biaya pemeliharaan setelah masa garansi ditawarkan terpisah.
+
+Demikian penawaran ini kami sampaikan. Kami siap mendiskusikan penyesuaian lingkup
+maupun tahapan implementasi sesuai prioritas Bapak/Ibu.
+
+Hormat kami,
+
+<br><br>
+
+**____________________**
+____________________
