@@ -109,16 +109,23 @@ Perlu ditegaskan tingkat kebutuhannya:
 ### d. Notifikasi WhatsApp / SMS
 
 Pelacakan pesanan dan pemberitahuan status kepada pembeli akan jauh lebih efektif
-melalui WhatsApp. WhatsApp Business API memerlukan verifikasi bisnis oleh Meta dan
-**persetujuan templat pesan** yang dapat memakan waktu 1–2 minggu di luar kendali
-kami. Biaya per pesan ditanggung pihak klien. **Belum tercakup.**
+melalui WhatsApp. Terdapat dua jalur layanan yang dapat dipilih:
+
+- **Jalur tidak resmi** — menggunakan penyedia layanan pihak ketiga dengan biaya
+  berlangganan bulanan. Jalur ini tidak berafiliasi resmi dengan Meta sehingga
+  memiliki risiko pembatasan atau pemblokiran nomor oleh WhatsApp.
+- **Jalur resmi (WhatsApp Business Platform)** — memerlukan verifikasi bisnis oleh
+  Meta dan persetujuan templat pesan. Biaya layanan dikenakan berdasarkan jumlah
+  pesan yang dikirim sesuai tarif Meta dan/atau penyedia resmi.
+
+Biaya berlangganan maupun biaya per pesan ditanggung pihak klien. Integrasi
+notifikasi WhatsApp/SMS **belum tercakup** dalam nilai penawaran.
 
 ### e. Peta & Geolokasi (Absensi)
 
-Absensi GPS/geofence pada penawaran menggunakan koordinat dan radius — sudah
-tercakup. Namun bila diperlukan **tampilan peta visual** dan **penerjemahan
-koordinat menjadi alamat**, hal tersebut memerlukan layanan peta berbayar (Google
-Maps) dengan biaya berlangganan atas nama klien. **Belum tercakup.**
+Absensi berbasis GPS/geofence, termasuk penggunaan koordinat, radius lokasi, dan
+kebutuhan peta/geolokasi yang berkaitan dengan proses absensi, **sudah tercakup**
+dalam nilai penawaran.
 
 ---
 
@@ -135,11 +142,7 @@ Website yang belum masuk lingkup penawaran:
 | 4 | **Empat tingkat harga jual** — Grosir, Pajak, Non-pajak, Konsumen | Tabel Jenis Harga |
 | 5 | **Jenis pelanggan berjenjang** — Konsumen, Affiliate, Dropship, Reseller, Agen | Data Customer |
 | 6 | **Target Order harian sales** Rp 8.000.000/hari beserta pemantauan pencapaian | Data Sales |
-| 7 | **Manajemen kepegawaian** — jabatan, divisi, status (tetap/kontrak/magang), riwayat pekerjaan | Modul HR |
-| 8 | **Barcode pada POS** — pemindaian dan pencarian produk berdasarkan barcode | Modul POS |
-| 9 | **Diskon & voucher** pada transaksi kasir | Modul POS |
-| 10 | **Kas masuk & kas keluar** pada shift kasir | Modul POS — Manajemen Kas |
-| 11 | **Pembelian produk impor** | Modul Pembelian |
+| 7 | **Pembelian produk impor** | Modul Pembelian |
 
 Perlu kami sampaikan secara terbuka bahwa butir **nomor 1 (Penggajian)** saat ini
 **dinyatakan di luar lingkup** pada dokumen Requirement kami — sistem hanya
@@ -148,28 +151,7 @@ memintanya secara eksplisit, butir ini perlu diselaraskan sebelum kontrak berjal
 
 ---
 
-## 4. Hal-hal yang Sudah Tercakup dan Melebihi Dokumen Bapak
-
-Sebagai keseimbangan, penawaran kami telah mencakup sejumlah hal yang **tidak
-tercantum** dalam dokumen Rancangan Website, namun kami nilai penting bagi bisnis
-produksi sepatu:
-
-- **Varian artikel × nomor × warna** beserta pemesanan berbasis *size run* —
-  seluruh dimensi ukuran dan warna sepatu.
-- **BOM per artikel × nomor**, tahapan produksi (potong → upper → assembling →
-  finishing → QC), pencatatan reject, dan **perhitungan HPP**.
-- **Subkontrak tukang** lengkap: SPK, setor BOM, saldo bahan di tukang, dan
-  rekonsiliasi pemakaian bahan.
-- **Finance & Accounting** menyeluruh: Chart of Account, kas & bank, jurnal, giro
-  & kliring, Buku Besar, Neraca, Laba Rugi, dan Arus Kas.
-- **Multi-gudang** dengan kartu stok, stok opname, penilaian persediaan, dan
-  peringatan stok minimum.
-- **Konsinyasi & jual putus** beserta rekap tagihan per toko.
-- **Jejak audit**, pencadangan terjadwal, dan ekspor laporan ke Excel/PDF.
-
----
-
-## 5. Usulan Langkah Selanjutnya
+## 4. Usulan Langkah Selanjutnya
 
 Kami mengusulkan satu sesi pembahasan untuk menyepakati:
 
