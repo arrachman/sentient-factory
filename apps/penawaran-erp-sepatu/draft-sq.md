@@ -2,20 +2,16 @@
 
 **Nomor**: SQ/____/____/2026
 **Tanggal**: ____________
-**Kepada Yth.**: Bapak Anil — Jl. Terusan Dieng, Malang, Jawa Timur (0816 665 500)
-**Perihal**: Penawaran Pengembangan Sistem ERP Terintegrasi Produksi Sepatu
+**Kepada Yth.**: Bapak Anil — Jl. Terusan Dieng (0816 665 500)
+**Perihal**: Penawaran Pengembangan Sistem ERP Sepatu, E-Katalog, POS & Absensi
 
 ---
 
 Dengan hormat,
 
 Menindaklanjuti diskusi kebutuhan sistem, berikut kami sampaikan penawaran
-pengembangan **Sistem ERP Terintegrasi Produksi Sepatu** — mencakup Master Data,
-E-Katalog & Order, Produksi (in-house & subkontrak), Purchasing (termasuk impor),
-Warehouse & Inventory, Sales & Distribusi, POS Toko, Finance & Accounting,
-Perpajakan, Absensi, Penggajian, Kemitraan & Harga Berjenjang, serta Integrasi
-Pihak Ketiga. Seluruh butir pada Catatan Klarifikasi Lingkup **ADD-SPT-2026-0001**
-sudah dimasukkan ke lingkup. Sistem dirancang mengikuti proses bisnis aktual: produksi in-house,
+pengembangan **Sistem Terintegrasi ERP Produksi Sepatu, E-Katalog, POS Toko, dan
+Finance & Accounting, Warehouse & Inventory, Purchasing, Sales, dan Absensi**. Sistem dirancang mengikuti proses bisnis aktual: produksi in-house,
 subkontrak tukang, distribusi ke toko/sekolah, penjualan online, serta pengawasan
 tim lapangan (sales & SPG).
 
@@ -69,24 +65,23 @@ Receipt/Send Memo, Cash/Bank Transfer, FX Revaluation. Laporan: Buku Besar, Nera
 Saldo, Neraca, Laba Rugi, Arus Kas, kartu hutang & piutang. Terintegrasi dengan
 invoice penjualan, hutang tukang, pembelian bahan, dan HPP.
 
-### K. Perpajakan
-Peran Admin Pajak: PPN keluaran & masukan, pajak pengeluaran, retur pajak,
-pengeluaran keliling sales, cetak faktur dari sistem, arsip laporan pajak bulanan,
-serta pembedaan harga pajak vs non-pajak.
-
-### L. Penggajian (Payroll)
+### K. Penggajian (Payroll)
 Gaji pokok & tunjangan, bonus & insentif, potongan, lembur, proses penggajian
 periodik, cetak slip gaji, terhubung jurnal biaya gaji.
 
-### M. Kemitraan & Harga Berjenjang
-Jenis pelanggan berjenjang (Konsumen, Affiliate, Dropship, Reseller, Agen), komisi
-mitra 10/14/19/24% dengan minimum order, empat tingkat harga jual (Grosir, Pajak,
-Non-pajak, Konsumen), target order harian sales & pemantauannya.
+### L. Skema Komisi Mitra Berjenjang
+Jenis mitra berjenjang (Affiliate, Dropship, Reseller, Agen) dengan persentase
+komisi dan minimum order per jenjang, perhitungan komisi otomatis dari penjualan,
+laporan komisi terutang & riwayat pembayaran.
 
-### N. Integrasi Pihak Ketiga
-Payment gateway (VA, QRIS, e-wallet, kartu; webhook, rekonsiliasi, refund),
-ekspedisi semi-otomatis via agregator (ongkir, resi, label, pelacakan), QRIS dinamis
-pada POS, notifikasi WhatsApp Business Platform, dan pembelian impor.
+### M. Integrasi Payment Gateway
+Pembayaran online untuk order online: VA, QRIS, e-wallet, kartu kredit; webhook +
+verifikasi tanda tangan, rekonsiliasi otomatis, penanganan pending/gagal/refund,
+halaman status pembayaran. Order via sales tetap bisa transfer manual.
+
+### N. Integrasi Ekspedisi
+Terhubung agregator kurir: cek ongkir, pembuatan resi, cetak label pengiriman,
+pembaruan status, pelacakan oleh pembeli.
 
 ### O. Laporan & Dashboard
 Stok per artikel × nomor × warna, kartu stok bahan, outstanding SPK & saldo bahan
@@ -98,64 +93,55 @@ margin, rekap absensi. Export Excel/PDF.
 | No | Uraian Pekerjaan | Biaya (Rp) |
 | --- | --- | ---: |
 | 1 | Modul Master Data & Manajemen Pengguna | 11.000.000 |
-| 2 | Modul E-Katalog & Order (sales + online, checkout) | 24.000.000 |
+| 2 | Modul E-Katalog & Order (sales + online) | 21.000.000 |
 | 3 | Modul Produksi (BOM, WO, HPP) | 24.000.000 |
 | 4 | Modul Subkontrak Tukang (SPK, setor BOM, rekonsiliasi) | 21.000.000 |
 | 5 | Modul Purchasing (supplier, PR, PO, goods receipt, hutang) | 17.000.000 |
 | 6 | Modul Warehouse & Inventory (multi-gudang, kartu stok, opname) | 20.000.000 |
-| 7 | Modul Sales — Distribusi & Penjualan | 21.000.000 |
+| 7 | Modul Sales — Distribusi & Penjualan | 19.000.000 |
 | 8 | Modul POS Toko (offline-sync, monitoring, SPG) | 20.000.000 |
 | 9 | Modul Finance & Accounting | 28.000.000 |
 | 10 | Modul Absensi (GPS/geofence, shift, rekap) | 12.000.000 |
-| 11 | Modul Perpajakan (PPN, retur pajak, faktur, arsip bulanan) | 14.000.000 |
-| 12 | Modul Penggajian (gaji, bonus, potongan, lembur, slip) | 26.000.000 |
-| 13 | Modul Kemitraan & Harga Berjenjang (komisi mitra, 4 tingkat harga) | 33.000.000 |
-| 14 | Integrasi Payment Gateway | 22.000.000 |
-| 15 | Integrasi Ekspedisi (semi-otomatis via agregator) | 14.000.000 |
-| 16 | Integrasi QRIS Dinamis pada POS | 9.000.000 |
-| 17 | Integrasi Notifikasi WhatsApp | 12.000.000 |
-| 18 | Pembelian Impor (perluasan Purchasing) | 10.000.000 |
-| 19 | Laporan & Dashboard Manajemen | 7.000.000 |
-| 20 | Deployment, migrasi data awal, pelatihan & dokumentasi | 7.000.000 |
-| 21 | Support & maintenance bulanan (3 bulan, sudah termasuk) | 8.000.000 |
-| | **Subtotal (sebelum pajak)** | **360.000.000** |
-| | **PPN 11%** | **39.600.000** |
-| | **Total setelah PPN** | **399.600.000** |
+| 11 | Modul Penggajian (gaji, bonus, potongan, lembur, slip gaji) | 9.000.000 |
+| 12 | Skema Komisi Mitra Berjenjang | 7.000.000 |
+| 13 | Integrasi Payment Gateway (untuk order online) | 13.000.000 |
+| 14 | Integrasi Ekspedisi (ongkir, resi, label, pelacakan) | 8.000.000 |
+| 15 | Laporan & Dashboard Manajemen | 7.000.000 |
+| 16 | Deployment, migrasi data awal, pelatihan & dokumentasi | 5.000.000 |
+| 17 | Support & maintenance bulanan (3 bulan, sudah termasuk) | 5.000.000 |
+| | **Total** | **247.000.000** |
 
-**Terbilang**: *Tiga ratus sembilan puluh sembilan juta enam ratus ribu rupiah* (termasuk PPN 11%)
+**Terbilang**: *Dua ratus empat puluh tujuh juta rupiah*
 
-> Nilai pekerjaan Rp 360.000.000 bersifat tetap (*fixed price*).
+> Nilai pekerjaan Rp 247.000.000 bersifat tetap (*fixed price*).
 > Belum termasuk biaya server/hosting, domain, dan perangkat keras POS
 > (tablet/PC kasir, printer thermal, barcode scanner).
 
 ## 3. Termin Pembayaran
 
-| Termin | Tahap | Porsi | Nilai (Rp) | PPN 11% | Ditagihkan |
-| --- | --- | ---: | ---: | ---: | ---: |
-| I | Kontrak / DP | 30% | 108.000.000 | 11.880.000 | 119.880.000 |
-| II | Serah terima Master Data, Purchasing & Inventory | 25% | 90.000.000 | 9.900.000 | 99.900.000 |
-| III | Serah terima Produksi, Subkontrak, E-Katalog, Sales & Kemitraan | 25% | 90.000.000 | 9.900.000 | 99.900.000 |
-| IV | Serah terima POS, Integrasi, Finance, Pajak, Absensi, Payroll & Go-Live | 20% | 72.000.000 | 7.920.000 | 79.920.000 |
-| | **Total** | **100%** | **360.000.000** | **39.600.000** | **399.600.000** |
+| Termin | Tahap | Porsi | Nilai (Rp) |
+| --- | --- | ---: | ---: |
+| I | Kontrak / DP | 30% | 74.100.000 |
+| II | Serah terima Master Data, E-Katalog, Purchasing & Inventory | 25% | 61.750.000 |
+| III | Serah terima Produksi & Subkontrak Tukang | 25% | 61.750.000 |
+| IV | Serah terima Sales, POS, Finance, Absensi & Go-Live | 20% | 49.400.000 |
+| | **Total** | **100%** | **247.000.000** |
 
 ## 4. Jangka Waktu
 
-Estimasi **7 (tujuh) bulan** kalender sejak kontrak ditandatangani dan data awal
+Estimasi **4 (empat) bulan** kalender sejak kontrak ditandatangani dan data awal
 diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
 
 | Bulan | Fokus |
 | --- | --- |
-| 1 | Analisis, desain, master data, harga berjenjang |
-| 2 | Purchasing (termasuk impor) & Warehouse/Inventory |
-| 3 | Produksi in-house & subkontrak tukang |
-| 4 | E-Katalog, Sales, distribusi & kemitraan |
-| 5 | POS & integrasi pihak ketiga (payment gateway, ekspedisi, QRIS, WhatsApp) |
-| 6 | Finance & Accounting, Perpajakan, Absensi, Penggajian |
-| 7 | Laporan, migrasi, pelatihan, UAT, go-live |
+| 1 | Analisis, desain, master data, E-Katalog & Order |
+| 2 | Purchasing & Warehouse/Inventory |
+| 3 | Produksi, subkontrak tukang, sales & distribusi |
+| 4 | POS, Finance & Accounting, absensi, laporan, pelatihan, go-live |
 
-> Jadwal go-live untuk pembayaran online dan notifikasi WhatsApp bergantung pada
-> verifikasi merchant (1–3 minggu) dan persetujuan templat pesan oleh penyedia,
-> yang berada di luar kendali kami.
+> Timeline 4 bulan dicapai dengan penambahan personel dan pengerjaan modul secara
+> paralel. Ketepatan jadwal bergantung pada ketersediaan narasumber proses bisnis
+> dari pihak klien dan kecepatan approval pada setiap serah terima modul.
 
 ## 5. Yang Kami Serahkan
 
