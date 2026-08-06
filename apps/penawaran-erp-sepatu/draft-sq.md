@@ -3,16 +3,19 @@
 **Nomor**: SQ/____/____/2026
 **Tanggal**: ____________
 **Kepada Yth.**: Bapak Anil — Jl. Terusan Dieng, Malang, Jawa Timur (0816 665 500)
-**Perihal**: Penawaran Pengembangan Sistem ERP Sepatu, E-Katalog, POS & Absensi
+**Perihal**: Penawaran Pengembangan Sistem ERP Terintegrasi Produksi Sepatu
 
 ---
 
 Dengan hormat,
 
 Menindaklanjuti diskusi kebutuhan sistem, berikut kami sampaikan penawaran
-pengembangan **Sistem Terintegrasi ERP Produksi Sepatu, E-Katalog, POS Toko, dan
-Finance & Accounting, Warehouse & Inventory, Purchasing, Sales, dan Perpajakan, Penggajian, Kemitraan, dan Integrasi Pihak Ketiga**. Seluruh butir
-pada Catatan Klarifikasi Lingkup ADD-SPT-2026-0001 sudah masuk lingkup. Sistem dirancang mengikuti proses bisnis aktual: produksi in-house,
+pengembangan **Sistem ERP Terintegrasi Produksi Sepatu** — mencakup Master Data,
+E-Katalog & Order, Produksi (in-house & subkontrak), Purchasing (termasuk impor),
+Warehouse & Inventory, Sales & Distribusi, POS Toko, Finance & Accounting,
+Perpajakan, Absensi, Penggajian, Kemitraan & Harga Berjenjang, serta Integrasi
+Pihak Ketiga. Seluruh butir pada Catatan Klarifikasi Lingkup **ADD-SPT-2026-0001**
+sudah dimasukkan ke lingkup. Sistem dirancang mengikuti proses bisnis aktual: produksi in-house,
 subkontrak tukang, distribusi ke toko/sekolah, penjualan online, serta pengawasan
 tim lapangan (sales & SPG).
 
