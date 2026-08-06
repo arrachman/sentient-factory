@@ -25,9 +25,9 @@ Master artikel (nomor & warna sebagai varian), **master warna**, **master tukang
 Katalog online per warna & nomor, order oleh sales (mobile-friendly), order online
 oleh toko, keranjang berbasis *size run*, approval, dan pelacakan status pesanan.
 
-### C. Produksi (In-House)
-BOM per artikel × nomor, perintah produksi, tahapan cutting → upper → assembling →
-finishing → QC, pemotongan stok bahan otomatis, pencatatan reject, perhitungan HPP.
+### C. Produksi
+BOM per artikel × nomor, perintah produksi, tahapan produksi & QC, pemotongan stok
+bahan otomatis, pencatatan reject, perhitungan HPP.
 
 ### D. Produksi Subkontrak (Tukang)
 SPK ke tukang, **setor BOM** & pengeluaran bahan ke tukang dengan pemotongan stok,
@@ -50,9 +50,9 @@ SO → Surat Jalan → Invoice → Piutang. Pencatatan sales penanggung jawab da
 kirim, mode jual putus & konsinyasi, retur, komisi sales, laporan penjualan.
 
 ### H. POS Toko
-Aplikasi kasir untuk toko (berdiri sendiri maupun tersambung ke pusat), mode
-offline dengan sinkronisasi, monitoring stok titipan milik perusahaan secara
-real-time, shift & tutup kasir, cetak struk, modul SPG (stok opname & laporan).
+Aplikasi kasir untuk toko yang tersambung ke sistem pusat, mode offline dengan
+sinkronisasi, monitoring stok titipan milik perusahaan secara real-time, shift &
+tutup kasir, cetak struk, modul SPG (stok opname & laporan).
 
 ### J. Absensi
 Absensi admin, SPG, dan sales dengan selfie + GPS/geofence, jadwal & shift,
@@ -76,7 +76,7 @@ margin, rekap absensi. Export Excel/PDF.
 | --- | --- | ---: |
 | 1 | Modul Master Data & Manajemen Pengguna | 11.000.000 |
 | 2 | Modul E-Katalog & Order (sales + online) | 21.000.000 |
-| 3 | Modul Produksi In-House (BOM, WO, HPP) | 24.000.000 |
+| 3 | Modul Produksi (BOM, WO, HPP) | 24.000.000 |
 | 4 | Modul Subkontrak Tukang (SPK, setor BOM, rekonsiliasi) | 21.000.000 |
 | 5 | Modul Purchasing (supplier, PR, PO, goods receipt, hutang) | 17.000.000 |
 | 6 | Modul Warehouse & Inventory (multi-gudang, kartu stok, opname) | 20.000.000 |
@@ -87,41 +87,37 @@ margin, rekap absensi. Export Excel/PDF.
 | 11 | Laporan & Dashboard Manajemen | 7.000.000 |
 | 12 | Deployment, migrasi data awal, pelatihan & dokumentasi | 5.000.000 |
 | 13 | Support & maintenance bulanan (3 bulan, sudah termasuk) | 5.000.000 |
-| | **Subtotal (sebelum pajak)** | **210.000.000** |
-| | **PPN 11%** | **23.100.000** |
-| | **Total setelah PPN** | **233.100.000** |
+| | **Total** | **210.000.000** |
 
-**Terbilang**: *Dua ratus tiga puluh tiga juta seratus ribu rupiah* (termasuk PPN 11%)
+**Terbilang**: *Dua ratus sepuluh juta rupiah*
 
-> Nilai pekerjaan Rp 210.000.000 belum termasuk pajak; PPN 11% ditambahkan
-> menjadi Rp 233.100.000. Faktur pajak diterbitkan tiap termin.
+> Nilai pekerjaan Rp 210.000.000 bersifat tetap (*fixed price*).
 > Belum termasuk biaya server/hosting, domain, dan perangkat keras POS
 > (tablet/PC kasir, printer thermal, barcode scanner).
 
 ## 3. Termin Pembayaran
 
-| Termin | Tahap | Porsi | Nilai (Rp) | PPN 11% | Ditagihkan |
-| --- | --- | ---: | ---: | ---: | ---: |
-| I | Kontrak / DP | 30% | 63.000.000 | 6.930.000 | 69.930.000 |
-| II | Serah terima Master Data, E-Katalog, Purchasing & Inventory | 25% | 52.500.000 | 5.775.000 | 58.275.000 |
-| III | Serah terima Produksi & Subkontrak Tukang | 25% | 52.500.000 | 5.775.000 | 58.275.000 |
-| IV | Serah terima Sales, POS, Finance, Absensi & Go-Live | 20% | 42.000.000 | 4.620.000 | 46.620.000 |
-| | **Total** | **100%** | **210.000.000** | **23.100.000** | **233.100.000** |
+| Termin | Tahap | Porsi | Nilai (Rp) |
+| --- | --- | ---: | ---: |
+| I | Kontrak / DP | 30% | 63.000.000 |
+| II | Serah terima Master Data, E-Katalog, Purchasing & Inventory | 25% | 52.500.000 |
+| III | Serah terima Produksi & Subkontrak Tukang | 25% | 52.500.000 |
+| IV | Serah terima Sales, POS, Finance, Absensi & Go-Live | 20% | 42.000.000 |
+| | **Total** | **100%** | **210.000.000** |
 
 ## 4. Jangka Waktu
 
-Estimasi **5 (lima) bulan** kalender sejak kontrak ditandatangani dan data awal
+Estimasi **4 (empat) bulan** kalender sejak kontrak ditandatangani dan data awal
 diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
 
 | Bulan | Fokus |
 | --- | --- |
 | 1 | Analisis, desain, master data, E-Katalog & Order |
 | 2 | Purchasing & Warehouse/Inventory |
-| 3 | Produksi in-house & subkontrak tukang |
-| 4 | Sales, distribusi & POS |
-| 5 | Finance & Accounting, absensi, laporan, pelatihan, go-live |
+| 3 | Produksi, subkontrak tukang, sales & distribusi |
+| 4 | POS, Finance & Accounting, absensi, laporan, pelatihan, go-live |
 
-> Timeline 5 bulan dicapai dengan penambahan personel dan pengerjaan modul secara
+> Timeline 4 bulan dicapai dengan penambahan personel dan pengerjaan modul secara
 > paralel. Ketepatan jadwal bergantung pada ketersediaan narasumber proses bisnis
 > dari pihak klien dan kecepatan approval pada setiap serah terima modul.
 
@@ -142,7 +138,10 @@ diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
 3. Klien menyediakan narasumber proses bisnis dan data master awal.
 4. Server/hosting produksi disediakan klien, atau kami sediakan dengan biaya
    berlangganan terpisah.
-5. Perpanjangan support & maintenance setelah 3 bulan pertama ditawarkan terpisah.
+5. Integrasi ke sistem ekspedisi/kurir (cek ongkir otomatis, generate resi,
+   pelacakan pengiriman) tidak termasuk; sistem hanya mencatat ekspedisi, nomor
+   resi, dan ongkir secara manual.
+6. Perpanjangan support & maintenance setelah 3 bulan pertama ditawarkan terpisah.
 
 Demikian penawaran ini kami sampaikan. Kami siap mendiskusikan penyesuaian lingkup
 maupun tahapan implementasi sesuai prioritas Bapak/Ibu.
