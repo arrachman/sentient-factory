@@ -1,10 +1,9 @@
-# CATATAN KLARIFIKASI LINGKUP PENAWARAN
+# CATATAN KLARIFIKASI LINGKUP
 
 **Nomor**: ADD-SPT-2026-0001
 **Tanggal**: 6 Agustus 2026
-**Lampiran dari**: Sales Quotation No. SQ-SPT-2026-0001
 **Kepada Yth.**: Bapak Anil — Jl. Terusan Dieng, Malang, Jawa Timur
-**Perihal**: Hal-hal yang belum tercakup dalam penawaran, merujuk dokumen
+**Perihal**: Hal-hal yang belum tercakup dalam lingkup pekerjaan, merujuk dokumen
 *"Rancangan Website"* yang Bapak sampaikan
 
 ---
@@ -12,14 +11,13 @@
 Dengan hormat,
 
 Setelah kami pelajari dokumen **"Rancangan Website"** yang Bapak sampaikan dan
-membandingkannya dengan lingkup pekerjaan pada Sales Quotation No.
-SQ-SPT-2026-0001, kami menemukan sejumlah kebutuhan yang tercantum dalam dokumen
-tersebut namun **belum tercakup** dalam nilai penawaran Rp 210.000.000.
+membandingkannya dengan lingkup pekerjaan yang telah kami susun, kami menemukan
+sejumlah kebutuhan yang tercantum dalam dokumen tersebut namun **belum tercakup**
+dalam lingkup pekerjaan.
 
-Kami sampaikan hal ini di awal — sebelum kontrak ditandatangani — agar tidak
-menjadi persoalan di tengah pelaksanaan proyek. Setiap butir di bawah ini
-memerlukan keputusan Bapak: **masuk ke lingkup** (dengan penyesuaian nilai dan
-jadwal), atau **dikeluarkan** dari tahap pertama.
+Kami sampaikan hal ini di awal agar tidak menjadi persoalan di tengah pelaksanaan
+proyek. Setiap butir di bawah ini memerlukan keputusan Bapak: **masuk ke lingkup**
+atau **dikeluarkan** dari tahap pertama.
 
 ---
 
@@ -54,8 +52,8 @@ Integrasi payment gateway yang sesungguhnya mencakup pekerjaan berikut:
 
 **Perlu diketahui:** setiap transaksi melalui payment gateway dikenakan biaya
 potongan oleh penyedia (umumnya berkisar 0,7%–2,9% per transaksi, tergantung
-metode pembayaran). Biaya ini **ditanggung pihak klien** dan berada di luar nilai
-penawaran. Proses verifikasi merchant juga memakan waktu 1–3 minggu dan berada di
+metode pembayaran). Biaya ini **ditanggung pihak klien** dan berada di luar lingkup
+pekerjaan. Proses verifikasi merchant juga memakan waktu 1–3 minggu dan berada di
 luar kendali kami — hal ini berpengaruh pada jadwal go-live.
 
 ---
@@ -119,13 +117,13 @@ melalui WhatsApp. Terdapat dua jalur layanan yang dapat dipilih:
   pesan yang dikirim sesuai tarif Meta dan/atau penyedia resmi.
 
 Biaya berlangganan maupun biaya per pesan ditanggung pihak klien. Integrasi
-notifikasi WhatsApp/SMS **belum tercakup** dalam nilai penawaran.
+notifikasi WhatsApp/SMS **belum tercakup** dalam lingkup pekerjaan.
 
 ### e. Peta & Geolokasi (Absensi)
 
 Absensi berbasis GPS/geofence, termasuk penggunaan koordinat, radius lokasi, dan
 kebutuhan peta/geolokasi yang berkaitan dengan proses absensi, **sudah tercakup**
-dalam nilai penawaran.
+dalam lingkup pekerjaan.
 
 ---
 
@@ -158,15 +156,14 @@ Kami mengusulkan satu sesi pembahasan untuk menyepakati:
 1. **Integrasi mana yang masuk tahap pertama** — terutama payment gateway,
    ekspedisi, dan perpajakan.
 2. **Status modul Penggajian** — masuk lingkup atau tetap dikecualikan.
-3. **Penyesuaian nilai dan jadwal** apabila butir-butir di atas ditambahkan.
+3. **Prioritas pengerjaan** — butir mana yang dikerjakan lebih dulu.
 
-Setelah kesepakatan tercapai, kami akan menerbitkan **penawaran revisi** dengan
-lingkup dan nilai yang telah disesuaikan.
+Setelah lingkup disepakati, kami akan menyusun dokumen lingkup pekerjaan yang
+telah diperbarui sebagai dasar pembahasan berikutnya.
 
-Perlu kami tekankan bahwa **jadwal 4 (empat) bulan** pada penawaran saat ini
-disusun berdasarkan lingkup yang tercantum di dalamnya. Penambahan integrasi
-pihak ketiga akan memperpanjang jadwal, terutama karena proses verifikasi merchant
-dan persetujuan dari penyedia layanan berada di luar kendali kami.
+Perlu kami sampaikan bahwa penambahan integrasi pihak ketiga berpengaruh pada
+jadwal pengerjaan, terutama karena proses verifikasi merchant dan persetujuan dari
+penyedia layanan berada di luar kendali kami.
 
 Demikian catatan ini kami sampaikan sebagai bentuk keterbukaan sejak awal. Kami
 berpandangan lebih baik menyelaraskan harapan di depan daripada menemui perbedaan

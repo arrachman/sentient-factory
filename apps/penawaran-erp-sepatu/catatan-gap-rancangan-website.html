@@ -39,11 +39,10 @@ ul.notes li,ol.notes li{margin-bottom:5px;font-size:11.5px;text-align:justify;br
 .signblock .sline{font-size:11.5px;color:#374151;}
 .signblock .smuted{color:var(--muted);font-size:11px;}
 </style></head><body><div class="page"><div class="hero">
-  <div class="word">CATATAN KLARIFIKASI LINGKUP<small>Lampiran Penawaran</small></div>
+  <div class="word">CATATAN KLARIFIKASI LINGKUP<small>Dokumen Pembahasan</small></div>
   <div class="meta">
     <div>Tanggal: <b>6 Agustus 2026</b></div>
     <div>No. Dokumen: <b>ADD-SPT-2026-0001</b></div>
-    <div>Lampiran dari: <b>SQ-SPT-2026-0001</b></div>
   </div>
 </div>
 <div class="parties">
@@ -61,10 +60,10 @@ ul.notes li,ol.notes li{margin-bottom:5px;font-size:11.5px;text-align:justify;br
   </div>
 </div>
 <div class="rule"></div>
-<p class="lead" style="margin-top:16px"><b>Perihal:</b> Hal-hal yang belum tercakup dalam Penawaran No. SQ-SPT-2026-0001, merujuk dokumen <i>"Rancangan Website"</i> yang Bapak sampaikan.</p>
+<p class="lead" style="margin-top:16px"><b>Perihal:</b> Hal-hal yang belum tercakup dalam lingkup pekerjaan, merujuk dokumen <i>"Rancangan Website"</i> yang Bapak sampaikan.</p>
 <p class="lead">Dengan hormat,</p>
-<p class="lead">Setelah kami pelajari dokumen <b>&quot;Rancangan Website&quot;</b> yang Bapak sampaikan dan membandingkannya dengan lingkup pekerjaan pada Sales Quotation No. SQ-SPT-2026-0001, kami menemukan sejumlah kebutuhan yang tercantum dalam dokumen tersebut namun <b>belum tercakup</b> dalam nilai penawaran Rp 210.000.000.</p>
-<p class="lead">Kami sampaikan hal ini di awal — sebelum kontrak ditandatangani — agar tidak menjadi persoalan di tengah pelaksanaan proyek. Setiap butir di bawah ini memerlukan keputusan Bapak: <b>masuk ke lingkup</b> (dengan penyesuaian nilai dan jadwal), atau <b>dikeluarkan</b> dari tahap pertama.</p>
+<p class="lead">Setelah kami pelajari dokumen <b>&quot;Rancangan Website&quot;</b> yang Bapak sampaikan dan membandingkannya dengan lingkup pekerjaan yang telah kami susun, kami menemukan sejumlah kebutuhan yang tercantum dalam dokumen tersebut namun <b>belum tercakup</b> dalam lingkup pekerjaan.</p>
+<p class="lead">Kami sampaikan hal ini di awal agar tidak menjadi persoalan di tengah pelaksanaan proyek. Setiap butir di bawah ini memerlukan keputusan Bapak: <b>masuk ke lingkup</b> atau <b>dikeluarkan</b> dari tahap pertama.</p>
 <h2 class="sec"><span class="n">1</span>Integrasi Payment Gateway — perhatian utama</h2>
 <p class="lead">Dokumen Rancangan Website mencantumkan alur <b>Keranjang → Checkout → Pembayaran</b> serta peran <b>Admin Pembayaran</b> (memverifikasi pembayaran pelanggan, mengonfirmasi pembayaran berhasil, menangani pembayaran gagal atau belum terkonfirmasi).</p>
 <p class="lead">Pada penawaran saat ini, modul E-Katalog &amp; Order <b>belum mencakup integrasi payment gateway</b>. Yang tersedia baru pencatatan pembayaran secara manual (transfer + konfirmasi admin).</p>
@@ -72,7 +71,7 @@ ul.notes li,ol.notes li{margin-bottom:5px;font-size:11.5px;text-align:justify;br
 <table><thead><tr><th>Komponen</th><th>Keterangan</th></tr></thead><tbody><tr><td>Pendaftaran &amp; aktivasi merchant</td><td>Midtrans / Xendit / Doku — perlu dokumen legal usaha</td></tr><tr><td>Metode pembayaran</td><td>Virtual Account, QRIS, e-wallet, kartu kredit</td></tr><tr><td>Callback / webhook</td><td>Penerimaan notifikasi status bayar dari provider, verifikasi tanda tangan digital, penanganan notifikasi ganda</td></tr><tr><td>Rekonsiliasi</td><td>Pencocokan otomatis pembayaran masuk dengan pesanan</td></tr><tr><td>Penanganan status</td><td>Pending, kedaluwarsa, gagal, batal, dan pengembalian dana (<i>refund</i>)</td></tr><tr><td>Halaman &amp; notifikasi</td><td>Halaman status pembayaran untuk pembeli beserta pemberitahuannya</td></tr></tbody></table>
 <p class="lead"><b>Yang perlu Bapak putuskan:</b></p>
 <ol class="notes"><li>Apakah pembayaran online benar-benar diperlukan pada tahap pertama, atau cukup transfer manual dengan verifikasi oleh Admin Pembayaran?</li><li>Bila diperlukan, penyedia mana yang dipilih?</li><li>Siapa yang mengurus pendaftaran merchant — pihak Bapak atau kami dampingi?</li></ol>
-<p class="lead"><b>Perlu diketahui:</b> setiap transaksi melalui payment gateway dikenakan biaya potongan oleh penyedia (umumnya berkisar 0,7%–2,9% per transaksi, tergantung metode pembayaran). Biaya ini <b>ditanggung pihak klien</b> dan berada di luar nilai penawaran. Proses verifikasi merchant juga memakan waktu 1–3 minggu dan berada di luar kendali kami — hal ini berpengaruh pada jadwal go-live.</p>
+<p class="lead"><b>Perlu diketahui:</b> setiap transaksi melalui payment gateway dikenakan biaya potongan oleh penyedia (umumnya berkisar 0,7%–2,9% per transaksi, tergantung metode pembayaran). Biaya ini <b>ditanggung pihak klien</b> dan berada di luar lingkup pekerjaan. Proses verifikasi merchant juga memakan waktu 1–3 minggu dan berada di luar kendali kami — hal ini berpengaruh pada jadwal go-live.</p>
 <h2 class="sec"><span class="n">2</span>Integrasi Pihak Ketiga Lainnya</h2>
 <h3 class="sub">a. Ekspedisi / Kurir</h3>
 <p class="lead">Dokumen Rancangan Website meminta: <b>cetak label pengiriman</b>, <b>nomor resi</b>, <b>pembaruan status pengiriman secara real-time</b>, dan <b>pelacakan oleh pembeli</b>.</p>
@@ -89,18 +88,18 @@ ul.notes li,ol.notes li{margin-bottom:5px;font-size:11.5px;text-align:justify;br
 <h3 class="sub">d. Notifikasi WhatsApp / SMS</h3>
 <p class="lead">Pelacakan pesanan dan pemberitahuan status kepada pembeli akan jauh lebih efektif melalui WhatsApp. Terdapat dua jalur layanan yang dapat dipilih:</p>
 <ul class="notes"><li><b>Jalur tidak resmi</b> — menggunakan penyedia layanan pihak ketiga dengan biaya berlangganan bulanan. Jalur ini tidak berafiliasi resmi dengan Meta sehingga memiliki risiko pembatasan atau pemblokiran nomor oleh WhatsApp.</li><li><b>Jalur resmi (WhatsApp Business Platform)</b> — memerlukan verifikasi bisnis oleh Meta dan persetujuan templat pesan. Biaya layanan dikenakan berdasarkan jumlah pesan yang dikirim sesuai tarif Meta dan/atau penyedia resmi.</li></ul>
-<p class="lead">Biaya berlangganan maupun biaya per pesan ditanggung pihak klien. Integrasi notifikasi WhatsApp/SMS <b>belum tercakup</b> dalam nilai penawaran.</p>
+<p class="lead">Biaya berlangganan maupun biaya per pesan ditanggung pihak klien. Integrasi notifikasi WhatsApp/SMS <b>belum tercakup</b> dalam lingkup pekerjaan.</p>
 <h3 class="sub">e. Peta &amp; Geolokasi (Absensi)</h3>
-<p class="lead">Absensi berbasis GPS/geofence, termasuk penggunaan koordinat, radius lokasi, dan kebutuhan peta/geolokasi yang berkaitan dengan proses absensi, <b>sudah tercakup</b> dalam nilai penawaran.</p>
+<p class="lead">Absensi berbasis GPS/geofence, termasuk penggunaan koordinat, radius lokasi, dan kebutuhan peta/geolokasi yang berkaitan dengan proses absensi, <b>sudah tercakup</b> dalam lingkup pekerjaan.</p>
 <h2 class="sec pagebreak"><span class="n">3</span>Kebutuhan Fungsional yang Belum Tercakup</h2>
 <p class="lead">Di luar integrasi pihak ketiga, terdapat kebutuhan berikut pada dokumen Rancangan Website yang belum masuk lingkup penawaran:</p>
 <table><thead><tr><th class="c-no">No</th><th>Kebutuhan</th><th>Sumber di dokumen Bapak</th></tr></thead><tbody><tr><td class="c-no">1</td><td><b>Penggajian penuh</b> — perhitungan gaji, bonus &amp; insentif, potongan, lembur, dan <b>cetak slip gaji</b></td><td>Modul HR — Penggajian</td></tr><tr><td class="c-no">2</td><td><b>Modul perpajakan</b> — pajak pengeluaran, retur pajak, pengeluaran kelilingan sales, arsip laporan bulanan</td><td>Peran Admin Pajak</td></tr><tr><td class="c-no">3</td><td><b>Skema komisi mitra berjenjang</b> — Affiliate 10%, Dropship 14%, Reseller 19%, Agen 24%, masing-masing dengan minimum order</td><td>Tabel Jenis Kerjasama</td></tr><tr><td class="c-no">4</td><td><b>Empat tingkat harga jual</b> — Grosir, Pajak, Non-pajak, Konsumen</td><td>Tabel Jenis Harga</td></tr><tr><td class="c-no">5</td><td><b>Jenis pelanggan berjenjang</b> — Konsumen, Affiliate, Dropship, Reseller, Agen</td><td>Data Customer</td></tr><tr><td class="c-no">6</td><td><b>Target Order harian sales</b> Rp 8.000.000/hari beserta pemantauan pencapaian</td><td>Data Sales</td></tr><tr><td class="c-no">7</td><td><b>Pembelian produk impor</b></td><td>Modul Pembelian</td></tr></tbody></table>
 <p class="lead">Perlu kami sampaikan secara terbuka bahwa butir <b>nomor 1 (Penggajian)</b> saat ini <b>dinyatakan di luar lingkup</b> pada dokumen Requirement kami — sistem hanya menyediakan data jam kerja sebagai dasar perhitungan. Karena dokumen Bapak memintanya secara eksplisit, butir ini perlu diselaraskan sebelum kontrak berjalan.</p>
 <h2 class="sec"><span class="n">4</span>Usulan Langkah Selanjutnya</h2>
 <p class="lead">Kami mengusulkan satu sesi pembahasan untuk menyepakati:</p>
-<ol class="notes"><li><b>Integrasi mana yang masuk tahap pertama</b> — terutama payment gateway, ekspedisi, dan perpajakan.</li><li><b>Status modul Penggajian</b> — masuk lingkup atau tetap dikecualikan.</li><li><b>Penyesuaian nilai dan jadwal</b> apabila butir-butir di atas ditambahkan.</li></ol>
-<p class="lead">Setelah kesepakatan tercapai, kami akan menerbitkan <b>penawaran revisi</b> dengan lingkup dan nilai yang telah disesuaikan.</p>
-<p class="lead">Perlu kami tekankan bahwa <b>jadwal 4 (empat) bulan</b> pada penawaran saat ini disusun berdasarkan lingkup yang tercantum di dalamnya. Penambahan integrasi pihak ketiga akan memperpanjang jadwal, terutama karena proses verifikasi merchant dan persetujuan dari penyedia layanan berada di luar kendali kami.</p>
+<ol class="notes"><li><b>Integrasi mana yang masuk tahap pertama</b> — terutama payment gateway, ekspedisi, dan perpajakan.</li><li><b>Status modul Penggajian</b> — masuk lingkup atau tetap dikecualikan.</li><li><b>Prioritas pengerjaan</b> — butir mana yang dikerjakan lebih dulu.</li></ol>
+<p class="lead">Setelah lingkup disepakati, kami akan menyusun dokumen lingkup pekerjaan yang telah diperbarui sebagai dasar pembahasan berikutnya.</p>
+<p class="lead">Perlu kami sampaikan bahwa penambahan integrasi pihak ketiga berpengaruh pada jadwal pengerjaan, terutama karena proses verifikasi merchant dan persetujuan dari penyedia layanan berada di luar kendali kami.</p>
 <p class="lead">Demikian catatan ini kami sampaikan sebagai bentuk keterbukaan sejak awal. Kami berpandangan lebih baik menyelaraskan harapan di depan daripada menemui perbedaan di tengah pelaksanaan.</p>
 <div class="signblock">
   <div class="sline">Hormat kami,</div>
