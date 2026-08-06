@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<title>Sales Quotation — ERP Sepatu, E-Katalog, POS &amp; Absensi</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @page {
+    size: A4 portrait;
+    margin: 18mm 0 16mm 0;
+    @bottom-left {
+      content: "Penawaran ERP Sepatu · E-Katalog · POS · Absensi";
+      font-family: 'Liberation Sans', 'DejaVu Sans', sans-serif;
+      font-size: 8.5pt; color: #6b7280; margin-left: 56px;
+    }
+    @bottom-right {
+      content: "Halaman " counter(page);
+      font-family: 'Liberation Sans', 'DejaVu Sans', sans-serif;
+      font-size: 8.5pt; color: #6b7280; margin-right: 56px;
+    }
+  }
+  :root {
+    --green: #2f6b4c;
+    --green-dark: #285c41;
+    --green-soft: #eef4ef;
+    --ink: #1f2a24;
+    --muted: #6b7280;
+    --line: #e3e9e3;
+  }
+  html, body { background: #ffffff; }
+  body {
+    font-family: 'Liberation Sans', 'DejaVu Sans', system-ui, sans-serif;
+    color: var(--ink);
+    font-size: 11.5px;
+    line-height: 1.5;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page { padding: 0 56px; }
+
+  /* ===== Hero ===== */
+  .hero { display: flex; justify-content: space-between; align-items: flex-start; margin-top: 4px; }
+  .hero .word { font-family: 'Liberation Serif', 'DejaVu Serif', serif; font-size: 40px; font-weight: 700; color: var(--green-dark); letter-spacing: -1px; line-height: 1.05; }
+  .hero .word small { display: block; font-family: 'Liberation Sans', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 3px; color: var(--green); margin-top: 8px; text-transform: uppercase; }
+  .hero .meta { text-align: right; font-size: 11.5px; padding-top: 8px; }
+  .hero .meta div { margin-bottom: 2px; }
+  .hero .meta b { color: var(--ink); }
+
+  /* ===== Parties ===== */
+  .parties { display: flex; gap: 48px; margin-top: 24px; }
+  .parties .col { flex: 1; }
+  .parties .label { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 4px; }
+  .parties .name { font-weight: 800; font-size: 14px; }
+  .parties .line { font-size: 11.5px; color: #374151; }
+  .parties .muted { color: var(--muted); }
+
+  /* ===== Sections ===== */
+  h2.sec { font-family: 'Liberation Serif', 'DejaVu Serif', serif; color: var(--green); font-size: 16px; font-weight: 700; margin: 22px 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--green-soft); }
+  h2.sec .n { color: var(--green-dark); font-weight: 700; margin-right: 8px; }
+  p.lead { font-size: 11.5px; color: #374151; margin-bottom: 6px; text-align: justify; }
+
+  /* ===== Tables ===== */
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  thead { display: table-header-group; }
+  thead th { background: var(--green-dark); color: #fff; font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; padding: 7px 9px; text-align: left; }
+  th.c-no, td.c-no { width: 34px; text-align: center; }
+  th.c-amt, td.c-amt { width: 130px; text-align: right; white-space: nowrap; }
+  th.c-pct, td.c-pct { width: 58px; text-align: center; }
+  tbody td { font-size: 11px; padding: 7px 9px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr { break-inside: avoid; }
+  tbody tr:nth-child(even) td { background: #f7faf7; }
+  td.c-no { color: var(--green-dark); font-weight: 800; }
+  td .scn { font-weight: 700; }
+  tr.total td { background: var(--green-soft) !important; font-weight: 800; font-size: 11.5px; color: var(--green-dark); border-bottom: none; }
+
+  /* ===== Scope cards ===== */
+  .scope { margin-top: 6px; }
+  .scope .item { border: 1px solid var(--line); border-radius: 6px; padding: 9px 12px; margin-bottom: 7px; break-inside: avoid; }
+  .scope .item .t { font-weight: 800; color: var(--green-dark); margin-bottom: 3px; }
+  .scope .item .t .tag { float: right; font-size: 9.5px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; }
+  .scope .item .d { font-size: 11px; color: #374151; text-align: justify; }
+
+  /* ===== Box ===== */
+  .box { margin-top: 10px; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; break-inside: avoid; }
+  .box .row { display: flex; }
+  .box .row > div { padding: 8px 12px; }
+  .box .k { width: 180px; background: var(--green-soft); font-weight: 700; }
+  .box .v { flex: 1; }
+  .box .row + .row { border-top: 1px solid var(--line); }
+
+  .grand { margin-top: 12px; background: var(--green-dark); color: #fff; border-radius: 6px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; break-inside: avoid; }
+  .grand .lbl { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .8px; }
+  .grand .val { font-family: 'Liberation Serif', serif; font-size: 22px; font-weight: 700; }
+  .grand .say { font-size: 10px; color: #cfe3d6; font-style: italic; margin-top: 2px; }
+
+  /* ===== Notes / sign ===== */
+  .pagebreak { break-before: page; }
+  ul.notes { margin: 8px 0 0 18px; }
+  ul.notes li { margin-bottom: 6px; font-size: 11.5px; text-align: justify; }
+  .signs { display: flex; gap: 60px; margin-top: 46px; }
+  .signs .col { flex: 1; }
+  .signs .slabel { font-weight: 800; margin-bottom: 56px; }
+  .signs .sline { border-top: 1px solid #374151; padding-top: 6px; }
+  .signs .sname { font-weight: 800; }
+  .signs .smuted { color: var(--muted); font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ===================== HERO ===================== -->
+  <div class="hero">
+    <div class="word">SALES QUOTATION<small>Penawaran Pengembangan Sistem</small></div>
+    <div class="meta">
+      <div>Tanggal: <b>6 Agustus 2026</b></div>
+      <div>No. SQ: <b>SQ-SPT-2026-0001</b></div>
+      <div>Berlaku sampai: <b>5 September 2026</b></div>
+    </div>
+  </div>
+
+  <!-- ===================== PARTIES ===================== -->
+  <div class="parties">
+    <div class="col">
+      <div class="label">Ditujukan kepada</div>
+      <div class="name">____________________________</div>
+      <div class="line">____________________________</div>
+      <div class="line">____________________________</div>
+      <div class="line">Telp: ______________________</div>
+      <div class="line">Up.: <b>____________________</b></div>
+    </div>
+    <div class="col">
+      <div class="label">Diterbitkan oleh</div>
+      <div class="name">PT. Tarik Data Digital</div>
+      <div class="line"><b>Fatchur Rachman</b> <span class="muted">· Tim Pengembang</span></div>
+      <div class="line muted">fatchur@tarikdata.digital · WA 0857-3524-8244</div>
+      <div class="line"><b>A. Adi Prasetiyo</b> <span class="muted">· Sales &amp; Marketing</span></div>
+      <div class="line muted">adi@tarikdata.digital · WA 0822-4558-3226</div>
+    </div>
+  </div>
+
+  <!-- ===================== PERIHAL ===================== -->
+  <h2 class="sec">Perihal Penawaran</h2>
+  <p class="lead">
+    Penawaran resmi pengembangan <b>Sistem Terintegrasi ERP Produksi Sepatu, E-Katalog, POS Toko, dan
+    Absensi</b>. Sistem dirancang mengikuti proses bisnis aktual perusahaan: produksi <i>in-house</i>,
+    subkontrak ke tukang, distribusi ke toko dan sekolah, penjualan online, serta pengawasan tim
+    lapangan (sales &amp; SPG). Seluruh data produk dikelola pada level varian
+    <b>artikel &times; nomor &times; warna</b>, sehingga stok, BOM, harga, dan penjualan terlacak sampai
+    ke tiap ukuran dan warna sepatu.
+  </p>
+
+  <div class="box">
+    <div class="row"><div class="k">Lingkup modul</div><div class="v">8 modul — Master Data, E-Katalog &amp; Order, Produksi In-House, Subkontrak Tukang, Distribusi &amp; Penjualan, POS Toko, Absensi, Laporan &amp; Dashboard.</div></div>
+    <div class="row"><div class="k">Estimasi waktu</div><div class="v">4 (empat) bulan kalender sejak kontrak &amp; data awal diterima.</div></div>
+    <div class="row"><div class="k">Nilai penawaran</div><div class="v"><b>Rp 210.000.000</b> (belum termasuk PPN).</div></div>
+  </div>
+
+  <!-- ===================== LINGKUP ===================== -->
+  <h2 class="sec"><span class="n">A</span>Lingkup Pekerjaan</h2>
+  <div class="scope">
+    <div class="item">
+      <div class="t">1 &nbsp;Master Data &amp; Fondasi Sistem <span class="tag">Fondasi</span></div>
+      <div class="d">Master artikel/model dengan varian nomor &amp; warna, <b>master warna</b>, <b>master tukang</b>,
+      <b>master sales</b>, master bahan, master ukuran &amp; grup <i>size run</i>, toko/sekolah, gudang, SPG,
+      serta manajemen pengguna dan hak akses berjenjang.</div>
+    </div>
+    <div class="item">
+      <div class="t">2 &nbsp;E-Katalog &amp; Order <span class="tag">Penjualan</span></div>
+      <div class="d">Katalog produk online lengkap dengan foto per warna, pilihan nomor, stok, dan harga.
+      Order oleh sales (mobile-friendly, bisa dari HP di lapangan) maupun order online mandiri oleh toko.
+      Keranjang berbasis <i>size run</i> — input kuantitas per nomor dalam satu grid. Alur approval limit
+      kredit/harga serta pelacakan status pesanan oleh pemesan.</div>
+    </div>
+    <div class="item">
+      <div class="t">3 &nbsp;Produksi In-House <span class="tag">Produksi</span></div>
+      <div class="d">BOM per artikel &times; nomor (konsumsi bahan berbeda tiap ukuran), Perintah Produksi (WO)
+      dari SO maupun rencana stok, tahapan <i>cutting</i> &rarr; <i>upper</i> &rarr; <i>assembling</i> &rarr;
+      <i>finishing</i> &rarr; QC, pemotongan stok bahan otomatis sesuai BOM, pencatatan reject/afkir, dan
+      perhitungan HPP (bahan + ongkos + overhead).</div>
+    </div>
+    <div class="item">
+      <div class="t">4 &nbsp;Produksi Subkontrak — Tukang <span class="tag">Produksi</span></div>
+      <div class="d">Penerbitan SPK ke tukang; <b>setor BOM</b> — pengeluaran bahan ke tukang disertai surat jalan
+      dan pemotongan stok, pencatatan saldo bahan yang berada di tiap tukang, penerimaan barang jadi,
+      rekonsiliasi pemakaian bahan berikut susut/sisa, serta pembentukan hutang ongkos otomatis.
+      Mendukung dua mode: <b>bahan disediakan perusahaan</b> (ongkos per pasang) dan
+      <b>bahan milik tukang sendiri</b> (beli jadi per pasang).</div>
+    </div>
+    <div class="item">
+      <div class="t">5 &nbsp;Distribusi &amp; Penjualan <span class="tag">Distribusi</span></div>
+      <div class="d">Alur SO &rarr; Surat Jalan (DO) &rarr; Invoice &rarr; Piutang. Setiap pengiriman mencatat
+      <b>sales penanggung jawab</b> dan <b>tujuan kirim</b> berikut ekspedisi &amp; ongkir. Mendukung
+      <i>jual putus</i> dan <i>konsinyasi</i>, retur penjualan, serta perhitungan komisi sales.</div>
+    </div>
+    <div class="item">
+      <div class="t">6 &nbsp;POS Toko <span class="tag">Ritel</span></div>
+      <div class="d">Aplikasi kasir untuk toko — dapat <b>berdiri sendiri</b> maupun <b>tersambung</b> ke pusat.
+      Kasir dioperasikan pihak toko, sementara pusat memantau stok titipan milik perusahaan secara
+      real-time. Dilengkapi <b>mode offline</b> dengan sinkronisasi otomatis saat kembali online, shift &amp;
+      tutup kasir harian, cetak struk, serta modul SPG untuk stok opname dan laporan display.</div>
+    </div>
+    <div class="item">
+      <div class="t">7 &nbsp;Absensi — Admin, SPG &amp; Sales <span class="tag">SDM</span></div>
+      <div class="d">Absensi masuk/pulang dengan <i>selfie</i> + GPS/<i>geofence</i> — SPG terkunci di lokasi toko,
+      sales mobile di lapangan, admin di kantor. Mencakup jadwal &amp; shift, izin/cuti/lembur,
+      <i>check-in</i> kunjungan sales yang terhubung ke order, serta rekap jam kerja sebagai dasar payroll.</div>
+    </div>
+    <div class="item">
+      <div class="t">8 &nbsp;Laporan &amp; Dashboard Manajemen <span class="tag">Analitik</span></div>
+      <div class="d">Stok per artikel &times; nomor &times; warna (gudang, tukang, toko), kartu stok &amp; mutasi bahan,
+      outstanding SPK dan saldo bahan di tukang, penjualan per sales/toko/area/periode, rekap POS &amp;
+      konsinyasi, umur piutang, HPP &amp; margin per artikel, serta rekap absensi. Seluruh laporan dapat
+      diekspor ke Excel/PDF.</div>
+    </div>
+  </div>
+
+  <!-- ===================== HARGA ===================== -->
+  <h2 class="sec pagebreak"><span class="n">B</span>Rincian Harga</h2>
+  <table>
+    <thead><tr><th class="c-no">No</th><th>Uraian Pekerjaan</th><th class="c-amt">Jumlah</th></tr></thead>
+    <tbody>
+      <tr><td class="c-no">1</td><td><span class="scn">Analisis proses bisnis, perancangan sistem &amp; database</span><br />Pemetaan alur produksi, subkontrak, distribusi &amp; ritel; desain skema data varian nomor &times; warna.</td><td class="c-amt">Rp 16.000.000</td></tr>
+      <tr><td class="c-no">2</td><td><span class="scn">Modul Master Data &amp; Manajemen Pengguna</span><br />Artikel, warna, tukang, sales, bahan, ukuran, toko/sekolah, gudang, SPG, hak akses.</td><td class="c-amt">Rp 15.000.000</td></tr>
+      <tr><td class="c-no">3</td><td><span class="scn">Modul E-Katalog &amp; Order</span><br />Katalog online, order sales (mobile), order online toko, keranjang size run, approval.</td><td class="c-amt">Rp 29.000.000</td></tr>
+      <tr><td class="c-no">4</td><td><span class="scn">Modul Produksi In-House</span><br />BOM per nomor, Perintah Produksi, tahapan produksi &amp; QC, potong bahan otomatis, HPP.</td><td class="c-amt">Rp 33.000.000</td></tr>
+      <tr><td class="c-no">5</td><td><span class="scn">Modul Subkontrak Tukang</span><br />SPK, setor BOM, saldo bahan di tukang, penerimaan hasil, rekonsiliasi, hutang ongkos.</td><td class="c-amt">Rp 29.000.000</td></tr>
+      <tr><td class="c-no">6</td><td><span class="scn">Modul Distribusi &amp; Penjualan</span><br />SO, Surat Jalan, Invoice, piutang, konsinyasi, retur, komisi sales.</td><td class="c-amt">Rp 27.000.000</td></tr>
+      <tr><td class="c-no">7</td><td><span class="scn">Modul POS Toko</span><br />Kasir toko, mode offline &amp; sinkronisasi, monitoring stok titipan, shift kasir, modul SPG.</td><td class="c-amt">Rp 28.000.000</td></tr>
+      <tr><td class="c-no">8</td><td><span class="scn">Modul Absensi</span><br />Selfie + GPS/geofence, shift &amp; jadwal, izin/cuti/lembur, kunjungan sales, rekap jam kerja.</td><td class="c-amt">Rp 17.000.000</td></tr>
+      <tr><td class="c-no">9</td><td><span class="scn">Laporan &amp; Dashboard Manajemen</span><br />Laporan stok, produksi, penjualan, piutang, HPP &amp; absensi; export Excel/PDF.</td><td class="c-amt">Rp 9.000.000</td></tr>
+      <tr><td class="c-no">10</td><td><span class="scn">Deployment, migrasi data awal, pelatihan &amp; dokumentasi</span><br />Instalasi produksi, import master data, pelatihan 2 sesi, manual pengguna.</td><td class="c-amt">Rp 7.000.000</td></tr>
+      <tr class="total"><td class="c-no"></td><td>TOTAL PENAWARAN</td><td class="c-amt">Rp 210.000.000</td></tr>
+    </tbody>
+  </table>
+
+  <div class="grand">
+    <div>
+      <div class="lbl">Total Penawaran</div>
+      <div class="say">Terbilang: dua ratus sepuluh juta rupiah</div>
+    </div>
+    <div class="val">Rp 210.000.000</div>
+  </div>
+  <p class="lead" style="margin-top:8px; color:var(--muted); font-size:10.5px">
+    Harga belum termasuk PPN. Belum termasuk biaya server/hosting, domain, serta perangkat keras POS
+    (tablet/PC kasir, printer thermal, barcode scanner).
+  </p>
+
+  <!-- ===================== TERMIN ===================== -->
+  <h2 class="sec"><span class="n">C</span>Tahapan Pembayaran</h2>
+  <table>
+    <thead><tr><th>Termin</th><th>Deskripsi</th><th class="c-pct">Porsi</th><th class="c-amt">Jumlah</th></tr></thead>
+    <tbody>
+      <tr><td><span class="scn">Termin 1</span><br />DP</td><td>Dibayar saat persetujuan penawaran. Pengerjaan dimulai setelah pembayaran diterima.</td><td class="c-pct">30%</td><td class="c-amt">Rp 63.000.000</td></tr>
+      <tr><td><span class="scn">Termin 2</span><br />Serah terima I</td><td>Dibayar saat serah terima Master Data, E-Katalog &amp; Order dan klien sign-off UAT tahap 1.</td><td class="c-pct">25%</td><td class="c-amt">Rp 52.500.000</td></tr>
+      <tr><td><span class="scn">Termin 3</span><br />Serah terima II</td><td>Dibayar saat serah terima modul Produksi In-House &amp; Subkontrak Tukang dan sign-off UAT tahap 2.</td><td class="c-pct">25%</td><td class="c-amt">Rp 52.500.000</td></tr>
+      <tr><td><span class="scn">Termin 4</span><br />Pelunasan</td><td>Dibayar saat serah terima Distribusi, POS, Absensi &amp; Laporan. Sistem go-live setelah pelunasan.</td><td class="c-pct">20%</td><td class="c-amt">Rp 42.000.000</td></tr>
+      <tr class="total"><td>TOTAL</td><td></td><td class="c-pct">100%</td><td class="c-amt">Rp 210.000.000</td></tr>
+    </tbody>
+  </table>
+
+  <!-- ===================== TIMELINE ===================== -->
+  <h2 class="sec"><span class="n">D</span>Estimasi Timeline</h2>
+  <table>
+    <thead><tr><th class="c-no">Bln</th><th>Fase</th><th>Kegiatan</th></tr></thead>
+    <tbody>
+      <tr><td class="c-no">1</td><td><span class="scn">Analisis, Fondasi &amp; Penjualan</span></td><td>Pemetaan proses bisnis, desain database varian nomor &times; warna, pembangunan master data &amp; hak akses, E-Katalog dan modul Order (sales + online).</td></tr>
+      <tr><td class="c-no">2</td><td><span class="scn">Produksi</span></td><td>BOM per nomor, Perintah Produksi &amp; tahapan produksi, perhitungan HPP, modul subkontrak tukang: SPK, setor BOM, saldo bahan, rekonsiliasi &amp; hutang ongkos.</td></tr>
+      <tr><td class="c-no">3</td><td><span class="scn">Distribusi &amp; Ritel</span></td><td>SO/Surat Jalan/Invoice/piutang, konsinyasi &amp; retur, komisi sales, aplikasi POS toko dengan mode offline-sinkronisasi dan monitoring stok titipan.</td></tr>
+      <tr><td class="c-no">4</td><td><span class="scn">Absensi, Laporan &amp; Go-Live</span></td><td>Modul absensi (GPS/geofence, shift, kunjungan sales), laporan &amp; dashboard, migrasi data awal, pengujian menyeluruh, pelatihan, sign-off UAT &amp; go-live.</td></tr>
+    </tbody>
+  </table>
+  <p class="lead" style="margin-top:8px; font-size:10.5px; color:var(--muted)">
+    Timeline 4 bulan dicapai dengan penambahan personel dan pengerjaan modul secara paralel. Ketepatan
+    jadwal bergantung pada ketersediaan narasumber proses bisnis dari pihak klien serta kecepatan
+    approval pada setiap serah terima modul.
+  </p>
+
+  <!-- ===================== OUT OF SCOPE ===================== -->
+  <h2 class="sec"><span class="n">E</span>Yang Tidak Termasuk (Out of Scope)</h2>
+  <ul class="notes">
+    <li>Sistem payroll penuh — sistem hanya menyediakan data jam kerja sebagai dasar perhitungan.</li>
+    <li>Akuntansi umum (jurnal, buku besar, neraca, laba rugi) — tersedia sebagai add-on terpisah.</li>
+    <li>Integrasi marketplace (Shopee, Tokopedia, TikTok Shop) — kontrak terpisah.</li>
+    <li>Integrasi payment gateway untuk pembayaran online otomatis — kontrak terpisah.</li>
+    <li>Aplikasi mobile native (App Store / Play Store) — sistem berbasis web responsif yang dapat diakses dari HP.</li>
+    <li>Pengadaan perangkat keras POS, server/hosting, domain, dan biaya langganan WhatsApp Business API.</li>
+    <li>Support &amp; maintenance bulanan setelah masa garansi 3 bulan — kontrak terpisah.</li>
+  </ul>
+
+  <!-- ===================== KETENTUAN ===================== -->
+  <h2 class="sec pagebreak"><span class="n">F</span>Ketentuan Penawaran</h2>
+  <ul class="notes">
+    <li><b>Validitas:</b> Penawaran ini berlaku 30 hari sejak tanggal penerbitan (s.d. 5 September 2026).</li>
+    <li><b>Pembayaran:</b> 4 termin sesuai bagian C. Pembayaran via transfer ke BCA 0113202448 a.n. Fatchur Rachman, Tim Pengembang Aplikasi.</li>
+    <li><b>Serah terima bertahap:</b> Setiap termin didahului demo modul dan sign-off UAT oleh klien sebelum tagihan diterbitkan.</li>
+    <li><b>Revisi:</b> Maksimal 2&times; revisi per modul pasca sign-off UAT. Catatan yang ditemukan sebelum sign-off tidak dihitung sebagai revisi.</li>
+    <li><b>Perubahan lingkup:</b> Permintaan di luar dokumen requirement dikenakan biaya tambahan berdasarkan kesepakatan tertulis (<i>change request</i>).</li>
+    <li><b>Kewajiban klien:</b> Menyediakan narasumber proses bisnis, data master awal (artikel, warna, ukuran, tukang, sales, toko), serta contoh dokumen yang berlaku.</li>
+    <li><b>Garansi:</b> Pendampingan dan perbaikan bug selama 3 bulan sejak go-live, tanpa biaya tambahan.</li>
+    <li><b>Hak cipta:</b> Source code &amp; aset sistem diserahkan ke klien setelah pelunasan.</li>
+    <li><b>Dokumen pendukung:</b> Dokumen Requirement Sistem ERP Sepatu (terlampir).</li>
+  </ul>
+
+  <div class="signs">
+    <div class="col">
+      <div class="slabel">Menyetujui penawaran ini,</div>
+      <div class="sline">
+        <div class="sname">____________________________</div>
+        <div class="smuted">Up.: ____________________</div>
+        <div class="smuted">Tanggal: ____________________</div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="slabel">Diterbitkan oleh,</div>
+      <div class="sline">
+        <div class="sname">Fatchur Rachman</div>
+        <div class="smuted">Tim Pengembang — PT. Tarik Data Digital</div>
+        <div class="smuted">Disampaikan oleh: A. Adi Prasetiyo, Sales &amp; Marketing</div>
+        <div class="smuted">Tanggal: 6 Agustus 2026</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
