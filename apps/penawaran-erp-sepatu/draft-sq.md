@@ -129,7 +129,7 @@ margin, rekap absensi. Export Excel/PDF.
 
 ## 4. Jangka Waktu
 
-Estimasi **4 (empat) bulan** kalender sejak kontrak ditandatangani dan data awal
+Estimasi **4,5 (empat setengah) bulan** kalender sejak kontrak ditandatangani dan data awal
 diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
 
 | Bulan | Fokus |
@@ -137,9 +137,10 @@ diterima, dengan penyerahan bertahap per modul sesuai termin di atas.
 | 1 | Analisis, desain, master data, E-Katalog & Order |
 | 2 | Purchasing & Warehouse/Inventory |
 | 3 | Produksi, subkontrak tukang, sales & distribusi |
-| 4 | POS, Finance & Accounting, absensi, laporan, pelatihan, go-live |
+| 4 | POS, Finance & Accounting, absensi, penggajian & komisi mitra |
+| 4,5 | Laporan, migrasi data, pelatihan, UAT & go-live |
 
-> Timeline 4 bulan dicapai dengan penambahan personel dan pengerjaan modul secara
+> Timeline 4,5 bulan dicapai dengan penambahan personel dan pengerjaan modul secara
 > paralel. Ketepatan jadwal bergantung pada ketersediaan narasumber proses bisnis
 > dari pihak klien dan kecepatan approval pada setiap serah terima modul.
 
