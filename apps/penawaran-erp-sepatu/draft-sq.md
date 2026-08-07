@@ -2,7 +2,7 @@
 
 **Nomor**: SQ/____/____/2026
 **Tanggal**: ____________
-**Kepada Yth.**: Bapak Anil — Jl. Terusan Dieng (0816 665 500)
+**Kepada Yth.**: Bapak Anil — Jl. Terusan Dieng, Malang, Jawa Timur (0816 665 500)
 **Perihal**: Penawaran Pengembangan Sistem ERP Sepatu, E-Katalog, POS & Absensi
 
 ---
