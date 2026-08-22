@@ -10,19 +10,26 @@ sebagai satu bundel HTML statis. Ini **prototype demo**, bukan aplikasi produksi
 ```
 hanania/
 ├── dist/                 # yang di-serve nginx (document root)
-│   ├── index.html        # seluruh app: markup <x-dc> + <style> inline (~177 KB)
+│   ├── index.html        # seluruh app: markup <x-dc> + <style> inline (~206 KB)
 │   ├── support.js        # runtime claude.ai/design, meng-compile <x-dc> di browser
+│   ├── assets/           # 4 foto klinik (.webp): hero, playroom, afterschool, pelatihan
 │   └── vendor/           # React 18.3.1 + Babel 7.29.0 UMD hasil vendoring
 ├── nginx.conf            # config server (CSP, cache, SPA fallback)
 ├── CLAUDE.md             # berkas ini
 └── _source/              # artefak sumber, TIDAK di-serve
-    ├── Prototype Penjadwalan Klinik Anak (1).zip   # export asli
-    └── uploads/          # referensi visual (palet warna, screenshot)
+    ├── Prototype Penjadwalan Klinik Anak (2).zip   # export AKTIF (dist/ dari sini)
+    ├── Prototype Penjadwalan Klinik Anak (1).zip   # export sebelumnya, arsip
+    ├── uploads-v2/       # referensi visual dari export v2 (foto WhatsApp, screenshot)
+    └── uploads-v1/       # idem, dari export v1 (palet warna Color Hunt)
 ```
 
-Tidak ada folder `assets/` — semua visual pakai placeholder inline
-(mis. "[ foto ruang terapi + anak ] 1200 × 900"). Kalau nanti foto asli
-dimasukkan, taruh di `dist/assets/` dan `nginx.conf` sudah punya location-nya.
+Zip di `_source/` bernomor sesuai urutan export dari claude.ai/design. **Yang
+tertinggi = yang aktif**; simpan versi lama sebagai arsip, jangan dihapus.
+`uploads-*/` di-gitignore (lihat `../.gitignore`) karena isinya hasil extract
+dari zip yang sudah tracked.
+
+Sejak v2 foto asli klinik sudah masuk ke `dist/assets/` — sebelumnya semua
+visual masih placeholder inline ("[ foto ruang terapi + anak ] 1200 × 900").
 
 ## `dist/` tidak masuk Git
 
@@ -32,7 +39,7 @@ baru:
 
 ```bash
 cd apps/marketing/sub/hanania
-unzip -q "_source/Prototype Penjadwalan Klinik Anak (1).zip" -d dist
+unzip -q "_source/Prototype Penjadwalan Klinik Anak (2).zip" -d dist
 mv "dist/Hanania Kidz Clinic.dc.html" dist/index.html
 rm -rf dist/uploads dist/.thumbnail      # artefak sumber, bukan aset halaman
 
@@ -46,6 +53,38 @@ done
 
 # WAJIB: inject window.__resources SEBELUM <script src="./support.js">
 ```
+
+## Prosedur update dari export baru
+
+Saat datang zip versi berikutnya (mis. `... (3).zip`), lakukan urut:
+
+```bash
+cd apps/marketing/sub/hanania
+mv dist dist.old                                  # jangan rm — untuk diff & rollback
+unzip -q "_source/Prototype Penjadwalan Klinik Anak (3).zip" -d dist
+mv "dist/Hanania Kidz Clinic.dc.html" dist/index.html
+mv dist/uploads _source/uploads-v3 && rm -f dist/.thumbnail
+
+# 1. versi CDN berubah? kalau sama, vendor lama bisa dipakai ulang
+grep -oE 'https://unpkg.com/[^"]+' dist/support.js | sort -u
+cp -a dist.old/vendor dist/vendor
+
+# 2. re-inject window.__resources (patch ini SELALU hilang di export baru)
+
+# 3. cek semua rujukan aset lokal resolve (abaikan '{{ ... }}' = binding runtime)
+python3 - <<'PY'
+import re, os
+os.chdir('dist')
+s = open('index.html', encoding='utf8', errors='replace').read()
+refs = set(re.findall(r'(?:src|href)="(?!https?:|#|/)([^"]+)"', s))
+print('MISSING:', [r for r in sorted(refs) if '{{' not in r and not os.path.exists(r)] or 'none')
+PY
+
+# 4. restart + verifikasi RENDER, bukan cuma status code
+docker restart sentient-infra-hanania-marketing
+```
+
+Setelah yakin, baru buang `dist.old`. Simpan zip lama di `_source/` sebagai arsip.
 
 ## Menjalankan
 
@@ -71,7 +110,7 @@ Ubah `nginx.conf` → perlu `docker restart sentient-infra-hanania-marketing`.
 ### Aturan kerja non-negosiabel di folder ini
 
 1. **JANGAN edit `dist/index.html` dengan tangan** untuk perubahan desain besar.
-   Berkas itu hasil export mesin (satu file ~177 KB, class dan style ter-generate).
+   Berkas itu hasil export mesin (satu file ~206 KB, class dan style ter-generate).
    Untuk perubahan besar: iterasi di claude.ai/design, export ulang, ganti isi
    `dist/`. Tambal kecil (typo, harga, nomor telepon) langsung masih boleh.
 2. **JANGAN pindahkan apa pun dari `_source/` ke `dist/`** — `_source/` sengaja
@@ -139,5 +178,5 @@ Satu halaman, navigasi client-side lewat anchor (`#layanan`, `#jadwal`, `#tim`,
 - **Progres anak**, tagihan & paket (QRIS/VA/transfer/tunai/klaim asuransi),
   profil tim terapis, biaya, dan portal orang tua.
 
-Klinik buka Selasa–Minggu 08.00–20.00 WIB. Angka-angka di halaman (178+ keluarga,
+Klinik buka Selasa–Minggu 08.00–20.00 WIB. Angka-angka di halaman (112+ keluarga,
 slot per minggu) adalah data demo — perbarui bareng-bareng kalau dipakai pitch.
