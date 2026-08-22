@@ -1,0 +1,644 @@
+// SIMTERPADU — Sistem Informasi Manajemen Terpadu
+// Yayasan Pendidikan Islam Nurul Huda Mergosono
+//
+// Prinsip inti: SATU IDENTITAS, BANYAK PERAN.
+// Seorang santri pondok yang juga siswa SMP adalah satu record `Orang`
+// dengan beberapa baris peran (Santri, Siswa, Pegawai, Wali), bukan
+// beberapa record terpisah per unit.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Identitas & akses
+// ─────────────────────────────────────────────────────────────
+
+enum JenisKelamin {
+  L
+  P
+}
+
+model Orang {
+  id        BigInt       @id @default(autoincrement())
+  nik       String?      @unique @db.VarChar(32)
+  nama      String       @db.VarChar(160)
+  jk        JenisKelamin
+  tglLahir  DateTime?    @map("tgl_lahir") @db.Date
+  tmpLahir  String?      @map("tmp_lahir") @db.VarChar(120)
+  alamat    String?      @db.VarChar(255)
+  hp        String?      @db.VarChar(32)
+  email     String?      @unique @db.VarChar(160)
+  fotoUrl   String?      @map("foto_url") @db.VarChar(255)
+  aktif     Boolean      @default(true)
+  deletedAt DateTime?    @map("deleted_at")
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  user        User?
+  santri      Santri?
+  pegawai     Pegawai?
+  waliDari    RelasiWali[] @relation("WaliOrang")
+  sebagaiAnak RelasiWali[] @relation("AnakOrang")
+
+  @@index([nama])
+  @@map("orang")
+}
+
+model Peran {
+  id        Int     @id @default(autoincrement())
+  key       String  @unique @db.VarChar(32)
+  nama      String  @db.VarChar(120)
+  deskripsi String? @db.VarChar(255)
+
+  users     UserPeran[]
+  menuAkses MenuPeran[]
+
+  @@map("peran")
+}
+
+model User {
+  id           BigInt    @id @default(autoincrement())
+  orangId      BigInt    @unique @map("orang_id")
+  email        String    @unique @db.VarChar(160)
+  passwordHash String    @map("password_hash") @db.VarChar(255)
+  unitScope    String?   @map("unit_scope") @db.VarChar(64)
+  aktif        Boolean   @default(true)
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  orang Orang       @relation(fields: [orangId], references: [id], onDelete: Cascade)
+  peran UserPeran[]
+
+  @@map("user")
+}
+
+model UserPeran {
+  userId  BigInt @map("user_id")
+  peranId Int    @map("peran_id")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  peran Peran @relation(fields: [peranId], references: [id], onDelete: Cascade)
+
+  @@id([userId, peranId])
+  @@map("user_peran")
+}
+
+model Menu {
+  id     Int     @id @default(autoincrement())
+  key    String  @unique @db.VarChar(32)
+  label  String  @db.VarChar(120)
+  icon   String? @db.VarChar(255)
+  urutan Int     @default(0)
+
+  akses MenuPeran[]
+
+  @@map("menu")
+}
+
+model MenuPeran {
+  menuId  Int @map("menu_id")
+  peranId Int @map("peran_id")
+
+  menu  Menu  @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  peran Peran @relation(fields: [peranId], references: [id], onDelete: Cascade)
+
+  @@id([menuId, peranId])
+  @@map("menu_peran")
+}
+
+model RelasiWali {
+  id        BigInt  @id @default(autoincrement())
+  waliId    BigInt  @map("wali_id")
+  anakId    BigInt  @map("anak_id")
+  hubungan  String  @db.VarChar(48)
+  pekerjaan String? @db.VarChar(120)
+  utama     Boolean @default(true)
+
+  wali Orang @relation("WaliOrang", fields: [waliId], references: [id], onDelete: Cascade)
+  anak Orang @relation("AnakOrang", fields: [anakId], references: [id], onDelete: Cascade)
+
+  @@unique([waliId, anakId])
+  @@map("relasi_wali")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Unit, asrama, kelas
+// ─────────────────────────────────────────────────────────────
+
+model Unit {
+  id        Int     @id @default(autoincrement())
+  key       String  @unique @db.VarChar(24)
+  nama      String  @db.VarChar(160)
+  deskripsi String? @db.VarChar(255)
+  aktif     Boolean @default(true)
+
+  kelas   Kelas[]
+  santri  Santri[]
+  pegawai Pegawai[]
+
+  @@map("unit")
+}
+
+model Kelas {
+  id        Int     @id @default(autoincrement())
+  unitId    Int     @map("unit_id")
+  nama      String  @db.VarChar(32)
+  tingkat   String  @db.VarChar(16)
+  waliKelas String? @map("wali_kelas") @db.VarChar(160)
+
+  unit   Unit     @relation(fields: [unitId], references: [id])
+  santri Santri[]
+
+  @@unique([unitId, nama])
+  @@map("kelas")
+}
+
+model Asrama {
+  id        Int          @id @default(autoincrement())
+  nama      String       @unique @db.VarChar(120)
+  jk        JenisKelamin
+  kapasitas Int          @default(0)
+  musyrif   String?      @db.VarChar(160)
+
+  kamar Kamar[]
+
+  @@map("asrama")
+}
+
+model Kamar {
+  id        Int    @id @default(autoincrement())
+  asramaId  Int    @map("asrama_id")
+  kode      String @db.VarChar(16)
+  kapasitas Int    @default(0)
+
+  asrama Asrama   @relation(fields: [asramaId], references: [id], onDelete: Cascade)
+  santri Santri[]
+
+  @@unique([asramaId, kode])
+  @@map("kamar")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Santri & pegawai (peran dari Orang)
+// ─────────────────────────────────────────────────────────────
+
+enum StatusSantri {
+  Mukim
+  Kalong
+  Alumni
+  Keluar
+}
+
+model Santri {
+  id         BigInt       @id @default(autoincrement())
+  orangId    BigInt       @unique @map("orang_id")
+  nis        String       @unique @db.VarChar(32)
+  nisn       String?      @unique @db.VarChar(32)
+  unitId     Int?         @map("unit_id")
+  kelasId    Int?         @map("kelas_id")
+  kamarId    Int?         @map("kamar_id")
+  status     StatusSantri @default(Mukim)
+  program    String?      @db.VarChar(64)
+  tahunMasuk String?      @map("tahun_masuk") @db.VarChar(8)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @updatedAt @map("updated_at")
+
+  orang Orang  @relation(fields: [orangId], references: [id], onDelete: Cascade)
+  unit  Unit?  @relation(fields: [unitId], references: [id])
+  kelas Kelas? @relation(fields: [kelasId], references: [id])
+  kamar Kamar? @relation(fields: [kamarId], references: [id])
+
+  hafalan    Hafalan[]
+  tazir      Tazir[]
+  izin       Izin[]
+  presensi   Presensi[]
+  tagihan    Tagihan[]
+  rekamMedis RekamMedis[]
+  nilai      Nilai[]
+  kunjungan  Kunjungan[]
+
+  @@index([status])
+  @@map("santri")
+}
+
+model Pegawai {
+  id        BigInt   @id @default(autoincrement())
+  orangId   BigInt   @unique @map("orang_id")
+  nip       String   @unique @db.VarChar(32)
+  unitId    Int?     @map("unit_id")
+  jabatan   String   @db.VarChar(120)
+  status    String   @db.VarChar(32)
+  rekening  String?  @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  orang    Orang         @relation(fields: [orangId], references: [id], onDelete: Cascade)
+  unit     Unit?         @relation(fields: [unitId], references: [id])
+  komponen KomponenGaji?
+  slip     SlipGaji[]
+
+  @@map("pegawai")
+}
+
+model KomponenGaji {
+  pegawaiId   BigInt  @id @map("pegawai_id")
+  pokok       Decimal @default(0) @db.Decimal(14, 2)
+  tunjJab     Decimal @default(0) @map("tunj_jab") @db.Decimal(14, 2)
+  tunjKel     Decimal @default(0) @map("tunj_kel") @db.Decimal(14, 2)
+  jamMengajar Int     @default(0) @map("jam_mengajar")
+  tarifJam    Decimal @default(0) @map("tarif_jam") @db.Decimal(14, 2)
+  transport   Decimal @default(0) @db.Decimal(14, 2)
+  bpjs        Decimal @default(0) @db.Decimal(14, 2)
+  koperasi    Decimal @default(0) @db.Decimal(14, 2)
+  pph         Decimal @default(0) @db.Decimal(14, 2)
+
+  pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+
+  @@map("komponen_gaji")
+}
+
+model SlipGaji {
+  id        BigInt    @id @default(autoincrement())
+  pegawaiId BigInt    @map("pegawai_id")
+  periode   String    @db.VarChar(16)
+  bruto     Decimal   @db.Decimal(14, 2)
+  potongan  Decimal   @db.Decimal(14, 2)
+  netto     Decimal   @db.Decimal(14, 2)
+  dibayarAt DateTime? @map("dibayar_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+
+  @@unique([pegawaiId, periode])
+  @@map("slip_gaji")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Kepesantrenan
+// ─────────────────────────────────────────────────────────────
+
+model Halaqah {
+  id      Int    @id @default(autoincrement())
+  nama    String @db.VarChar(120)
+  ustadz  String @db.VarChar(160)
+  waktu   String @db.VarChar(64)
+  tempat  String @db.VarChar(120)
+  jenjang String @db.VarChar(64)
+  anggota Int    @default(0)
+
+  @@map("halaqah")
+}
+
+model Hafalan {
+  id       BigInt   @id @default(autoincrement())
+  santriId BigInt   @map("santri_id")
+  tgl      DateTime @db.Date
+  surat    String   @db.VarChar(64)
+  ayat     String   @db.VarChar(32)
+  jenis    String   @db.VarChar(32)
+  nilai    String   @db.VarChar(32)
+  penguji  String   @db.VarChar(160)
+
+  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+
+  @@index([santriId, tgl])
+  @@map("hafalan")
+}
+
+model Tazir {
+  id          BigInt   @id @default(autoincrement())
+  santriId    BigInt   @map("santri_id")
+  tgl         DateTime @db.Date
+  pelanggaran String   @db.VarChar(255)
+  poin        Int      @default(0)
+  sanksi      String?  @db.VarChar(255)
+  petugas     String   @db.VarChar(160)
+
+  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+
+  @@index([santriId, tgl])
+  @@map("tazir")
+}
+
+enum StatusIzin {
+  Menunggu
+  Disetujui
+  Ditolak
+  Selesai
+}
+
+model Izin {
+  id        BigInt     @id @default(autoincrement())
+  kode      String     @unique @db.VarChar(24)
+  santriId  BigInt     @map("santri_id")
+  jenis     String     @db.VarChar(64)
+  alasan    String     @db.VarChar(255)
+  penjemput String?    @db.VarChar(160)
+  keluarAt  DateTime   @map("keluar_at")
+  kembaliAt DateTime?  @map("kembali_at")
+  status    StatusIzin @default(Menunggu)
+
+  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@map("izin")
+}
+
+enum StatusHadir {
+  Hadir
+  Sakit
+  Izin
+  Alpa
+}
+
+model Presensi {
+  id       BigInt      @id @default(autoincrement())
+  santriId BigInt      @map("santri_id")
+  tgl      DateTime    @db.Date
+  sesi     String      @db.VarChar(32)
+  status   StatusHadir @default(Hadir)
+  ket      String?     @db.VarChar(255)
+
+  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+
+  @@unique([santriId, tgl, sesi])
+  @@map("presensi")
+}
+
+model KegiatanHarian {
+  id     Int     @id @default(autoincrement())
+  jam    String  @db.VarChar(16)
+  nama   String  @db.VarChar(160)
+  ket    String? @db.VarChar(255)
+  urutan Int     @default(0)
+
+  @@map("kegiatan_harian")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Akademik
+// ─────────────────────────────────────────────────────────────
+
+model MataPelajaran {
+  id       Int    @id @default(autoincrement())
+  kode     String @unique @db.VarChar(24)
+  nama     String @db.VarChar(160)
+  jp       Int    @default(0)
+  kelompok String @db.VarChar(64)
+
+  nilai Nilai[]
+
+  @@map("mata_pelajaran")
+}
+
+model Nilai {
+  id       BigInt  @id @default(autoincrement())
+  santriId BigInt  @map("santri_id")
+  mapelId  Int     @map("mapel_id")
+  periode  String  @db.VarChar(24)
+  tugas    Decimal @default(0) @db.Decimal(5, 2)
+  uts      Decimal @default(0) @db.Decimal(5, 2)
+  uas      Decimal @default(0) @db.Decimal(5, 2)
+  akhir    Decimal @default(0) @db.Decimal(5, 2)
+  predikat String? @db.VarChar(8)
+
+  santri Santri        @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  mapel  MataPelajaran @relation(fields: [mapelId], references: [id])
+
+  @@unique([santriId, mapelId, periode])
+  @@map("nilai")
+}
+
+model JadwalPelajaran {
+  id    Int     @id @default(autoincrement())
+  hari  String  @db.VarChar(16)
+  jamKe Int     @map("jam_ke")
+  waktu String  @db.VarChar(32)
+  mapel String  @db.VarChar(160)
+  guru  String? @db.VarChar(160)
+  kelas String? @db.VarChar(32)
+
+  @@map("jadwal_pelajaran")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Poskestren
+// ─────────────────────────────────────────────────────────────
+
+model RekamMedis {
+  id           BigInt   @id @default(autoincrement())
+  santriId     BigInt   @map("santri_id")
+  tgl          DateTime @db.Date
+  jam          String?  @db.VarChar(16)
+  keluhan      String   @db.VarChar(255)
+  diagnosis    String?  @db.VarChar(255)
+  terapi       String?  @db.VarChar(255)
+  tindakLanjut String?  @map("tindak_lanjut") @db.VarChar(120)
+  petugas      String   @db.VarChar(160)
+
+  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+
+  @@index([santriId, tgl])
+  @@map("rekam_medis")
+}
+
+model Obat {
+  id         Int     @id @default(autoincrement())
+  nama       String  @unique @db.VarChar(160)
+  satuan     String  @db.VarChar(32)
+  kategori   String? @db.VarChar(64)
+  stok       Int     @default(0)
+  stokMin    Int     @default(0) @map("stok_min")
+  kadaluarsa String? @db.VarChar(32)
+
+  @@map("obat")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Keuangan
+// ─────────────────────────────────────────────────────────────
+
+model Tagihan {
+  id         BigInt   @id @default(autoincrement())
+  kode       String   @unique @db.VarChar(24)
+  santriId   BigInt   @map("santri_id")
+  jenis      String   @db.VarChar(120)
+  periode    String   @db.VarChar(24)
+  nominal    Decimal  @db.Decimal(14, 2)
+  dibayar    Decimal  @default(0) @db.Decimal(14, 2)
+  jatuhTempo DateTime @map("jatuh_tempo") @db.Date
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  santri     Santri       @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  pembayaran Pembayaran[]
+
+  @@index([periode])
+  @@map("tagihan")
+}
+
+model Pembayaran {
+  id        BigInt   @id @default(autoincrement())
+  tagihanId BigInt   @map("tagihan_id")
+  tgl       DateTime @db.Date
+  nominal   Decimal  @db.Decimal(14, 2)
+  metode    String   @db.VarChar(64)
+  ref       String?  @db.VarChar(64)
+
+  tagihan Tagihan @relation(fields: [tagihanId], references: [id], onDelete: Cascade)
+
+  @@map("pembayaran")
+}
+
+enum ArahKas {
+  Masuk
+  Keluar
+}
+
+model TransaksiKas {
+  id       BigInt   @id @default(autoincrement())
+  kode     String   @unique @db.VarChar(24)
+  tgl      DateTime @db.Date
+  uraian   String   @db.VarChar(255)
+  kategori String   @db.VarChar(64)
+  metode   String   @db.VarChar(64)
+  arah     ArahKas
+  nominal  Decimal  @db.Decimal(14, 2)
+
+  @@index([tgl])
+  @@map("transaksi_kas")
+}
+
+// ─────────────────────────────────────────────────────────────
+// PPDB
+// ─────────────────────────────────────────────────────────────
+
+enum StatusPendaftar {
+  Baru
+  Verifikasi
+  Seleksi
+  Lulus
+  TidakLulus
+  DaftarUlang
+}
+
+model Pendaftar {
+  id          BigInt          @id @default(autoincrement())
+  noReg       String          @unique @map("no_reg") @db.VarChar(32)
+  nama        String          @db.VarChar(160)
+  jk          JenisKelamin?
+  pilihan     String          @db.VarChar(64)
+  asalSekolah String?         @map("asal_sekolah") @db.VarChar(160)
+  hpWali      String?         @map("hp_wali") @db.VarChar(32)
+  tglDaftar   DateTime        @map("tgl_daftar") @db.Date
+  nilai       Decimal?        @db.Decimal(5, 2)
+  status      StatusPendaftar @default(Baru)
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  berkas BerkasPendaftar[]
+
+  @@index([status])
+  @@map("pendaftar")
+}
+
+model BerkasPendaftar {
+  id            BigInt  @id @default(autoincrement())
+  pendaftarId   BigInt  @map("pendaftar_id")
+  nama          String  @db.VarChar(120)
+  fileUrl       String? @map("file_url") @db.VarChar(255)
+  wajib         Boolean @default(true)
+  terverifikasi Boolean @default(false)
+
+  pendaftar Pendaftar @relation(fields: [pendaftarId], references: [id], onDelete: Cascade)
+
+  @@map("berkas_pendaftar")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Kunjungan wali
+// ─────────────────────────────────────────────────────────────
+
+model Kunjungan {
+  id        BigInt   @id @default(autoincrement())
+  santriId  BigInt   @map("santri_id")
+  namaWali  String   @map("nama_wali") @db.VarChar(160)
+  hubungan  String?  @db.VarChar(48)
+  tgl       DateTime @db.Date
+  jamMasuk  String?  @map("jam_masuk") @db.VarChar(16)
+  jamKeluar String?  @map("jam_keluar") @db.VarChar(16)
+  keperluan String?  @db.VarChar(255)
+  status    String   @default("Terjadwal") @db.VarChar(32)
+
+  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+
+  @@index([tgl])
+  @@map("kunjungan")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Notifikasi WhatsApp
+// ─────────────────────────────────────────────────────────────
+
+model TemplateWa {
+  id     Int     @id @default(autoincrement())
+  kode   String  @unique @db.VarChar(24)
+  role   String  @db.VarChar(64)
+  judul  String  @db.VarChar(160)
+  pemicu String  @db.VarChar(255)
+  waktu  String? @db.VarChar(120)
+  isi    String  @db.Text
+  aktif  Boolean @default(true)
+
+  log LogWa[]
+
+  @@map("template_wa")
+}
+
+model LogWa {
+  id         BigInt   @id @default(autoincrement())
+  templateId Int?     @map("template_id")
+  tujuan     String   @db.VarChar(160)
+  nomor      String   @db.VarChar(32)
+  isi        String   @db.Text
+  status     String   @default("Terkirim") @db.VarChar(24)
+  waktu      DateTime @default(now())
+
+  template TemplateWa? @relation(fields: [templateId], references: [id])
+
+  @@index([waktu])
+  @@map("log_wa")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Pengumuman & agenda
+// ─────────────────────────────────────────────────────────────
+
+model Pengumuman {
+  id        BigInt   @id @default(autoincrement())
+  tgl       DateTime @db.Date
+  judul     String   @db.VarChar(200)
+  isi       String   @db.Text
+  target    String   @default("Semua") @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([tgl])
+  @@map("pengumuman")
+}
+
+model Agenda {
+  id    BigInt   @id @default(autoincrement())
+  tgl   DateTime @db.Date
+  jam   String?  @db.VarChar(16)
+  judul String   @db.VarChar(200)
+  unit  String?  @db.VarChar(64)
+
+  @@index([tgl])
+  @@map("agenda")
+}

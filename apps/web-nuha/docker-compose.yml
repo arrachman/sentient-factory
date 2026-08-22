@@ -1,0 +1,67 @@
+name: nuha_simterpadu
+
+services:
+  nuha-mysql:
+    image: mysql:8.0
+    container_name: nuha-mysql
+    restart: unless-stopped
+    ports:
+      - "${NUHA_MYSQL_PORT:-3308}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${NUHA_MYSQL_ROOT_PASSWORD:-change_me}
+      MYSQL_DATABASE: ${NUHA_MYSQL_DATABASE:-nuha_simterpadu}
+      MYSQL_USER: ${NUHA_MYSQL_USER:-nuha}
+      MYSQL_PASSWORD: ${NUHA_MYSQL_PASSWORD:-change_me}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - nuha_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+
+  nuha-migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: nuha-migrate
+    restart: "no"
+    environment:
+      DATABASE_URL: mysql://${NUHA_MYSQL_USER:-nuha}:${NUHA_MYSQL_PASSWORD:-change_me}@nuha-mysql:3306/${NUHA_MYSQL_DATABASE:-nuha_simterpadu}
+    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts"
+    depends_on:
+      nuha-mysql:
+        condition: service_healthy
+
+  nuha-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nuha-app
+    restart: unless-stopped
+    ports:
+      - "${WEB_NUHA_PORT:-3226}:3226"
+    environment:
+      NODE_ENV: production
+      PORT: 3226
+      HOSTNAME: 0.0.0.0
+      DATABASE_URL: mysql://${NUHA_MYSQL_USER:-nuha}:${NUHA_MYSQL_PASSWORD:-change_me}@nuha-mysql:3306/${NUHA_MYSQL_DATABASE:-nuha_simterpadu}
+      AUTH_SECRET: ${AUTH_SECRET:-dev-secret-change-me-in-production-32b}
+    depends_on:
+      nuha-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:3226/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+volumes:
+  nuha_mysql_data:
+    name: nuha_simterpadu_mysql_data

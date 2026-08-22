@@ -1,0 +1,28 @@
+import { redirect } from 'next/navigation';
+import { readSession } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import { Shell } from '@/components/Shell';
+import { DaftarPpdb } from './DaftarPpdb';
+
+export default async function PpdbPage() {
+  const session = await readSession();
+  if (!session) redirect('/login');
+  const pendaftar = await prisma.pendaftar.findMany({ orderBy: { tglDaftar: 'desc' } });
+  const lulus = pendaftar.filter((row) => row.status === 'Lulus').length;
+
+  return <Shell session={session} active="ppdb" title="PPDB 2026/2027">
+    <section className="grid grid-4">
+      <div className="card"><div className="kpi-label">Total pendaftar</div><div className="kpi-value">{pendaftar.length}</div></div>
+      <div className="card"><div className="kpi-label">Lulus seleksi</div><div className="kpi-value">{lulus}</div></div>
+      <div className="card"><div className="kpi-label">Menunggu proses</div><div className="kpi-value">{pendaftar.filter((r) => ['Baru','Verifikasi','Seleksi'].includes(r.status)).length}</div></div>
+      <div className="card"><div className="kpi-label">Daftar ulang</div><div className="kpi-value">{pendaftar.filter((r) => r.status === 'DaftarUlang').length}</div></div>
+    </section>
+    <div style={{ marginTop: 16 }}><DaftarPpdb /></div>
+    <div className="card" style={{ marginTop: 16 }}>
+      <h3>Daftar pendaftar</h3>
+      <table><thead><tr><th>No. Reg</th><th>Nama</th><th>Pilihan</th><th>Asal sekolah</th><th>Status</th></tr></thead>
+        <tbody>{pendaftar.map((row) => <tr key={String(row.id)}><td>{row.noReg}</td><td>{row.nama}</td><td>{row.pilihan}</td><td>{row.asalSekolah ?? '-'}</td><td><span className={`badge ${row.status === 'Lulus' ? 'badge-hijau' : row.status === 'TidakLulus' ? 'badge-merah' : 'badge-emas'}`}>{row.status}</span></td></tr>)}</tbody>
+      </table>
+    </div>
+  </Shell>;
+}
