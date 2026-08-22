@@ -13,16 +13,20 @@ nuha/
 ├── dist/                 # yang di-serve nginx (document root)
 │   ├── index.html        # seluruh app: markup <x-dc> + <style> inline (~590 KB)
 │   ├── support.js        # runtime claude.ai/design, meng-compile <x-dc> di browser
-│   ├── assets/           # gambar halaman (logo, foto kiai, banner PPDB, dll)
+│   ├── assets/           # gambar halaman (logo, foto kiai/pengasuh, galeri kegiatan)
 │   ├── vendor/           # React 18.3.1 + Babel 7.29.0 UMD hasil vendoring
 │   └── _ds/engenlearn-ui-kit-<uuid>/   # design-system bundle (CSS + JS + manifest)
 ├── nginx.conf            # config server (CSP, cache, SPA fallback)
 ├── CLAUDE.md             # berkas ini
 └── _source/              # artefak sumber, TIDAK di-serve
-    ├── Prototype Sistem Manajemen Pesantren (5).zip   # export asli
-    ├── prompt-claude-design-yayasan.md                # prompt yang dipakai
-    └── pasted-*.png, *.webp                           # referensi visual
+    ├── Prototype Sistem Manajemen Pesantren (6).zip   # export AKTIF (dist/ dari sini)
+    ├── Prototype Sistem Manajemen Pesantren (5).zip   # export sebelumnya, arsip
+    ├── uploads-v6/       # referensi visual + prompt dari export v6
+    └── uploads-v5/       # idem, dari export v5 (prompt-nya identik dengan v6)
 ```
+
+Zip di `_source/` bernomor sesuai urutan export dari claude.ai/design. **Yang
+tertinggi = yang aktif**; simpan versi lama sebagai arsip, jangan dihapus.
 
 ## `dist/` tidak masuk Git
 
@@ -32,7 +36,7 @@ kebenarannya adalah zip di `_source/`. Rebuild pada checkout baru:
 
 ```bash
 cd apps/marketing/sub/nuha
-unzip -q "_source/Prototype Sistem Manajemen Pesantren (5).zip" -d dist
+unzip -q "_source/Prototype Sistem Manajemen Pesantren (6).zip" -d dist
 mv dist/SIMTERPADU.dc.html dist/index.html
 rm -rf dist/uploads dist/.thumbnail      # artefak sumber, bukan aset halaman
 
@@ -46,6 +50,38 @@ done
 
 # WAJIB: inject window.__resources SEBELUM <script src="./support.js">
 ```
+
+## Prosedur update dari export baru
+
+Saat datang zip versi berikutnya (mis. `... (7).zip`), lakukan urut:
+
+```bash
+cd apps/marketing/sub/nuha
+mv dist dist.old                                  # jangan rm — untuk diff & rollback
+unzip -q "_source/Prototype Sistem Manajemen Pesantren (7).zip" -d dist
+mv dist/SIMTERPADU.dc.html dist/index.html
+mv dist/uploads _source/uploads-v7 && rm -f dist/.thumbnail
+
+# 1. versi CDN berubah? kalau sama, vendor lama bisa dipakai ulang
+grep -oE 'https://unpkg.com/[^"]+' dist/support.js | sort -u
+cp -a dist.old/vendor dist/vendor
+
+# 2. re-inject window.__resources (patch ini SELALU hilang di export baru)
+
+# 3. cek semua rujukan aset lokal resolve (abaikan '{{ ... }}' = binding runtime)
+python3 - <<'PY'
+import re, os
+os.chdir('dist')
+s = open('index.html', encoding='utf8', errors='replace').read()
+refs = set(re.findall(r'(?:src|href)="(?!https?:|#|/)([^"]+)"', s))
+print('MISSING:', [r for r in sorted(refs) if '{{' not in r and not os.path.exists(r)] or 'none')
+PY
+
+# 4. restart + verifikasi RENDER, bukan cuma status code
+docker restart sentient-infra-nuha-marketing
+```
+
+Setelah yakin, baru buang `dist.old`. Simpan zip lama di `_source/` sebagai arsip.
 
 ## Menjalankan
 

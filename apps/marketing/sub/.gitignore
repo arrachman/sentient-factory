@@ -1,0 +1,5 @@
+# Folder uploads/ dari export claude.ai/design adalah hasil extract zip di
+# _source/ (referensi visual + prompt). Zip-nya sudah tracked sebagai SSOT
+# untuk rebuild dist/, jadi menyimpan extract-nya lagi cuma menggandakan
+# puluhan MB di history Git. Ambil dari zip kalau perlu dilihat.
+*/_source/uploads-*/
