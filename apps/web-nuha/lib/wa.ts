@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { log } from '@/lib/logger';
 import { recordAudit, type AuditActor } from '@/lib/audit';
+import { tokenPengirim } from '@/lib/wa-gateway';
 
 export function normalizeTarget(value: string): string {
   const digits = value.replace(/\D/g, '');
@@ -32,8 +33,11 @@ export async function kirimWa(params: SendWaParams) {
 
   if (!dryRun) {
     const url = process.env.WA_GATEWAY_URL;
-    const token = process.env.WA_GATEWAY_TOKEN;
-    if (!url || !token) error = 'WA_GATEWAY_URL atau WA_GATEWAY_TOKEN belum dikonfigurasi.';
+    // Token perangkat boleh datang dari QR yang baru saja dipindai, bukan hanya
+    // dari env — lihat `tokenPengirim`.
+    const token = await tokenPengirim();
+    if (!url) error = 'WA_GATEWAY_URL belum dikonfigurasi.';
+    else if (!token) error = 'Belum ada perangkat WhatsApp yang terhubung. Pindai QR di Notifikasi → Perangkat.';
     else {
       try {
         const form = new URLSearchParams({ target: nomor, message: params.isi });

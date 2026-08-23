@@ -86,6 +86,9 @@ export async function Shell({ session, active, title, children }: { session: Ses
               <span className="rl" style={{ display: 'block' }}>{peranUtama}</span>
             </span>
           </div>
+          <Link href="/docs" className="btn-ghost-terang" style={{ display: 'block', textAlign: 'center', color: '#f3f1e9' }}>
+            Panduan
+          </Link>
           <LogoutButton />
         </div>
       </aside>

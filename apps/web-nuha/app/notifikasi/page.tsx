@@ -6,12 +6,18 @@ import { Tabs, tabAktif } from '@/components/ui/Tabs';
 import { TabLog } from './TabLog';
 import { TabTemplate } from './TabTemplate';
 import { TabPemicu } from './TabPemicu';
+import { TabPerangkat } from './TabPerangkat';
 
 const TABS = [
   { key: 'log', label: 'Log Pengiriman' },
   { key: 'template', label: 'Template' },
   { key: 'pemicu', label: 'Pemicu Otomatis' },
+  { key: 'perangkat', label: 'Perangkat' },
 ];
+
+// Daftar perangkat dan QR datang dari gateway, bukan basis data — jangan pernah
+// disajikan dari cache.
+export const dynamic = 'force-dynamic';
 
 export default async function NotifikasiPage({
   searchParams,
@@ -45,6 +51,7 @@ export default async function NotifikasiPage({
       {aktif === 'log' && <TabLog searchParams={sp} />}
       {aktif === 'template' && <TabTemplate searchParams={sp} />}
       {aktif === 'pemicu' && <TabPemicu />}
+      {aktif === 'perangkat' && <TabPerangkat searchParams={sp} />}
     </Shell>
   );
 }

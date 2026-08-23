@@ -38,6 +38,9 @@ const perolehPeran = (nama: string) => {
   return prisma.peran.upsert({ where: { key }, create: { key, nama }, update: { nama } });
 };
 
+/** Prototype hanya memuat jadwal satu rombongan belajar. */
+const KELAS_JADWAL_PROTOTYPE = '8B';
+
 const gender = (value: unknown): JenisKelamin => String(value) === 'P' ? JenisKelamin.P : JenisKelamin.L;
 const pendaftarStatus = (value: unknown): StatusPendaftar => {
   const statuses: Record<string, StatusPendaftar> = { Baru: 'Baru', Verifikasi: 'Verifikasi', Seleksi: 'Seleksi', Lulus: 'Lulus', 'Tidak Lulus': 'TidakLulus', 'Daftar Ulang': 'DaftarUlang' };
@@ -60,7 +63,21 @@ async function seedAcademicContent() {
     await prisma.capaianPembelajaran.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), mapelId: mapel?.id, mapel: String(row.mapel), fase: String(row.fase), capaian: String(row.capaian) }, update: { capaian: String(row.capaian) } });
   }
   for (const row of source.bankSoal) await prisma.bankSoal.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), mapel: String(row.mapel), topik: String(row.topik), tipe: String(row.tipe), level: String(row.level), butir: Number(row.butir), dipakai: Number(row.dipakai), penulis: String(row.penulis) }, update: { butir: Number(row.butir), dipakai: Number(row.dipakai) } });
-  for (const day of source.jadwalPelajaran) for (const [index, row] of (day.rows as unknown[][]).entries()) await prisma.jadwalPelajaran.upsert({ where: { hari_jamKe_kelas: { hari: String(day.hari), jamKe: index + 1, kelas: String(row[3]) } }, create: { hari: String(day.hari), jamKe: index + 1, waktu: String(row[0]), mapel: String(row[1]), guru: String(row[2]), kelas: String(row[3]) }, update: { waktu: String(row[0]), mapel: String(row[1]), guru: String(row[2]) } });
+  // Kolom keempat prototype adalah *ruangan*, dan seluruh jadwal itu milik satu
+  // rombongan belajar (8B). Menyalinnya ke `kelas` membuat "Lab IPA"/"Musholla"
+  // muncul sebagai kelas dan memutus guru dari kelas yang sebenarnya diampu.
+  const RUANG_BUKAN_KELAS = /^(lab|musholla|masjid|aula|lapangan|workshop|perpustakaan)/i;
+  for (const day of source.jadwalPelajaran) for (const [index, row] of (day.rows as unknown[][]).entries()) {
+    const tempat = String(row[3]);
+    const ruangSaja = RUANG_BUKAN_KELAS.test(tempat);
+    const kelas = ruangSaja ? KELAS_JADWAL_PROTOTYPE : tempat;
+    const ruang = ruangSaja ? tempat : 'Ruang kelas';
+    await prisma.jadwalPelajaran.upsert({
+      where: { hari_jamKe_kelas: { hari: String(day.hari), jamKe: index + 1, kelas } },
+      create: { hari: String(day.hari), jamKe: index + 1, waktu: String(row[0]), mapel: String(row[1]), guru: String(row[2]), kelas, ruang },
+      update: { waktu: String(row[0]), mapel: String(row[1]), guru: String(row[2]), ruang },
+    });
+  }
   for (const row of source.lmsKursus) await prisma.kursusLms.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), nama: String(row.nama), guru: String(row.guru), modul: Number(row.modul), selesai: Number(row.selesai), tugasAktif: Number(row.tugasAktif), nilai: Number(row.nilai) }, update: { modul: Number(row.modul), selesai: Number(row.selesai), tugasAktif: Number(row.tugasAktif), nilai: Number(row.nilai) } });
   const courses = await prisma.kursusLms.findMany(); const courseByName = new Map(courses.map((course) => [course.nama, course]));
   // MateriLms has no natural key, so guard the append rather than upsert it.
@@ -116,6 +133,53 @@ async function seedSuperAdmin(passwordHashBawaan: string) {
   }
 }
 
+/**
+ * Peran `guru` sebelumnya tidak dipegang siapa pun, sehingga tab "Kelas Saya"
+ * tak pernah bisa dibuka. Yang menentukan isi tab itu adalah kecocokan persis
+ * `JadwalPelajaran.guru` dengan nama pengguna — jadi akun dibuat dari daftar
+ * pengajar di jadwal, bukan dari tabel pegawai (namanya tidak selalu sama).
+ */
+async function seedGuru(passwordHash: string) {
+  const peran = await prisma.peran.upsert({
+    where: { key: 'guru' },
+    create: { key: 'guru', nama: 'Guru / Wali Kelas' },
+    update: {},
+  });
+
+  const jadwal = await prisma.jadwalPelajaran.findMany({ distinct: ['guru'], select: { guru: true } });
+  const namaGuru = jadwal.map((row) => (row.guru ?? '').trim()).filter(Boolean).sort();
+
+  for (const [index, nama] of namaGuru.entries()) {
+    // Nama pengajar bisa sama dengan pegawai yang sudah punya akun lain (mis.
+    // Pengasuh yang juga mengajar). Pakai email khusus guru agar akunnya
+    // terpisah dan peran aslinya tidak tertimpa.
+    const email = `guru.${kunciPeran(nama)}@nuha.local`;
+    const orang = await prisma.orang.upsert({
+      where: { email },
+      create: { nama, jk: nama.startsWith('Bu ') ? JenisKelamin.P : JenisKelamin.L, email, aktif: true },
+      update: { nama, aktif: true },
+    });
+    const user = await prisma.user.upsert({
+      where: { orangId: orang.id },
+      create: { orangId: orang.id, email, username: `guru.${index + 1}`, passwordHash, unitScope: 'Unit mengajar', aktif: true },
+      update: { username: `guru.${index + 1}`, passwordHash, aktif: true },
+    });
+    await prisma.userPeran.upsert({
+      where: { userId_peranId: { userId: user.id, peranId: peran.id } },
+      create: { userId: user.id, peranId: peran.id },
+      update: {},
+    });
+  }
+
+  // `kelas.wali_kelas` seluruhnya NULL, jadi badge "Wali Kelas" tak pernah
+  // muncul. Tunjuk satu wali per kelas dari pengajar kelas itu sendiri.
+  const kelasRows = await prisma.kelas.findMany({ where: { waliKelas: null }, select: { id: true, nama: true } });
+  for (const kelas of kelasRows) {
+    const pengampu = await prisma.jadwalPelajaran.findFirst({ where: { kelas: kelas.nama }, select: { guru: true } });
+    if (pengampu?.guru) await prisma.kelas.update({ where: { id: kelas.id }, data: { waliKelas: pengampu.guru } });
+  }
+}
+
 async function seedPortalAccess() {
   const passwordHash = await bcrypt.hash('Nuha2026!', 12);
   const roleSantri = await prisma.peran.upsert({ where: { key: 'santri' }, create: { key: 'santri', nama: 'Santri' }, update: {} });
@@ -140,6 +204,7 @@ async function seedPortalAccess() {
   }
 
   await seedSuperAdmin(passwordHash);
+  await seedGuru(passwordHash);
 
   const santriRows = await prisma.santri.findMany({ include: { orang: true } });
   for (const santri of santriRows) {

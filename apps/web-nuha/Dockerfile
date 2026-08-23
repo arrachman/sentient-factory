@@ -14,6 +14,9 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+# Tangkapan layar panduan. Sengaja di luar `public/`: disajikan route bergerbang
+# sesi karena memuat data santri, tagihan, dan layar pemasangan WhatsApp.
+COPY --from=builder --chown=nextjs:nodejs /app/docs-assets ./docs-assets
 USER nextjs
 EXPOSE 3226
 ENV PORT=3226

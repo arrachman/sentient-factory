@@ -1,0 +1,87 @@
+/* Gaya khusus halaman dokumentasi. Token diwarisi dari globals.css. */
+
+.docs {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 20px 72px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.docs-head {
+  background: var(--sidebar);
+  border-radius: 0 0 22px 22px;
+  padding: 34px 30px 30px;
+  margin: 0 -20px 4px;
+}
+.docs-head h1 { color: #faf8f3; }
+
+.docs-nav ol {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  columns: 2;
+  column-gap: 28px;
+  font-size: 13.5px;
+  line-height: 1.9;
+}
+@media (max-width: 620px) { .docs-nav ol { columns: 1; } }
+
+.docs-langkah {
+  margin: 0;
+  padding-left: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.docs-langkah li { font-size: 13.5px; color: var(--teks-2); }
+.docs-langkah b { display: block; color: var(--teks-kuat); margin-bottom: 2px; }
+
+.docs-diagram {
+  margin: 16px 0 4px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--krem);
+  border: 1px solid var(--krem-4);
+  overflow-x: auto;
+}
+
+.docs-gambar { margin: 16px 0 0; }
+.docs-gambar img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid var(--garis);
+}
+.docs-gambar figcaption {
+  margin-top: 7px;
+  font-size: 12.5px;
+  color: var(--teks-lembut);
+}
+
+.docs-daftar { margin: 0; display: flex; flex-direction: column; gap: 13px; }
+.docs-daftar dt { font-weight: 700; font-size: 13.5px; color: var(--teks-kuat); }
+.docs-daftar dd { margin: 3px 0 0; font-size: 13.5px; color: var(--teks-2); }
+
+.docs code {
+  background: var(--krem-3);
+  border: 1px solid var(--krem-4);
+  border-radius: 6px;
+  padding: 1px 5px;
+  font-size: 12.5px;
+}
+
+.docs-kaki {
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--teks-samar);
+  padding-top: 8px;
+}
+
+@media print {
+  .docs-head { background: none; }
+  .docs-head h1, .docs-head p { color: var(--teks) !important; }
+  .docs-nav, .docs-head .btn { display: none; }
+  .card { break-inside: avoid; }
+}
