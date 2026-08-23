@@ -98,7 +98,9 @@ export default async function DocsPage() {
             <figure className="docs-gambar" key={gambar.file}>
               {/* Disajikan route bergerbang sesi, bukan aset publik. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/docs/tangkapan/${gambar.file}`} alt={gambar.caption} loading="lazy" />
+              {/* Sengaja tanpa lazy: gambar yang termuat belakangan menggeser
+                  tata letak dan membuat lompatan anchor dari sidebar meleset. */}
+              <img src={`/docs/tangkapan/${gambar.file}`} alt={gambar.caption} />
               <figcaption>{gambar.caption}</figcaption>
             </figure>
           ))}

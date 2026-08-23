@@ -4,6 +4,18 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-23 — `8d4fd3aa` — Smooth scroll + fix scroll-spy /docs
+
+- Lompatan dari sidebar kini meluncur halus (`scroll-behavior: smooth`,
+  dimatikan bila pengguna menyetel prefers-reduced-motion).
+- Bug "klik item, yang menyala malah di atasnya" diperbaiki. Akar masalahnya
+  `loading="lazy"` pada screenshot: gambar termuat di tengah luncuran
+  menggeser tata letak sehingga anchor mendarat di bagian sebelumnya. Lazy
+  dilepas, scroll-spy dihitung dari posisi scroll (bagian terakhir yang
+  melewati garis baca), dan klik mengoreksi posisi hingga tepat sasaran.
+- Diverifikasi Chromium: 14/14 klik menandai item yang benar; scroll manual
+  bergerak maju berurutan.
+
 ## 2026-08-23 — `4c569a35` — Sidebar navigasi di /docs
 
 - Daftar isi berpindah dari kartu di atas konten menjadi sidebar kiri yang

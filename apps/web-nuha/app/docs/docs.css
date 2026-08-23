@@ -49,6 +49,7 @@
   color: var(--teks-2);
   text-decoration: none;
   border-left: 2px solid transparent;
+  transition: background .18s ease, border-color .18s ease, color .18s ease;
 }
 .docs-samping a:hover { background: var(--krem); color: var(--teks-kuat); }
 .docs-samping a.aktif {
@@ -81,6 +82,12 @@
   margin: 0 -20px 4px;
 }
 .docs-head h1 { color: #faf8f3; }
+
+/* Lompatan dari sidebar meluncur halus, kecuali pengguna minta reduksi gerak. */
+html:has(.docs) { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html:has(.docs) { scroll-behavior: auto; }
+}
 
 /* Judul bagian tidak tertutup saat lompat dari sidebar. */
 .docs-isi section[id] { scroll-margin-top: 18px; }
