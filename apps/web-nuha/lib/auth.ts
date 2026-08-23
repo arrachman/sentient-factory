@@ -29,7 +29,9 @@ export async function createSession(payload: SessionPayload): Promise<void> {
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    // The app is also deployed behind plain HTTP on the LAN/public IP. A Secure
+    // cookie is silently rejected there; enable it explicitly when HTTPS is used.
+    secure: process.env.AUTH_COOKIE_SECURE === 'true',
     path: '/',
     maxAge: MAX_AGE_SECONDS,
   });

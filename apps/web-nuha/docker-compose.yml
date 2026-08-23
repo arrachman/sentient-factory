@@ -52,6 +52,8 @@ services:
       HOSTNAME: 0.0.0.0
       DATABASE_URL: mysql://${NUHA_MYSQL_USER:-nuha}:${NUHA_MYSQL_PASSWORD:-change_me}@nuha-mysql:3306/${NUHA_MYSQL_DATABASE:-nuha_simterpadu}
       AUTH_SECRET: ${AUTH_SECRET:-dev-secret-change-me-in-production-32b}
+      # Set to true only once the app is served over HTTPS.
+      AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-false}
       WA_DRY_RUN: ${WA_DRY_RUN:-true}
       WA_GATEWAY_URL: ${WA_GATEWAY_URL:-http://wa-gateway:3204}
       WA_GATEWAY_TOKEN: ${WA_GATEWAY_TOKEN:-}
