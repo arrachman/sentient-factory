@@ -95,6 +95,15 @@ a:hover { color: var(--emas); }
 .topbar .judul { font-family: var(--font-lora), serif; font-size: 17px; color: var(--hijau-gelap); }
 .pad { padding: 24px; flex: 1; display: flex; flex-direction: column; gap: 16px; }
 
+/* Pemilih peran super admin (debug) */
+.samaran { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.samaran .label { white-space: nowrap; }
+.samaran select {
+  padding: 6px 10px; border: 1px solid var(--garis-input); border-radius: 9px;
+  background: #fff; font-size: 12.5px; font-family: inherit; color: var(--teks);
+}
+.samaran .btn-sekunder { padding: 6px 12px; font-size: 12.5px; border-radius: 9px; cursor: pointer; }
+
 /* Ticker agenda */
 .mq { overflow: hidden; max-width: 520px; mask-image: linear-gradient(90deg, #000 84%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 84%, transparent); }
 .mqtrack { display: flex; gap: 26px; white-space: nowrap; animation: mq 46s linear infinite; }

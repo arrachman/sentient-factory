@@ -8,8 +8,23 @@ export type SessionPayload = {
   userId: string;
   nama: string;
   email: string;
+  /** Peran efektif — yang dipakai semua pengecekan akses. */
   peran: string[];
+  /**
+   * Peran asli dari basis data. Hanya terisi saat super admin sedang menyamar
+   * sebagai peran lain; dipakai untuk mengembalikan dirinya dan untuk memutuskan
+   * siapa yang boleh mengganti peran. Tanpa ini, super admin yang menyamar jadi
+   * santri akan kehilangan tombol kembalinya.
+   */
+  peranAsli?: string[];
 };
+
+export const PERAN_SUPERADMIN = 'superadmin';
+
+/** Super admin dinilai dari peran asli, bukan peran yang sedang dipakai. */
+export function isSuperAdmin(session: SessionPayload): boolean {
+  return (session.peranAsli ?? session.peran).includes(PERAN_SUPERADMIN);
+}
 
 function secretKey(): Uint8Array {
   const secret = process.env.AUTH_SECRET;

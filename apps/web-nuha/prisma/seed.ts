@@ -28,6 +28,16 @@ const parseDate = (value: unknown, tahunDefault = 2026): Date => {
  */
 const jamSingkat = (value: unknown): string => String(value ?? '').split('·')[0].trim().slice(0, 16);
 
+/** Slug peran dari nama jabatan: "Musyrif Asrama" → "musyrif-asrama". */
+const kunciPeran = (nama: string): string =>
+  nama.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32);
+
+/** Peran tanpa grant menu apa pun — akses ditambahkan manual lewat Pengaturan. */
+const perolehPeran = (nama: string) => {
+  const key = kunciPeran(nama);
+  return prisma.peran.upsert({ where: { key }, create: { key, nama }, update: { nama } });
+};
+
 const gender = (value: unknown): JenisKelamin => String(value) === 'P' ? JenisKelamin.P : JenisKelamin.L;
 const pendaftarStatus = (value: unknown): StatusPendaftar => {
   const statuses: Record<string, StatusPendaftar> = { Baru: 'Baru', Verifikasi: 'Verifikasi', Seleksi: 'Seleksi', Lulus: 'Lulus', 'Tidak Lulus': 'TidakLulus', 'Daftar Ulang': 'DaftarUlang' };
@@ -65,6 +75,47 @@ async function seedAcademicContent() {
  * reuse the same session, role, and menu machinery as staff. Runs before the
  * first-boot guard so an already-seeded database still gains the portals.
  */
+/**
+ * Super admin memegang seluruh menu dan boleh menyamar sebagai peran lain untuk
+ * debugging. Sandinya diambil dari SUPERADMIN_PASSWORD bila diset, sehingga
+ * deployment nyata tidak terpaku pada sandi seed bersama.
+ */
+async function seedSuperAdmin(passwordHashBawaan: string) {
+  const sandi = process.env.SUPERADMIN_PASSWORD;
+  const passwordHash = sandi ? await bcrypt.hash(sandi, 12) : passwordHashBawaan;
+  const peran = await prisma.peran.upsert({
+    where: { key: 'superadmin' },
+    create: { key: 'superadmin', nama: 'Super Admin' },
+    update: { nama: 'Super Admin' },
+  });
+
+  const orang = await prisma.orang.upsert({
+    where: { email: 'superadmin@nuha.pesantren.web.id' },
+    create: { nama: 'Super Admin', jk: JenisKelamin.L, email: 'superadmin@nuha.pesantren.web.id', aktif: true },
+    update: { aktif: true },
+  });
+  const user = await prisma.user.upsert({
+    where: { orangId: orang.id },
+    create: { orangId: orang.id, email: orang.email!, username: 'superadmin', passwordHash, unitScope: 'Semua unit', aktif: true },
+    update: { username: 'superadmin', passwordHash, aktif: true },
+  });
+  await prisma.userPeran.upsert({
+    where: { userId_peranId: { userId: user.id, peranId: peran.id } },
+    create: { userId: user.id, peranId: peran.id },
+    update: {},
+  });
+
+  // Semua menu diberikan agar super admin bisa membuka layar mana pun tanpa
+  // harus menyamar lebih dulu.
+  for (const menu of await prisma.menu.findMany()) {
+    await prisma.menuPeran.upsert({
+      where: { menuId_peranId: { menuId: menu.id, peranId: peran.id } },
+      create: { menuId: menu.id, peranId: peran.id },
+      update: {},
+    });
+  }
+}
+
 async function seedPortalAccess() {
   const passwordHash = await bcrypt.hash('Nuha2026!', 12);
   const roleSantri = await prisma.peran.upsert({ where: { key: 'santri' }, create: { key: 'santri', nama: 'Santri' }, update: {} });
@@ -87,6 +138,8 @@ async function seedPortalAccess() {
   if (dataMenu) for (const role of staffRoles) {
     await prisma.menuPeran.upsert({ where: { menuId_peranId: { menuId: dataMenu.id, peranId: role.id } }, create: { menuId: dataMenu.id, peranId: role.id }, update: {} });
   }
+
+  await seedSuperAdmin(passwordHash);
 
   const santriRows = await prisma.santri.findMany({ include: { orang: true } });
   for (const santri of santriRows) {
@@ -260,7 +313,11 @@ async function main() {
   }
 
   for (const row of source.users) {
-    const role = roles.find((item) => item.nama === row.peran || String(row.peran).startsWith(item.nama)) ?? roleByKey.get('ketua')!;
+    // Jabatan yang belum punya peran (Musyrif, Tata Usaha) dibuatkan peran
+    // sendiri tanpa grant menu. Sebelumnya jatuh ke `ketua`, sehingga staf biasa
+    // otomatis memperoleh hak akses tertinggi.
+    const role = roles.find((item) => item.nama === row.peran || String(row.peran).startsWith(item.nama))
+      ?? await perolehPeran(String(row.peran));
     const orang = await prisma.orang.upsert({ where: { email: String(row.email) }, create: { nama: String(row.nama), jk: JenisKelamin.L, email: String(row.email), aktif: Boolean(row.aktif) }, update: { nama: String(row.nama), aktif: Boolean(row.aktif) } });
     const user = await prisma.user.upsert({ where: { orangId: orang.id }, create: { orangId: orang.id, email: String(row.email), passwordHash, unitScope: String(row.unit), aktif: Boolean(row.aktif) }, update: { passwordHash, aktif: Boolean(row.aktif) } });
     await prisma.userPeran.upsert({ where: { userId_peranId: { userId: user.id, peranId: role.id } }, create: { userId: user.id, peranId: role.id }, update: {} });

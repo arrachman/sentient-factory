@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
-import type { SessionPayload } from '@/lib/auth';
+import { isSuperAdmin, type SessionPayload } from '@/lib/auth';
 import { LogoutButton } from '@/components/LogoutButton';
+import { PemilihPeran } from '@/components/PemilihPeran';
 import { inisial } from '@/components/ui/primitives';
 
 const HREF_BY_KEY: Record<string, string> = {
@@ -46,6 +47,7 @@ export async function Shell({ session, active, title, children }: { session: Ses
   ]);
   const visible = menus.filter((menu) => HREF_BY_KEY[menu.key]);
   const peranUtama = session.peran[0] ?? 'pengguna';
+  const menyamar = Boolean(session.peranAsli);
 
   const ticker = agenda.map((a) => {
     const tgl = a.tgl.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
@@ -105,9 +107,18 @@ export async function Shell({ session, active, title, children }: { session: Ses
               </div>
             )}
           </div>
+          {isSuperAdmin(session) && <PemilihPeran session={session} />}
           <p className="muted" style={{ margin: 0 }}>Tahun Ajaran 2026/2027 · Semester Gasal</p>
         </header>
-        <div className="pad">{children}</div>
+        <div className="pad">
+          {menyamar && (
+            <div className="alert alert-peringatan" style={{ marginBottom: 14 }}>
+              Mode debug: Anda melihat aplikasi sebagai <b>{peranUtama}</b>. Data dan menu mengikuti peran itu — pilih
+              &ldquo;Super admin&rdquo; di kanan atas untuk kembali.
+            </div>
+          )}
+          {children}
+        </div>
       </main>
     </div>
   );
