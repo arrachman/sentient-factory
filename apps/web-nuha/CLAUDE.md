@@ -37,19 +37,26 @@ WA sungguhan — jangan setel false saat testing tanpa penerima yang diotorisasi
    `user_peran`, bukan hardcode. Setiap halaman & server action memanggil
    `requirePage('<menuKey>')` dari `lib/access.ts`; menu tersembunyi bukan
    pengaman. Menu baru = baris `menu` + `menu_peran` di seed **dan** entri
-   `HREF_BY_KEY` di `components/Shell.tsx` (tanpa itu tidak muncul di sidebar).
+   `HREF_BY_KEY` di `components/templates/Shell.tsx` (tanpa itu tidak muncul
+   di sidebar).
 2. **Audit** — semua aksi yang mengubah keadaan memanggil `recordAudit()` dari
    `lib/audit.ts`.
 3. **Server Actions** — mutasi lewat `'use server'` + `FormData` +
    `revalidatePath`; tidak ada API route CRUD baru tanpa alasan.
 4. **Tab server-side** — `?tab=` dengan `Tabs`/`tabAktif` dari
-   `components/ui/Tabs.tsx`. Satu file per tab (konvensi maks 400 baris/file);
-   pengumpul data panjang dipisah ke modul sendiri (contoh:
-   `app/kurikulum/kelas-guru.ts`).
-5. **Primitif UI** — pakai `components/ui/primitives.tsx` (`Card`, `StatCard`,
-   `Tabel`, `Badge`, `Kosong`, `ProgressBar`, …). Kelas badge yang tersedia:
-   hijau, biru, kuning, merah, netral, oranye, toska, pink — **tidak ada
-   `badge-ungu`**; cek `styles/globals.css` sebelum memakai kelas baru.
+   `@/components` (molecules/Tabs.tsx + utils/tabs.ts). Satu file per tab
+   (konvensi maks 400 baris/file); pengumpul data panjang dipisah ke modul
+   sendiri (contoh: `app/kurikulum/kelas-guru.ts`).
+5. **Primitif UI** — `components/` mengikuti atomic design: `atoms/`
+   (Badge, Ring, ProgressBar, Kosong, Avatar), `molecules/` (Card, StatCard,
+   Tabel, Tabs, JudulHalaman), `organisms/` (chart-chart), `templates/`
+   (Shell), `utils/` (helper murni: rp, inisial, avaBg, kelasStatus,
+   tabAktif). Semua diekspor lewat barrel `components/index.ts` — import
+   selalu dari `@/components`, **jangan** buat file flat baru langsung di
+   `components/` (folder `components/ui/` sudah dihapus). Kelas badge yang
+   tersedia: hijau, biru, kuning, merah, netral, oranye, toska, pink —
+   **tidak ada `badge-ungu`**; cek `styles/globals.css` sebelum memakai
+   kelas baru.
 6. **Data nyata** — angka di layar dihitung dari Prisma, bukan konstanta.
    Kalau datanya belum ada, perluas `prisma/seed.ts` (idempoten, nilai contoh
    deterministik dari indeks — bukan acak).

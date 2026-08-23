@@ -4,6 +4,33 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-23 — `d7bc8fdc` — Restrukturisasi `components/` ke atomic design
+
+- `components/ui/primitives.tsx`, `charts.tsx`, `Tabs.tsx`, dan
+  `components/Shell.tsx` dipecah ke `components/atoms/`, `molecules/`,
+  `organisms/`, `templates/`, dan `utils/` — pure restructure, tidak ada
+  perubahan behavior atau styling.
+- `components/index.ts` jadi barrel export sehingga seluruh import di
+  `app/**` (104 file) cukup diarahkan ke satu path (`@/components`) tanpa
+  perlu memecah tiap import statement per simbol per file baru.
+- `app/**/Tab*.tsx` dan `page.tsx` tetap di lokasi masing-masing (constraint
+  Next.js file-based routing) — hanya path import yang berubah.
+
+**Dampak operasional**
+
+- Tidak ada perubahan Prisma, query, atau route — verifikasi cukup lewat
+  `npx tsc --noEmit` (hijau) dan smoke test setelah rebuild image
+  (`docker compose build nuha-app && docker compose up -d nuha-app`):
+  login superadmin, `/`, `/akademik`, `/keuangan`, `/kepesantrenan`,
+  `/poskestren` semuanya render 200 tanpa error server.
+- `npm run lint` tidak bisa dijalankan di host ini (Node 18.19, Next 16
+  butuh ≥20.9) — pre-existing, bukan akibat perubahan ini.
+- Kontributor baru: komponen UI generik ditambah di level yang sesuai
+  (`atoms/` untuk elemen tunggal, `molecules/` untuk komposit kecil,
+  `organisms/` untuk chart/komponen besar) lalu diekspor lewat
+  `components/index.ts` — jangan tambah lagi file flat di `components/ui/`
+  (folder itu sudah dihapus).
+
 ## 2026-08-23 — `376820e2` — Ujian berbasis komputer (CBT) dengan IRT dan anti-curang
 
 - Delapan model baru (`soal`, `opsi_soal`, `paket_soal`, `butir_paket`,
