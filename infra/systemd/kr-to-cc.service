@@ -1,0 +1,18 @@
+[Unit]
+Description=kr-to-cc — Anthropic-compatible proxy (Kiro / AWS CodeWhisperer)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/sentient-factory/apps/kr-to-cc
+EnvironmentFile=/opt/sentient-factory/apps/kr-to-cc/.env
+Environment=NODE_ENV=production
+ExecStart=/home/rania/.nvm/versions/node/v22.22.0/bin/node apps/server/src/index.js
+Restart=always
+RestartSec=3
+StandardOutput=append:/home/rania/.local/state/kr-to-cc.log
+StandardError=append:/home/rania/.local/state/kr-to-cc.log
+
+[Install]
+WantedBy=default.target
