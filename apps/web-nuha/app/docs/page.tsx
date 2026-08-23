@@ -4,8 +4,14 @@ import { readSession } from '@/lib/auth';
 import { AKUN, BAGIAN, OPERASIONAL } from './isi';
 import { AlurAkses, AlurQr } from './Diagram';
 import { NavSamping } from './NavSamping';
+import { Onboarding } from './Onboarding';
 
 const NAV_ITEMS = [
+  { id: 'tentang', judul: 'Proyek ini untuk apa' },
+  { id: 'peta-modul', judul: 'Peta modul' },
+  { id: 'alur-inti', judul: 'Alur data inti' },
+  { id: 'teknologi', judul: 'Cara sistem dibangun' },
+  { id: 'glosarium', judul: 'Glosarium' },
   { id: 'akun', judul: 'Akun dan peran' },
   { id: 'hak-akses', judul: 'Penegakan hak akses' },
   ...BAGIAN.map((b) => ({ id: b.id, judul: b.judul })),
@@ -42,6 +48,8 @@ export default async function DocsPage() {
         <NavSamping items={NAV_ITEMS} />
 
         <div className="docs-isi">
+      <Onboarding />
+
       <section id="akun" className="card">
         <h2 className="card-judul" style={{ fontSize: 20 }}>Akun dan peran</h2>
         <p className="muted" style={{ marginBottom: 14 }}>
