@@ -4,6 +4,18 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-23 — `a770bdca` — Bagian onboarding proyek di /docs
+
+- Lima bagian baru di paling atas /docs untuk orang yang baru mengenal
+  proyek: "Proyek ini untuk apa" (4 unit + prinsip satu identitas), peta
+  seluruh modul per kelompok urusan, lima alur data inti (PPDB → santri,
+  nilai, uang masuk, santri sakit, WhatsApp), cara sistem dibangun, dan
+  glosarium istilah pesantren.
+- Data di `app/docs/onboarding.ts` + komponen `Onboarding.tsx` terpisah
+  agar tiap file tetap < 400 baris. Sidebar bertambah 5 item (total 19).
+- Diverifikasi Chromium via IP publik: 5 section render, 7/7 klik sidebar
+  menandai item benar, nol pageerror.
+
 ## 2026-08-23 — `72dec77c` — Smooth scroll + fix scroll-spy /docs
 
 - Lompatan dari sidebar kini meluncur halus (`scroll-behavior: smooth`,
