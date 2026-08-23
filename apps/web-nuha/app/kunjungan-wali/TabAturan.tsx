@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui/primitives';
+import { Card } from '@/components';
 
 const JAM_BERKUNJUNG = [
   { hari: 'Ahad (kunjungan umum)', jam: '09.00 – 15.00' },

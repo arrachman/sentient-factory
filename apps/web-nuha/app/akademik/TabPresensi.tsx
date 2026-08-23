@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { ProgressBar, Kosong } from '@/components/ui/primitives';
+import { ProgressBar, Kosong } from '@/components';
 
 type Params = Record<string, string | string[] | undefined>;
 

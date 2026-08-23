@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Shell } from '@/components/Shell';
+import { Shell } from '@/components/templates/Shell';
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { ENTITIES } from '@/lib/crud/registry';

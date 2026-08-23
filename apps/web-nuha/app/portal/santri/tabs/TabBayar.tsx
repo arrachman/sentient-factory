@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { rupiah } from '@/lib/gaji';
-import { Badge, Kosong } from '@/components/ui/primitives';
+import { Badge, Kosong } from '@/components';
 
 const KOTAK: React.CSSProperties = { background: '#FFFFFF', border: '1px solid #E8E3D9', borderRadius: 15, padding: 18 };
 

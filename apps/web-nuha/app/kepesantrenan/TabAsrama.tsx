@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, ProgressBar } from '@/components/ui/primitives';
-import { Kosong } from '@/components/ui/primitives';
+import { Avatar, ProgressBar, Kosong } from '@/components';
 
 /** Kartu asrama: hunian per kamar + avatar musyrif/santri contoh, semua dari Prisma. */
 export async function TabAsrama() {

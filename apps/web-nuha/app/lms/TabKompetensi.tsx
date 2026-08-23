@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { Kosong, ProgressBar } from '@/components/ui/primitives';
+import { Kosong, ProgressBar } from '@/components';
 
 /**
  * Skema tidak punya model "unit kompetensi" tersendiri — tiap KursusLms diperlakukan

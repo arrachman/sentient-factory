@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { rupiah } from '@/lib/gaji';
-import { Badge, Kosong } from '@/components/ui/primitives';
+import { Badge, Kosong } from '@/components';
 import { konfirmasiPembayaranWali } from '../actions';
 
 const METODE_OPTS = ['Transfer bank', 'QRIS', 'Tunai di kantor'];

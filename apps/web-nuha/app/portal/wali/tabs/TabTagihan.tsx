@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { rupiah } from '@/lib/gaji';
-import { Badge, Kosong } from '@/components/ui/primitives';
+import { Badge, Kosong } from '@/components';
 
 function statusTagihan(nominal: number, dibayar: number) {
   if (dibayar >= nominal) return 'Lunas';

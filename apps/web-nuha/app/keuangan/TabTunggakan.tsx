@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Avatar, Badge, Kosong, rp } from '@/components/ui/primitives';
+import { Card, Avatar, Badge, Kosong, rp } from '@/components';
 
 export async function TabTunggakan() {
   const rows = await prisma.tagihan.findMany({

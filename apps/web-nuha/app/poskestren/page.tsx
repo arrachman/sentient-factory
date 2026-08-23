@@ -1,7 +1,6 @@
 import { requirePage } from '@/lib/access';
-import { Shell } from '@/components/Shell';
-import { JudulHalaman } from '@/components/ui/primitives';
-import { Tabs, tabAktif } from '@/components/ui/Tabs';
+import { Shell } from '@/components/templates/Shell';
+import { JudulHalaman, Tabs, tabAktif } from '@/components';
 import { TabDashboard } from './TabDashboard';
 import { TabPeriksa } from './TabPeriksa';
 import { TabRekam } from './TabRekam';

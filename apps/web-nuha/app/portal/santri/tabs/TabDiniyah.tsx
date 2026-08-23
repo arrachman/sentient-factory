@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 
 export async function TabDiniyah({ kelas }: { kelas: string }) {
   const mapelDiniyah = await prisma.mataPelajaran.findMany({ where: { kurikulum: 'Kurikulum Diniyah' } });

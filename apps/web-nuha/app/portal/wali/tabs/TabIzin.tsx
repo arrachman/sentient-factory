@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Badge, Kosong } from '@/components/ui/primitives';
+import { Badge, Kosong } from '@/components';
 
 const WARNA_STATUS: Record<string, string> = { Menunggu: '#E8973A', Disetujui: '#1D4ED8', Ditolak: '#B91C1C', Selesai: '#0F6B3D' };
 

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Badge, Kosong } from '@/components/ui/primitives';
+import { Badge, Kosong } from '@/components';
 import { ajukanIzin } from '../actions';
 
 const JENIS_OPTS = ['Pulang', 'Sakit', 'Keperluan keluarga', 'Lainnya'];

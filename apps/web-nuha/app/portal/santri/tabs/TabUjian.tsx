@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { Badge, Kosong } from '@/components/ui/primitives';
+import { Badge, Kosong } from '@/components';
 import { mulaiKerja } from '@/app/ujian/peserta-actions';
 
 const waktu = (d: Date) => d.toLocaleString('id-ID', { weekday: 'long', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });

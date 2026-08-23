@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, Badge, Kosong } from '@/components/ui/primitives';
+import { Avatar, Badge, Kosong } from '@/components';
 import { ubahStatusSeleksi } from './actions';
 
 /** Pendaftar yang masih perlu diverifikasi/diseleksi, dengan aksi keputusan. */

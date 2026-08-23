@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Tabel, Kosong, rp } from '@/components/ui/primitives';
+import { Card, Tabel, Kosong, rp } from '@/components';
 
 export async function TabTransaksi() {
   const rows = await prisma.transaksiKas.findMany({ orderBy: { tgl: 'desc' }, take: 40 });

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Badge, Kosong, Tabel } from '@/components/ui/primitives';
+import { Badge, Kosong, Tabel } from '@/components';
 
 /** Unit di bawah yayasan beserta populasi santri & pegawai per unit. */
 export async function TabUnit() {

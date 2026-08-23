@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { Shell } from '@/components/Shell';
+import { Shell } from '@/components/templates/Shell';
 import { requirePage } from '@/lib/access';
 import { CrudPanel } from '@/components/CrudPanel';
 import { getEntity } from '@/lib/crud/registry';

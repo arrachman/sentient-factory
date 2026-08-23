@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Avatar, Tabel, Badge, ProgressBar, Kosong, rp } from '@/components/ui/primitives';
+import { Card, Avatar, Tabel, Badge, ProgressBar, Kosong, rp } from '@/components';
 
 /** Ketaatan pembayaran per santri diringkas dari seluruh tagihannya. */
 function statusKetaatan(nominal: number, dibayar: number): string {

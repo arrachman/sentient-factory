@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong, ProgressBar, Tabel } from '@/components/ui/primitives';
+import { Kosong, ProgressBar, Tabel } from '@/components';
 import { analisisPaket, putarToken, terbitkanPeserta, ubahStatusSesi } from './cbt-actions';
 
 const WARNA_STATUS: Record<string, string> = {

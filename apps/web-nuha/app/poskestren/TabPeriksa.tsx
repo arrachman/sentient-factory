@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card } from '@/components/ui/primitives';
+import { Card } from '@/components';
 import { simpanPeriksa } from './actions';
 
 const LANJUT_OPSI = ['Istirahat di kamar', 'Rawat Poskestren', 'Rujuk Puskesmas'];

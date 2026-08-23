@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Avatar, Kosong } from '@/components/ui/primitives';
+import { Card, Avatar, Kosong } from '@/components';
 import { hitungGaji, rupiah } from '@/lib/gaji';
 
 /** Slip cetak untuk satu pegawai; pegawai dipilih lewat query ?peg=id. */

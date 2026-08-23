@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Tabel, Badge, Kosong } from '@/components/ui/primitives';
+import { Card, Tabel, Badge, Kosong } from '@/components';
 
 /**
  * Skema tidak punya model sertifikat/nomor terbit. Sebagai padanan dari data nyata:

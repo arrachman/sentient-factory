@@ -1,4 +1,4 @@
-import { avaBg, inisial } from '@/components/ui/primitives';
+import { avaBg, inisial } from '@/components';
 import type { SantriLengkap } from './types';
 
 export function TabKartu({ santri, nama }: { santri: SantriLengkap; nama: string }) {

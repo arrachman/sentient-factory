@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 
 export async function TabKesehatan({ santriId }: { santriId: bigint }) {
   const rekam = await prisma.rekamMedis.findMany({ where: { santriId }, orderBy: { tgl: 'desc' }, take: 15 });

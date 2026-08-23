@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Badge, Kosong } from '@/components/ui/primitives';
+import { Badge, Kosong } from '@/components';
 
 /** Read-only: TugasLms tidak punya tabel submisi per-santri di skema, jadi status berlaku per kursus, bukan per santri. */
 export async function TabTugas() {

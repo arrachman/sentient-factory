@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, Badge, Kosong } from '@/components/ui/primitives';
+import { Avatar, Badge, Kosong } from '@/components';
 
 /** Pengumuman kelulusan: pendaftar yang sudah lulus, tidak lulus, atau daftar ulang. */
 export async function TabKelulusan() {

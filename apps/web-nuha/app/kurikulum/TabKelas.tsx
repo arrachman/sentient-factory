@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import type { SessionPayload } from '@/lib/auth';
-import { Kosong, ProgressBar } from '@/components/ui/primitives';
+import { Kosong, ProgressBar } from '@/components';
 import { ambilKelasGuru, type KartuKelas } from './kelas-guru';
 
 const warnaKelengkapan = (pct: number) => (pct >= 90 ? '#0F6B3D' : pct >= 60 ? '#E8973A' : '#B91C1C');

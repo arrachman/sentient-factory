@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Badge, Kosong } from '@/components/ui/primitives';
+import { Badge, Kosong } from '@/components';
 import { ajukanKunjunganWali } from '../actions';
 
 const JAM_OPTS = ['09.00', '10.00', '11.00', '13.00', '14.00'];

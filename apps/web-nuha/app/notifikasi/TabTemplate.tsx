@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 import { toggleTemplateWa } from './actions';
 
 /** Kartu template per skenario pesan; nonaktifkan untuk menghentikan pengiriman otomatis. */

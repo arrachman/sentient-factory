@@ -1,4 +1,4 @@
-import { Card, Avatar, Kosong, ProgressBar } from '@/components/ui/primitives';
+import { Card, Avatar, Kosong, ProgressBar } from '@/components';
 import { hitungPoinSantri, tingkatUntuk } from './poin';
 
 const MEDALI = ['#E8973A', '#9CA3AF', '#B45309']; // emas, perak, perunggu — 3 teratas

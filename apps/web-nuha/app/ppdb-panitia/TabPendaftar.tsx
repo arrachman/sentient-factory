@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, Badge, Kosong, Tabel } from '@/components/ui/primitives';
+import { Avatar, Badge, Kosong, Tabel } from '@/components';
 import { DaftarPpdb } from './DaftarPpdb';
 
 /** Seluruh pendaftar, difilter lewat query param `q` (bukan state klien). */

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 
 const jam = (d: Date) => d.toLocaleString('id-ID', {
   weekday: 'long', day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',

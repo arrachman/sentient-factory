@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, Badge, Kosong, Tabel } from '@/components/ui/primitives';
+import { Avatar, Badge, Kosong, Tabel } from '@/components';
 
 /** Pengguna & peran, difilter lewat query param `q` (nama atau email). */
 export async function TabPengguna({ q }: { q: string }) {

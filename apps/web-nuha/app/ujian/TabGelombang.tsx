@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong, ProgressBar, Tabel } from '@/components/ui/primitives';
+import { Kosong, ProgressBar, Tabel } from '@/components';
 import { ubahStatusUjian } from './actions';
 
 const WARNA_STATUS: Record<string, string> = { Draf: 'badge-netral', Berjalan: 'badge-kuning', Selesai: 'badge-hijau' };

@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import type { SessionPayload } from '@/lib/auth';
-import { BarHorizontal } from '@/components/ui/charts';
-import { Kosong } from '@/components/ui/primitives';
+import { BarHorizontal, Kosong } from '@/components';
 
 const WARNA_KELOMPOK: Record<string, { bg: string; fg: string; bar: string }> = {
   A: { bg: '#DBEAFE', fg: '#1E40AF', bar: '#1D4ED8' },

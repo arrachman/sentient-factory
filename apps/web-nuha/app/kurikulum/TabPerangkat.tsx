@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 import { ajukanPerangkat, setujuiPerangkat } from './actions';
 
 /** Tab silabus & modul ajar: guru mengajukan, kepala unit menyetujui. Pencarian lewat ?q=. */

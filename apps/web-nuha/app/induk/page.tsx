@@ -1,9 +1,8 @@
 import Link from 'next/link';
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
-import { Shell } from '@/components/Shell';
-import { JudulHalaman, Kosong } from '@/components/ui/primitives';
-import type { TabDef } from '@/components/ui/Tabs';
+import { Shell } from '@/components/templates/Shell';
+import { JudulHalaman, Kosong, type TabDef } from '@/components';
 import { DaftarSantri } from './DaftarSantri';
 import { HeaderSantri } from './HeaderSantri';
 import { TabBiodata } from './TabBiodata';

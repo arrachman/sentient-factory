@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { Kosong, Tabel } from '@/components/ui/primitives';
+import { Kosong, Tabel } from '@/components';
 
 const tanggal = (tgl: Date) => tgl.toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' });
 

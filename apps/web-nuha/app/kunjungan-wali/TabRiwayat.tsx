@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Tabel, Kosong, Badge } from '@/components/ui/primitives';
+import { Card, Tabel, Kosong, Badge } from '@/components';
 
 /** Riwayat seluruh kunjungan; pencarian nama wali/santri lewat query ?q=. */
 export async function TabRiwayat({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {

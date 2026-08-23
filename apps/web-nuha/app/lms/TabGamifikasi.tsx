@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Kosong, ProgressBar } from '@/components/ui/primitives';
+import { Card, Kosong, ProgressBar } from '@/components';
 import { hitungPoinSantri, TINGKAT, tingkatUntuk } from './poin';
 
 /**

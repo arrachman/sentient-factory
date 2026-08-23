@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { inisial } from '@/components/ui/primitives';
+import { inisial } from '@/components';
 
 type Tahap = { judul: string; ket: string; status: 'selesai' | 'gagal' | 'menunggu' };
 

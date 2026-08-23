@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 
 /** Tab capaian pembelajaran: pilih CP lewat ?cp=<kode>, bukan state klien. */
 export async function TabCp({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {

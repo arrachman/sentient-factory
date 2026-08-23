@@ -2,9 +2,8 @@ import { redirect } from 'next/navigation';
 import { requirePage } from '@/lib/access';
 import { readSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { Shell } from '@/components/Shell';
-import { Card, JudulHalaman, StatCard, Kosong, rp } from '@/components/ui/primitives';
-import { ChartTren, ChartDonut, ChartBatang } from '@/components/ui/charts';
+import { Shell } from '@/components/templates/Shell';
+import { Card, JudulHalaman, StatCard, Kosong, rp, ChartTren, ChartDonut, ChartBatang } from '@/components';
 
 const WARNA_UNIT = ['#0F6B3D', '#E8973A', '#1D4ED8', '#7C3AED', '#0891B2', '#BE185D'];
 

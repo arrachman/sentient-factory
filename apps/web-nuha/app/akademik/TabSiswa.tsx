@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, Badge, Kosong } from '@/components/ui/primitives';
+import { Avatar, Badge, Kosong } from '@/components';
 
 const UKURAN_HALAMAN = 15;
 

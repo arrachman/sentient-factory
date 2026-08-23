@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong, ProgressBar, Tabel } from '@/components/ui/primitives';
+import { Kosong, ProgressBar, Tabel } from '@/components';
 
 export async function TabObat({ q }: { q: string }) {
   const semuaObat = await prisma.obat.findMany({ orderBy: { nama: 'asc' } });

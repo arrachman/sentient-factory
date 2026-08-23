@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong, Tabel } from '@/components/ui/primitives';
+import { Kosong, Tabel } from '@/components';
 
 export async function TabHalaqah() {
   const halaqah = await prisma.halaqah.findMany({ orderBy: { nama: 'asc' } });

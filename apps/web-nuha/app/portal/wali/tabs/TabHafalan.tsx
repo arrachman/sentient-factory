@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 
 // Skema hafalan tidak menyimpan capaian per-juz (hanya log setoran per surat/ayat),
 // jadi progres ditampilkan sebagai jumlah setoran tercatat, bukan pecahan 30 juz.

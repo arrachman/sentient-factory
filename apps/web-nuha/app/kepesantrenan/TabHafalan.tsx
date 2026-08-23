@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, Kosong, ProgressBar } from '@/components/ui/primitives';
+import { Avatar, Kosong, ProgressBar } from '@/components';
 
 /** Progres hafalan diukur relatif dari jumlah setoran tercatat per santri — tidak ada
  *  field target/juz di skema, jadi persentase dihitung terhadap santri tersibuk. */

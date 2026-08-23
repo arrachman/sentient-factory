@@ -1,8 +1,7 @@
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
-import { Shell } from '@/components/Shell';
-import { JudulHalaman, StatCard } from '@/components/ui/primitives';
-import { Tabs, tabAktif } from '@/components/ui/Tabs';
+import { Shell } from '@/components/templates/Shell';
+import { JudulHalaman, StatCard, Tabs, tabAktif } from '@/components';
 import { TabStruktur } from './TabStruktur';
 import { TabCp } from './TabCp';
 import { TabPerangkat } from './TabPerangkat';

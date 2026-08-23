@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong, rp } from '@/components/ui/primitives';
+import { Kosong, rp } from '@/components';
 
 /** Tab Keuangan: tagihan & pembayaran santri, digabung dari semua jenis (SPP/syahriyah/dll). */
 export async function TabKeuangan({ santriId }: { santriId: bigint }) {

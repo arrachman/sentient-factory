@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 
 /**
  * Skema tidak punya tabel pendaftaran per-santri untuk KursusLms, jadi katalog

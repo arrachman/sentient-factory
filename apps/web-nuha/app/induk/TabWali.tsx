@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 
 /** Tab Wali & Keluarga: relasi wali utama santri + info akses portal wali. */
 export async function TabWali({ santriId }: { santriId: bigint }) {

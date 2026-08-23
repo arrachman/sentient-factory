@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 
 export async function TabPengumuman() {
   const pengumuman = await prisma.pengumuman.findMany({ orderBy: { tgl: 'desc' }, take: 30 });

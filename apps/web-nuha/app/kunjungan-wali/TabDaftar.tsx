@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card } from '@/components/ui/primitives';
+import { Card } from '@/components';
 import { daftarkanKunjungan } from './actions';
 
 const JAM_OPSI = ['09.00', '10.00', '11.00', '13.00', '14.00', '15.00'];

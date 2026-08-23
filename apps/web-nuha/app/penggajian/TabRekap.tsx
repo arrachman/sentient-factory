@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { hitungGaji, rupiah } from '@/lib/gaji';
-import { Card, ProgressBar, Kosong } from '@/components/ui/primitives';
+import { Card, ProgressBar, Kosong } from '@/components';
 
 const WARNA_UNIT = ['#0F6B3D', '#1D4ED8', '#E8973A', '#7C2D12', '#5B21B6', '#9A3412'];
 

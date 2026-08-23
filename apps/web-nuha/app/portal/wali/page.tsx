@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { LogoutButton } from '@/components/LogoutButton';
-import { avaBg, inisial } from '@/components/ui/primitives';
+import { avaBg, inisial } from '@/components';
 import { TabRingkasan } from './tabs/TabRingkasan';
 import { TabHafalan } from './tabs/TabHafalan';
 import { TabKesehatan } from './tabs/TabKesehatan';

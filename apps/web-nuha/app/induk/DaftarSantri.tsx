@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Avatar, Kosong } from '@/components/ui/primitives';
+import { Avatar, Kosong } from '@/components';
 
 export type BarisDaftar = {
   id: bigint;

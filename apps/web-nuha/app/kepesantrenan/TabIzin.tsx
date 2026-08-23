@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, Kosong, kelasStatus } from '@/components/ui/primitives';
+import { Avatar, Kosong, kelasStatus } from '@/components';
 import { ubahStatusIzin } from './actions';
 
 /** Overdue = izin Disetujui, sudah lewat jadwal kembali, tapi belum ditandai Selesai. */

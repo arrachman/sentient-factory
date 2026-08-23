@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 
 const warnaLevel = (level: string): { bg: string; fg: string } => {
   if (level.startsWith('C2')) return { bg: '#DBEAFE', fg: '#1E40AF' };

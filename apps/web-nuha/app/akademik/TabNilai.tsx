@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 import { simpanNilaiKelas } from './actions';
 
 const PERIODE_DEFAULT = 'Ganjil 2026/2027';

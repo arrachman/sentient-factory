@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 
 type Params = Record<string, string | string[] | undefined>;
 const satu = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';

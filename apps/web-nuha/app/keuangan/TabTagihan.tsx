@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Avatar, Tabel, Badge, Kosong, rp } from '@/components/ui/primitives';
+import { Card, Avatar, Tabel, Badge, Kosong, rp } from '@/components';
 
 /** Status tagihan diturunkan dari rasio dibayar/nominal — bukan kolom terpisah. */
 function statusTagihan(nominal: number, dibayar: number): string {

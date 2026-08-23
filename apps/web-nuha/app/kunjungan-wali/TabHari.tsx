@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, Badge, Kosong } from '@/components/ui/primitives';
+import { Avatar, Badge, Kosong } from '@/components';
 import { setujuiKunjungan, tolakKunjungan, checkoutKunjungan } from './actions';
 
 /** Kartu kunjungan hari ini: verifikasi pengajuan atau check-out yang sedang berkunjung. */

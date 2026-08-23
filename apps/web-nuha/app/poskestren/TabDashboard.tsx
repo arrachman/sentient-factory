@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Kosong, avaBg, inisial } from '@/components/ui/primitives';
-import { BarHorizontal } from '@/components/ui/charts';
+import { Card, Kosong, avaBg, inisial, BarHorizontal } from '@/components';
 
 const WARNA_PENYAKIT = ['#B91C1C', '#D97706', '#0F6B3D', '#1D4ED8', '#86B79C'];
 const AMBANG_KLB = 3; // ambang KLB prototype: 3 kasus/asrama untuk diagnosis yang sama

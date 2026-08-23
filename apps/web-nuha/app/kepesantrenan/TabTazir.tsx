@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong, Tabel } from '@/components/ui/primitives';
+import { Kosong, Tabel } from '@/components';
 
 /** Akumulasi poin dihitung berjalan per santri, urut tanggal — bukan angka hardcode. */
 export async function TabTazir() {

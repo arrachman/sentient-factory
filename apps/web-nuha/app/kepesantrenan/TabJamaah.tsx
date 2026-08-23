@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
-import { Avatar, Kosong } from '@/components/ui/primitives';
+import { Avatar, Kosong } from '@/components';
 import { simpanAbsenJamaah } from './actions';
 
 const WAKTU_LIST = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];

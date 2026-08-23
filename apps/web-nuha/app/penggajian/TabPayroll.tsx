@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Tabel, Kosong, Avatar } from '@/components/ui/primitives';
+import { Card, Tabel, Kosong, Avatar } from '@/components';
 import { hitungGaji, rupiah } from '@/lib/gaji';
 import { SlipActions } from '@/components/SlipActions';
 

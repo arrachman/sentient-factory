@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { rupiah } from '@/lib/gaji';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 import { kirimPemicu } from './actions';
 
 type Baris = { kode: string; judul: string; detail: string; target: string; nomor: string; tujuan: string; isi: string };

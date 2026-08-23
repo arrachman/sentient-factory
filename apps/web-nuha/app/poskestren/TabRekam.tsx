@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, Kosong, Tabel } from '@/components/ui/primitives';
+import { Avatar, Kosong, Tabel } from '@/components';
 
 const WARNA_LANJUT: Record<string, string> = {
   'Rujuk Puskesmas': 'badge-merah',

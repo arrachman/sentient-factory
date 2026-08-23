@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Tabel, Badge, Kosong, ProgressBar } from '@/components/ui/primitives';
+import { Card, Tabel, Badge, Kosong, ProgressBar } from '@/components';
 
 export async function TabModul({ q }: { q: string }) {
   const materi = await prisma.materiLms.findMany({

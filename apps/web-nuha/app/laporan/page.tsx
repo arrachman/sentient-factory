@@ -1,6 +1,6 @@
-import { Shell } from '@/components/Shell';
+import { Shell } from '@/components/templates/Shell';
 import { requirePage } from '@/lib/access';
-import { rp, JudulHalaman, Kosong, Tabel } from '@/components/ui/primitives';
+import { rp, JudulHalaman, Kosong, Tabel } from '@/components';
 import { ambilRekapLaporan } from './data';
 
 export default async function LaporanPage() {

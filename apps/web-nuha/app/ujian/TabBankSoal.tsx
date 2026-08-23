@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong, Tabel } from '@/components/ui/primitives';
+import { Kosong, Tabel } from '@/components';
 import { mutuButir } from '@/lib/cbt';
 
 const WARNA_TIPE: Record<string, string> = {

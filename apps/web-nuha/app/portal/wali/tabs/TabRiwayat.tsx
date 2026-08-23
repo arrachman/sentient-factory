@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { rupiah } from '@/lib/gaji';
-import { Badge, Kosong } from '@/components/ui/primitives';
+import { Badge, Kosong } from '@/components';
 
 export async function TabRiwayat({ santriId }: { santriId: bigint }) {
   const tagihan = await prisma.tagihan.findMany({

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Tabel, Kosong, Badge } from '@/components/ui/primitives';
+import { Card, Tabel, Kosong, Badge } from '@/components';
 import { WaTestForm } from '@/components/WaTestForm';
 
 /** Log pengiriman WA, difilter per peran lewat query ?role=. Form kirim uji tetap dipertahankan apa adanya. */

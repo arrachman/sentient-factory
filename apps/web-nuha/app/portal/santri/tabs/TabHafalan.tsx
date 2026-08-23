@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components/ui/primitives';
+import { Kosong } from '@/components';
 import type { SantriLengkap } from './types';
 
 // Sama seperti portal wali: skema tidak menyimpan capaian per-juz, jadi progres

@@ -1,4 +1,4 @@
-import { Avatar, Badge } from '@/components/ui/primitives';
+import { Avatar, Badge } from '@/components';
 
 export type SantriDetail = {
   id: bigint;
