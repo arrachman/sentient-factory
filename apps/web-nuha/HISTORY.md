@@ -4,6 +4,15 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-23 — `4c569a35` — Sidebar navigasi di /docs
+
+- Daftar isi berpindah dari kartu di atas konten menjadi sidebar kiri yang
+  sticky, dengan scroll-spy (item bagian yang sedang dibaca ditandai) dan
+  tombol kembali ke aplikasi. Layar ≤860px: berubah jadi pill daftar isi di
+  atas konten; saat print disembunyikan.
+- Komponen baru `app/docs/NavSamping.tsx` (client, IntersectionObserver);
+  lebar halaman docs 880 → 1180px dua kolom.
+
 ## 2026-08-23 — `bda183df` — Manajemen ujian + kartu guru lintas unit
 
 - Model baru `Ujian`, `JadwalUjian`, `NilaiUjian`; kolom `unit_id` pada

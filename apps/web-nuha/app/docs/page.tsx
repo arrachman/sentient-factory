@@ -3,6 +3,14 @@ import { redirect } from 'next/navigation';
 import { readSession } from '@/lib/auth';
 import { AKUN, BAGIAN, OPERASIONAL } from './isi';
 import { AlurAkses, AlurQr } from './Diagram';
+import { NavSamping } from './NavSamping';
+
+const NAV_ITEMS = [
+  { id: 'akun', judul: 'Akun dan peran' },
+  { id: 'hak-akses', judul: 'Penegakan hak akses' },
+  ...BAGIAN.map((b) => ({ id: b.id, judul: b.judul })),
+  { id: 'operasional', judul: 'Operasional' },
+];
 
 export const dynamic = 'force-dynamic';
 
@@ -30,15 +38,10 @@ export default async function DocsPage() {
         </Link>
       </header>
 
-      <nav className="docs-nav card">
-        <p className="label">Isi</p>
-        <ol>
-          <li><a href="#akun">Akun dan peran</a></li>
-          {BAGIAN.map((b) => <li key={b.id}><a href={`#${b.id}`}>{b.judul}</a></li>)}
-          <li><a href="#operasional">Operasional</a></li>
-        </ol>
-      </nav>
+      <div className="docs-badan">
+        <NavSamping items={NAV_ITEMS} />
 
+        <div className="docs-isi">
       <section id="akun" className="card">
         <h2 className="card-judul" style={{ fontSize: 20 }}>Akun dan peran</h2>
         <p className="muted" style={{ marginBottom: 14 }}>
@@ -68,7 +71,7 @@ export default async function DocsPage() {
         </div>
       </section>
 
-      <section className="card">
+      <section id="hak-akses" className="card">
         <h2 className="card-judul" style={{ fontSize: 20 }}>Bagaimana hak akses ditegakkan</h2>
         <AlurAkses />
       </section>
@@ -123,6 +126,8 @@ export default async function DocsPage() {
       <footer className="docs-kaki">
         Dokumentasi ini menggambarkan keadaan sistem apa adanya, termasuk data yang belum lengkap.
       </footer>
+        </div>
+      </div>
     </div>
   );
 }
