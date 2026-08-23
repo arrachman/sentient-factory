@@ -46,7 +46,10 @@ fi
 
 # --- model catalog ----------------------------------------------------------
 body=$(curl -sS --max-time 20 "${auth[@]}" "$BASE/v1/models" 2>&1)
-count=$(printf '%s' "$body" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);console.log((j.data||[]).length)}catch{console.log(0)}})' 2>/dev/null)
+# NO_COLOR keeps Node from wrapping the count in ANSI escapes, which would make
+# the integer test below fail on output that is otherwise correct.
+count=$(printf '%s' "$body" | NO_COLOR=1 node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);process.stdout.write(String((j.data||[]).length))}catch{process.stdout.write("0")}})' 2>/dev/null)
+count=${count//[^0-9]/}
 [ "${count:-0}" -gt 0 ] && ok=yes || ok=no
 check "/v1/models lists models" "$ok" "${count:-0} models"
 
