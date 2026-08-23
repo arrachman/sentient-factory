@@ -1,13 +1,55 @@
 import { Shell } from '@/components/Shell';
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
+import { JudulHalaman } from '@/components/ui/primitives';
+import { Tabs, tabAktif } from '@/components/ui/Tabs';
+import { TabHari } from './TabHari';
+import { TabRiwayat } from './TabRiwayat';
+import { TabDaftar } from './TabDaftar';
+import { TabAturan } from './TabAturan';
 
-export default async function KunjunganWaliPage() {
+const TABS = [
+  { key: 'hari', label: 'Hari Ini' },
+  { key: 'riwayat', label: 'Riwayat' },
+  { key: 'daftar', label: 'Pendaftaran' },
+  { key: 'aturan', label: 'Aturan' },
+];
+
+export default async function KunjunganWaliPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requirePage('kunjungan');
-  const visits = await prisma.kunjungan.findMany({ include: { santri: { include: { orang: true, kamar: { include: { asrama: true } } } } }, orderBy: { tgl: 'desc' }, take: 30 });
-  const ongoing = visits.filter((item) => item.status === 'Sedang berkunjung').length;
-  return <Shell session={session} active="kunjungan" title="Kunjungan Wali">
-    <section className="grid g4"><div className="card"><div className="label">Kunjungan tercatat</div><div className="angka">{visits.length}</div></div><div className="card"><div className="label">Sedang berkunjung</div><div className="angka">{ongoing}</div></div><div className="card"><div className="label">Selesai</div><div className="angka">{visits.filter((item) => item.status === 'Selesai').length}</div></div><div className="card"><div className="label">Terjadwal</div><div className="angka">{visits.filter((item) => item.status === 'Terjadwal').length}</div></div></section>
-    <div className="card" style={{ marginTop: 16 }}><h3>Daftar kunjungan</h3><table><thead><tr><th>Tanggal / jam</th><th>Wali</th><th>Santri</th><th>Keperluan</th><th>Status</th></tr></thead><tbody>{visits.map((item) => <tr key={String(item.id)}><td>{item.tgl.toLocaleDateString('id-ID')}<br /><span className="muted">{item.jamMasuk} – {item.jamKeluar ?? '-'}</span></td><td>{item.namaWali}<br /><span className="muted">{item.hubungan}</span></td><td>{item.santri.orang.nama}<br /><span className="muted">{item.santri.kamar?.asrama.nama} · {item.santri.kamar?.kode}</span></td><td>{item.keperluan}</td><td><span className={`badge ${item.status === 'Selesai' ? 'badge-hijau' : 'badge-emas'}`}>{item.status}</span></td></tr>)}</tbody></table></div>
-  </Shell>;
+  const sp = await searchParams;
+  const aktif = tabAktif(TABS, sp.tab);
+
+  const awalHari = new Date();
+  awalHari.setHours(0, 0, 0, 0);
+  const akhirHari = new Date(awalHari);
+  akhirHari.setDate(akhirHari.getDate() + 1);
+
+  const hariIni = await prisma.kunjungan.findMany({ where: { tgl: { gte: awalHari, lt: akhirHari } } });
+  const kjHariN = hariIni.length;
+  const kjAreaN = hariIni.filter((k) => k.status === 'Sedang berkunjung').length;
+  const kjTungguN = hariIni.filter((k) => k.status === 'Menunggu verifikasi').length;
+
+  return (
+    <Shell session={session} active="kunjungan" title="Kunjungan Wali">
+      <JudulHalaman
+        judul="Kunjungan Wali Santri"
+        sub="Buku tamu digital: verifikasi, check-in, check-out, dan pencatatan kunjungan."
+      />
+      <section className="grid g3">
+        <div className="card"><p className="label">Kunjungan hari ini</p><p className="angka" style={{ color: '#0F6B3D' }}>{kjHariN}</p></div>
+        <div className="card"><p className="label">Sedang berkunjung</p><p className="angka" style={{ color: '#1D4ED8' }}>{kjAreaN}</p></div>
+        <div className="card"><p className="label">Menunggu verifikasi</p><p className="angka" style={{ color: '#E8973A' }}>{kjTungguN}</p></div>
+      </section>
+      <Tabs tabs={TABS} aktif={aktif} basePath="/kunjungan-wali" />
+      {aktif === 'hari' && <TabHari />}
+      {aktif === 'riwayat' && <TabRiwayat searchParams={sp} />}
+      {aktif === 'daftar' && <TabDaftar />}
+      {aktif === 'aturan' && <TabAturan />}
+    </Shell>
+  );
 }

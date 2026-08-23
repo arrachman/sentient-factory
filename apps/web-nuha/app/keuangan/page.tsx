@@ -1,18 +1,64 @@
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/Shell';
+import { JudulHalaman, StatCard, rp } from '@/components/ui/primitives';
+import { Tabs, tabAktif, type TabDef } from '@/components/ui/Tabs';
+import { TabTagihan } from './TabTagihan';
+import { TabSpp } from './TabSpp';
+import { TabRekap } from './TabRekap';
+import { TabTunggakan } from './TabTunggakan';
+import { TabTransaksi } from './TabTransaksi';
 
-const rupiah = (value: { toString(): string }) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value));
-export default async function KeuanganPage() {
-  const session = await requirePage('keuangan');
-  const [invoices, totals, transactions] = await Promise.all([
-    prisma.tagihan.findMany({ include: { santri: { include: { orang: true } } }, orderBy: { jatuhTempo: 'desc' }, take: 30 }),
+const TABS: TabDef[] = [
+  { key: 'tagihan', label: 'Tagihan' },
+  { key: 'spp', label: 'Riwayat SPP per Anak' },
+  { key: 'rekap', label: 'Rekap Nama Santri' },
+  { key: 'tunggakan', label: 'Tunggakan' },
+  { key: 'transaksi', label: 'Riwayat Transaksi' },
+];
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+/** KPI ringkas di puncak modul — ditarik dari Tagihan + TransaksiKas, bukan angka tetap. */
+async function ambilKartu() {
+  const [totals, kas] = await Promise.all([
     prisma.tagihan.aggregate({ _sum: { nominal: true, dibayar: true } }),
-    prisma.transaksiKas.findMany({ orderBy: { tgl: 'desc' }, take: 10 }),
+    prisma.transaksiKas.groupBy({ by: ['arah'], _sum: { nominal: true } }),
   ]);
-  const nominal = Number(totals._sum.nominal ?? 0); const paid = Number(totals._sum.dibayar ?? 0);
-  return <Shell session={session} active="keuangan" title="Keuangan Yayasan">
-    <section className="grid g4"><div className="card"><div className="label">Total tagihan</div><div className="angka" style={{fontSize:20}}>{rupiah({toString:()=>String(nominal)})}</div></div><div className="card"><div className="label">Sudah dibayar</div><div className="angka" style={{fontSize:20}}>{rupiah({toString:()=>String(paid)})}</div></div><div className="card"><div className="label">Tunggakan</div><div className="angka" style={{fontSize:20}}>{rupiah({toString:()=>String(nominal-paid)})}</div></div><div className="card"><div className="label">Invoice aktif</div><div className="angka">{invoices.length}</div></div></section>
-    <section className="grid g2" style={{marginTop:16}}><div className="card"><h3>Tagihan santri</h3><table><thead><tr><th>Santri</th><th>Jenis</th><th>Nominal</th><th>Status</th></tr></thead><tbody>{invoices.map((item)=><tr key={String(item.id)}><td>{item.santri.orang.nama}<br/><span className="muted">{item.periode}</span></td><td>{item.jenis}</td><td>{rupiah(item.nominal)}</td><td><span className={`badge ${Number(item.dibayar)>=Number(item.nominal)?'badge-hijau':'badge-emas'}`}>{Number(item.dibayar)>=Number(item.nominal)?'Lunas':'Belum lunas'}</span></td></tr>)}</tbody></table></div><div className="card"><h3>Kas terakhir</h3><table><thead><tr><th>Tanggal</th><th>Uraian</th><th>Nilai</th></tr></thead><tbody>{transactions.map((item)=><tr key={String(item.id)}><td>{item.tgl.toLocaleDateString('id-ID')}</td><td>{item.uraian}<br/><span className="muted">{item.kategori}</span></td><td style={{color:item.arah==='Masuk'?'var(--hijau)':'#b91c1c'}}>{item.arah==='Masuk'?'+':'-'} {rupiah(item.nominal)}</td></tr>)}</tbody></table></div></section>
-  </Shell>;
+  const totalTagihan = Number(totals._sum.nominal ?? 0);
+  const totalBayar = Number(totals._sum.dibayar ?? 0);
+  const masuk = Number(kas.find((k) => k.arah === 'Masuk')?._sum.nominal ?? 0);
+  const keluar = Number(kas.find((k) => k.arah === 'Keluar')?._sum.nominal ?? 0);
+  return { totalTagihan, totalBayar, tunggakan: totalTagihan - totalBayar, saldoKas: masuk - keluar };
+}
+
+export default async function KeuanganPage({ searchParams }: { searchParams: SearchParams }) {
+  const session = await requirePage('keuangan');
+  const sp = await searchParams;
+  const aktif = tabAktif(TABS, sp.tab);
+  const kartu = await ambilKartu();
+
+  return (
+    <Shell session={session} active="keuangan" title="Keuangan">
+      <JudulHalaman
+        judul="Modul Keuangan"
+        sub="SPP unit sekolah, syahriyah pondok, uang makan, dan laundry dalam satu tagihan per santri."
+      />
+
+      <section className="grid g4">
+        <StatCard label="Total tagihan" nilai={rp(kartu.totalTagihan)} />
+        <StatCard label="Sudah dibayar" nilai={rp(kartu.totalBayar)} warna="#0F6B3D" />
+        <StatCard label="Tunggakan" nilai={rp(kartu.tunggakan)} warna="#B91C1C" />
+        <StatCard label="Saldo kas yayasan" nilai={rp(kartu.saldoKas)} warna="#1D4ED8" />
+      </section>
+
+      <Tabs tabs={TABS} aktif={aktif} basePath="/keuangan" />
+
+      {aktif === 'tagihan' && <TabTagihan q={typeof sp.q === 'string' ? sp.q : ''} />}
+      {aktif === 'spp' && <TabSpp anakId={typeof sp.anak === 'string' ? sp.anak : undefined} />}
+      {aktif === 'rekap' && <TabRekap q={typeof sp.q === 'string' ? sp.q : ''} />}
+      {aktif === 'tunggakan' && <TabTunggakan />}
+      {aktif === 'transaksi' && <TabTransaksi />}
+    </Shell>
+  );
 }

@@ -1,20 +1,73 @@
-import { Shell } from '@/components/Shell';
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
+import { Shell } from '@/components/Shell';
+import { JudulHalaman, StatCard } from '@/components/ui/primitives';
+import { Tabs, tabAktif } from '@/components/ui/Tabs';
+import { TabStruktur } from './TabStruktur';
+import { TabCp } from './TabCp';
+import { TabPerangkat } from './TabPerangkat';
+import { TabSoal } from './TabSoal';
+import { TabKelas } from './TabKelas';
 
-export default async function KurikulumPage() {
+const TABS = [
+  { key: 'struktur', label: 'Struktur Kurikulum' },
+  { key: 'cp', label: 'Capaian Pembelajaran' },
+  { key: 'perangkat', label: 'Silabus & Modul Ajar' },
+  { key: 'soal', label: 'Bank Soal' },
+  { key: 'kelas', label: 'Kelas Saya' },
+];
+
+export default async function KurikulumPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requirePage('kurikulum');
-  const [mapel, perangkat, capaian, soal] = await Promise.all([
-    prisma.mataPelajaran.findMany({ orderBy: [{ kelompok: 'asc' }, { nama: 'asc' }] }),
-    prisma.perangkatAjar.findMany({ orderBy: { kode: 'desc' } }),
-    prisma.capaianPembelajaran.findMany({ orderBy: { kode: 'asc' } }),
-    prisma.bankSoal.findMany({ orderBy: { kode: 'desc' } }),
+  const sp = await searchParams;
+  const aktif = tabAktif(TABS, sp.tab);
+  const isGuru = session.peran.includes('guru');
+
+  const [mapel, capaian, perangkat, soal] = await Promise.all([
+    prisma.mataPelajaran.findMany(),
+    prisma.capaianPembelajaran.count(),
+    prisma.perangkatAjar.findMany({ select: { status: true } }),
+    prisma.bankSoal.findMany({ select: { butir: true } }),
   ]);
   const totalJp = mapel.reduce((total, item) => total + item.jp, 0);
-  return <Shell session={session} active="kurikulum" title="Kurikulum">
-    <section className="grid g4"><div className="card"><div className="label">Mata pelajaran</div><div className="angka">{mapel.length}</div><div className="muted">{totalJp} JP per pekan</div></div><div className="card"><div className="label">Perangkat ajar</div><div className="angka">{perangkat.length}</div><div className="muted">{perangkat.filter((item) => item.status === 'Disetujui').length} disetujui</div></div><div className="card"><div className="label">Capaian pembelajaran</div><div className="angka">{capaian.length}</div></div><div className="card"><div className="label">Butir bank soal</div><div className="angka">{soal.reduce((total, item) => total + item.butir, 0)}</div><div className="muted">{soal.length} paket</div></div></section>
-    <div className="card" style={{ marginTop: 16 }}><h3>Struktur kurikulum</h3><table><thead><tr><th>Kelompok</th><th>Mata pelajaran</th><th>Guru</th><th>JP</th><th>KKM</th></tr></thead><tbody>{mapel.map((item) => <tr key={item.id}><td>{item.kelompok}</td><td>{item.nama}<br /><span className="muted">{item.kurikulum}</span></td><td>{item.guru}</td><td>{item.jp}</td><td>{item.kkm}</td></tr>)}</tbody></table></div>
-    <section className="grid g2" style={{ marginTop: 16 }}><div className="card"><h3>Perangkat ajar</h3><table><thead><tr><th>Kode</th><th>Topik</th><th>Status</th></tr></thead><tbody>{perangkat.map((item) => <tr key={item.id}><td>{item.kode}<br /><span className="muted">{item.kelas}</span></td><td>{item.topik}<br /><span className="muted">{item.mapel} · {item.pertemuan} pertemuan</span></td><td><span className={`badge ${item.status === 'Disetujui' ? 'badge-hijau' : 'badge-emas'}`}>{item.status}</span></td></tr>)}</tbody></table></div><div className="card"><h3>Capaian pembelajaran</h3><table><thead><tr><th>Kode</th><th>Capaian</th></tr></thead><tbody>{capaian.map((item) => <tr key={item.id}><td>{item.kode}<br /><span className="muted">{item.fase}</span></td><td>{item.capaian}</td></tr>)}</tbody></table></div></section>
-    <div className="card" style={{ marginTop: 16 }}><h3>Bank soal</h3><table><thead><tr><th>Kode</th><th>Mapel / topik</th><th>Tipe</th><th>Level</th><th>Butir</th><th>Dipakai</th></tr></thead><tbody>{soal.map((item) => <tr key={item.id}><td>{item.kode}</td><td>{item.mapel}<br /><span className="muted">{item.topik}</span></td><td>{item.tipe}</td><td>{item.level}</td><td>{item.butir}</td><td>{item.dipakai}</td></tr>)}</tbody></table></div>
-  </Shell>;
+  const paDisetujui = perangkat.filter((item) => item.status === 'Disetujui').length;
+  const paReview = perangkat.filter((item) => item.status === 'Menunggu review').length;
+  const totalButir = soal.reduce((total, item) => total + item.butir, 0);
+
+  return (
+    <Shell session={session} active="kurikulum" title="Kurikulum">
+      <JudulHalaman
+        judul="Kurikulum & Perangkat Ajar"
+        sub="Struktur kurikulum terpadu, capaian pembelajaran, silabus & modul ajar, bank soal, hingga kelas yang diampu guru."
+      />
+      {isGuru && (
+        <div className="alert alert-info">
+          Anda masuk sebagai <strong>Guru / Wali Kelas</strong>. Anda dapat menyusun dan mengajukan perangkat ajar,
+          mengelola bank soal, serta menginput nilai & presensi kelas yang diampu. Persetujuan perangkat ajar tetap
+          di kepala unit.
+        </div>
+      )}
+      <section className="grid g4">
+        <StatCard label="Mata pelajaran" nilai={mapel.length} sub={`${totalJp} JP per pekan`} />
+        <StatCard label="Capaian pembelajaran" nilai={capaian} warna="#17804A" />
+        <StatCard
+          label="Perangkat ajar"
+          nilai={`${paDisetujui} / ${perangkat.length}`}
+          sub={`${paReview} menunggu review`}
+          warna="#E8973A"
+        />
+        <StatCard label="Bank soal" nilai={totalButir} sub={`butir · ${soal.length} paket`} warna="#5B21B6" />
+      </section>
+      <Tabs tabs={TABS} aktif={aktif} basePath="/kurikulum" />
+      {aktif === 'struktur' && <TabStruktur searchParams={sp} session={session} />}
+      {aktif === 'cp' && <TabCp searchParams={sp} />}
+      {aktif === 'perangkat' && <TabPerangkat searchParams={sp} />}
+      {aktif === 'soal' && <TabSoal searchParams={sp} />}
+      {aktif === 'kelas' && <TabKelas session={session} />}
+    </Shell>
+  );
 }

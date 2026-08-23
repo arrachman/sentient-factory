@@ -1,4 +1,6 @@
+import { redirect } from 'next/navigation';
 import { requirePage } from '@/lib/access';
+import { readSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/Shell';
 import { Card, JudulHalaman, StatCard, Kosong, rp } from '@/components/ui/primitives';
@@ -7,6 +9,9 @@ import { ChartTren, ChartDonut, ChartBatang } from '@/components/ui/charts';
 const WARNA_UNIT = ['#0F6B3D', '#E8973A', '#1D4ED8', '#7C3AED', '#0891B2', '#BE185D'];
 
 export default async function DashboardPage() {
+  // Tamu tanpa sesi melihat halaman publik, bukan dilempar ke /login: `/` adalah
+  // pintu masuk umum, sedangkan dasbor staf hanya muncul setelah login.
+  if (!(await readSession())) redirect('/beranda');
   const session = await requirePage('dashboard');
 
   const [santri, mukim, kalong, alumni, pegawai, pendaftar, tagihan, unit, kas, agenda, pengumuman] =

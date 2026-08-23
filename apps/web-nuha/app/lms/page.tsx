@@ -1,18 +1,70 @@
 import { Shell } from '@/components/Shell';
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
+import { JudulHalaman, StatCard } from '@/components/ui/primitives';
+import { Tabs, tabAktif, type TabDef } from '@/components/ui/Tabs';
+import { TabModul } from './TabModul';
+import { TabKompetensi } from './TabKompetensi';
+import { TabEvidence } from './TabEvidence';
+import { TabSertifikat } from './TabSertifikat';
+import { TabGamifikasi } from './TabGamifikasi';
+import { TabPeringkat } from './TabPeringkat';
 
-export default async function LmsPage() {
-  const session = await requirePage('lms');
-  const [courses, materials, assignments] = await Promise.all([
-    prisma.kursusLms.findMany({ orderBy: { nama: 'asc' } }),
-    prisma.materiLms.findMany({ include: { kursus: true }, orderBy: { tgl: 'desc' }, take: 12 }),
-    prisma.tugasLms.findMany({ include: { kursus: true }, orderBy: { deadline: 'asc' }, take: 12 }),
+const TABS: TabDef[] = [
+  { key: 'modul', label: 'Modul' },
+  { key: 'kompetensi', label: 'Kompetensi' },
+  { key: 'evidence', label: 'Evidence' },
+  { key: 'sertifikat', label: 'Sertifikat' },
+  { key: 'gamifikasi', label: 'Gamifikasi' },
+  { key: 'peringkat', label: 'Peringkat' },
+];
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+/** KPI puncak modul — ditarik dari kursus & materi LMS, bukan angka tetap. */
+async function ambilKartu() {
+  const [kursus, materi] = await Promise.all([
+    prisma.kursusLms.findMany(),
+    prisma.materiLms.findMany(),
   ]);
-  const progress = courses.length ? Math.round(courses.reduce((total, item) => total + (item.modul ? item.selesai / item.modul : 0), 0) / courses.length * 100) : 0;
-  return <Shell session={session} active="lms" title="LMS & Kompetensi">
-    <section className="grid g4"><div className="card"><div className="label">Kursus aktif</div><div className="angka">{courses.length}</div></div><div className="card"><div className="label">Progres rata-rata</div><div className="angka">{progress}%</div></div><div className="card"><div className="label">Tugas aktif</div><div className="angka">{courses.reduce((total, item) => total + item.tugasAktif, 0)}</div></div><div className="card"><div className="label">Nilai rata-rata</div><div className="angka">{courses.length ? Math.round(courses.reduce((total, item) => total + item.nilai, 0) / courses.length) : 0}</div></div></section>
-    <section className="grid g2" style={{ marginTop: 16 }}><div className="card"><h3>Kursus</h3><table><thead><tr><th>Kursus</th><th>Progres</th><th>Nilai</th></tr></thead><tbody>{courses.map((item) => <tr key={item.id}><td><strong>{item.nama}</strong><br /><span className="muted">{item.guru}</span></td><td>{item.selesai}/{item.modul} modul<br /><span className="muted">{item.tugasAktif} tugas aktif</span></td><td>{item.nilai}</td></tr>)}</tbody></table></div><div className="card"><h3>Tugas terdekat</h3><table><thead><tr><th>Tugas</th><th>Deadline</th><th>Status</th></tr></thead><tbody>{assignments.map((item) => <tr key={item.id}><td>{item.judul}<br /><span className="muted">{item.kursus.nama}</span></td><td>{item.deadline.toLocaleDateString('id-ID')}</td><td><span className="badge badge-emas">{item.status}</span></td></tr>)}</tbody></table></div></section>
-    <div className="card" style={{ marginTop: 16 }}><h3>Materi terbaru</h3><table><thead><tr><th>Kursus</th><th>Materi</th><th>Tipe</th><th>Status</th><th>Tanggal</th></tr></thead><tbody>{materials.map((item) => <tr key={item.id}><td>{item.kursus.nama}</td><td>{item.judul}</td><td>{item.tipe}</td><td>{item.status}</td><td>{item.tgl.toLocaleDateString('id-ID')}</td></tr>)}</tbody></table></div>
-  </Shell>;
+  const modulTerbit = materi.filter((m) => m.status !== 'Belum dibuka').length;
+  const totalElemen = kursus.reduce((total, k) => total + k.modul, 0);
+  return {
+    modulTerbit,
+    modulTotal: materi.length,
+    kursusN: kursus.length,
+    elemenN: totalElemen,
+  };
+}
+
+export default async function LmsPage({ searchParams }: { searchParams: SearchParams }) {
+  const session = await requirePage('lms');
+  const sp = await searchParams;
+  const aktif = tabAktif(TABS, sp.tab);
+  const kartu = await ambilKartu();
+
+  return (
+    <Shell session={session} active="lms" title="LMS & Kompetensi">
+      <JudulHalaman
+        judul="LMS, Kompetensi & Gamifikasi"
+        sub="Pengelolaan modul pembelajaran, unit kompetensi, evidence, sertifikasi, dan poin santri."
+      />
+
+      <section className="grid g4">
+        <StatCard label="Materi tersedia" nilai={`${kartu.modulTerbit} / ${kartu.modulTotal}`} />
+        <StatCard label="Kursus berjalan" nilai={kartu.kursusN} warna="#17804A" />
+        <StatCard label="Total modul kursus" nilai={kartu.elemenN} warna="#E8973A" />
+        <StatCard label="Tab aktif" nilai={TABS.find((t) => t.key === aktif)?.label ?? '-'} warna="#5B21B6" />
+      </section>
+
+      <Tabs tabs={TABS} aktif={aktif} basePath="/lms" />
+
+      {aktif === 'modul' && <TabModul q={typeof sp.q === 'string' ? sp.q : ''} />}
+      {aktif === 'kompetensi' && <TabKompetensi kom={typeof sp.kom === 'string' ? sp.kom : undefined} />}
+      {aktif === 'evidence' && <TabEvidence />}
+      {aktif === 'sertifikat' && <TabSertifikat />}
+      {aktif === 'gamifikasi' && <TabGamifikasi />}
+      {aktif === 'peringkat' && <TabPeringkat />}
+    </Shell>
+  );
 }

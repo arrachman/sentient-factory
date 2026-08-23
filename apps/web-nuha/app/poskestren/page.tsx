@@ -1,15 +1,45 @@
 import { requirePage } from '@/lib/access';
-import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/Shell';
+import { JudulHalaman } from '@/components/ui/primitives';
+import { Tabs, tabAktif } from '@/components/ui/Tabs';
+import { TabDashboard } from './TabDashboard';
+import { TabPeriksa } from './TabPeriksa';
+import { TabRekam } from './TabRekam';
+import { TabObat } from './TabObat';
+import { TabPiket } from './TabPiket';
+import { TabLapor } from './TabLapor';
 
-export default async function PoskestrenPage() {
+const TABS = [
+  { key: 'dashboard', label: 'Dashboard' },
+  { key: 'periksa', label: 'Form Pemeriksaan' },
+  { key: 'rekam', label: 'Rekam Medis' },
+  { key: 'obat', label: 'Stok Obat' },
+  { key: 'piket', label: 'Piket Kader' },
+  { key: 'lapor', label: 'Laporan Puskesmas' },
+];
+
+export default async function PoskestrenPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requirePage('poskestren');
-  const [visits, medicines] = await Promise.all([
-    prisma.rekamMedis.findMany({ include: { santri: { include: { orang: true } } }, orderBy: { tgl: 'desc' }, take: 20 }),
-    prisma.obat.findMany({ orderBy: { stok: 'asc' } }),
-  ]);
-  return <Shell session={session} active="poskestren" title="Poskestren">
-    <section className="grid g4"><div className="card"><div className="label">Kunjungan tercatat</div><div className="angka">{visits.length}</div></div><div className="card"><div className="label">Jenis obat</div><div className="angka">{medicines.length}</div></div><div className="card"><div className="label">Stok perlu perhatian</div><div className="angka">{medicines.filter((item) => item.stok <= item.stokMin).length}</div></div><div className="card"><div className="label">Layanan</div><div className="angka">24/7</div></div></section>
-    <section className="grid g2" style={{ marginTop: 16 }}><div className="card"><h3>Rekam kunjungan</h3><table><thead><tr><th>Santri</th><th>Keluhan / Diagnosis</th><th>Petugas</th></tr></thead><tbody>{visits.map((item) => <tr key={String(item.id)}><td>{item.santri.orang.nama}<br/><span className="muted">{item.tgl.toLocaleDateString('id-ID')}</span></td><td>{item.keluhan}<br/><span className="muted">{item.diagnosis}</span></td><td>{item.petugas}</td></tr>)}</tbody></table></div><div className="card"><h3>Stok obat</h3><table><thead><tr><th>Obat</th><th>Stok</th><th>Kadaluwarsa</th></tr></thead><tbody>{medicines.map((item) => <tr key={item.id}><td>{item.nama}<br/><span className="muted">{item.satuan}</span></td><td><span className={`badge ${item.stok <= item.stokMin ? 'badge-merah' : 'badge-hijau'}`}>{item.stok}</span></td><td>{item.kadaluarsa}</td></tr>)}</tbody></table></div></section>
-  </Shell>;
+  const params = await searchParams;
+  const aktif = tabAktif(TABS, params.tab);
+
+  return (
+    <Shell session={session} active="poskestren" title="Poskestren">
+      <JudulHalaman
+        judul="Modul Poskestren"
+        sub="1 perawat tetap · 2 dokter kunjung (Selasa & Jumat) · kader Santri Husada mendampingi piket harian."
+      />
+      <Tabs tabs={TABS} aktif={aktif} basePath="/poskestren" />
+      {aktif === 'dashboard' && <TabDashboard />}
+      {aktif === 'periksa' && <TabPeriksa />}
+      {aktif === 'rekam' && <TabRekam />}
+      {aktif === 'obat' && <TabObat q={typeof params.q === 'string' ? params.q : ''} />}
+      {aktif === 'piket' && <TabPiket />}
+      {aktif === 'lapor' && <TabLapor />}
+    </Shell>
+  );
 }

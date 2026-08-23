@@ -1,19 +1,50 @@
 import { Shell } from '@/components/Shell';
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
-import { WaTestForm } from '@/components/WaTestForm';
+import { JudulHalaman } from '@/components/ui/primitives';
+import { Tabs, tabAktif } from '@/components/ui/Tabs';
+import { TabLog } from './TabLog';
+import { TabTemplate } from './TabTemplate';
+import { TabPemicu } from './TabPemicu';
 
-export default async function NotifikasiPage() {
+const TABS = [
+  { key: 'log', label: 'Log Pengiriman' },
+  { key: 'template', label: 'Template' },
+  { key: 'pemicu', label: 'Pemicu Otomatis' },
+];
+
+export default async function NotifikasiPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requirePage('wa');
-  const [templates, logs] = await Promise.all([
-    prisma.templateWa.findMany({ orderBy: { kode: 'asc' } }),
-    prisma.logWa.findMany({ include: { template: true }, orderBy: { waktu: 'desc' }, take: 20 }),
+  const sp = await searchParams;
+  const aktif = tabAktif(TABS, sp.tab);
+
+  const [templates, logN, roles] = await Promise.all([
+    prisma.templateWa.findMany(),
+    prisma.logWa.count(),
+    prisma.templateWa.findMany({ select: { role: true }, distinct: ['role'] }),
   ]);
-  const byRole = templates.reduce<Record<string, number>>((acc, item) => ({ ...acc, [item.role]: (acc[item.role] ?? 0) + 1 }), {});
-  return <Shell session={session} active="wa" title="Notifikasi WhatsApp">
-    <section className="grid g4"><div className="card"><div className="label">Template</div><div className="angka">{templates.length}</div></div><div className="card"><div className="label">Aktif</div><div className="angka">{templates.filter((item) => item.aktif).length}</div></div><div className="card"><div className="label">Kelompok penerima</div><div className="angka">{Object.keys(byRole).length}</div></div><div className="card"><div className="label">Log terkirim</div><div className="angka">{logs.length}</div></div></section>
-    <WaTestForm templates={templates.filter((item) => item.aktif).map((item) => ({ kode: item.kode, judul: item.judul }))} />
-    <div className="card" style={{ marginTop: 16 }}><h3>Template pesan</h3><p className="muted" style={{ marginBottom: 10 }}>Pemicu terdaftar di sini; pengiriman memakai gateway WhatsApp kompatibel-Fonnte.</p><table><thead><tr><th>Kode</th><th>Penerima</th><th>Judul / pemicu</th><th>Status</th></tr></thead><tbody>{templates.map((item) => <tr key={item.id}><td>{item.kode}</td><td>{item.role}</td><td>{item.judul}<br /><span className="muted">{item.pemicu}</span></td><td><span className={`badge ${item.aktif ? 'badge-hijau' : 'badge-emas'}`}>{item.aktif ? 'Aktif' : 'Nonaktif'}</span></td></tr>)}</tbody></table></div>
-    {logs.length > 0 && <div className="card" style={{ marginTop: 16 }}><h3>Log pengiriman</h3><table><thead><tr><th>Waktu</th><th>Tujuan</th><th>Isi</th><th>Status</th></tr></thead><tbody>{logs.map((item) => <tr key={String(item.id)}><td>{item.waktu.toLocaleString('id-ID')}</td><td>{item.tujuan}<br /><span className="muted">{item.nomor}</span></td><td>{item.isi}</td><td>{item.status}</td></tr>)}</tbody></table></div>}
-  </Shell>;
+  const aktifN = templates.filter((t) => t.aktif).length;
+
+  return (
+    <Shell session={session} active="wa" title="Notifikasi WhatsApp">
+      <JudulHalaman
+        judul="Notifikasi WhatsApp"
+        sub={`${templates.length} skenario pesan untuk ${roles.length} peran — wali santri, santri, guru, ustadz/musyrif, kiai, staff, kepala sekolah, bendahara.`}
+      />
+      <section className="grid g4">
+        <div className="card"><p className="label">Template</p><p className="angka">{templates.length}</p></div>
+        <div className="card"><p className="label">Aktif</p><p className="angka" style={{ color: '#0F6B3D' }}>{aktifN}</p></div>
+        <div className="card"><p className="label">Kelompok penerima</p><p className="angka">{roles.length}</p></div>
+        <div className="card"><p className="label">Log terkirim</p><p className="angka">{logN}</p></div>
+      </section>
+      <Tabs tabs={TABS} aktif={aktif} basePath="/notifikasi" />
+      {aktif === 'log' && <TabLog searchParams={sp} />}
+      {aktif === 'template' && <TabTemplate searchParams={sp} />}
+      {aktif === 'pemicu' && <TabPemicu />}
+    </Shell>
+  );
 }

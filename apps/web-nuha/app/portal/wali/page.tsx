@@ -1,18 +1,123 @@
-import { Shell } from '@/components/Shell';
+import Link from 'next/link';
 import { requirePage } from '@/lib/access';
-import { rupiah } from '@/lib/gaji';
 import { prisma } from '@/lib/prisma';
+import { LogoutButton } from '@/components/LogoutButton';
+import { avaBg, inisial } from '@/components/ui/primitives';
+import { TabRingkasan } from './tabs/TabRingkasan';
+import { TabHafalan } from './tabs/TabHafalan';
+import { TabKesehatan } from './tabs/TabKesehatan';
+import { TabTagihan } from './tabs/TabTagihan';
+import { TabBayar } from './tabs/TabBayar';
+import { TabRiwayat } from './tabs/TabRiwayat';
+import { TabKunjungan } from './tabs/TabKunjungan';
+import { TabIzin } from './tabs/TabIzin';
 
-export default async function PortalWaliPage() {
+const TABS = [
+  { key: 'ringkasan', label: 'Ringkasan' },
+  { key: 'hafalan', label: 'Hafalan' },
+  { key: 'kesehatan', label: 'Kesehatan' },
+  { key: 'tagihan', label: 'Tagihan' },
+  { key: 'bayar', label: 'Bayar' },
+  { key: 'riwayat', label: 'Riwayat SPP' },
+  { key: 'kunjungan', label: 'Kunjungan' },
+  { key: 'izin', label: 'Izin' },
+];
+
+/**
+ * Portal Wali — beda dari prototype: prototype cuma render santri[0], di sini
+ * wali dengan >1 anak WAJIB memilih lewat ?anak=<santriId>. Param itu divalidasi
+ * di server terhadap RelasiWali milik sesi — tidak pernah dipercaya mentah.
+ */
+export default async function PortalWaliPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const session = await requirePage('portal-wali');
-  const user = await prisma.user.findUnique({ where: { id: BigInt(session.userId) }, include: { orang: { include: { waliDari: { include: { anak: { include: { santri: { include: { unit: true, kelas: true } } } } } } } } } });
-  const children = user?.orang.waliDari ?? [];
-  const childIds = children.map((row) => row.anakId);
-  const tagihan = childIds.length ? await prisma.tagihan.findMany({ where: { santri: { orangId: { in: childIds } } }, orderBy: { jatuhTempo: 'desc' }, take: 20, include: { santri: { include: { orang: true } } } }) : [];
+  const sp = await searchParams;
+  const tabRaw = Array.isArray(sp.tab) ? sp.tab[0] : sp.tab;
+  const tabAktif = TABS.some((t) => t.key === tabRaw) ? (tabRaw as string) : TABS[0].key;
 
-  return <Shell session={session} active="portal-wali" title="Portal Wali Santri">
-    <div className="card"><h3>Selamat datang, {user?.orang.nama ?? session.nama}</h3><p className="muted">Akses data hanya untuk anak yang tertaut pada akun wali ini.</p></div>
-    <section className="grid g3" style={{ marginTop: 16 }}>{children.map((row) => <div className="card" key={String(row.id)}><div className="label">Anak · {row.hubungan}</div><div className="angka" style={{ fontSize: 18 }}>{row.anak.nama}</div><div className="muted">{row.anak.santri?.nis} · {row.anak.santri?.unit?.nama} · {row.anak.santri?.kelas?.nama}</div></div>)}</section>
-    <div className="card" style={{ marginTop: 16 }}><h3>Tagihan anak</h3><table><thead><tr><th>Santri</th><th>Jenis / periode</th><th>Nominal</th><th>Status bayar</th></tr></thead><tbody>{tagihan.map((row) => <tr key={String(row.id)}><td>{row.santri.orang.nama}</td><td>{row.jenis}<br /><span className="muted">{row.periode}</span></td><td>{rupiah(Number(row.nominal))}</td><td>{Number(row.dibayar) >= Number(row.nominal) ? 'Lunas' : `Sisa ${rupiah(Number(row.nominal) - Number(row.dibayar))}`}</td></tr>)}</tbody></table></div>
-  </Shell>;
+  const user = await prisma.user.findUnique({
+    where: { id: BigInt(session.userId) },
+    include: { orang: { include: { waliDari: { include: { anak: { include: { santri: { include: { unit: true, kelas: true, kamar: { include: { asrama: true } } } } } } } } } } },
+  });
+  const relasi = user?.orang.waliDari.filter((row) => row.anak.santri) ?? [];
+
+  if (relasi.length === 0) {
+    return (
+      <PortalFrame nama={user?.orang.nama ?? session.nama}>
+        <div className="card">Akun wali ini belum tertaut ke data santri manapun. Hubungi kantor pondok.</div>
+      </PortalFrame>
+    );
+  }
+
+  const anakParam = Array.isArray(sp.anak) ? sp.anak[0] : sp.anak;
+  const relasiDipilih = relasi.find((row) => String(row.anak.santri!.id) === anakParam) ?? relasi[0];
+  const santri = relasiDipilih.anak.santri!;
+  const anak = relasiDipilih.anak;
+
+  return (
+    <PortalFrame nama={anak.nama}>
+      <div style={{ display: 'flex', gap: 13, alignItems: 'center', marginTop: 16 }}>
+        <div style={{ width: 52, height: 52, borderRadius: 16, background: avaBg(anak.nama), color: '#FFF', display: 'grid', placeItems: 'center', fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-lora), serif', border: '2px solid rgba(232,151,58,.6)', flex: '0 0 auto' }}>{inisial(anak.nama)}</div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontFamily: 'var(--font-lora), serif', fontSize: 19, fontWeight: 600, color: '#0A4A2B' }}>{anak.nama}</div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{santri.unit?.nama ?? '-'} {santri.kelas?.nama ?? ''} · Asrama {santri.kamar?.asrama.nama ?? '-'} {santri.kamar?.kode ?? ''}</div>
+        </div>
+      </div>
+
+      {relasi.length > 1 && (
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 12 }}>
+          {relasi.map((row) => (
+            <Link
+              key={String(row.anak.santri!.id)}
+              href={`/portal/wali?anak=${row.anak.santri!.id}`}
+              className={`tab ${String(row.anak.santri!.id) === String(santri.id) ? 'active' : ''}`}
+              style={{ fontSize: 12 }}
+            >
+              {row.anak.nama}
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginTop: 14, paddingBottom: 4 }}>
+        {TABS.map((t) => (
+          <Link
+            key={t.key}
+            href={`/portal/wali?anak=${santri.id}${t.key === TABS[0].key ? '' : `&tab=${t.key}`}`}
+            className={`tab ${t.key === tabAktif ? 'active' : ''}`}
+            style={{ whiteSpace: 'nowrap' }}
+          >
+            {t.label}
+          </Link>
+        ))}
+      </div>
+
+      <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {tabAktif === 'ringkasan' && <TabRingkasan santriId={santri.id} program={santri.program} />}
+        {tabAktif === 'hafalan' && <TabHafalan santriId={santri.id} program={santri.program} />}
+        {tabAktif === 'kesehatan' && <TabKesehatan santriId={santri.id} />}
+        {tabAktif === 'tagihan' && <TabTagihan santriId={santri.id} />}
+        {tabAktif === 'bayar' && <TabBayar santriId={santri.id} />}
+        {tabAktif === 'riwayat' && <TabRiwayat santriId={santri.id} />}
+        {tabAktif === 'kunjungan' && <TabKunjungan santriId={santri.id} namaWaliDefault={session.nama} hubungan={relasiDipilih.hubungan} />}
+        {tabAktif === 'izin' && <TabIzin santriId={santri.id} />}
+      </div>
+    </PortalFrame>
+  );
+}
+
+function PortalFrame({ nama, children }: { nama: string; children: React.ReactNode }) {
+  return (
+    <div style={{ minHeight: '100vh', background: '#EDF3EF', display: 'flex', justifyContent: 'center', padding: 0 }}>
+      <div style={{ width: '100%', maxWidth: 420, background: '#FAF8F3', minHeight: '100vh', boxShadow: '0 0 40px rgba(10,74,43,.09)', display: 'flex', flexDirection: 'column' }}>
+        <header style={{ background: 'linear-gradient(180deg, #4E8F72 0%, #5C9C7D 52%, #74B092 100%)', color: '#F3F1E9', padding: '18px 18px 22px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+            <div style={{ fontSize: 11, letterSpacing: 0.8, textTransform: 'uppercase', color: 'rgba(243,241,233,.7)' }}>Portal Wali Santri · {nama}</div>
+            <LogoutButton />
+          </div>
+        </header>
+        <div style={{ padding: '16px 14px 30px', flex: 1 }}>{children}</div>
+        <div style={{ margin: '6px 0 20px', textAlign: 'center', fontSize: 11, color: '#9CA3AF' }}>SIMTERPADU · Portal Wali</div>
+      </div>
+    </div>
+  );
 }

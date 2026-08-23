@@ -1,19 +1,59 @@
 import { Shell } from '@/components/Shell';
 import { requirePage } from '@/lib/access';
-import { hitungGaji, rupiah } from '@/lib/gaji';
 import { prisma } from '@/lib/prisma';
-import { SlipActions } from '@/components/SlipActions';
+import { JudulHalaman } from '@/components/ui/primitives';
+import { Tabs, tabAktif } from '@/components/ui/Tabs';
+import { hitungGaji, rupiah } from '@/lib/gaji';
+import { TabPayroll } from './TabPayroll';
+import { TabSlip } from './TabSlip';
+import { TabRekap } from './TabRekap';
 
-export default async function PenggajianPage() {
+const TABS = [
+  { key: 'payroll', label: 'Payroll' },
+  { key: 'slip', label: 'Slip Gaji' },
+  { key: 'rekap', label: 'Rekap' },
+];
+
+export const PERIODE_GAJI = () => process.env.NUHA_PERIODE_GAJI ?? new Date().toISOString().slice(0, 7);
+
+export default async function PenggajianPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requirePage('gaji');
-  const employees = await prisma.pegawai.findMany({ include: { orang: true, unit: true, komponen: true }, orderBy: { nip: 'asc' } });
-  const periode = process.env.NUHA_PERIODE_GAJI ?? new Date().toISOString().slice(0, 7);
-  const slips = await prisma.slipGaji.findMany({ where: { periode } });
-  const slipByPegawai = new Map(slips.map((slip) => [String(slip.pegawaiId), slip]));
-  const calculations = employees.map((employee) => ({ employee, slip: slipByPegawai.get(String(employee.id)), ...hitungGaji(employee.komponen) }));
-  const total = calculations.reduce((sum, item) => sum + item.netto, 0);
-  return <Shell session={session} active="gaji" title="Penggajian">
-    <section className="grid g4"><div className="card"><div className="label">Pegawai</div><div className="angka">{employees.length}</div></div><div className="card"><div className="label">Bruto periode ini</div><div className="angka" style={{ fontSize: 19 }}>{rupiah(calculations.reduce((sum, item) => sum + item.bruto, 0))}</div></div><div className="card"><div className="label">Potongan</div><div className="angka" style={{ fontSize: 19 }}>{rupiah(calculations.reduce((sum, item) => sum + item.potongan, 0))}</div></div><div className="card"><div className="label">Netto dibayarkan</div><div className="angka" style={{ fontSize: 19 }}>{rupiah(total)}</div></div></section>
-    <div className="card" style={{ marginTop: 16 }}><h3>Perhitungan gaji · {periode}</h3><p className="muted">Semua pemegang akses menu Penggajian dapat menerbitkan, membayar, atau merevisi. Revisi setelah bayar tetap tercatat di audit log.</p><table><thead><tr><th>Pegawai</th><th>Unit / jabatan</th><th>Bruto</th><th>Potongan</th><th>Netto</th><th>Slip</th><th>Aksi</th></tr></thead><tbody>{calculations.map((item) => <tr key={String(item.employee.id)}><td><strong>{item.employee.orang.nama}</strong><br /><span className="muted">{item.employee.nip}</span></td><td>{item.employee.unit?.nama ?? 'Yayasan'}<br /><span className="muted">{item.employee.jabatan}</span></td><td>{rupiah(item.bruto)}</td><td>{rupiah(item.potongan)}</td><td><strong>{rupiah(item.netto)}</strong></td><td>{item.slip ? <><span className="badge badge-hijau">{item.slip.status}</span><br /><span className="muted">Revisi {item.slip.revisi}</span></> : <span className="muted">Belum terbit</span>}</td><td><SlipActions pegawaiId={String(item.employee.id)} periode={periode} status={item.slip?.status} /></td></tr>)}</tbody></table></div>
-  </Shell>;
+  const sp = await searchParams;
+  const aktif = tabAktif(TABS, sp.tab);
+  const periode = PERIODE_GAJI();
+
+  const [pegawaiN, komponenSemua] = await Promise.all([
+    prisma.pegawai.count(),
+    prisma.pegawai.findMany({ include: { komponen: true } }),
+  ]);
+  const total = komponenSemua.reduce(
+    (acc, p) => {
+      const h = hitungGaji(p.komponen);
+      return { bruto: acc.bruto + h.bruto, potongan: acc.potongan + h.potongan, netto: acc.netto + h.netto };
+    },
+    { bruto: 0, potongan: 0, netto: 0 },
+  );
+
+  return (
+    <Shell session={session} active="gaji" title="Penggajian">
+      <JudulHalaman
+        judul="Penggajian & Slip Gaji"
+        sub={`${pegawaiN} pegawai lintas unit — guru, ustadz, musyrif, perawat, tata usaha, dan mitra dokter.`}
+      />
+      <section className="grid g4">
+        <div className="card"><p className="label">Total bruto</p><p className="angka-sm">{rupiah(total.bruto)}</p></div>
+        <div className="card"><p className="label">Total potongan</p><p className="angka-sm" style={{ color: '#B91C1C' }}>{rupiah(total.potongan)}</p></div>
+        <div className="card"><p className="label">Dibayarkan (netto)</p><p className="angka-sm" style={{ color: '#0F6B3D' }}>{rupiah(total.netto)}</p></div>
+        <div className="card"><p className="label">Periode</p><p className="angka-sm" style={{ color: '#E8973A' }}>{periode}</p></div>
+      </section>
+      <Tabs tabs={TABS} aktif={aktif} basePath="/penggajian" />
+      {aktif === 'payroll' && <TabPayroll searchParams={sp} periode={periode} />}
+      {aktif === 'slip' && <TabSlip searchParams={sp} periode={periode} />}
+      {aktif === 'rekap' && <TabRekap periode={periode} />}
+    </Shell>
+  );
 }

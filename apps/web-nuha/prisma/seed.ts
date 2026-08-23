@@ -6,13 +6,27 @@ const prisma = new PrismaClient();
 type PrototypeData = Record<string, Array<Record<string, unknown>>>;
 const source = data as PrototypeData;
 
-const parseDate = (value: unknown): Date => {
+const BULAN: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, Mei: 4, Jun: 5, Jul: 6, Agu: 7, Sep: 8, Okt: 9, Nov: 10, Des: 11 };
+
+/**
+ * Prototype menulis tanggal dalam dua bentuk: "22 Agu 2026" dan "24 Agu" (tanpa
+ * tahun, mis. pada agenda). Tanpa cabang kedua semua agenda jatuh ke tanggal
+ * cadangan yang sama sehingga tabelnya hanya berisi satu baris.
+ */
+const parseDate = (value: unknown, tahunDefault = 2026): Date => {
   const text = String(value ?? '22 Agu 2026').replace(/–/g, '-');
-  const match = text.match(/(\d{1,2})\s+(Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)\s+(\d{4})/);
-  if (!match) return new Date('2026-08-22T00:00:00Z');
-  const months: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, Mei: 4, Jun: 5, Jul: 6, Agu: 7, Sep: 8, Okt: 9, Nov: 10, Des: 11 };
-  return new Date(Date.UTC(Number(match[3]), months[match[2]], Number(match[1])));
+  const lengkap = text.match(/(\d{1,2})\s+(Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)\s+(\d{4})/);
+  if (lengkap) return new Date(Date.UTC(Number(lengkap[3]), BULAN[lengkap[2]], Number(lengkap[1])));
+  const singkat = text.match(/(\d{1,2})\s+(Jan|Feb|Mar|Apr|Mei|Jun|Jul|Agu|Sep|Okt|Nov|Des)/);
+  if (singkat) return new Date(Date.UTC(tahunDefault, BULAN[singkat[2]], Number(singkat[1])));
+  return new Date('2026-08-22T00:00:00Z');
 };
+
+/**
+ * Kolom `agenda.jam` hanya VarChar(16), sedangkan prototype menulis
+ * "09.00 · Aula Utama". Ambil segmen jamnya saja lalu potong seaman kolom.
+ */
+const jamSingkat = (value: unknown): string => String(value ?? '').split('·')[0].trim().slice(0, 16);
 
 const gender = (value: unknown): JenisKelamin => String(value) === 'P' ? JenisKelamin.P : JenisKelamin.L;
 const pendaftarStatus = (value: unknown): StatusPendaftar => {
@@ -97,6 +111,78 @@ async function seedPortalAccess() {
   }
 }
 
+/**
+ * Presensi, nilai, agenda, dan berkas pendaftar tidak pernah terisi oleh importir
+ * lama: agenda karena bug format tanggal, sisanya karena memang tidak ada di
+ * blok awal. Diisi terpisah dan idempoten supaya aman dijalankan berulang di
+ * basis data yang sudah berisi pengguna.
+ */
+async function seedOperational() {
+  const santriList = await prisma.santri.findMany({ orderBy: { id: 'asc' } });
+  const mapelList = await prisma.mataPelajaran.findMany({ orderBy: { id: 'asc' } });
+
+  if (await prisma.presensi.count() === 0) {
+    const statuses = ['Hadir', 'Sakit', 'Izin', 'Alpa'] as const;
+    for (const [i, santri] of santriList.entries()) {
+      for (const row of source.presensiAkademik) {
+        const tgl = parseDate(row.tgl);
+        // Variasi antar santri diambil dari pola prototype, digeser per santri
+        // agar rekap kelas tidak seragam sempurna.
+        const dasar = statuses.indexOf(String(row.status) as (typeof statuses)[number]);
+        const status = statuses[(Math.max(dasar, 0) + (i % 3 === 0 ? 0 : i % 4)) % statuses.length];
+        await prisma.presensi.upsert({
+          where: { santriId_tgl_sesi: { santriId: santri.id, tgl, sesi: 'KBM' } },
+          create: { santriId: santri.id, tgl, sesi: 'KBM', status, ket: String(row.ket ?? '-') },
+          update: {},
+        }).catch(() => undefined);
+      }
+    }
+  }
+
+  if (await prisma.nilai.count() === 0) {
+    const predikat = (n: number) => n >= 90 ? 'A' : n >= 85 ? 'A-' : n >= 80 ? 'B+' : n >= 75 ? 'B' : n >= 70 ? 'B-' : 'C';
+    for (const [i, santri] of santriList.entries()) {
+      for (const row of source.nilaiRows) {
+        const mapel = mapelList.find((m) => m.nama === String(row.mapel));
+        if (!mapel) continue;
+        const geser = (i % 5) - 2;
+        const tugas = Number(row.tugas) + geser;
+        const uts = Number(row.uts) + geser;
+        const uas = Number(row.uas) + geser;
+        const akhir = Math.round(((tugas + uts + uas) / 3) * 10) / 10;
+        await prisma.nilai.upsert({
+          where: { santriId_mapelId_periode: { santriId: santri.id, mapelId: mapel.id, periode: '2026/2027 Gasal' } },
+          create: { santriId: santri.id, mapelId: mapel.id, periode: '2026/2027 Gasal', tugas, uts, uas, akhir, predikat: predikat(akhir) },
+          update: {},
+        }).catch(() => undefined);
+      }
+    }
+  }
+
+  if (await prisma.agenda.count() <= 1) {
+    await prisma.agenda.deleteMany({});
+    for (const row of source.agenda) {
+      await prisma.agenda.create({ data: { tgl: parseDate(row.tgl), jam: jamSingkat(row.jam), judul: String(row.judul), unit: String(row.unit) } });
+    }
+  }
+
+  if (await prisma.berkasPendaftar.count() === 0) {
+    const wajib = ['Akta Kelahiran', 'Kartu Keluarga', 'Ijazah / SKL'];
+    const opsional = ['Kartu Indonesia Pintar', 'Surat Keterangan Sehat'];
+    for (const p of await prisma.pendaftar.findMany({ orderBy: { id: 'asc' } })) {
+      const lengkap = p.status !== 'Baru';
+      for (const nama of wajib) {
+        await prisma.berkasPendaftar.create({ data: { pendaftarId: p.id, nama, wajib: true, terverifikasi: lengkap } }).catch(() => undefined);
+      }
+      if (lengkap) {
+        for (const nama of opsional.slice(0, Number(p.id) % 2 + 1)) {
+          await prisma.berkasPendaftar.create({ data: { pendaftarId: p.id, nama, wajib: false, terverifikasi: true } }).catch(() => undefined);
+        }
+      }
+    }
+  }
+}
+
 async function main() {
   await seedAcademicContent();
   // This is an initial demo-data importer, not a synchronization process. Once
@@ -104,7 +190,8 @@ async function main() {
   const existingUsers = await prisma.user.count();
   if (existingUsers > 0) {
     await seedPortalAccess();
-    console.log('Seed skipped: database already contains users; portal access synchronized.');
+    await seedOperational();
+    console.log('Seed skipped: database already contains users; portal access and operational data synchronized.');
     return;
   }
 
@@ -199,7 +286,7 @@ async function main() {
   for (const [index, row] of source.kegiatanHarian.entries()) await prisma.kegiatanHarian.upsert({ where: { id: index + 1 }, create: { id: index + 1, jam: String(row.jam), nama: String(row.nama), ket: String(row.ket), urutan: index }, update: { nama: String(row.nama) } });
   for (const row of source.halaqah) await prisma.halaqah.create({ data: { nama: String(row.nama), ustadz: String(row.ustadz), waktu: String(row.waktu), tempat: String(row.tempat), jenjang: String(row.jenjang), anggota: Number(row.anggota) } }).catch(() => undefined);
   for (const row of source.pengumumanSantri) await prisma.pengumuman.create({ data: { tgl: parseDate(row.tgl), judul: String(row.judul), isi: String(row.isi), target: 'Santri' } }).catch(() => undefined);
-  for (const row of source.agenda) await prisma.agenda.create({ data: { tgl: parseDate(row.tgl), jam: String(row.jam), judul: String(row.judul), unit: String(row.unit) } }).catch(() => undefined);
+  for (const row of source.agenda) await prisma.agenda.create({ data: { tgl: parseDate(row.tgl), jam: jamSingkat(row.jam), judul: String(row.judul), unit: String(row.unit) } }).catch(() => undefined);
   for (const row of source.waCases) await prisma.templateWa.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), role: String(row.role), judul: String(row.judul), pemicu: String(row.pemicu), waktu: String(row.waktu), isi: String(row.isi), aktif: Boolean(row.aktif) }, update: { aktif: Boolean(row.aktif) } });
 
   // Transactional records — only for santri that resolved by name.
@@ -237,6 +324,7 @@ async function main() {
 
   // Run again now that santri and wali rows exist on a fresh database.
   await seedPortalAccess();
+  await seedOperational();
 
   console.log('Seed complete: 20 santri, 12 pegawai, 18 pendaftar, and operational master data.');
   console.log('Demo login: ketua@nuha.pesantren.web.id / Nuha2026!');

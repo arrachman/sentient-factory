@@ -1,26 +1,54 @@
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/Shell';
-import { DaftarPpdb } from './DaftarPpdb';
+import { JudulHalaman } from '@/components/ui/primitives';
+import { Tabs, tabAktif } from '@/components/ui/Tabs';
+import { TabPendaftar } from './TabPendaftar';
+import { TabSeleksi } from './TabSeleksi';
+import { TabKelulusan } from './TabKelulusan';
 
-export default async function PpdbPage() {
+const TABS = [
+  { key: 'pendaftar', label: 'Pendaftar' },
+  { key: 'seleksi', label: 'Seleksi & verifikasi' },
+  { key: 'kelulusan', label: 'Pengumuman kelulusan' },
+];
+
+export default async function PpdbPanitiaPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const session = await requirePage('ppdb');
-  const pendaftar = await prisma.pendaftar.findMany({ orderBy: { tglDaftar: 'desc' } });
-  const lulus = pendaftar.filter((row) => row.status === 'Lulus').length;
+  const sp = await searchParams;
+  const aktif = tabAktif(TABS, sp.tab);
 
-  return <Shell session={session} active="ppdb" title="PPDB 2026/2027">
-    <section className="grid g4">
-      <div className="card"><div className="label">Total pendaftar</div><div className="angka">{pendaftar.length}</div></div>
-      <div className="card"><div className="label">Lulus seleksi</div><div className="angka">{lulus}</div></div>
-      <div className="card"><div className="label">Menunggu proses</div><div className="angka">{pendaftar.filter((r) => ['Baru','Verifikasi','Seleksi'].includes(r.status)).length}</div></div>
-      <div className="card"><div className="label">Daftar ulang</div><div className="angka">{pendaftar.filter((r) => r.status === 'DaftarUlang').length}</div></div>
-    </section>
-    <div style={{ marginTop: 16 }}><DaftarPpdb /></div>
-    <div className="card" style={{ marginTop: 16 }}>
-      <h3>Daftar pendaftar</h3>
-      <table><thead><tr><th>No. Reg</th><th>Nama</th><th>Pilihan</th><th>Asal sekolah</th><th>Status</th></tr></thead>
-        <tbody>{pendaftar.map((row) => <tr key={String(row.id)}><td>{row.noReg}</td><td>{row.nama}</td><td>{row.pilihan}</td><td>{row.asalSekolah ?? '-'}</td><td><span className={`badge ${row.status === 'Lulus' ? 'badge-hijau' : row.status === 'TidakLulus' ? 'badge-merah' : 'badge-emas'}`}>{row.status}</span></td></tr>)}</tbody>
-      </table>
-    </div>
-  </Shell>;
+  const perStatus = await prisma.pendaftar.groupBy({ by: ['status'], _count: { _all: true } });
+  const jumlah = (status: string) => perStatus.find((r) => r.status === status)?._count._all ?? 0;
+  const total = perStatus.reduce((sum, r) => sum + r._count._all, 0);
+
+  const STAT = [
+    { label: 'Total pendaftar', n: total, c: '#0A4A2B' },
+    { label: 'Menunggu verifikasi', n: jumlah('Baru') + jumlah('Verifikasi'), c: '#92400E' },
+    { label: 'Dalam seleksi', n: jumlah('Seleksi'), c: '#1E40AF' },
+    { label: 'Lulus', n: jumlah('Lulus'), c: '#0F6B3D' },
+    { label: 'Daftar ulang', n: jumlah('DaftarUlang'), c: '#0A4A2B' },
+  ];
+
+  return (
+    <Shell session={session} active="ppdb" title="PPDB 2026/2027 — Sisi Panitia">
+      <JudulHalaman judul="PPDB 2026/2027 — Sisi Panitia" sub="Verifikasi berkas, seleksi, dan penetapan kelulusan calon santri." />
+      <section className="grid g4" style={{ marginBottom: 16 }}>
+        {STAT.map((s) => (
+          <div className="card" key={s.label}>
+            <div className="label">{s.label}</div>
+            <div className="angka" style={{ color: s.c }}>{s.n}</div>
+          </div>
+        ))}
+      </section>
+      <Tabs tabs={TABS} aktif={aktif} basePath="/ppdb-panitia" />
+      {aktif === 'pendaftar' && <TabPendaftar q={typeof sp.q === 'string' ? sp.q : ''} />}
+      {aktif === 'seleksi' && <TabSeleksi />}
+      {aktif === 'kelulusan' && <TabKelulusan />}
+    </Shell>
+  );
 }
