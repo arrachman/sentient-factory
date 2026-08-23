@@ -160,6 +160,7 @@ model Kelas {
   unit        Unit          @relation(fields: [unitId], references: [id])
   santri      Santri[]
   jadwalUjian JadwalUjian[]
+  sesiCbt     SesiCbt[]
 
   @@unique([unitId, nama])
   @@map("kelas")
@@ -229,6 +230,7 @@ model Santri {
   nilai      Nilai[]
   kunjungan  Kunjungan[]
   nilaiUjian NilaiUjian[]
+  pesertaCbt PesertaCbt[]
 
   @@index([status])
   @@map("santri")
@@ -429,6 +431,8 @@ model MataPelajaran {
   nilai       Nilai[]
   capaian     CapaianPembelajaran[]
   jadwalUjian JadwalUjian[]
+  soal        Soal[]
+  paketSoal   PaketSoal[]
 
   @@map("mata_pelajaran")
 }
@@ -553,6 +557,7 @@ model JadwalUjian {
   mapel MataPelajaran @relation(fields: [mapelId], references: [id])
   kelas Kelas         @relation(fields: [kelasId], references: [id])
   nilai NilaiUjian[]
+  sesiCbt SesiCbt[]
 
   @@unique([ujianId, mapelId, kelasId])
   @@map("jadwal_ujian")
@@ -831,4 +836,221 @@ model Agenda {
 
   @@index([tgl])
   @@map("agenda")
+}
+
+// ---------------------------------------------------------------------------
+// CBT — ujian berbasis komputer
+//
+// `BankSoal` yang lama hanya menyimpan metadata paket (jumlah butir, penulis)
+// untuk layar kurikulum. Butir soal sungguhan hidup di `Soal` + `OpsiSoal`,
+// dirakit jadi `PaketSoal`, lalu dijadwalkan lewat `SesiCbt`. Nilai akhir tetap
+// mengalir ke `NilaiUjian` supaya rapor dan analisis lama tidak perlu diubah.
+// ---------------------------------------------------------------------------
+
+/// Satu butir soal. `tipe` menentukan cara koreksi: PG/PGK/BS/Menjodohkan
+/// dikoreksi otomatis, Esai/Uraian menunggu penilaian guru.
+model Soal {
+  id        BigInt   @id @default(autoincrement())
+  mapelId   Int      @map("mapel_id")
+  penulis   String   @db.VarChar(160)
+  tipe      TipeSoal @default(PG)
+  level     String   @default("C1") @db.VarChar(8)
+  topik     String?  @db.VarChar(200)
+  /// Konteks/stimulus bersama (wacana AKM). Kosong untuk soal berdiri sendiri.
+  stimulus  String?  @db.Text
+  pertanyaan String  @db.Text
+  /// Jawaban benar untuk tipe isian singkat; PG memakai OpsiSoal.benar.
+  kunci     String?  @db.VarChar(255)
+  pembahasan String? @db.Text
+  bobot     Decimal  @default(1) @db.Decimal(6, 2)
+  /// Parameter IRT hasil kalibrasi: a=daya beda, b=tingkat kesulitan, c=tebakan.
+  irtA      Decimal? @map("irt_a") @db.Decimal(6, 3)
+  irtB      Decimal? @map("irt_b") @db.Decimal(6, 3)
+  irtC      Decimal? @map("irt_c") @db.Decimal(6, 3)
+  /// Statistik klasik, diperbarui tiap kali analisis butir dijalankan.
+  pDiff     Decimal? @map("p_diff") @db.Decimal(6, 3)
+  dIndex    Decimal? @map("d_index") @db.Decimal(6, 3)
+  dipakai   Int      @default(0)
+  aktif     Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  mapel MataPelajaran @relation(fields: [mapelId], references: [id])
+  opsi  OpsiSoal[]
+  butir ButirPaket[]
+  jawab JawabanPeserta[]
+
+  @@index([mapelId, tipe])
+  @@index([aktif])
+  @@map("soal")
+}
+
+enum TipeSoal {
+  PG
+  PGK
+  BS
+  Menjodohkan
+  IsianSingkat
+  Esai
+}
+
+model OpsiSoal {
+  id     BigInt  @id @default(autoincrement())
+  soalId BigInt  @map("soal_id")
+  label  String  @db.VarChar(4)
+  teks   String  @db.Text
+  benar  Boolean @default(false)
+  urutan Int     @default(0)
+
+  soal Soal @relation(fields: [soalId], references: [id], onDelete: Cascade)
+
+  @@unique([soalId, label])
+  @@map("opsi_soal")
+}
+
+/// Rakitan soal yang siap diujikan. Satu paket dipakai berulang di banyak sesi.
+model PaketSoal {
+  id         Int      @id @default(autoincrement())
+  kode       String   @unique @db.VarChar(24)
+  nama       String   @db.VarChar(160)
+  mapelId    Int      @map("mapel_id")
+  /// Jenis penilaian: Harian, UTS, UAS, AKM, TryOut.
+  jenis      String   @default("UTS") @db.VarChar(32)
+  durasi     Int      @default(90)
+  /// Acak urutan soal & opsi per peserta agar tetangga tidak sama layarnya.
+  acakSoal   Boolean  @default(true) @map("acak_soal")
+  acakOpsi   Boolean  @default(true) @map("acak_opsi")
+  /// Tampilkan skor & pembahasan segera setelah peserta submit.
+  tampilHasil Boolean @default(false) @map("tampil_hasil")
+  kkm        Int      @default(75)
+  status     String   @default("Draf") @db.VarChar(24)
+  penulis    String   @db.VarChar(160)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  mapel MataPelajaran @relation(fields: [mapelId], references: [id])
+  butir ButirPaket[]
+  sesi  SesiCbt[]
+
+  @@index([status])
+  @@map("paket_soal")
+}
+
+model ButirPaket {
+  id      BigInt  @id @default(autoincrement())
+  paketId Int     @map("paket_id")
+  soalId  BigInt  @map("soal_id")
+  urutan  Int     @default(0)
+  bobot   Decimal @default(1) @db.Decimal(6, 2)
+
+  paket PaketSoal @relation(fields: [paketId], references: [id], onDelete: Cascade)
+  soal  Soal      @relation(fields: [soalId], references: [id], onDelete: Cascade)
+
+  @@unique([paketId, soalId])
+  @@map("butir_paket")
+}
+
+/// Penyelenggaraan satu paket untuk satu kelas pada waktu tertentu.
+/// Boleh berdiri sendiri (ulangan harian) atau menempel ke sesi `JadwalUjian`.
+model SesiCbt {
+  id        Int      @id @default(autoincrement())
+  kode      String   @unique @db.VarChar(24)
+  paketId   Int      @map("paket_id")
+  kelasId   Int      @map("kelas_id")
+  jadwalId  Int?     @map("jadwal_id")
+  mulai     DateTime @map("mulai")
+  selesai   DateTime @map("selesai")
+  /// Token yang diketik peserta sebelum masuk; diputar tiap sesi.
+  token     String   @db.VarChar(12)
+  /// Kunci lokasi: hanya IP dengan awalan ini yang boleh mengerjakan
+  /// (zone-locked exam di jaringan lab sekolah). Kosong = tanpa kunci.
+  ipPrefix  String?  @map("ip_prefix") @db.VarChar(64)
+  /// Wajib memakai Exam Browser; permintaan dari browser biasa ditolak.
+  wajibExamBrowser Boolean @default(false) @map("wajib_exam_browser")
+  /// Berapa kali peserta boleh keluar layar sebelum sesinya dibekukan.
+  batasPelanggaran Int @default(3) @map("batas_pelanggaran")
+  status    String   @default("Terjadwal") @db.VarChar(24)
+  pengawas  String?  @db.VarChar(160)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  paket  PaketSoal    @relation(fields: [paketId], references: [id])
+  kelas  Kelas        @relation(fields: [kelasId], references: [id])
+  jadwal JadwalUjian? @relation(fields: [jadwalId], references: [id])
+  peserta PesertaCbt[]
+
+  @@index([status])
+  @@map("sesi_cbt")
+}
+
+/// Satu peserta pada satu sesi: kartu ujian, urutan soal acaknya, dan hasilnya.
+model PesertaCbt {
+  id        BigInt    @id @default(autoincrement())
+  sesiId    Int       @map("sesi_id")
+  santriId  BigInt    @map("santri_id")
+  /// Nomor peserta yang tercetak di kartu ujian.
+  noPeserta String    @map("no_peserta") @db.VarChar(32)
+  status    StatusPeserta @default(Belum)
+  mulaiAt   DateTime? @map("mulai_at")
+  selesaiAt DateTime? @map("selesai_at")
+  /// Urutan soal hasil pengacakan, disimpan agar refresh tidak mengubah soal.
+  urutan    String?   @db.Text
+  skor      Decimal   @default(0) @db.Decimal(6, 2)
+  benar     Int       @default(0)
+  salah     Int       @default(0)
+  kosong    Int       @default(0)
+  /// Estimasi kemampuan hasil skoring IRT (theta).
+  theta     Decimal?  @db.Decimal(6, 3)
+  pelanggaran Int     @default(0)
+  ipTerakhir String?  @map("ip_terakhir") @db.VarChar(64)
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  sesi    SesiCbt   @relation(fields: [sesiId], references: [id], onDelete: Cascade)
+  santri  Santri    @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  jawaban JawabanPeserta[]
+  log     LogKecurangan[]
+
+  @@unique([sesiId, santriId])
+  @@index([status])
+  @@map("peserta_cbt")
+}
+
+enum StatusPeserta {
+  Belum
+  Mengerjakan
+  Selesai
+  Dibekukan
+}
+
+model JawabanPeserta {
+  id        BigInt   @id @default(autoincrement())
+  pesertaId BigInt   @map("peserta_id")
+  soalId    BigInt   @map("soal_id")
+  /// Label opsi terpilih (PG) atau teks jawaban (isian/esai).
+  jawaban   String?  @db.Text
+  ragu      Boolean  @default(false)
+  benar     Boolean?
+  skor      Decimal  @default(0) @db.Decimal(6, 2)
+  /// Diisi guru untuk esai; null berarti belum dinilai.
+  dinilaiOleh String? @map("dinilai_oleh") @db.VarChar(160)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  peserta PesertaCbt @relation(fields: [pesertaId], references: [id], onDelete: Cascade)
+  soal    Soal       @relation(fields: [soalId], references: [id], onDelete: Cascade)
+
+  @@unique([pesertaId, soalId])
+  @@map("jawaban_peserta")
+}
+
+/// Jejak setiap dugaan kecurangan. Tidak pernah dihapus otomatis: pengawas
+/// yang memutuskan apakah sesi peserta dibuka kembali.
+model LogKecurangan {
+  id        BigInt   @id @default(autoincrement())
+  pesertaId BigInt   @map("peserta_id")
+  jenis     String   @db.VarChar(48)
+  detail    String?  @db.VarChar(255)
+  at        DateTime @default(now())
+
+  peserta PesertaCbt @relation(fields: [pesertaId], references: [id], onDelete: Cascade)
+
+  @@index([pesertaId])
+  @@map("log_kecurangan")
 }

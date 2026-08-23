@@ -6,15 +6,23 @@ import { Tabs, tabAktif } from '@/components/ui/Tabs';
 import { TabGelombang } from './TabGelombang';
 import { TabJadwal } from './TabJadwal';
 import { TabNilai } from './TabNilai';
+import { TabBankSoal } from './TabBankSoal';
+import { TabSesiCbt } from './TabSesiCbt';
+import { TabPengawasan } from './TabPengawasan';
+import { TabKartu } from './TabKartu';
 
 const TABS = [
   { key: 'gelombang', label: 'Gelombang Ujian' },
-  { key: 'jadwal', label: 'Kartu Ujian' },
+  { key: 'jadwal', label: 'Jadwal Sesi' },
   { key: 'nilai', label: 'Input Nilai' },
+  { key: 'bank', label: 'Bank Soal' },
+  { key: 'cbt', label: 'Sesi CBT' },
+  { key: 'pengawasan', label: 'Pengawasan' },
+  { key: 'kartu', label: 'Kartu Ujian' },
 ];
 
 /** Peran yang boleh memindahkan status gelombang; guru hanya mengisi nilai. */
-const PENGELOLA = ['ketua', 'kepsmp', 'kepma'];
+const PENGELOLA = ['superadmin', 'ketua', 'kepsmp', 'kepma'];
 
 export default async function UjianPage({
   searchParams,
@@ -29,11 +37,15 @@ export default async function UjianPage({
   // Guru murni disaring ke mapel yang diampunya; pengelola melihat seluruh sesi.
   const namaGuru = !bolehKelola && session.peran.includes('guru') ? session.nama?.trim() || null : null;
 
-  const [gelombang, berjalan, sesi, nilai] = await Promise.all([
+  const [gelombang, berjalan, sesi, nilai, soal, sesiCbt, cbtBerjalan, dibekukan] = await Promise.all([
     prisma.ujian.count(),
     prisma.ujian.count({ where: { status: 'Berjalan' } }),
     prisma.jadwalUjian.count(),
     prisma.nilaiUjian.count(),
+    prisma.soal.count({ where: { aktif: true } }),
+    prisma.sesiCbt.count(),
+    prisma.sesiCbt.count({ where: { status: 'Berjalan' } }),
+    prisma.pesertaCbt.count({ where: { status: 'Dibekukan' } }),
   ]);
 
   return (
@@ -52,12 +64,21 @@ export default async function UjianPage({
         <StatCard label="Gelombang ujian" nilai={gelombang} sub={`${berjalan} sedang berjalan`} />
         <StatCard label="Sesi terjadwal" nilai={sesi} warna="#17804A" />
         <StatCard label="Nilai masuk" nilai={nilai} warna="#E8973A" />
-        <StatCard label="Status Anda" nilai={bolehKelola ? 'Pengelola' : 'Pengampu'} sub={bolehKelola ? 'dapat mengubah status gelombang' : 'dapat mengisi nilai sesi'} warna="#5B21B6" />
+        <StatCard label="Butir soal aktif" nilai={soal} sub={`${sesiCbt} sesi CBT`} warna="#5B21B6" />
+      </section>
+      <section className="grid g4">
+        <StatCard label="Sesi CBT berjalan" nilai={cbtBerjalan} sub="peserta dapat masuk" warna="#17804A" />
+        <StatCard label="Peserta dibekukan" nilai={dibekukan} sub={dibekukan > 0 ? 'perlu ditinjau pengawas' : 'tidak ada pelanggaran'} warna={dibekukan > 0 ? '#B91C1C' : undefined} />
+        <StatCard label="Status Anda" nilai={bolehKelola ? 'Pengelola' : 'Pengampu'} sub={bolehKelola ? 'dapat mengubah status sesi' : 'dapat mengisi nilai sesi'} warna="#E8973A" />
       </section>
       <Tabs tabs={TABS} aktif={aktif} basePath="/ujian" />
       {aktif === 'gelombang' && <TabGelombang bolehKelola={bolehKelola} />}
       {aktif === 'jadwal' && <TabJadwal searchParams={sp} namaGuru={namaGuru} />}
       {aktif === 'nilai' && <TabNilai searchParams={sp} namaGuru={namaGuru} />}
+      {aktif === 'bank' && <TabBankSoal namaGuru={namaGuru} />}
+      {aktif === 'cbt' && <TabSesiCbt bolehKelola={bolehKelola} />}
+      {aktif === 'pengawasan' && <TabPengawasan searchParams={sp} bolehKelola={bolehKelola} />}
+      {aktif === 'kartu' && <TabKartu searchParams={sp} />}
     </Shell>
   );
 }

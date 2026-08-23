@@ -214,3 +214,36 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* --- Kartu ujian: tampil grid di layar, satu lembar penuh saat dicetak --- */
+.kartu-lembar {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 14px;
+}
+.kartu-ujian {
+  background: #fff;
+  border: 1px solid var(--garis);
+  border-radius: 12px;
+  padding: 16px;
+  break-inside: avoid;
+}
+.kartu-ujian header { border-bottom: 1px solid var(--garis); padding-bottom: 8px; margin-bottom: 10px; }
+.kartu-ujian h4 { margin: 2px 0 0; font-size: 15px; color: var(--teks-kuat); }
+.kartu-ujian dl { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.kartu-ujian dl > div { display: grid; grid-template-columns: 108px 1fr; gap: 8px; }
+.kartu-ujian dt { font-size: 12px; color: var(--teks-lembut); }
+.kartu-ujian dd { margin: 0; font-size: 13px; color: var(--teks-kuat); }
+.kartu-ujian footer {
+  margin-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--teks-lembut);
+}
+.kartu-ujian footer span { border-top: 1px dotted var(--garis); padding-top: 26px; width: 45%; text-align: center; }
+
+@media print {
+  .kartu-kendali, .sidebar, .topbar, .tabbar { display: none !important; }
+  .kartu-lembar { grid-template-columns: 1fr 1fr; }
+}

@@ -101,6 +101,24 @@ export const BAGIAN: Bagian[] = [
       'Setiap perubahan status gelombang dan penyimpanan nilai digerbangi menu ujian di server serta dicatat ke audit log (UBAH_STATUS_UJIAN, SIMPAN_NILAI_UJIAN).',
   },
   {
+    id: 'cbt',
+    judul: 'Ujian berbasis komputer (CBT)',
+    ringkas:
+      'Selain gelombang ujian di atas, sesi ujian dapat dikerjakan langsung di komputer. Bank soal, paket, sesi, pengawasan, dan kartu peserta berada pada satu modul; skor akhirnya tetap mengalir ke nilai ujian sehingga rapor memakai satu sumber angka.',
+    langkah: [
+      { judul: 'Bank Soal', detail: 'Butir soal enam tipe: pilihan ganda, pilihan ganda kompleks, benar–salah, menjodohkan, isian singkat, dan esai. Soal AKM memakai stimulus bersama. Guru hanya melihat butir mapel yang diampunya — kunci mapel lain tidak pernah dikirim ke layarnya.' },
+      { judul: 'Sesi CBT', detail: 'Peserta diterbitkan dari anggota kelas (idempoten, aman dijalankan ulang). Token enam huruf tanpa vokal mirip angka, ditutup dari layar kecuali saat sesi berjalan, dan dapat diputar sewaktu-waktu tanpa mengganggu yang sudah masuk.' },
+      { judul: 'Mengerjakan', detail: 'Peserta masuk dengan token. Urutan soal diacak sekali lalu disimpan, jadi refresh atau pindah perangkat tidak mengubah susunannya. Jawaban tersimpan otomatis setiap perubahan; butir boleh ditandai ragu-ragu.' },
+      { judul: 'Proteksi anti-curang', detail: 'Server memeriksa token, jendela waktu, dan kunci zona jaringan (awalan IP). Pindah tab, keluar layar penuh, salin–tempel, dan layar terbagi terdeteksi lalu dilaporkan; server yang menghitung dan membekukan sesi setelah batas pelanggaran terlampaui.' },
+      { judul: 'Pengawasan', detail: 'Pengawas melihat kemajuan, skor, theta, dan jejak pelanggaran tiap peserta, serta membuka kembali sesi yang dibekukan. Pembekuan tidak pernah dibatalkan otomatis — keputusan pengawas masuk audit.' },
+      { judul: 'Penilaian esai', detail: 'Butir esai menunggu nilai guru; autosave peserta tidak pernah menimpanya dengan nol. Setiap esai yang dinilai memicu perhitungan ulang skor peserta.' },
+      { judul: 'Analisis butir dan IRT', detail: 'Setelah sesi selesai, tingkat kesukaran (p) dan daya beda (D) dihitung dari kelompok 27% atas dan bawah, lalu dikalibrasi ke parameter IRT tiga parameter (a, b, c). Kemampuan peserta (theta) diduga dengan pencarian kemungkinan maksimum. Analisis menolak berjalan di bawah empat responden — lebih baik tanpa angka daripada angka yang tak bisa dipercaya.' },
+      { judul: 'Kartu Ujian', detail: 'Kartu siap cetak satu per peserta, sengaja tanpa token: kartu dibagikan jauh-jauh hari, sedangkan token diumumkan pengawas saat sesi dibuka.' },
+    ],
+    catatan:
+      'Identitas peserta selalu diambil dari sesi login, tidak pernah dari formulir — tanpa itu siapa pun bisa mengirim jawaban atau melaporkan pelanggaran atas nama orang lain. Aksi CBT dicatat ke audit log (MULAI_CBT, SELESAI_CBT, BEKUKAN_CBT, NILAI_ESAI_CBT, ANALISIS_BUTIR_CBT, PUTAR_TOKEN_CBT).',
+  },
+  {
     id: 'wa-perangkat',
     judul: 'Menautkan nomor WhatsApp',
     ringkas:
@@ -146,7 +164,7 @@ export const BAGIAN: Bagian[] = [
       'Dua portal terpisah dengan hak baca-saja yang ditegakkan di server. Santri tidak dapat mengubah nilai atau presensinya sendiri.',
     langkah: [
       { judul: 'Portal Wali', detail: 'Mobile-first: ringkasan, hafalan, kesehatan, tagihan, pembayaran, riwayat SPP, kunjungan, izin.' },
-      { judul: 'Portal Santri', detail: 'Beranda, pengumuman, jadwal, diniyah, LMS, tugas, hafalan, izin, pembayaran, kartu santri.' },
+      { judul: 'Portal Santri', detail: 'Beranda, pengumuman, jadwal, diniyah, LMS, tugas, ujian CBT, hafalan, izin, pembayaran, kartu santri.' },
     ],
     gambar: [
       { file: 'portal-wali.png', caption: 'Portal wali pada lebar ponsel.' },

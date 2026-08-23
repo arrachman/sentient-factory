@@ -4,6 +4,38 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-23 — `PENDING` — Ujian berbasis komputer (CBT) dengan IRT dan anti-curang
+
+- Delapan model baru (`soal`, `opsi_soal`, `paket_soal`, `butir_paket`,
+  `sesi_cbt`, `peserta_cbt`, `jawaban_peserta`, `log_kecurangan`) lewat migrasi
+  aditif `20260823210000_cbt_ujian_online` — tidak ada tabel lama yang diubah.
+  `BankSoal` yang sudah ada tetap metadata kurikulum; butir sungguhan hidup di
+  `soal`.
+- `lib/cbt.ts`: koreksi otomatis enam tipe soal, pengacakan deterministik
+  per peserta, analisis butir (p dan D dari kelompok 27% atas/bawah), IRT tiga
+  parameter, dan penaksiran theta lewat pencarian kemungkinan maksimum.
+  32 tes unit di `tests/cbt.test.ts`.
+- Modul `/ujian` bertambah empat tab: Bank Soal, Sesi CBT, Pengawasan
+  (termasuk panel penilaian esai), dan Kartu Ujian siap cetak.
+- Portal santri bertambah tab **Ujian CBT** dan layar pengerjaan
+  `/portal/santri/ujian/<id>` dengan autosave, penanda ragu-ragu, hitung waktu,
+  dan pengawasan sisi klien.
+
+**Dampak operasional**
+
+- Token sesi hanya tampil saat sesi berstatus Berjalan; kartu ujian sengaja
+  tidak memuat token karena dibagikan jauh sebelum ujian.
+- Pembekuan peserta setelah batas pelanggaran dilakukan server dan tidak
+  pernah dibatalkan otomatis — pengawas yang membuka kembali, tercatat di audit.
+- Kunci zona jaringan (`sesi_cbt.ip_prefix`) memakai awalan IP pemanggil.
+  Sesi contoh pertama sengaja dibiarkan terbuka agar bisa diuji dari luar lab.
+- Analisis butir menolak berjalan di bawah empat responden.
+- Peran pengelola ujian kini termasuk `superadmin` (sebelumnya hanya ketua dan
+  kepala unit), supaya akun debug bisa menjalankan aksi pengelolaan.
+- Seed CBT (`prisma/seed-cbt.ts`) idempoten; sesi berstatus Berjalan diberi
+  jendela waktu relatif terhadap saat seed dijalankan agar benar-benar bisa
+  dicoba.
+
 ## 2026-08-23 — `a770bdca` — Bagian onboarding proyek di /docs
 
 - Lima bagian baru di paling atas /docs untuk orang yang baru mengenal

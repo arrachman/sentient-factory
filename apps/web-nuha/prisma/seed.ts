@@ -1,6 +1,7 @@
 import { PrismaClient, JenisKelamin, StatusPendaftar, StatusSantri } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import data from './proto-data.json';
+import { seedCbt } from './seed-cbt';
 
 const prisma = new PrismaClient();
 type PrototypeData = Record<string, Array<Record<string, unknown>>>;
@@ -489,6 +490,7 @@ async function main() {
   if (existingUsers > 0) {
     await seedPortalAccess();
     await seedOperational();
+    await seedCbt(prisma);
     console.log('Seed skipped: database already contains users; portal access and operational data synchronized.');
     return;
   }
@@ -627,6 +629,7 @@ async function main() {
   // Run again now that santri and wali rows exist on a fresh database.
   await seedPortalAccess();
   await seedOperational();
+  await seedCbt(prisma);
 
   console.log('Seed complete: 20 santri, 12 pegawai, 18 pendaftar, and operational master data.');
   console.log('Demo login: ketua@nuha.pesantren.web.id / Nuha2026!');

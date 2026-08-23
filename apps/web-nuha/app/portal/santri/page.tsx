@@ -13,6 +13,7 @@ import { TabHafalan } from './tabs/TabHafalan';
 import { TabIzin } from './tabs/TabIzin';
 import { TabBayar } from './tabs/TabBayar';
 import { TabKartu } from './tabs/TabKartu';
+import { TabUjian } from './tabs/TabUjian';
 
 const TABS = [
   { key: 'beranda', label: 'Beranda' },
@@ -21,6 +22,7 @@ const TABS = [
   { key: 'diniyah', label: 'Diniyah & Harian' },
   { key: 'lms', label: 'LMS' },
   { key: 'tugas', label: 'Tugas' },
+  { key: 'ujian', label: 'Ujian CBT' },
   { key: 'hafalan', label: 'Hafalan' },
   { key: 'izin', label: 'Izin' },
   { key: 'bayar', label: 'Bayar' },
@@ -70,6 +72,7 @@ export default async function PortalSantriPage({ searchParams }: { searchParams:
       {tabAktif === 'diniyah' && <TabDiniyah kelas={santri.kelas?.nama ?? ''} />}
       {tabAktif === 'lms' && <TabLms />}
       {tabAktif === 'tugas' && <TabTugas />}
+      {tabAktif === 'ujian' && <TabUjian santriId={santri.id} />}
       {tabAktif === 'hafalan' && <TabHafalan santri={santri} />}
       {tabAktif === 'izin' && <TabIzin santriId={santri.id} />}
       {tabAktif === 'bayar' && <TabBayar santriId={santri.id} />}
