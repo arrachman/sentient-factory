@@ -77,10 +77,11 @@ export async function getKiroUsageLimits() {
         return { plan: null, quotas: [], resetAt: null, error: 'Not authenticated.' };
     }
 
+    // Null for device-code logins, which are rejected when the field is present.
     const profileArn = auth.profileArn || resolveDefaultProfileArn(auth.authKey);
     const body = JSON.stringify({
         origin: 'AI_EDITOR',
-        profileArn,
+        ...(profileArn ? { profileArn } : {}),
         resourceType: 'AGENTIC_REQUEST'
     });
 
@@ -107,7 +108,7 @@ export async function getKiroUsageLimits() {
             name: 'q-rest',
             url: `${Q_HOST}${LIMITS_PATH}?${new URLSearchParams({
                 origin: 'AI_EDITOR',
-                profileArn,
+                ...(profileArn ? { profileArn } : {}),
                 resourceType: 'AGENTIC_REQUEST'
             })}`,
             init: {

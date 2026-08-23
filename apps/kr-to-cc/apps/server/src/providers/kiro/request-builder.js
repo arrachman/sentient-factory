@@ -248,8 +248,17 @@ function buildKiroHistory(messages, model) {
 
 /** Resolve a shared default CodeWhisperer profileArn by auth method.
  *  Social (Google/GitHub) sign-ins map to a different shared profile than
- *  Builder ID, mirroring the real Kiro IDE behaviour. */
+ *  Builder ID, mirroring the real Kiro IDE behaviour.
+ *
+ *  SSO OIDC device-code logins (`kirocli:odic:token`, what `kiro-cli login
+ *  --use-device-flow` writes) are the exception: their token is already scoped
+ *  to the caller's own profile, and sending *any* profileArn alongside it makes
+ *  CodeWhisperer answer 403 "User is not authorized to make this call."
+ *  Returning null lets the caller omit the field entirely. */
 export function resolveDefaultProfileArn(authKey) {
+    if (typeof authKey === 'string' && authKey.includes('odic')) {
+        return null;
+    }
     if (typeof authKey === 'string' && authKey.includes('social')) {
         return KIRO_DEFAULT_PROFILE_ARNS.social;
     }
@@ -280,7 +289,7 @@ export function buildKiroRequest(anthropicRequest, options = {}) {
         userInputMessageContext.toolResults = currentTurn.toolResults;
     }
 
-    return {
+    const payload = {
         conversationState: {
             conversationId: options.conversationId || crypto.randomUUID(),
             chatTriggerType: 'MANUAL',
@@ -295,11 +304,17 @@ export function buildKiroRequest(anthropicRequest, options = {}) {
             },
             history
         },
-        profileArn: options.profileArn || resolveDefaultProfileArn(options.authKey),
         source: 'AI_EDITOR',
         modelId: model,
         origin: 'AI_EDITOR'
     };
+
+    // Omitted rather than sent as null: a device-code token is rejected with 403
+    // when the field is present at all, however it is filled in.
+    const profileArn = options.profileArn || resolveDefaultProfileArn(options.authKey);
+    if (profileArn) payload.profileArn = profileArn;
+
+    return payload;
 }
 
 /** Build headers for CodeWhisperer API requests.
