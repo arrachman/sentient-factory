@@ -4,7 +4,7 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
-## 2026-08-23 — `8d4fd3aa` — Smooth scroll + fix scroll-spy /docs
+## 2026-08-23 — `72dec77c` — Smooth scroll + fix scroll-spy /docs
 
 - Lompatan dari sidebar kini meluncur halus (`scroll-behavior: smooth`,
   dimatikan bila pengguna menyetel prefers-reduced-motion).
