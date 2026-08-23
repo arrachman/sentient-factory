@@ -180,6 +180,164 @@ async function seedGuru(passwordHash: string) {
   }
 }
 
+/**
+ * Prototype hanya memuat jadwal satu rombongan belajar SMP, sehingga tiap guru
+ * seolah mengajar di satu kelas saja. Kenyataannya seorang guru lazim mengampu
+ * di SMP dan MA sekaligus, bahkan merangkap ustadz di pondok. Jadwal tambahan
+ * dibuat di sini — deterministik dari daftar guru, bukan acak — supaya kartu
+ * "Kelas Saya" bisa diuji lintas unit.
+ */
+async function seedJadwalLintasUnit() {
+  const HARI = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Sabtu'];
+  const [mapelSemua, unitSemua] = await Promise.all([
+    prisma.mataPelajaran.findMany({ orderBy: { kode: 'asc' } }),
+    prisma.unit.findMany(),
+  ]);
+  const pondok = unitSemua.find((unit) => unit.nama.startsWith('Pondok'));
+  // Pondok belum punya rombel apa pun, sehingga guru yang merangkap ustadz tak
+  // punya tempat mengajar. Siapkan satu kelas diniyah sebagai wadahnya.
+  if (pondok) {
+    await prisma.kelas.upsert({
+      where: { unitId_nama: { unitId: pondok.id, nama: 'Diniyah Wustha' } },
+      create: { unitId: pondok.id, nama: 'Diniyah Wustha', tingkat: 'Wustha' },
+      update: {},
+    });
+  }
+  // Diambil setelah kelas diniyah dipastikan ada.
+  const kelasSemua = await prisma.kelas.findMany({ include: { unit: true }, orderBy: { nama: 'asc' } });
+  const kelasMa = kelasSemua.filter((kelas) => kelas.unit.nama.startsWith('MA'));
+  // Kelas SMP selain rombel prototype, supaya guru tidak hanya terikat ke 8B.
+  const kelasSmpLain = kelasSemua.filter(
+    (kelas) => kelas.unit.nama.startsWith('SMP') && kelas.nama !== KELAS_JADWAL_PROTOTYPE,
+  );
+  if (kelasMa.length === 0 || mapelSemua.length === 0) return;
+
+  const guruRows = await prisma.jadwalPelajaran.findMany({
+    where: { kelas: KELAS_JADWAL_PROTOTYPE },
+    distinct: ['guru'],
+    select: { guru: true, mapel: true },
+    orderBy: { guru: 'asc' },
+  });
+
+  let jamKe = 7;
+  for (const [index, row] of guruRows.entries()) {
+    const guru = (row.guru ?? '').trim();
+    if (!guru) continue;
+    const mapel = mapelSemua.find((m) => m.nama === row.mapel) ?? mapelSemua[index % mapelSemua.length];
+
+    // Satu jam di MA dan satu lagi di kelas SMP lain: itu sudah cukup untuk
+    // membuat pengampuan guru benar-benar lintas unit dan lintas rombel.
+    const target = [kelasMa[index % kelasMa.length]];
+    if (kelasSmpLain.length > 0) target.push(kelasSmpLain[index % kelasSmpLain.length]);
+
+    for (const kelas of target) {
+      const hari = HARI[(index + target.indexOf(kelas)) % HARI.length];
+      await prisma.jadwalPelajaran.upsert({
+        where: { hari_jamKe_kelas: { hari, jamKe, kelas: kelas.nama } },
+        create: {
+          hari, jamKe, waktu: '13.00–14.20', mapel: mapel.nama, guru,
+          kelas: kelas.nama, ruang: 'Ruang kelas', unitId: kelas.unitId,
+        },
+        update: { mapel: mapel.nama, guru, unitId: kelas.unitId },
+      });
+    }
+
+    // Sepertiga pengajar merangkap ustadz diniyah di pondok.
+    if (pondok && index % 3 === 0) {
+      const kelasDiniyah = kelasSemua.find((kelas) => kelas.unitId === pondok.id);
+      if (kelasDiniyah) {
+        // Kunci uniknya (hari, jamKe, kelas); tanpa jam yang berbeda per ustadz
+        // seluruh baris diniyah saling menimpa dan hanya satu yang tersisa.
+        const jamDiniyah = 20 + index;
+        await prisma.jadwalPelajaran.upsert({
+          where: { hari_jamKe_kelas: { hari: 'Jumat', jamKe: jamDiniyah, kelas: kelasDiniyah.nama } },
+          create: {
+            hari: 'Jumat', jamKe: jamDiniyah, waktu: '16.00–17.00', mapel: 'Diniyah',
+            guru, kelas: kelasDiniyah.nama, ruang: 'Musholla', unitId: pondok.id,
+          },
+          update: { guru, unitId: pondok.id },
+        });
+      }
+    }
+    jamKe = jamKe === 9 ? 7 : jamKe + 1;
+  }
+}
+
+/**
+ * Satu gelombang ujian per unit sekolah, dengan sesi untuk tiap kelas dan
+ * beberapa mapel. Nilai hanya diisi untuk gelombang yang sudah selesai — yang
+ * masih berjalan sengaja dibiarkan kosong supaya layar "belum dinilai" ikut teruji.
+ */
+async function seedUjian() {
+  const unitSekolah = await prisma.unit.findMany({ where: { OR: [{ nama: { startsWith: 'SMP' } }, { nama: { startsWith: 'MA' } }] } });
+  // Hanya mapel yang benar-benar diajarkan pada jadwal pelajaran. Tanpa filter
+  // ini, sesi ujian bisa jatuh ke mapel sisa data uji yang tak punya pengampu,
+  // sehingga tak seorang guru pun melihat kartu ujiannya.
+  const mapelDiajarkan = await prisma.jadwalPelajaran.findMany({
+    where: { guru: { not: null } }, distinct: ['mapel'], select: { mapel: true },
+  });
+  const mapelSemua = await prisma.mataPelajaran.findMany({
+    where: { nama: { in: mapelDiajarkan.map((j) => j.mapel) } },
+    orderBy: { kode: 'asc' },
+  });
+  if (mapelSemua.length === 0) return;
+
+  // Sesi dari seed sebelumnya yang mapelnya di luar daftar ini tidak akan pernah
+  // terlihat oleh guru mana pun; buang agar rekap kemajuan tidak menghitungnya.
+  await prisma.jadwalUjian.deleteMany({ where: { mapelId: { notIn: mapelSemua.map((m) => m.id) } } });
+
+  for (const unit of unitSekolah) {
+    const kelasUnit = await prisma.kelas.findMany({ where: { unitId: unit.id }, orderBy: { nama: 'asc' }, take: 4 });
+    if (kelasUnit.length === 0) continue;
+    const singkat = unit.nama.startsWith('SMP') ? 'SMP' : 'MA';
+
+    for (const gelombang of [
+      { jenis: 'UTS', nama: 'Ujian Tengah Semester Gasal', mulai: '2026-09-21', selesai: '2026-09-26', status: 'Selesai' },
+      { jenis: 'UAS', nama: 'Ujian Akhir Semester Gasal', mulai: '2026-12-07', selesai: '2026-12-12', status: 'Berjalan' },
+    ]) {
+      const kode = `UJI-${singkat}-${gelombang.jenis}-2026G`;
+      const ujian = await prisma.ujian.upsert({
+        where: { kode },
+        create: {
+          kode, nama: `${gelombang.nama} — ${singkat}`, jenis: gelombang.jenis, unitId: unit.id,
+          tahunAjaran: '2026/2027', semester: 'Gasal',
+          mulai: new Date(gelombang.mulai), selesai: new Date(gelombang.selesai), status: gelombang.status,
+        },
+        update: { status: gelombang.status },
+      });
+
+      for (const [iKelas, kelas] of kelasUnit.entries()) {
+        for (const [iMapel, mapel] of mapelSemua.entries()) {
+          const hari = new Date(gelombang.mulai);
+          hari.setUTCDate(hari.getUTCDate() + iMapel);
+          const jadwal = await prisma.jadwalUjian.upsert({
+            where: { ujianId_mapelId_kelasId: { ujianId: ujian.id, mapelId: mapel.id, kelasId: kelas.id } },
+            create: {
+              ujianId: ujian.id, mapelId: mapel.id, kelasId: kelas.id, tgl: hari,
+              waktu: iKelas % 2 === 0 ? '07.30–09.00' : '09.30–11.00', durasi: 90,
+              ruang: `Ruang ${kelas.nama}`, pengawas: kelas.waliKelas,
+            },
+            update: { tgl: hari, pengawas: kelas.waliKelas },
+          });
+
+          if (gelombang.status !== 'Selesai') continue;
+          const peserta = await prisma.santri.findMany({ where: { kelasId: kelas.id }, select: { id: true } });
+          for (const [iSantri, santri] of peserta.entries()) {
+            // Nilai contoh yang stabil antar-seed: turunan indeks, bukan acak,
+            // supaya rekap tidak berubah tiap kali seed dijalankan ulang.
+            const nilai = 70 + ((iSantri * 7 + iMapel * 3 + iKelas) % 26);
+            await prisma.nilaiUjian.upsert({
+              where: { jadwalId_santriId: { jadwalId: jadwal.id, santriId: santri.id } },
+              create: { jadwalId: jadwal.id, santriId: santri.id, nilai, hadir: true },
+              update: { nilai },
+            });
+          }
+        }
+      }
+    }
+  }
+}
+
 async function seedPortalAccess() {
   const passwordHash = await bcrypt.hash('Nuha2026!', 12);
   const roleSantri = await prisma.peran.upsert({ where: { key: 'santri' }, create: { key: 'santri', nama: 'Santri' }, update: {} });
@@ -196,6 +354,24 @@ async function seedPortalAccess() {
     await prisma.menuPeran.upsert({ where: { menuId_peranId: { menuId: menu.id, peranId: row.peranId } }, create: { menuId: menu.id, peranId: row.peranId }, update: {} });
   }
 
+  // Ujian dipegang bersama: kepala unit menyusun gelombangnya, guru mengisi
+  // nilai sesi yang diampu. Ikon mengikuti gaya path menu lain di seed prototype.
+  const menuUjian = await prisma.menu.upsert({
+    where: { key: 'ujian' },
+    create: { key: 'ujian', label: 'Ujian', icon: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11', urutan: 8 },
+    update: { label: 'Ujian' },
+  });
+  for (const key of ['ketua', 'kepsmp', 'kepma', 'guru']) {
+    const peran = await prisma.peran.findUnique({ where: { key } });
+    if (peran) {
+      await prisma.menuPeran.upsert({
+        where: { menuId_peranId: { menuId: menuUjian.id, peranId: peran.id } },
+        create: { menuId: menuUjian.id, peranId: peran.id },
+        update: {},
+      });
+    }
+  }
+
   // Staff share the Kelola Data entry; each entity is still gated by its own menu grant.
   const dataMenu = await prisma.menu.findUnique({ where: { key: 'data' } });
   const staffRoles = await prisma.peran.findMany({ where: { key: { notIn: ['santri', 'wali'] } } });
@@ -204,7 +380,11 @@ async function seedPortalAccess() {
   }
 
   await seedSuperAdmin(passwordHash);
+  // Urutan penting: jadwal lintas unit dulu, baru akun guru dibuat dari
+  // daftar pengajar yang sudah lengkap.
+  await seedJadwalLintasUnit();
   await seedGuru(passwordHash);
+  await seedUjian();
 
   const santriRows = await prisma.santri.findMany({ include: { orang: true } });
   for (const santri of santriRows) {

@@ -144,6 +144,8 @@ model Unit {
   kelas   Kelas[]
   santri  Santri[]
   pegawai Pegawai[]
+  jadwal  JadwalPelajaran[]
+  ujian   Ujian[]
 
   @@map("unit")
 }
@@ -155,8 +157,9 @@ model Kelas {
   tingkat   String  @db.VarChar(16)
   waliKelas String? @map("wali_kelas") @db.VarChar(160)
 
-  unit   Unit     @relation(fields: [unitId], references: [id])
-  santri Santri[]
+  unit        Unit          @relation(fields: [unitId], references: [id])
+  santri      Santri[]
+  jadwalUjian JadwalUjian[]
 
   @@unique([unitId, nama])
   @@map("kelas")
@@ -225,6 +228,7 @@ model Santri {
   rekamMedis RekamMedis[]
   nilai      Nilai[]
   kunjungan  Kunjungan[]
+  nilaiUjian NilaiUjian[]
 
   @@index([status])
   @@map("santri")
@@ -267,13 +271,13 @@ model KomponenGaji {
 }
 
 model SlipGaji {
-  id        BigInt    @id @default(autoincrement())
-  pegawaiId BigInt    @map("pegawai_id")
-  periode   String    @db.VarChar(16)
-  bruto     Decimal   @db.Decimal(14, 2)
-  potongan  Decimal   @db.Decimal(14, 2)
-  netto     Decimal   @db.Decimal(14, 2)
-  dibayarAt DateTime? @map("dibayar_at")
+  id              BigInt    @id @default(autoincrement())
+  pegawaiId       BigInt    @map("pegawai_id")
+  periode         String    @db.VarChar(16)
+  bruto           Decimal   @db.Decimal(14, 2)
+  potongan        Decimal   @db.Decimal(14, 2)
+  netto           Decimal   @db.Decimal(14, 2)
+  dibayarAt       DateTime? @map("dibayar_at")
   // Revisi setelah pembayaran diizinkan; jejaknya disimpan di sini dan di audit_log.
   status          String    @default("Draft") @db.VarChar(16)
   revisi          Int       @default(0)
@@ -422,8 +426,9 @@ model MataPelajaran {
   kkm       Int     @default(75)
   kurikulum String? @db.VarChar(64)
 
-  nilai   Nilai[]
-  capaian CapaianPembelajaran[]
+  nilai       Nilai[]
+  capaian     CapaianPembelajaran[]
+  jadwalUjian JadwalUjian[]
 
   @@map("mata_pelajaran")
 }
@@ -488,20 +493,86 @@ model Nilai {
 }
 
 model JadwalPelajaran {
-  id    Int     @id @default(autoincrement())
-  hari  String  @db.VarChar(16)
-  jamKe Int     @map("jam_ke")
-  waktu String  @db.VarChar(32)
-  mapel String  @db.VarChar(160)
-  guru  String? @db.VarChar(160)
-  kelas String? @db.VarChar(32)
+  id     Int     @id @default(autoincrement())
+  hari   String  @db.VarChar(16)
+  jamKe  Int     @map("jam_ke")
+  waktu  String  @db.VarChar(32)
+  mapel  String  @db.VarChar(160)
+  guru   String? @db.VarChar(160)
+  kelas  String? @db.VarChar(32)
   /// Tempat pelajaran berlangsung. Terpisah dari `kelas`: importir lama menyimpan
   /// ruangan ("Lab IPA", "Musholla") di kolom kelas, sehingga guru yang mengajar
   /// di luar ruang kelas kehilangan rombongan belajarnya.
-  ruang String? @db.VarChar(64)
+  ruang  String? @db.VarChar(64)
+  /// Unit tempat jam ini diajarkan. Seorang guru lazim mengampu di SMP dan MA
+  /// sekaligus, bahkan merangkap ustadz di pondok — tanpa kolom ini, jadwalnya
+  /// tercampur dan kartu "Kelas Saya" tak bisa dikelompokkan per unit.
+  unitId Int?    @map("unit_id")
+
+  unit Unit? @relation(fields: [unitId], references: [id])
 
   @@unique([hari, jamKe, kelas])
+  @@index([guru])
   @@map("jadwal_pelajaran")
+}
+
+/// Satu gelombang ujian (UTS/UAS/ujian pondok) pada satu unit dan periode.
+model Ujian {
+  id          Int      @id @default(autoincrement())
+  kode        String   @unique @db.VarChar(24)
+  nama        String   @db.VarChar(160)
+  jenis       String   @db.VarChar(32)
+  unitId      Int      @map("unit_id")
+  tahunAjaran String   @map("tahun_ajaran") @db.VarChar(16)
+  semester    String   @db.VarChar(16)
+  mulai       DateTime @db.Date
+  selesai     DateTime @db.Date
+  status      String   @default("Draf") @db.VarChar(24)
+  catatan     String?  @db.VarChar(255)
+
+  unit   Unit          @relation(fields: [unitId], references: [id])
+  jadwal JadwalUjian[]
+
+  @@index([status])
+  @@map("ujian")
+}
+
+/// Satu sesi ujian: satu mapel untuk satu kelas, dengan pengawasnya.
+model JadwalUjian {
+  id       Int      @id @default(autoincrement())
+  ujianId  Int      @map("ujian_id")
+  mapelId  Int      @map("mapel_id")
+  kelasId  Int      @map("kelas_id")
+  tgl      DateTime @db.Date
+  waktu    String   @db.VarChar(32)
+  durasi   Int      @default(90)
+  ruang    String?  @db.VarChar(64)
+  pengawas String?  @db.VarChar(160)
+
+  ujian Ujian         @relation(fields: [ujianId], references: [id], onDelete: Cascade)
+  mapel MataPelajaran @relation(fields: [mapelId], references: [id])
+  kelas Kelas         @relation(fields: [kelasId], references: [id])
+  nilai NilaiUjian[]
+
+  @@unique([ujianId, mapelId, kelasId])
+  @@map("jadwal_ujian")
+}
+
+/// Hasil satu santri pada satu sesi ujian. Terpisah dari `Nilai` yang menyimpan
+/// rekap rapor per periode: di sini nilainya per sesi, lengkap dengan kehadiran.
+model NilaiUjian {
+  id       BigInt  @id @default(autoincrement())
+  jadwalId Int     @map("jadwal_id")
+  santriId BigInt  @map("santri_id")
+  nilai    Decimal @default(0) @db.Decimal(5, 2)
+  hadir    Boolean @default(true)
+  catatan  String? @db.VarChar(255)
+
+  jadwal JadwalUjian @relation(fields: [jadwalId], references: [id], onDelete: Cascade)
+  santri Santri      @relation(fields: [santriId], references: [id], onDelete: Cascade)
+
+  @@unique([jadwalId, santriId])
+  @@map("nilai_ujian")
 }
 
 model KursusLms {

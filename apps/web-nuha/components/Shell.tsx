@@ -14,6 +14,7 @@ const HREF_BY_KEY: Record<string, string> = {
   keuangan: '/keuangan',
   akademik: '/akademik',
   kurikulum: '/kurikulum',
+  ujian: '/ujian',
   lms: '/lms',
   gaji: '/penggajian',
   wa: '/notifikasi',
@@ -28,7 +29,7 @@ const HREF_BY_KEY: Record<string, string> = {
 
 // Warna stroke ikon per menu — menCol di prototype.
 const WARNA_IKON: Record<string, string> = {
-  dashboard: '#F2B770', induk: '#93C5FD', akademik: '#86EFAC', kurikulum: '#FDBA74',
+  dashboard: '#F2B770', induk: '#93C5FD', akademik: '#86EFAC', kurikulum: '#FDBA74', ujian: '#FCD34D',
   pesantren: '#C4B5FD', poskestren: '#FCA5A5', keuangan: '#6EE7B7', gaji: '#FDE047',
   lms: '#7DD3FC', wa: '#4ADE80', kunjungan: '#F9A8D4', ppdb: '#A5B4FC',
   laporan: '#67E8F9', pengaturan: '#D6D3D1', data: '#D6D3D1',
