@@ -68,10 +68,24 @@ Untuk deploy cukup `prisma migrate deploy` (tanpa shadow DB).
 | `/kepesantrenan` | Okupansi asrama, setoran hafalan, ta'zir, perizinan |
 | `/poskestren` | Rekam kunjungan kesehatan + stok obat |
 | `/keuangan` | Tagihan SPP/syahriyah, pembayaran, kas |
+| `/akademik` | Jadwal pelajaran, nilai, rombel |
+| `/kurikulum` | Struktur kurikulum, perangkat ajar, capaian, bank soal |
+| `/lms` | Kursus, materi, dan tugas LMS |
+| `/penggajian` | Perhitungan gaji dari komponen (bruto, potongan, netto) |
+| `/notifikasi` | Template pemicu WhatsApp + log pengiriman |
+| `/kunjungan-wali` | Buku tamu kunjungan wali santri |
 | `/ppdb` | Formulir pendaftaran (tulis ke DB) + rekap pendaftar |
+| `/laporan` | Rekap lintas modul: santri, keuangan, kas, PPDB |
+| `/pengaturan` | Unit, peran, pengguna, dan pemetaan menu (khusus ketua) |
 
 Menu sidebar **tidak hardcoded** — dibaca dari tabel `menu`/`menu_peran` sesuai
-peran user yang login.
+peran user yang login. Hak yang sama juga menjaga halamannya: `requirePage()`
+di `lib/access.ts` mengecek `menu_peran` sebelum merender, jadi menu yang
+disembunyikan benar-benar tidak bisa dibuka lewat URL langsung, bukan sekadar
+tidak ditautkan.
+
+Angka gaji **dihitung** dari `komponen_gaji` (`lib/gaji.ts`), bukan disalin
+sebagai total jadi, agar slip tidak pernah menyimpang dari komponennya.
 
 ## API
 
@@ -90,9 +104,14 @@ Seed mengimpor dataset asli dari prototype (`prisma/proto-data.json`, hasil
 ekstraksi 42 array dari `dist/index.html`) menjadi record relasional:
 60 orang, 20 santri, 12 pegawai + komponen gaji, 19 pendaftar, 20 tagihan,
 16 pembayaran, 12 setoran hafalan, 18 rekam medis, 10 izin, 41 kamar,
-38 template WA, dan 14 menu berbasis peran.
+38 template WA, 14 menu berbasis peran, 20 mata pelajaran, 22 jadwal,
+6 kursus LMS, 10 perangkat ajar, 6 capaian pembelajaran, dan 8 bank soal.
 
-Seed adalah importer first-boot: bila user sudah ada, proses langsung berhenti agar data operasional tidak terduplikasi atau tertimpa. Untuk memuat ulang demo data, gunakan database/volume pengembangan baru.
+Seed memutakhirkan data referensi akademik yang punya kunci unik agar migrasi
+baru bisa terisi aman. Data operasional bersifat importer first-boot: bila user
+sudah ada, proses langsung berhenti agar data historis tidak terduplikasi atau
+ditimpa. Untuk memuat ulang seluruh demo data, gunakan database/volume
+pengembangan baru.
 
 ## Catatan
 
@@ -101,7 +120,11 @@ Seed adalah importer first-boot: bila user sudah ada, proses langsung berhenti a
   root §2 dan §9). Untuk akses dari LAN, daftarkan port lalu:
   `sudo ufw allow from 192.168.1.0/24 to any port 3226 proto tcp comment 'web-nuha'`
 - Prototype lama di `apps/marketing/sub/nuha` **tetap ada** dan masih jalan di
-  port 3223 — berguna sebagai rujukan desain layar yang belum diimplementasi
-  (LMS, kurikulum, penggajian, portal wali, notifikasi WA). Skema DB-nya sudah
-  disiapkan; UI-nya belum dibuat.
+  port 3223 — rujukan desain untuk yang belum dibuat: portal santri, portal
+  wali, dan halaman publik (profil + cek status PPDB). Semuanya butuh jalur
+  autentikasi terpisah dari staf, jadi sengaja belum dikerjakan.
+- Gerbang WhatsApp belum tersambung: `/notifikasi` mengelola template dan
+  pemicu, tetapi tidak ada pesan yang benar-benar dikirim.
+- Penggajian menampilkan perhitungan berjalan; penerbitan slip ke `slip_gaji`
+  (dan penguncian periode) belum dibuat.
 - `.env` berisi rahasia dan tidak di-commit (`.gitignore` + `.dockerignore`).

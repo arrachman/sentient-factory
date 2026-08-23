@@ -1,11 +1,9 @@
-import { redirect } from 'next/navigation';
-import { readSession } from '@/lib/auth';
+import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/Shell';
 
 export default async function IndukPage() {
-  const session = await readSession();
-  if (!session) redirect('/login');
+  const session = await requirePage('induk');
   const santri = await prisma.santri.findMany({
     include: { orang: true, unit: true, kelas: true, kamar: { include: { asrama: true } } },
     orderBy: { nis: 'asc' },

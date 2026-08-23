@@ -1,12 +1,10 @@
-import { redirect } from 'next/navigation';
-import { readSession } from '@/lib/auth';
+import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/Shell';
 import { DaftarPpdb } from './DaftarPpdb';
 
 export default async function PpdbPage() {
-  const session = await readSession();
-  if (!session) redirect('/login');
+  const session = await requirePage('ppdb');
   const pendaftar = await prisma.pendaftar.findMany({ orderBy: { tglDaftar: 'desc' } });
   const lulus = pendaftar.filter((row) => row.status === 'Lulus').length;
 

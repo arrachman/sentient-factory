@@ -1,13 +1,11 @@
-import { redirect } from 'next/navigation';
-import { readSession } from '@/lib/auth';
+import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/Shell';
 
 const rupiah = (amount: { toString(): string }) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(amount));
 
 export default async function DashboardPage() {
-  const session = await readSession();
-  if (!session) redirect('/login');
+  const session = await requirePage('dashboard');
   const [santri, mukim, pendaftar, outstanding, agenda, announcements] = await Promise.all([
     prisma.santri.count(),
     prisma.santri.count({ where: { status: 'Mukim' } }),

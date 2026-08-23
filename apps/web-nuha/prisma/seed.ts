@@ -20,7 +20,34 @@ const pendaftarStatus = (value: unknown): StatusPendaftar => {
   return statuses[String(value)] ?? 'Baru';
 };
 
+async function seedAcademicContent() {
+  const mapelByName = new Map<string, { id: number }>();
+  for (const [index, row] of source.strukturKurikulum.entries()) {
+    const mapel = await prisma.mataPelajaran.upsert({
+      where: { kode: `MAP-${String(index + 1).padStart(3, '0')}` },
+      create: { kode: `MAP-${String(index + 1).padStart(3, '0')}`, nama: String(row.mapel), jp: Number(row.jp), kelompok: String(row.kelompok), guru: String(row.guru), kkm: Number(row.kkm), kurikulum: String(row.kur) },
+      update: { nama: String(row.mapel), jp: Number(row.jp), kelompok: String(row.kelompok), guru: String(row.guru), kkm: Number(row.kkm), kurikulum: String(row.kur) },
+    });
+    mapelByName.set(mapel.nama, mapel);
+  }
+  for (const row of source.perangkatAjar) await prisma.perangkatAjar.upsert({ where: { kode: String(row.id) }, create: { kode: String(row.id), mapel: String(row.mapel), kelas: String(row.kelas), jenis: String(row.jenis), topik: String(row.topik), pertemuan: Number(row.pertemuan), guru: String(row.guru), status: String(row.status) }, update: { status: String(row.status) } });
+  for (const row of source.capaianPembelajaran) {
+    const mapel = mapelByName.get(String(row.mapel));
+    await prisma.capaianPembelajaran.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), mapelId: mapel?.id, mapel: String(row.mapel), fase: String(row.fase), capaian: String(row.capaian) }, update: { capaian: String(row.capaian) } });
+  }
+  for (const row of source.bankSoal) await prisma.bankSoal.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), mapel: String(row.mapel), topik: String(row.topik), tipe: String(row.tipe), level: String(row.level), butir: Number(row.butir), dipakai: Number(row.dipakai), penulis: String(row.penulis) }, update: { butir: Number(row.butir), dipakai: Number(row.dipakai) } });
+  for (const day of source.jadwalPelajaran) for (const [index, row] of (day.rows as unknown[][]).entries()) await prisma.jadwalPelajaran.upsert({ where: { hari_jamKe_kelas: { hari: String(day.hari), jamKe: index + 1, kelas: String(row[3]) } }, create: { hari: String(day.hari), jamKe: index + 1, waktu: String(row[0]), mapel: String(row[1]), guru: String(row[2]), kelas: String(row[3]) }, update: { waktu: String(row[0]), mapel: String(row[1]), guru: String(row[2]) } });
+  for (const row of source.lmsKursus) await prisma.kursusLms.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), nama: String(row.nama), guru: String(row.guru), modul: Number(row.modul), selesai: Number(row.selesai), tugasAktif: Number(row.tugasAktif), nilai: Number(row.nilai) }, update: { modul: Number(row.modul), selesai: Number(row.selesai), tugasAktif: Number(row.tugasAktif), nilai: Number(row.nilai) } });
+  const courses = await prisma.kursusLms.findMany(); const courseByName = new Map(courses.map((course) => [course.nama, course]));
+  // MateriLms has no natural key, so guard the append rather than upsert it.
+  if (await prisma.materiLms.count() === 0) {
+    for (const row of source.lmsMateri) { const course = courseByName.get(String(row.kursus)); if (course) await prisma.materiLms.create({ data: { kursusId: course.id, judul: String(row.judul), tipe: String(row.tipe), status: String(row.status), tgl: parseDate(row.tgl) } }); }
+  }
+  for (const row of source.lmsTugas) { const course = courseByName.get(String(row.kursus)); if (course) await prisma.tugasLms.upsert({ where: { kode: String(row.id) }, create: { kode: String(row.id), kursusId: course.id, judul: String(row.judul), deadline: parseDate(row.deadline), status: String(row.status) }, update: { status: String(row.status) } }); }
+}
+
 async function main() {
+  await seedAcademicContent();
   // This is an initial demo-data importer, not a synchronization process. Once
   // users exist, preserve operational data entered through the application.
   const existingUsers = await prisma.user.count();

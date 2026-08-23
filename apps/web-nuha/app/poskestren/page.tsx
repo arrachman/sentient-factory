@@ -1,11 +1,9 @@
-import { redirect } from 'next/navigation';
-import { readSession } from '@/lib/auth';
+import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/Shell';
 
 export default async function PoskestrenPage() {
-  const session = await readSession();
-  if (!session) redirect('/login');
+  const session = await requirePage('poskestren');
   const [visits, medicines] = await Promise.all([
     prisma.rekamMedis.findMany({ include: { santri: { include: { orang: true } } }, orderBy: { tgl: 'desc' }, take: 20 }),
     prisma.obat.findMany({ orderBy: { stok: 'asc' } }),

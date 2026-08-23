@@ -1,12 +1,10 @@
-import { redirect } from 'next/navigation';
-import { readSession } from '@/lib/auth';
+import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/Shell';
 
 const rupiah = (value: { toString(): string }) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(Number(value));
 export default async function KeuanganPage() {
-  const session = await readSession();
-  if (!session) redirect('/login');
+  const session = await requirePage('keuangan');
   const [invoices, totals, transactions] = await Promise.all([
     prisma.tagihan.findMany({ include: { santri: { include: { orang: true } } }, orderBy: { jatuhTempo: 'desc' }, take: 30 }),
     prisma.tagihan.aggregate({ _sum: { nominal: true, dibayar: true } }),

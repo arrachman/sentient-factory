@@ -388,15 +388,60 @@ model KegiatanHarian {
 // ─────────────────────────────────────────────────────────────
 
 model MataPelajaran {
-  id       Int    @id @default(autoincrement())
-  kode     String @unique @db.VarChar(24)
-  nama     String @db.VarChar(160)
-  jp       Int    @default(0)
-  kelompok String @db.VarChar(64)
+  id        Int     @id @default(autoincrement())
+  kode      String  @unique @db.VarChar(24)
+  nama      String  @db.VarChar(160)
+  jp        Int     @default(0)
+  kelompok  String  @db.VarChar(64)
+  guru      String? @db.VarChar(160)
+  kkm       Int     @default(75)
+  kurikulum String? @db.VarChar(64)
 
-  nilai Nilai[]
+  nilai   Nilai[]
+  capaian CapaianPembelajaran[]
 
   @@map("mata_pelajaran")
+}
+
+model PerangkatAjar {
+  id        Int    @id @default(autoincrement())
+  kode      String @unique @db.VarChar(24)
+  mapel     String @db.VarChar(160)
+  kelas     String @db.VarChar(32)
+  jenis     String @db.VarChar(64)
+  topik     String @db.VarChar(200)
+  pertemuan Int    @default(0)
+  guru      String @db.VarChar(160)
+  status    String @default("Draf") @db.VarChar(32)
+
+  @@map("perangkat_ajar")
+}
+
+model CapaianPembelajaran {
+  id      Int    @id @default(autoincrement())
+  kode    String @unique @db.VarChar(24)
+  mapelId Int?   @map("mapel_id")
+  mapel   String @db.VarChar(160)
+  fase    String @db.VarChar(32)
+  capaian String @db.Text
+
+  mataPelajaran MataPelajaran? @relation(fields: [mapelId], references: [id])
+
+  @@map("capaian_pembelajaran")
+}
+
+model BankSoal {
+  id      Int    @id @default(autoincrement())
+  kode    String @unique @db.VarChar(24)
+  mapel   String @db.VarChar(160)
+  topik   String @db.VarChar(200)
+  tipe    String @db.VarChar(64)
+  level   String @db.VarChar(64)
+  butir   Int    @default(0)
+  dipakai Int    @default(0)
+  penulis String @db.VarChar(160)
+
+  @@map("bank_soal")
 }
 
 model Nilai {
@@ -426,7 +471,50 @@ model JadwalPelajaran {
   guru  String? @db.VarChar(160)
   kelas String? @db.VarChar(32)
 
+  @@unique([hari, jamKe, kelas])
   @@map("jadwal_pelajaran")
+}
+
+model KursusLms {
+  id         Int    @id @default(autoincrement())
+  kode       String @unique @db.VarChar(24)
+  nama       String @db.VarChar(160)
+  guru       String @db.VarChar(160)
+  modul      Int    @default(0)
+  selesai    Int    @default(0)
+  tugasAktif Int    @default(0) @map("tugas_aktif")
+  nilai      Int    @default(0)
+
+  materi MateriLms[]
+  tugas  TugasLms[]
+
+  @@map("kursus_lms")
+}
+
+model MateriLms {
+  id       Int      @id @default(autoincrement())
+  kursusId Int      @map("kursus_id")
+  judul    String   @db.VarChar(200)
+  tipe     String   @db.VarChar(64)
+  status   String   @db.VarChar(64)
+  tgl      DateTime @db.Date
+
+  kursus KursusLms @relation(fields: [kursusId], references: [id], onDelete: Cascade)
+
+  @@map("materi_lms")
+}
+
+model TugasLms {
+  id       Int      @id @default(autoincrement())
+  kode     String   @unique @db.VarChar(24)
+  kursusId Int      @map("kursus_id")
+  judul    String   @db.VarChar(200)
+  deadline DateTime @db.DateTime
+  status   String   @db.VarChar(64)
+
+  kursus KursusLms @relation(fields: [kursusId], references: [id], onDelete: Cascade)
+
+  @@map("tugas_lms")
 }
 
 // ─────────────────────────────────────────────────────────────

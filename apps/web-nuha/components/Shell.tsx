@@ -8,9 +8,15 @@ const HREF_BY_KEY: Record<string, string> = {
   pesantren: '/kepesantrenan',
   poskestren: '/poskestren',
   keuangan: '/keuangan',
-  ppdb: '/ppdb',
+  akademik: '/akademik',
+  kurikulum: '/kurikulum',
+  lms: '/lms',
   gaji: '/penggajian',
   wa: '/notifikasi',
+  kunjungan: '/kunjungan-wali',
+  ppdb: '/ppdb',
+  laporan: '/laporan',
+  pengaturan: '/pengaturan',
 };
 
 export async function Shell({ session, active, title, children }: { session: SessionPayload; active: string; title: string; children: React.ReactNode }) {

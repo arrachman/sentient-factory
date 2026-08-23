@@ -1,11 +1,9 @@
-import { redirect } from 'next/navigation';
-import { readSession } from '@/lib/auth';
+import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/Shell';
 
 export default async function KepesantrenanPage() {
-  const session = await readSession();
-  if (!session) redirect('/login');
+  const session = await requirePage('pesantren');
   const [asrama, hafalan, tazir, izin] = await Promise.all([
     prisma.asrama.findMany({ include: { kamar: { include: { _count: { select: { santri: true } } } } } }),
     prisma.hafalan.findMany({ include: { santri: { include: { orang: true } } }, orderBy: { tgl: 'desc' }, take: 8 }),
