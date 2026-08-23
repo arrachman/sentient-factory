@@ -15,12 +15,12 @@ export type Bagian = {
 };
 
 export const AKUN: { peran: string; login: string; menu: string; catatan: string }[] = [
-  { peran: 'Super Admin', login: 'superadmin', menu: '17', catatan: 'Seluruh menu + pemilih peran untuk debugging.' },
-  { peran: 'Ketua Yayasan', login: 'ketua@nuha.pesantren.web.id', menu: '15', catatan: 'Pengawasan lintas unit.' },
-  { peran: 'Kepala SMP', login: 'kepsek.smp@nuha.pesantren.web.id', menu: '10', catatan: 'Terbatas unit SMP.' },
-  { peran: 'Kepala MA', login: 'kepsek.ma@nuha.pesantren.web.id', menu: '10', catatan: 'Terbatas unit MA.' },
+  { peran: 'Super Admin', login: 'superadmin', menu: '18', catatan: 'Seluruh menu + pemilih peran untuk debugging.' },
+  { peran: 'Ketua Yayasan', login: 'ketua@nuha.pesantren.web.id', menu: '16', catatan: 'Pengawasan lintas unit; termasuk mengelola gelombang ujian.' },
+  { peran: 'Kepala SMP', login: 'kepsek.smp@nuha.pesantren.web.id', menu: '11', catatan: 'Terbatas unit SMP; mengelola gelombang ujian unitnya.' },
+  { peran: 'Kepala MA', login: 'kepsek.ma@nuha.pesantren.web.id', menu: '11', catatan: 'Terbatas unit MA; mengelola gelombang ujian unitnya.' },
   { peran: 'Pengasuh', login: 'pengasuh@nuha.pesantren.web.id', menu: '9', catatan: 'Kepesantrenan, hafalan, tazir, izin.' },
-  { peran: 'Guru / Wali Kelas', login: 'guru.1 … guru.10', menu: '9', catatan: 'Kelas yang diampu muncul di Kurikulum → Kelas Saya.' },
+  { peran: 'Guru / Wali Kelas', login: 'guru.1 … guru.10', menu: '10', catatan: 'Kelas Saya di Kurikulum + input nilai di modul Ujian.' },
   { peran: 'Bendahara', login: 'bendahara@nuha.pesantren.web.id', menu: '8', catatan: 'Tagihan, SPP, kas, penggajian.' },
   { peran: 'Poskestren', login: 'poskestren@nuha.pesantren.web.id', menu: '6', catatan: 'Periksa, rekam medis, stok obat.' },
   { peran: 'Musyrif Asrama', login: 'musyrif.b@nuha.pesantren.web.id', menu: '1', catatan: 'Belum diberi hak menu — atur lewat Pengaturan.' },
@@ -73,16 +73,32 @@ export const BAGIAN: Bagian[] = [
     id: 'guru',
     judul: 'Alur guru',
     ringkas:
-      'Guru melihat kelas yang benar-benar diampunya. Yang menentukan bukan jabatan di kepegawaian, melainkan kecocokan namanya pada jadwal pelajaran.',
+      'Guru melihat kelas yang benar-benar diampunya, dikelompokkan per unit — seorang guru lazim mengajar di SMP dan MA sekaligus, bahkan merangkap ustadz diniyah di pondok. Yang menentukan bukan jabatan di kepegawaian, melainkan kecocokan namanya pada jadwal pelajaran.',
     langkah: [
       { judul: 'Masuk sebagai guru', detail: 'Akun guru.1 sampai guru.10, satu untuk tiap pengajar di jadwal.' },
-      { judul: 'Buka Kurikulum → Kelas Saya', detail: 'Kartu muncul per kombinasi kelas dan mata pelajaran yang diampu.' },
-      { judul: 'Badge Wali Kelas', detail: 'Muncul bila nama guru terdaftar sebagai wali kelas tersebut.' },
-      { judul: 'Input nilai dan presensi', detail: 'Kelengkapan input nilai dan presensi hari ini ditampilkan per kartu. Persetujuan perangkat ajar tetap di kepala unit.' },
+      { judul: 'Buka Kurikulum → Kelas Saya', detail: 'Kartu muncul per kombinasi kelas dan mata pelajaran, dikelompokkan per unit (SMP, MA, Pondok Pesantren).' },
+      { judul: 'Badge peran', detail: 'Wali Kelas bila namanya terdaftar sebagai wali kelas itu; Ustadz Diniyah bila jam mengajarnya berada di unit pondok.' },
+      { judul: 'Isi tiap kartu', detail: 'Jumlah siswa, JP per pekan, hari mengajar, KKM, kelengkapan input nilai beserta rerata, rincian presensi hari ini, dan sesi ujian terdekat yang belum selesai dinilai.' },
+      { judul: 'Tombol aksi', detail: 'Input nilai dan Presensi menuju Akademik; Nilai ujian menuju modul Ujian.' },
     ],
-    gambar: [{ file: 'guru-kelas-saya.png', caption: 'Kelas Saya untuk Ust. Nur Hasan, wali kelas 8B.' }],
+    gambar: [{ file: 'guru-kelas-saya.png', caption: 'Kelas Saya untuk Bu Dwi Astuti — mengampu di MA, SMP, dan merangkap ustadzah diniyah di pondok.' }],
     catatan:
-      'Prototype hanya memuat jadwal satu rombongan belajar (8B), dan kelas itu belum berisi santri — karena itu jumlah siswa masih 0. Jadwal kelas lain perlu dimasukkan lewat Kelola Data.',
+      'Kelas yang belum berisi santri ditandai jelas pada kartunya; presensi dan nilai baru bisa diisi setelah santri dimasukkan lewat Kelola Data.',
+  },
+  {
+    id: 'ujian',
+    judul: 'Manajemen ujian',
+    ringkas:
+      'Gelombang ujian (UTS/UAS) disusun per unit oleh kepala unit, sementara guru mengisi nilai sesi mata pelajaran yang diampunya. Nilai ujian per sesi disimpan terpisah dari rekap rapor.',
+    langkah: [
+      { judul: 'Gelombang Ujian', detail: 'Kepala unit dan ketua memindahkan status Draf → Berjalan → Selesai. Kemajuan penilaian dihitung dari nilai yang masuk dibanding jumlah peserta seluruh sesi.' },
+      { judul: 'Kartu Ujian', detail: 'Seluruh sesi satu gelombang: tanggal, waktu, durasi, ruang, pengawas, dan jumlah yang sudah dinilai. Guru hanya melihat sesi mapel yang diampunya.' },
+      { judul: 'Input Nilai', detail: 'Guru memilih sesi lalu mengisi nilai 0–100 per santri. Santri yang tidak hadir tetap tersimpan barisnya dengan nilai 0 — ketidakhadiran adalah fakta yang perlu tercatat.' },
+      { judul: 'Penguncian', detail: 'Gelombang berstatus Selesai mengunci formulir nilainya karena angkanya sudah dipakai rapor. Membukanya kembali harus lewat kepala unit.' },
+    ],
+    gambar: [{ file: 'ujian-input-nilai.png', caption: 'Input nilai sesi ujian oleh guru pengampu.' }],
+    catatan:
+      'Setiap perubahan status gelombang dan penyimpanan nilai digerbangi menu ujian di server serta dicatat ke audit log (UBAH_STATUS_UJIAN, SIMPAN_NILAI_UJIAN).',
   },
   {
     id: 'wa-perangkat',
