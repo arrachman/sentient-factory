@@ -25,13 +25,13 @@ export default async function PortalSantriPage() {
   const tunggakan = tagihan.reduce((total, row) => total + (Number(row.nominal) - Number(row.dibayar)), 0);
 
   return <Shell session={session} active="portal-santri" title="Portal Santri">
-    <section className="grid grid-4">
-      <div className="card"><div className="kpi-label">Nama</div><div className="kpi-value" style={{ fontSize: 18 }}>{user!.orang.nama}</div><div className="kpi-sub">NIS {santri.nis}</div></div>
-      <div className="card"><div className="kpi-label">Unit / kelas</div><div className="kpi-value" style={{ fontSize: 18 }}>{santri.unit?.nama ?? '-'}</div><div className="kpi-sub">{santri.kelas?.nama ?? '-'}</div></div>
-      <div className="card"><div className="kpi-label">Asrama</div><div className="kpi-value" style={{ fontSize: 18 }}>{santri.kamar?.asrama.nama ?? '-'}</div><div className="kpi-sub">{santri.kamar?.kode ?? '-'}</div></div>
-      <div className="card"><div className="kpi-label">Sisa tagihan</div><div className="kpi-value" style={{ fontSize: 18 }}>{rupiah(tunggakan)}</div></div>
+    <section className="grid g4">
+      <div className="card"><div className="label">Nama</div><div className="angka" style={{ fontSize: 18 }}>{user!.orang.nama}</div><div className="muted">NIS {santri.nis}</div></div>
+      <div className="card"><div className="label">Unit / kelas</div><div className="angka" style={{ fontSize: 18 }}>{santri.unit?.nama ?? '-'}</div><div className="muted">{santri.kelas?.nama ?? '-'}</div></div>
+      <div className="card"><div className="label">Asrama</div><div className="angka" style={{ fontSize: 18 }}>{santri.kamar?.asrama.nama ?? '-'}</div><div className="muted">{santri.kamar?.kode ?? '-'}</div></div>
+      <div className="card"><div className="label">Sisa tagihan</div><div className="angka" style={{ fontSize: 18 }}>{rupiah(tunggakan)}</div></div>
     </section>
-    <section className="grid grid-2" style={{ marginTop: 16 }}>
+    <section className="grid g2" style={{ marginTop: 16 }}>
       <div className="card"><h3>Setoran hafalan</h3><table><thead><tr><th>Tanggal</th><th>Surat</th><th>Nilai</th></tr></thead><tbody>{hafalan.map((row) => <tr key={String(row.id)}><td>{row.tgl.toLocaleDateString('id-ID')}</td><td>{row.surat} {row.ayat}</td><td>{row.nilai}</td></tr>)}</tbody></table></div>
       <div className="card"><h3>Perizinan</h3><table><thead><tr><th>Keluar</th><th>Jenis</th><th>Status</th></tr></thead><tbody>{izin.map((row) => <tr key={String(row.id)}><td>{row.keluarAt.toLocaleDateString('id-ID')}</td><td>{row.jenis}<br /><span className="muted">{row.alasan}</span></td><td>{row.status}</td></tr>)}</tbody></table></div>
     </section>

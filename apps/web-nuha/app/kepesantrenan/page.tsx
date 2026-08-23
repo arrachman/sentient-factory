@@ -12,13 +12,13 @@ export default async function KepesantrenanPage() {
   ]);
 
   return <Shell session={session} active="pesantren" title="Kepesantrenan">
-    <section className="grid grid-4">
+    <section className="grid g4">
       {asrama.map((row) => {
         const isi = row.kamar.reduce((total, kamar) => total + kamar._count.santri, 0);
-        return <div className="card" key={row.id}><div className="kpi-label">{row.jk === 'L' ? 'Putra' : 'Putri'}</div><div style={{ fontWeight: 700, marginTop: 4 }}>{row.nama}</div><div className="kpi-sub">{isi} / {row.kapasitas} · {row.musyrif}</div></div>;
+        return <div className="card" key={row.id}><div className="label">{row.jk === 'L' ? 'Putra' : 'Putri'}</div><div style={{ fontWeight: 700, marginTop: 4 }}>{row.nama}</div><div className="muted">{isi} / {row.kapasitas} · {row.musyrif}</div></div>;
       })}
     </section>
-    <section className="grid grid-2" style={{ marginTop: 16 }}>
+    <section className="grid g2" style={{ marginTop: 16 }}>
       <div className="card"><h3>Setoran hafalan terbaru</h3><table><thead><tr><th>Santri</th><th>Surat</th><th>Nilai</th></tr></thead><tbody>{hafalan.map((row) => <tr key={String(row.id)}><td>{row.santri.orang.nama}</td><td>{row.surat} {row.ayat}</td><td>{row.nilai}</td></tr>)}</tbody></table></div>
       <div className="card"><h3>Ta&apos;zir terbaru</h3><table><thead><tr><th>Santri</th><th>Pelanggaran</th><th>Poin</th></tr></thead><tbody>{tazir.map((row) => <tr key={String(row.id)}><td>{row.santri.orang.nama}</td><td>{row.pelanggaran}</td><td>{row.poin}</td></tr>)}</tbody></table></div>
     </section>

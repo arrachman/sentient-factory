@@ -55,7 +55,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
     {message && <p className="muted" role="status" style={{ marginTop: 8 }}>{message}</p>}
 
     {(open || editing) && <form onSubmit={submit} style={{ marginTop: 12 }} data-testid={`form-${entity.key}`}>
-      <div className="grid grid-3">
+      <div className="grid g3">
         {entity.fields.map((field) => <div className="field" key={field.name}>
           <label htmlFor={`${entity.key}-${field.name}`}>{field.label}</label>
           {field.type === 'textarea'
@@ -72,7 +72,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
       </div>
       <div style={{ display: 'flex', gap: 8 }}>
         <button className="btn" disabled={busy} type="submit">{busy ? 'Menyimpan…' : editing ? 'Simpan perubahan' : 'Simpan'}</button>
-        <button className="btn btn-secondary" type="button" onClick={() => { setEditing(null); setOpen(false); }}>Batal</button>
+        <button className="btn btn-sekunder" type="button" onClick={() => { setEditing(null); setOpen(false); }}>Batal</button>
       </div>
     </form>}
 
@@ -83,8 +83,8 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
         {rows.map((row) => <tr key={row.id} data-testid={`row-${entity.key}`}>
           {entity.columns.map((column) => <td key={column.name}>{display(row[column.name])}</td>)}
           <td><div style={{ display: 'flex', gap: 6 }}>
-            <button className="btn btn-secondary" type="button" disabled={busy} onClick={() => { setEditing(row); setOpen(true); setMessage(''); }}>Ubah</button>
-            <button className="btn btn-secondary" type="button" disabled={busy} onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}>Hapus</button>
+            <button className="btn btn-sekunder" type="button" disabled={busy} onClick={() => { setEditing(row); setOpen(true); setMessage(''); }}>Ubah</button>
+            <button className="btn btn-sekunder" type="button" disabled={busy} onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}>Hapus</button>
           </div></td>
         </tr>)}
       </tbody>

@@ -180,7 +180,7 @@ async function main() {
   }
 
   for (const [index, row] of source.menuDefs.entries()) {
-    const menu = await prisma.menu.upsert({ where: { key: String(row.key) }, create: { key: String(row.key), label: String(row.label), icon: String(row.icon ?? ''), urutan: index }, update: { label: String(row.label), urutan: index } });
+    const menu = await prisma.menu.upsert({ where: { key: String(row.key) }, create: { key: String(row.key), label: String(row.label), icon: String(row.icon ?? ''), urutan: index }, update: { label: String(row.label), icon: String(row.icon ?? ''), urutan: index } });
     for (const key of (row.roles as string[]) ?? []) {
       const role = roleByKey.get(key);
       if (role) await prisma.menuPeran.upsert({ where: { menuId_peranId: { menuId: menu.id, peranId: role.id } }, create: { menuId: menu.id, peranId: role.id }, update: {} });

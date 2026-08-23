@@ -9,11 +9,11 @@ export default async function PpdbPage() {
   const lulus = pendaftar.filter((row) => row.status === 'Lulus').length;
 
   return <Shell session={session} active="ppdb" title="PPDB 2026/2027">
-    <section className="grid grid-4">
-      <div className="card"><div className="kpi-label">Total pendaftar</div><div className="kpi-value">{pendaftar.length}</div></div>
-      <div className="card"><div className="kpi-label">Lulus seleksi</div><div className="kpi-value">{lulus}</div></div>
-      <div className="card"><div className="kpi-label">Menunggu proses</div><div className="kpi-value">{pendaftar.filter((r) => ['Baru','Verifikasi','Seleksi'].includes(r.status)).length}</div></div>
-      <div className="card"><div className="kpi-label">Daftar ulang</div><div className="kpi-value">{pendaftar.filter((r) => r.status === 'DaftarUlang').length}</div></div>
+    <section className="grid g4">
+      <div className="card"><div className="label">Total pendaftar</div><div className="angka">{pendaftar.length}</div></div>
+      <div className="card"><div className="label">Lulus seleksi</div><div className="angka">{lulus}</div></div>
+      <div className="card"><div className="label">Menunggu proses</div><div className="angka">{pendaftar.filter((r) => ['Baru','Verifikasi','Seleksi'].includes(r.status)).length}</div></div>
+      <div className="card"><div className="label">Daftar ulang</div><div className="angka">{pendaftar.filter((r) => r.status === 'DaftarUlang').length}</div></div>
     </section>
     <div style={{ marginTop: 16 }}><DaftarPpdb /></div>
     <div className="card" style={{ marginTop: 16 }}>

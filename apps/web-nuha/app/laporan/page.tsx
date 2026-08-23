@@ -22,12 +22,12 @@ export default async function LaporanPage() {
   const bayar = Number(keuangan._sum.dibayar ?? 0);
 
   return <Shell session={session} active="laporan" title="Laporan Yayasan">
-    <section className="grid grid-4"><div className="card"><div className="kpi-label">Kas masuk</div><div className="kpi-value" style={{ fontSize: 19 }}>{rupiah(masuk)}</div></div><div className="card"><div className="kpi-label">Kas keluar</div><div className="kpi-value" style={{ fontSize: 19 }}>{rupiah(keluar)}</div></div><div className="card"><div className="kpi-label">Saldo</div><div className="kpi-value" style={{ fontSize: 19 }}>{rupiah(masuk - keluar)}</div></div><div className="card"><div className="kpi-label">Rasio tertagih</div><div className="kpi-value">{tagih ? Math.round(bayar / tagih * 100) : 0}%</div><div className="kpi-sub">{rupiah(tagih - bayar)} tunggakan</div></div></section>
-    <section className="grid grid-2" style={{ marginTop: 16 }}>
+    <section className="grid g4"><div className="card"><div className="label">Kas masuk</div><div className="angka" style={{ fontSize: 19 }}>{rupiah(masuk)}</div></div><div className="card"><div className="label">Kas keluar</div><div className="angka" style={{ fontSize: 19 }}>{rupiah(keluar)}</div></div><div className="card"><div className="label">Saldo</div><div className="angka" style={{ fontSize: 19 }}>{rupiah(masuk - keluar)}</div></div><div className="card"><div className="label">Rasio tertagih</div><div className="angka">{tagih ? Math.round(bayar / tagih * 100) : 0}%</div><div className="muted">{rupiah(tagih - bayar)} tunggakan</div></div></section>
+    <section className="grid g2" style={{ marginTop: 16 }}>
       <div className="card"><h3>Santri per unit</h3><table><thead><tr><th>Unit</th><th>Jumlah</th></tr></thead><tbody>{byUnit.map((row) => <tr key={String(row.unitId)}><td>{row.unitId ? unitById.get(row.unitId) : 'Belum ditentukan'}</td><td>{row._count._all}</td></tr>)}</tbody></table></div>
       <div className="card"><h3>Santri per status</h3><table><thead><tr><th>Status</th><th>Jumlah</th></tr></thead><tbody>{byStatus.map((row) => <tr key={row.status}><td>{row.status}</td><td>{row._count._all}</td></tr>)}</tbody></table></div>
     </section>
-    <section className="grid grid-2" style={{ marginTop: 16 }}>
+    <section className="grid g2" style={{ marginTop: 16 }}>
       <div className="card"><h3>PPDB per status</h3><table><thead><tr><th>Status</th><th>Jumlah</th></tr></thead><tbody>{pendaftar.map((row) => <tr key={row.status}><td>{row.status}</td><td>{row._count._all}</td></tr>)}</tbody></table></div>
       <div className="card"><h3>Aktivitas terekam</h3><table><tbody><tr><td>Kunjungan poskestren</td><td>{medis}</td></tr><tr><td>Setoran hafalan</td><td>{hafalan}</td></tr></tbody></table></div>
     </section>

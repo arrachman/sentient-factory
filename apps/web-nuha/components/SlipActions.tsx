@@ -24,6 +24,6 @@ export function SlipActions({ pegawaiId, periode, status }: { pegawaiId: string;
   return <div style={{ display: 'flex', gap: 6 }}>
     {!status && <button className="btn" disabled={busy} onClick={() => jalankan('terbitkan')}>Terbitkan</button>}
     {status && status !== 'Dibayar' && <button className="btn" disabled={busy} onClick={() => jalankan('bayar')}>Tandai dibayar</button>}
-    {status && <button className="btn btn-secondary" disabled={busy} onClick={() => jalankan('revisi')}>Revisi</button>}
+    {status && <button className="btn btn-sekunder" disabled={busy} onClick={() => jalankan('revisi')}>Revisi</button>}
   </div>;
 }

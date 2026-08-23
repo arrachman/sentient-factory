@@ -18,5 +18,5 @@ export function LogoutButton() {
     }
   }
 
-  return <button className="btn btn-secondary" onClick={logout} disabled={isLoading}>{isLoading ? 'Keluar…' : 'Keluar'}</button>;
+  return <button className="btn-ghost-terang" onClick={logout} disabled={isLoading}>{isLoading ? 'Keluar…' : 'Keluar'}</button>;
 }
