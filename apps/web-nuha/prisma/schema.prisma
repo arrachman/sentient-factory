@@ -67,6 +67,7 @@ model User {
   id           BigInt    @id @default(autoincrement())
   orangId      BigInt    @unique @map("orang_id")
   email        String    @unique @db.VarChar(160)
+  username     String?   @unique @db.VarChar(64)
   passwordHash String    @map("password_hash") @db.VarChar(255)
   unitScope    String?   @map("unit_scope") @db.VarChar(64)
   aktif        Boolean   @default(true)
@@ -273,12 +274,36 @@ model SlipGaji {
   potongan  Decimal   @db.Decimal(14, 2)
   netto     Decimal   @db.Decimal(14, 2)
   dibayarAt DateTime? @map("dibayar_at")
-  createdAt DateTime  @default(now()) @map("created_at")
+  // Revisi setelah pembayaran diizinkan; jejaknya disimpan di sini dan di audit_log.
+  status          String    @default("Draft") @db.VarChar(16)
+  revisi          Int       @default(0)
+  diterbitkanOleh BigInt?   @map("diterbitkan_oleh")
+  catatanRevisi   String?   @map("catatan_revisi") @db.VarChar(255)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
   pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
 
   @@unique([pegawaiId, periode])
   @@map("slip_gaji")
+}
+
+/// Jejak audit append-only: siapa melakukan apa, kapan, dan nilai apa yang berubah.
+model AuditLog {
+  id        BigInt   @id @default(autoincrement())
+  aksi      String   @db.VarChar(48)
+  entitas   String   @db.VarChar(48)
+  entitasId String?  @map("entitas_id") @db.VarChar(64)
+  ringkasan String   @db.VarChar(255)
+  perubahan Json?
+  aktorId   BigInt?  @map("aktor_id")
+  aktorNama String   @default("anonim") @map("aktor_nama") @db.VarChar(160)
+  ip        String?  @db.VarChar(64)
+  waktu     DateTime @default(now())
+
+  @@index([waktu])
+  @@index([entitas, entitasId])
+  @@map("audit_log")
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -696,6 +721,8 @@ model LogWa {
   nomor      String   @db.VarChar(32)
   isi        String   @db.Text
   status     String   @default("Terkirim") @db.VarChar(24)
+  messageId  String?  @map("message_id") @db.VarChar(96)
+  error      String?  @db.VarChar(255)
   waktu      DateTime @default(now())
 
   template TemplateWa? @relation(fields: [templateId], references: [id])

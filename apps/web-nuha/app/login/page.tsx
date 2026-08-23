@@ -13,7 +13,7 @@ export default function LoginPage() {
     setError('');
     setIsLoading(true);
     const form = new FormData(event.currentTarget);
-    const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: form.get('email'), password: form.get('password') }) });
+    const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ identifier: form.get('identifier'), password: form.get('password') }) });
     const result = await response.json();
     setIsLoading(false);
     if (!response.ok) return setError(result.error?.message ?? 'Tidak dapat masuk.');
@@ -29,11 +29,11 @@ export default function LoginPage() {
         <p className="muted" style={{ marginBottom: 24 }}>Gunakan akun yang sudah terdaftar.</p>
         {error && <div className="error" role="alert">{error}</div>}
         <form onSubmit={handleSubmit}>
-          <div className="field"><label htmlFor="email">Email</label><input id="email" name="email" type="email" autoComplete="email" required defaultValue="ketua@nuha.pesantren.web.id" /></div>
+          <div className="field"><label htmlFor="identifier">Email atau nama pengguna</label><input id="identifier" name="identifier" autoComplete="username" required defaultValue="ketua@nuha.pesantren.web.id" /></div>
           <div className="field"><label htmlFor="password">Kata sandi</label><input id="password" name="password" type="password" autoComplete="current-password" required defaultValue="Nuha2026!" /></div>
           <button className="btn" style={{ width: '100%' }} disabled={isLoading}>{isLoading ? 'Memeriksa…' : 'Masuk'}</button>
         </form>
-        <p className="muted" style={{ marginTop: 18 }}>Akun demo: ketua@nuha.pesantren.web.id · Nuha2026!</p>
+        <p className="muted" style={{ marginTop: 18 }}>Akun demo staf: ketua@nuha.pesantren.web.id · Nuha2026!<br />Portal santri &amp; wali memakai nama pengguna, mis. <code>santri.24001</code> · Nuha2026!</p>
       </section>
     </main>
   );

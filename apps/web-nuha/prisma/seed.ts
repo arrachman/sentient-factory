@@ -46,13 +46,56 @@ async function seedAcademicContent() {
   for (const row of source.lmsTugas) { const course = courseByName.get(String(row.kursus)); if (course) await prisma.tugasLms.upsert({ where: { kode: String(row.id) }, create: { kode: String(row.id), kursusId: course.id, judul: String(row.judul), deadline: parseDate(row.deadline), status: String(row.status) }, update: { status: String(row.status) } }); }
 }
 
+/**
+ * Portal identities are ordinary `User` rows with a username, so santri and wali
+ * reuse the same session, role, and menu machinery as staff. Runs before the
+ * first-boot guard so an already-seeded database still gains the portals.
+ */
+async function seedPortalAccess() {
+  const passwordHash = await bcrypt.hash('Nuha2026!', 12);
+  const roleSantri = await prisma.peran.upsert({ where: { key: 'santri' }, create: { key: 'santri', nama: 'Santri' }, update: {} });
+  const roleWali = await prisma.peran.upsert({ where: { key: 'wali' }, create: { key: 'wali', nama: 'Wali Santri' }, update: {} });
+
+  const menus = [
+    { key: 'portal-santri', label: 'Portal Santri', urutan: 90, peranId: roleSantri.id },
+    { key: 'portal-wali', label: 'Portal Wali', urutan: 91, peranId: roleWali.id },
+  ];
+  for (const row of menus) {
+    const menu = await prisma.menu.upsert({ where: { key: row.key }, create: { key: row.key, label: row.label, urutan: row.urutan }, update: { label: row.label } });
+    await prisma.menuPeran.upsert({ where: { menuId_peranId: { menuId: menu.id, peranId: row.peranId } }, create: { menuId: menu.id, peranId: row.peranId }, update: {} });
+  }
+
+  const santriRows = await prisma.santri.findMany({ include: { orang: true } });
+  for (const santri of santriRows) {
+    const user = await prisma.user.upsert({
+      where: { orangId: santri.orangId },
+      create: { orangId: santri.orangId, email: santri.orang.email ?? `santri.${santri.nis}@nuha.local`, username: `santri.${santri.nis}`, passwordHash },
+      update: { username: `santri.${santri.nis}` },
+    });
+    await prisma.userPeran.upsert({ where: { userId_peranId: { userId: user.id, peranId: roleSantri.id } }, create: { userId: user.id, peranId: roleSantri.id }, update: {} });
+  }
+
+  const waliRows = await prisma.relasiWali.findMany({ where: { utama: true }, include: { wali: true, anak: { include: { santri: true } } } });
+  for (const relasi of waliRows) {
+    const nis = relasi.anak.santri?.nis;
+    if (!nis) continue;
+    const user = await prisma.user.upsert({
+      where: { orangId: relasi.waliId },
+      create: { orangId: relasi.waliId, email: relasi.wali.email ?? `wali.${nis}@nuha.local`, username: `wali.${nis}`, passwordHash },
+      update: { username: `wali.${nis}` },
+    });
+    await prisma.userPeran.upsert({ where: { userId_peranId: { userId: user.id, peranId: roleWali.id } }, create: { userId: user.id, peranId: roleWali.id }, update: {} });
+  }
+}
+
 async function main() {
   await seedAcademicContent();
   // This is an initial demo-data importer, not a synchronization process. Once
   // users exist, preserve operational data entered through the application.
   const existingUsers = await prisma.user.count();
   if (existingUsers > 0) {
-    console.log('Seed skipped: database already contains users.');
+    await seedPortalAccess();
+    console.log('Seed skipped: database already contains users; portal access synchronized.');
     return;
   }
 
@@ -182,6 +225,9 @@ async function main() {
   for (const row of source.transaksi) {
     await prisma.transaksiKas.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), tgl: parseDate(row.tgl), uraian: String(row.uraian), kategori: String(row.kategori), metode: String(row.metode), arah: Number(row.nominal) >= 0 ? 'Masuk' : 'Keluar', nominal: Math.abs(Number(row.nominal)) }, update: {} });
   }
+
+  // Run again now that santri and wali rows exist on a fresh database.
+  await seedPortalAccess();
 
   console.log('Seed complete: 20 santri, 12 pegawai, 18 pendaftar, and operational master data.');
   console.log('Demo login: ketua@nuha.pesantren.web.id / Nuha2026!');

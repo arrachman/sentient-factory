@@ -52,6 +52,10 @@ services:
       HOSTNAME: 0.0.0.0
       DATABASE_URL: mysql://${NUHA_MYSQL_USER:-nuha}:${NUHA_MYSQL_PASSWORD:-change_me}@nuha-mysql:3306/${NUHA_MYSQL_DATABASE:-nuha_simterpadu}
       AUTH_SECRET: ${AUTH_SECRET:-dev-secret-change-me-in-production-32b}
+      WA_DRY_RUN: ${WA_DRY_RUN:-true}
+      WA_GATEWAY_URL: ${WA_GATEWAY_URL:-http://wa-gateway:3204}
+      WA_GATEWAY_TOKEN: ${WA_GATEWAY_TOKEN:-}
+      NUHA_PERIODE_GAJI: ${NUHA_PERIODE_GAJI:-}
     depends_on:
       nuha-migrate:
         condition: service_completed_successfully

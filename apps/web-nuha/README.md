@@ -38,7 +38,14 @@ curl -s http://127.0.0.1:3226/api/health   # {"success":true,...,"database":"con
 ```
 
 Akun demo hasil seed: `ketua@nuha.pesantren.web.id` / `Nuha2026!`
-(8 akun, satu per peran — ganti password sebelum dipakai sungguhan.)
+(8 akun staf, satu per peran — ganti password sebelum dipakai sungguhan.)
+Akun portal dibuat otomatis dengan username `santri.<NIS>` dan `wali.<NIS>`, memakai
+password awal yang sama; akun ini memakai login username/password tanpa OTP.
+
+Konfigurasi WhatsApp ada di `.env` (jangan commit file tersebut):
+`WA_GATEWAY_URL`, `WA_GATEWAY_TOKEN`, dan `WA_DRY_RUN` (default `true`). Gateway
+mengikuti kontrak Fonnte-compatible `/send`; nomor `08xx` dinormalisasi menjadi
+`62xx`. Set `WA_DRY_RUN=false` hanya setelah gateway dan nomor uji resmi siap.
 
 ## Pengembangan lokal
 
@@ -71,8 +78,10 @@ Untuk deploy cukup `prisma migrate deploy` (tanpa shadow DB).
 | `/akademik` | Jadwal pelajaran, nilai, rombel |
 | `/kurikulum` | Struktur kurikulum, perangkat ajar, capaian, bank soal |
 | `/lms` | Kursus, materi, dan tugas LMS |
-| `/penggajian` | Perhitungan gaji dari komponen (bruto, potongan, netto) |
-| `/notifikasi` | Template pemicu WhatsApp + log pengiriman |
+| `/penggajian` | Perhitungan gaji + terbit/bayar/revisi slip `slip_gaji` |
+| `/notifikasi` | Template pemicu WhatsApp, kirim uji, dan log pengiriman |
+| `/portal/santri` | Portal santri: profil, hafalan, izin, tagihan sendiri |
+| `/portal/wali` | Portal wali: anak-anak asuh dan tagihannya |
 | `/kunjungan-wali` | Buku tamu kunjungan wali santri |
 | `/ppdb` | Formulir pendaftaran (tulis ke DB) + rekap pendaftar |
 | `/laporan` | Rekap lintas modul: santri, keuangan, kas, PPDB |
@@ -94,7 +103,10 @@ Semua respons memakai envelope `{ success, data, error }`.
 | Endpoint | Keterangan |
 | --- | --- |
 | `GET /api/health` | Cek liveness + koneksi DB |
-| `POST /api/auth/login` | Login; validasi zod, bcrypt, waktu respons konstan |
+| `POST /api/auth/login` | Login email atau username; validasi zod, bcrypt, waktu respons konstan |
+| `POST /api/auth/logout` | Hapus sesi dan catat audit logout |
+| `POST /api/wa/kirim` | Kirim/dry-run pesan melalui gateway; wajib grant `wa` |
+| `POST /api/gaji/slip` | Terbitkan, bayar, atau revisi slip; wajib grant `gaji` |
 | `POST /api/ppdb` | Pendaftaran PPDB (publik, tervalidasi) |
 | `GET /api/ppdb` | Rekap pendaftar (**wajib sesi**) |
 
@@ -120,11 +132,14 @@ pengembangan baru.
   root §2 dan §9). Untuk akses dari LAN, daftarkan port lalu:
   `sudo ufw allow from 192.168.1.0/24 to any port 3226 proto tcp comment 'web-nuha'`
 - Prototype lama di `apps/marketing/sub/nuha` **tetap ada** dan masih jalan di
-  port 3223 — rujukan desain untuk yang belum dibuat: portal santri, portal
-  wali, dan halaman publik (profil + cek status PPDB). Semuanya butuh jalur
-  autentikasi terpisah dari staf, jadi sengaja belum dikerjakan.
-- Gerbang WhatsApp belum tersambung: `/notifikasi` mengelola template dan
-  pemicu, tetapi tidak ada pesan yang benar-benar dikirim.
-- Penggajian menampilkan perhitungan berjalan; penerbitan slip ke `slip_gaji`
-  (dan penguncian periode) belum dibuat.
+  port 3223 — rujukan desain. Halaman publik (profil + cek status PPDB) belum
+  dibuat di aplikasi ini.
+- Portal santri/wali memakai tabel `user` dan sesi yang sama seperti staf, hanya
+  dengan peran `santri`/`wali`; datanya di-scope dari sesi, bukan parameter URL.
+- Wewenang slip gaji **digerakkan data**: siapa pun yang punya grant `menu_peran`
+  untuk menu `gaji` boleh menerbitkan, membayar, dan merevisi. Revisi setelah
+  bayar diizinkan tetapi menaikkan `revisi`, menyimpan catatan wajib, dan menulis
+  diff nilai lama→baru ke `audit_log`.
+- Semua aksi penting (login, login gagal, logout, kirim WA, siklus slip) ditulis
+  ke tabel append-only `audit_log` sekaligus ke stdout JSON terstruktur.
 - `.env` berisi rahasia dan tidak di-commit (`.gitignore` + `.dockerignore`).

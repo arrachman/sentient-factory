@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import type { SessionPayload } from '@/lib/auth';
+import { LogoutButton } from '@/components/LogoutButton';
 
 const HREF_BY_KEY: Record<string, string> = {
   dashboard: '/',
@@ -17,6 +18,8 @@ const HREF_BY_KEY: Record<string, string> = {
   ppdb: '/ppdb',
   laporan: '/laporan',
   pengaturan: '/pengaturan',
+  'portal-santri': '/portal/santri',
+  'portal-wali': '/portal/wali',
 };
 
 export async function Shell({ session, active, title, children }: { session: SessionPayload; active: string; title: string; children: React.ReactNode }) {
@@ -45,9 +48,12 @@ export async function Shell({ session, active, title, children }: { session: Ses
             <h2 style={{ color: 'var(--hijau-tua)' }}>{title}</h2>
             <p className="muted">Tahun ajaran 2026/2027 · Semester Gasal</p>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ fontWeight: 600, fontSize: 14 }}>{session.nama}</div>
-            <div className="muted">{session.peran.join(', ')}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontWeight: 600, fontSize: 14 }}>{session.nama}</div>
+              <div className="muted">{session.peran.join(', ')}</div>
+            </div>
+            <LogoutButton />
           </div>
         </header>
         {children}
