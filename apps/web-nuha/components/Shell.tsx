@@ -20,6 +20,7 @@ const HREF_BY_KEY: Record<string, string> = {
   pengaturan: '/pengaturan',
   'portal-santri': '/portal/santri',
   'portal-wali': '/portal/wali',
+  data: '/data',
 };
 
 export async function Shell({ session, active, title, children }: { session: SessionPayload; active: string; title: string; children: React.ReactNode }) {
