@@ -15,7 +15,7 @@ export default async function DashboardPage() {
       prisma.santri.count({ where: { status: 'Mukim' } }),
       prisma.santri.count({ where: { status: 'Kalong' } }),
       prisma.santri.count({ where: { status: 'Alumni' } }),
-      prisma.pegawai.count({ where: { status: 'Aktif' } }),
+      prisma.pegawai.count({ where: { status: { notIn: ['Nonaktif', 'Keluar', 'Pensiun'] } } }),
       prisma.pendaftar.count({ where: { status: { in: ['Baru', 'Verifikasi', 'Seleksi'] } } }),
       prisma.tagihan.aggregate({ _sum: { nominal: true, dibayar: true } }),
       prisma.unit.findMany({ where: { aktif: true }, orderBy: { id: 'asc' }, include: { _count: { select: { santri: true } } } }),
@@ -62,7 +62,7 @@ export default async function DashboardPage() {
 
       <section className="grid g4">
         <StatCard label="Santri aktif" nilai={santri} sub={`${mukim} mukim · ${kalong} kalong`} />
-        <StatCard label="Pegawai & asatidz" nilai={pegawai} sub="Berstatus aktif" warna="#1D4ED8" />
+        <StatCard label="Pegawai & asatidz" nilai={pegawai} sub="Tetap, kontrak, honorer & mitra" warna="#1D4ED8" />
         <StatCard label="PPDB perlu diproses" nilai={pendaftar} sub="Baru · verifikasi · seleksi" warna="#E8973A" />
         <StatCard label="Ketertagihan" nilai={`${pctTertagih}%`} sub={`Tunggakan ${rp(tunggakan)}`} pct={pctTertagih} />
       </section>
