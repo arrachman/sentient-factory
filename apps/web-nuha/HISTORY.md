@@ -4,6 +4,23 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-24 — `749ad0a4` — Pagination di pengguna, PPDB, tunggakan, kurikulum, CRUD generik
+
+- Molecule `components/molecules/Pagination.tsx` + util
+  `components/utils/pagination.ts` (`UKURAN_HALAMAN`, `satu`, `bacaHalaman`)
+  diekstrak dari pola yang sudah ada di `TabSiswa.tsx`, lalu dipakai ulang.
+- Ditambahkan ke: `TabPengguna` (akun `User` termasuk santri+wali),
+  `TabPendaftar`/`TabSeleksi`/`TabKelulusan` (PPDB), `TabTunggakan`
+  (tagihan lintas santri, pakai `$queryRaw` karena Prisma tak bisa
+  bandingkan dua kolom di `where`), `TabSoal`/`TabPerangkat` (bank soal &
+  perangkat ajar).
+- **Dampak operasional**: `lib/crud/engine.ts` (`listRows`) sebelumnya
+  diam-diam memotong hasil ke 100 baris tanpa indikasi apa pun ke user
+  (tidak ada total count, tidak ada halaman berikutnya) — kini
+  `app/data/[entity]/page.tsx` menampilkan pagination sungguhan untuk
+  semua entitas registry. Halaman lain (referensi kecil, agregasi,
+  entity-scoped) sengaja tidak disentuh — lihat plan pagination audit.
+
 ## 2026-08-23 — `d7bc8fdc` — Restrukturisasi `components/` ke atomic design
 
 - `components/ui/primitives.tsx`, `charts.tsx`, `Tabs.tsx`, dan
