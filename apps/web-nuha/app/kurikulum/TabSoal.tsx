@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components';
+import { Kosong, Pagination, UKURAN_HALAMAN, satu, bacaHalaman, type SearchParams } from '@/components';
 
 const warnaLevel = (level: string): { bg: string; fg: string } => {
   if (level.startsWith('C2')) return { bg: '#DBEAFE', fg: '#1E40AF' };
@@ -7,22 +7,38 @@ const warnaLevel = (level: string): { bg: string; fg: string } => {
   return { bg: '#FEF3C7', fg: '#92400E' };
 };
 
-/** Tab bank soal bersama, dicari lewat ?q=. */
-export async function TabSoal({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
-  const raw = searchParams.q;
-  const q = (Array.isArray(raw) ? raw[0] : raw ?? '').trim();
-  const soal = await prisma.bankSoal.findMany({ orderBy: { kode: 'desc' } });
+function hrefSoal(params: Record<string, string>) {
+  const qs = new URLSearchParams({ tab: 'soal', ...params });
+  for (const [k, v] of [...qs.entries()]) if (!v) qs.delete(k);
+  return `/kurikulum?${qs.toString()}`;
+}
 
-  const qLower = q.toLowerCase();
-  const baris = soal.filter((b) => `${b.mapel} ${b.topik} ${b.penulis}`.toLowerCase().includes(qLower));
-  const totalButir = soal.reduce((total, item) => total + item.butir, 0);
+/** Tab bank soal bersama, dicari lewat ?q= — bank ini tumbuh terus tiap mapel/semester. */
+export async function TabSoal({ searchParams }: { searchParams: SearchParams }) {
+  const q = satu(searchParams.q).trim();
+  const halaman = bacaHalaman(searchParams);
+  const where = q
+    ? { OR: [{ mapel: { contains: q } }, { topik: { contains: q } }, { penulis: { contains: q } }] }
+    : undefined;
+
+  const [totalAgregat, total, baris] = await Promise.all([
+    prisma.bankSoal.aggregate({ _sum: { butir: true }, _count: { _all: true } }),
+    prisma.bankSoal.count({ where }),
+    prisma.bankSoal.findMany({
+      where,
+      orderBy: { kode: 'desc' },
+      skip: (halaman - 1) * UKURAN_HALAMAN,
+      take: UKURAN_HALAMAN,
+    }),
+  ]);
+  const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN));
 
   return (
     <div className="card">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
         <div>
           <h3 className="card-judul">Bank soal bersama</h3>
-          <p className="card-sub">{totalButir} butir soal dalam {soal.length} paket, dapat langsung dipakai pada ujian LMS.</p>
+          <p className="card-sub">{totalAgregat._sum.butir ?? 0} butir soal dalam {totalAgregat._count._all} paket, dapat langsung dipakai pada ujian LMS.</p>
         </div>
         <form method="get" action="/kurikulum" className="field" style={{ margin: 0, minWidth: 200 }}>
           <input type="hidden" name="tab" value="soal" />
@@ -59,6 +75,14 @@ export async function TabSoal({ searchParams }: { searchParams: Record<string, s
           </table>
         </div>
       )}
+      <Pagination
+        halaman={halaman}
+        totalHalaman={totalHalaman}
+        total={total}
+        jumlahBaris={baris.length}
+        ukuranHalaman={UKURAN_HALAMAN}
+        buatHref={(p) => hrefSoal({ q, halaman: String(p) })}
+      />
     </div>
   );
 }

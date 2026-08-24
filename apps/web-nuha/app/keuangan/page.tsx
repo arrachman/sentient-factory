@@ -56,7 +56,7 @@ export default async function KeuanganPage({ searchParams }: { searchParams: Sea
       {aktif === 'tagihan' && <TabTagihan q={typeof sp.q === 'string' ? sp.q : ''} />}
       {aktif === 'spp' && <TabSpp anakId={typeof sp.anak === 'string' ? sp.anak : undefined} />}
       {aktif === 'rekap' && <TabRekap q={typeof sp.q === 'string' ? sp.q : ''} />}
-      {aktif === 'tunggakan' && <TabTunggakan />}
+      {aktif === 'tunggakan' && <TabTunggakan searchParams={sp} />}
       {aktif === 'transaksi' && <TabTransaksi />}
     </Shell>
   );

@@ -45,9 +45,9 @@ export default async function PpdbPanitiaPage({
         ))}
       </section>
       <Tabs tabs={TABS} aktif={aktif} basePath="/ppdb-panitia" />
-      {aktif === 'pendaftar' && <TabPendaftar q={typeof sp.q === 'string' ? sp.q : ''} />}
-      {aktif === 'seleksi' && <TabSeleksi />}
-      {aktif === 'kelulusan' && <TabKelulusan />}
+      {aktif === 'pendaftar' && <TabPendaftar searchParams={sp} />}
+      {aktif === 'seleksi' && <TabSeleksi searchParams={sp} />}
+      {aktif === 'kelulusan' && <TabKelulusan searchParams={sp} />}
     </Shell>
   );
 }

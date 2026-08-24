@@ -1,15 +1,32 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, Badge, Kosong, Tabel } from '@/components';
+import { Avatar, Badge, Kosong, Tabel, Pagination, UKURAN_HALAMAN, satu, bacaHalaman, type SearchParams } from '@/components';
 
-/** Pengguna & peran, difilter lewat query param `q` (nama atau email). */
-export async function TabPengguna({ q }: { q: string }) {
-  const users = await prisma.user.findMany({
-    where: q
-      ? { OR: [{ email: { contains: q } }, { orang: { nama: { contains: q } } }] }
-      : undefined,
-    include: { orang: true, peran: { include: { peran: true } } },
-    orderBy: { email: 'asc' },
-  });
+function hrefPengguna(params: Record<string, string>) {
+  const qs = new URLSearchParams({ tab: 'pengguna', ...params });
+  for (const [k, v] of [...qs.entries()]) if (!v) qs.delete(k);
+  return `/pengaturan?${qs.toString()}`;
+}
+
+/** Pengguna & peran — mencakup akun santri/wali portal, bukan cuma staf, jadi dipagination. */
+export async function TabPengguna({ searchParams }: { searchParams: SearchParams }) {
+  const q = satu(searchParams.q);
+  const halaman = bacaHalaman(searchParams);
+
+  const where = q
+    ? { OR: [{ email: { contains: q } }, { orang: { nama: { contains: q } } }] }
+    : undefined;
+
+  const [total, users] = await Promise.all([
+    prisma.user.count({ where }),
+    prisma.user.findMany({
+      where,
+      include: { orang: true, peran: { include: { peran: true } } },
+      orderBy: { email: 'asc' },
+      skip: (halaman - 1) * UKURAN_HALAMAN,
+      take: UKURAN_HALAMAN,
+    }),
+  ]);
+  const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN));
 
   return (
     <div className="card">
@@ -42,6 +59,14 @@ export async function TabPengguna({ q }: { q: string }) {
           ))}
         </Tabel>
       )}
+      <Pagination
+        halaman={halaman}
+        totalHalaman={totalHalaman}
+        total={total}
+        jumlahBaris={users.length}
+        ukuranHalaman={UKURAN_HALAMAN}
+        buatHref={(p) => hrefPengguna({ q, halaman: String(p) })}
+      />
     </div>
   );
 }

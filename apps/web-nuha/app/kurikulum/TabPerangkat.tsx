@@ -1,15 +1,31 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components';
+import { Kosong, Pagination, UKURAN_HALAMAN, satu, bacaHalaman, type SearchParams } from '@/components';
 import { ajukanPerangkat, setujuiPerangkat } from './actions';
 
-/** Tab silabus & modul ajar: guru mengajukan, kepala unit menyetujui. Pencarian lewat ?q=. */
-export async function TabPerangkat({ searchParams }: { searchParams: Record<string, string | string[] | undefined> }) {
-  const raw = searchParams.q;
-  const q = (Array.isArray(raw) ? raw[0] : raw ?? '').trim();
-  const perangkat = await prisma.perangkatAjar.findMany({ orderBy: { kode: 'desc' } });
+function hrefPerangkat(params: Record<string, string>) {
+  const qs = new URLSearchParams({ tab: 'perangkat', ...params });
+  for (const [k, v] of [...qs.entries()]) if (!v) qs.delete(k);
+  return `/kurikulum?${qs.toString()}`;
+}
 
-  const qLower = q.toLowerCase();
-  const baris = perangkat.filter((p) => `${p.topik} ${p.mapel} ${p.guru} ${p.jenis}`.toLowerCase().includes(qLower));
+/** Tab silabus & modul ajar: guru mengajukan, kepala unit menyetujui. Pencarian lewat ?q=. */
+export async function TabPerangkat({ searchParams }: { searchParams: SearchParams }) {
+  const q = satu(searchParams.q).trim();
+  const halaman = bacaHalaman(searchParams);
+  const where = q
+    ? { OR: [{ topik: { contains: q } }, { mapel: { contains: q } }, { guru: { contains: q } }, { jenis: { contains: q } }] }
+    : undefined;
+
+  const [total, baris] = await Promise.all([
+    prisma.perangkatAjar.count({ where }),
+    prisma.perangkatAjar.findMany({
+      where,
+      orderBy: { kode: 'desc' },
+      skip: (halaman - 1) * UKURAN_HALAMAN,
+      take: UKURAN_HALAMAN,
+    }),
+  ]);
+  const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN));
 
   return (
     <div className="card">
@@ -59,6 +75,14 @@ export async function TabPerangkat({ searchParams }: { searchParams: Record<stri
           ))}
         </div>
       )}
+      <Pagination
+        halaman={halaman}
+        totalHalaman={totalHalaman}
+        total={total}
+        jumlahBaris={baris.length}
+        ukuranHalaman={UKURAN_HALAMAN}
+        buatHref={(p) => hrefPerangkat({ q, halaman: String(p) })}
+      />
     </div>
   );
 }

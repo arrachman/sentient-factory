@@ -26,7 +26,7 @@ export default async function PengaturanPage({
       <Tabs tabs={TABS} aktif={aktif} basePath="/pengaturan" />
       {aktif === 'tahun-ajaran' && <TabTahunAjaran />}
       {aktif === 'unit' && <TabUnit />}
-      {aktif === 'pengguna' && <TabPengguna q={typeof sp.q === 'string' ? sp.q : ''} />}
+      {aktif === 'pengguna' && <TabPengguna searchParams={sp} />}
     </Shell>
   );
 }

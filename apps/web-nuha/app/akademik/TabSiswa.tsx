@@ -1,10 +1,7 @@
 import { prisma } from '@/lib/prisma';
-import { Avatar, Badge, Kosong } from '@/components';
+import { Avatar, Badge, Kosong, Pagination, UKURAN_HALAMAN, satu, bacaHalaman, type SearchParams } from '@/components';
 
-const UKURAN_HALAMAN = 15;
-
-type Params = Record<string, string | string[] | undefined>;
-const satu = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
+type Params = SearchParams;
 
 /** Bangun href tab siswa dengan query yang sudah digabung, dipakai form dan pagination. */
 function hrefSiswa(params: Record<string, string>) {
@@ -18,7 +15,7 @@ export async function TabSiswa({ searchParams }: { searchParams: Params }) {
   const unit = satu(searchParams.unit);
   const kelas = satu(searchParams.kelas);
   const status = satu(searchParams.status);
-  const halaman = Math.max(1, Number(satu(searchParams.halaman)) || 1);
+  const halaman = bacaHalaman(searchParams);
 
   const [unitOpts, kelasOpts] = await Promise.all([
     prisma.unit.findMany({ orderBy: { nama: 'asc' } }),
@@ -110,23 +107,14 @@ export async function TabSiswa({ searchParams }: { searchParams: Params }) {
         </table>
       </div>
       {siswaRows.length === 0 && <Kosong />}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginTop: 14, flexWrap: 'wrap' }}>
-        <span className="muted" style={{ fontSize: 12.5 }}>
-          Menampilkan {siswaRows.length === 0 ? 0 : (halaman - 1) * UKURAN_HALAMAN + 1}–{(halaman - 1) * UKURAN_HALAMAN + siswaRows.length} dari {total}
-        </span>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {Array.from({ length: totalHalaman }, (_, i) => i + 1).map((p) => (
-            <a
-              key={p}
-              href={hrefSiswa({ q, unit, kelas, status, halaman: String(p) })}
-              className={`btn-sekunder ${p === halaman ? 'active' : ''}`}
-              style={{ minWidth: 34, textAlign: 'center', padding: '7px 10px', borderRadius: 9, textDecoration: 'none', fontSize: 12.5, fontWeight: 600 }}
-            >
-              {p}
-            </a>
-          ))}
-        </div>
-      </div>
+      <Pagination
+        halaman={halaman}
+        totalHalaman={totalHalaman}
+        total={total}
+        jumlahBaris={siswaRows.length}
+        ukuranHalaman={UKURAN_HALAMAN}
+        buatHref={(p) => hrefSiswa({ q, unit, kelas, status, halaman: String(p) })}
+      />
     </div>
   );
 }

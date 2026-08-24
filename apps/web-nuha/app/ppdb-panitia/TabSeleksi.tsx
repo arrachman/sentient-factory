@@ -1,13 +1,29 @@
+import type { StatusPendaftar } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { Avatar, Badge, Kosong } from '@/components';
+import { Avatar, Badge, Kosong, Pagination, UKURAN_HALAMAN, bacaHalaman, type SearchParams } from '@/components';
 import { ubahStatusSeleksi } from './actions';
 
+function hrefSeleksi(params: Record<string, string>) {
+  const qs = new URLSearchParams({ tab: 'seleksi', ...params });
+  for (const [k, v] of [...qs.entries()]) if (!v) qs.delete(k);
+  return `/ppdb-panitia?${qs.toString()}`;
+}
+
 /** Pendaftar yang masih perlu diverifikasi/diseleksi, dengan aksi keputusan. */
-export async function TabSeleksi() {
-  const pendaftar = await prisma.pendaftar.findMany({
-    where: { status: { in: ['Baru', 'Verifikasi', 'Seleksi'] } },
-    orderBy: { tglDaftar: 'asc' },
-  });
+export async function TabSeleksi({ searchParams }: { searchParams: SearchParams }) {
+  const halaman = bacaHalaman(searchParams);
+  const where = { status: { in: ['Baru', 'Verifikasi', 'Seleksi'] as StatusPendaftar[] } };
+
+  const [total, pendaftar] = await Promise.all([
+    prisma.pendaftar.count({ where }),
+    prisma.pendaftar.findMany({
+      where,
+      orderBy: { tglDaftar: 'asc' },
+      skip: (halaman - 1) * UKURAN_HALAMAN,
+      take: UKURAN_HALAMAN,
+    }),
+  ]);
+  const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN));
 
   return (
     <div className="card">
@@ -45,6 +61,14 @@ export async function TabSeleksi() {
           ))}
         </div>
       )}
+      <Pagination
+        halaman={halaman}
+        totalHalaman={totalHalaman}
+        total={total}
+        jumlahBaris={pendaftar.length}
+        ukuranHalaman={UKURAN_HALAMAN}
+        buatHref={(p) => hrefSeleksi({ halaman: String(p) })}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import type { ClientEntity, Entity, Field, Row } from './types';
 
 type Delegate = {
   findMany: (args: unknown) => Promise<Array<Record<string, unknown>>>;
+  count: (args?: unknown) => Promise<number>;
   create: (args: unknown) => Promise<Record<string, unknown>>;
   update: (args: unknown) => Promise<Record<string, unknown>>;
   delete: (args: unknown) => Promise<Record<string, unknown>>;
@@ -78,11 +79,18 @@ function convert(field: Field, raw: unknown, errors: string[]): unknown {
   }
 }
 
-export async function listRows(entity: Entity): Promise<Row[]> {
+const UKURAN_HALAMAN_CRUD = 25;
+
+export async function countRows(entity: Entity): Promise<number> {
+  return delegateFor(entity).count();
+}
+
+export async function listRows(entity: Entity, halaman = 1): Promise<Row[]> {
   const rows = await delegateFor(entity).findMany({
     include: entity.include,
     orderBy: entity.orderBy,
-    take: entity.take ?? 100,
+    skip: (Math.max(1, halaman) - 1) * UKURAN_HALAMAN_CRUD,
+    take: UKURAN_HALAMAN_CRUD,
   });
   return rows.map((row) => ({ ...(serialize(row) as Record<string, unknown>), id: String(row.id) }));
 }

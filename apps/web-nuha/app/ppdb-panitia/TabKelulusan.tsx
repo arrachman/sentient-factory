@@ -1,12 +1,28 @@
+import type { StatusPendaftar } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { Avatar, Badge, Kosong } from '@/components';
+import { Avatar, Badge, Kosong, Pagination, UKURAN_HALAMAN, bacaHalaman, type SearchParams } from '@/components';
+
+function hrefKelulusan(params: Record<string, string>) {
+  const qs = new URLSearchParams({ tab: 'kelulusan', ...params });
+  for (const [k, v] of [...qs.entries()]) if (!v) qs.delete(k);
+  return `/ppdb-panitia?${qs.toString()}`;
+}
 
 /** Pengumuman kelulusan: pendaftar yang sudah lulus, tidak lulus, atau daftar ulang. */
-export async function TabKelulusan() {
-  const pendaftar = await prisma.pendaftar.findMany({
-    where: { status: { in: ['Lulus', 'TidakLulus', 'DaftarUlang'] } },
-    orderBy: { nama: 'asc' },
-  });
+export async function TabKelulusan({ searchParams }: { searchParams: SearchParams }) {
+  const halaman = bacaHalaman(searchParams);
+  const where = { status: { in: ['Lulus', 'TidakLulus', 'DaftarUlang'] as StatusPendaftar[] } };
+
+  const [total, pendaftar] = await Promise.all([
+    prisma.pendaftar.count({ where }),
+    prisma.pendaftar.findMany({
+      where,
+      orderBy: { nama: 'asc' },
+      skip: (halaman - 1) * UKURAN_HALAMAN,
+      take: UKURAN_HALAMAN,
+    }),
+  ]);
+  const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN));
 
   return (
     <div className="card">
@@ -30,6 +46,14 @@ export async function TabKelulusan() {
           ))}
         </div>
       )}
+      <Pagination
+        halaman={halaman}
+        totalHalaman={totalHalaman}
+        total={total}
+        jumlahBaris={pendaftar.length}
+        ukuranHalaman={UKURAN_HALAMAN}
+        buatHref={(p) => hrefKelulusan({ halaman: String(p) })}
+      />
     </div>
   );
 }

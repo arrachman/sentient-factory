@@ -1,16 +1,37 @@
 import { prisma } from '@/lib/prisma';
-import { Card, Avatar, Badge, Kosong, rp } from '@/components';
+import { Card, Avatar, Badge, Kosong, rp, Pagination, UKURAN_HALAMAN, bacaHalaman, type SearchParams } from '@/components';
 
-export async function TabTunggakan() {
-  const rows = await prisma.tagihan.findMany({
-    include: { santri: { include: { orang: true, unit: true } } },
-    orderBy: { jatuhTempo: 'asc' },
-  });
-  const tunggakan = rows.filter((t) => Number(t.dibayar) < Number(t.nominal));
+function hrefTunggakan(params: Record<string, string>) {
+  const qs = new URLSearchParams({ tab: 'tunggakan', ...params });
+  for (const [k, v] of [...qs.entries()]) if (!v) qs.delete(k);
+  return `/keuangan?${qs.toString()}`;
+}
+
+/** "Belum lunas" bergantung pada perbandingan dua kolom (dibayar < nominal), Prisma
+ * where tidak bisa bandingkan kolom langsung — ambil id yang cocok lewat raw query,
+ * lalu potong per halaman sebelum findMany+include supaya tidak menarik semua baris. */
+export async function TabTunggakan({ searchParams }: { searchParams: SearchParams }) {
+  const halaman = bacaHalaman(searchParams);
+
+  const idRows = await prisma.$queryRaw<{ id: bigint }[]>`
+    SELECT id FROM tagihan WHERE dibayar < nominal ORDER BY jatuh_tempo ASC
+  `;
+  const total = idRows.length;
+  const idHalaman = idRows.slice((halaman - 1) * UKURAN_HALAMAN, halaman * UKURAN_HALAMAN).map((r) => r.id);
+  const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN));
+
+  const rows = idHalaman.length
+    ? await prisma.tagihan.findMany({
+      where: { id: { in: idHalaman } },
+      include: { santri: { include: { orang: true, unit: true } } },
+    })
+    : [];
+  const posisi = new Map(idHalaman.map((id, i) => [id, i]));
+  const tunggakan = rows.sort((a, b) => (posisi.get(a.id) ?? 0) - (posisi.get(b.id) ?? 0));
 
   return (
     <Card
-      judul={`Daftar tunggakan — ${tunggakan.length} santri`}
+      judul={`Daftar tunggakan — ${total} santri`}
       sub="Prioritas penagihan: hubungi wali via WhatsApp, tembusan ke musyrif asrama."
     >
       {tunggakan.length === 0 ? (
@@ -43,6 +64,14 @@ export async function TabTunggakan() {
           })}
         </div>
       )}
+      <Pagination
+        halaman={halaman}
+        totalHalaman={totalHalaman}
+        total={total}
+        jumlahBaris={tunggakan.length}
+        ukuranHalaman={UKURAN_HALAMAN}
+        buatHref={(p) => hrefTunggakan({ halaman: String(p) })}
+      />
     </Card>
   );
 }
