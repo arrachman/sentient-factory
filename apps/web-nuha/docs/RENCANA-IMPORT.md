@@ -162,6 +162,108 @@ Diurutkan dari yang datanya sudah tersedia:
 
 ---
 
+## Fase 7 — Notifikasi WA: reminder piket & reminder ngajar
+
+### Temuan yang menghalangi
+
+`prisma/proto-data.json` punya 38 template WA, **20 di antaranya bertanda
+"Terjadwal"** (mis. `WA-KEU-02 · 08.00`, `WA-GUR-01 · 07.00`). Tetapi
+pencarian `cron|setInterval|scheduler|node-cron` di seluruh `app/` dan
+`lib/` **tidak menemukan satu pun penjadwal**. Artinya:
+
+> Semua template "Terjadwal" saat ini **tidak pernah benar-benar terkirim**.
+> Yang jalan hanya pengiriman manual dan pemicu di dalam server action.
+
+Jadi reminder piket dan ngajar tidak bisa sekadar menambah baris template —
+**infrastruktur penjadwalnya harus dibangun lebih dulu**.
+
+Selain itu, dua reminder yang diminta memang belum ada padanannya:
+`WA-GUR-03` hanya mengabarkan *perubahan* jadwal mengajar, bukan pengingat
+harian; dan piket yang ada (`WA-SAN-03`) adalah piket kader Poskestren untuk
+santri, bukan piket guru.
+
+### 7.1 Penjadwal (prasyarat)
+
+Tambah service `nuha-cron` di `docker-compose.yml` — proses Node terpisah,
+**bukan** `setInterval` di dalam Next.js (server action tidak punya siklus
+hidup yang menjamin eksekusi, dan `output: 'standalone'` bisa punya lebih
+dari satu instans sehingga pesan terkirim ganda).
+
+- Model `JadwalNotifikasi`: `kodeTemplate`, `cron`, `aktif`, `terakhirJalan`.
+- Model `AntreanNotifikasi` dengan kunci idempoten
+  `@@unique([kodeTemplate, tujuanId, tanggalJadwal])` — mencegah pesan ganda
+  bila cron jalan dua kali atau container restart.
+- Setiap eksekusi tetap lewat `kirimWa()` di `lib/wa.ts`, sehingga otomatis
+  tercatat di `LogWa` **dan** `AuditLog` seperti pengiriman manual.
+
+### 7.2 Reminder piket guru — `WA-GUR-04`
+
+Sumber data: foto `WhatsApp Image 2026-08-26 at 17.47.31.jpeg` (jadwal guru
+piket MPLS, Senin–Sabtu, 3 shift/hari: 06.45–09.35, 09.35–11.40, 11.40–13.25).
+
+- Butuh model **`JadwalPiket`** (`hari`, `waktuMulai`, `waktuSelesai`,
+  `pegawaiId`) — sekarang belum ada; `piket` di `proto-data.json` hanya array
+  JSON tanpa model, jadi tidak bisa di-query.
+- Dua pemicu: **H-1 pukul 19.00** ("besok Anda piket") dan **H-0, 45 menit
+  sebelum shift** ("piket Anda mulai 07.30").
+- Peubah template: `{{nama}}`, `{{hari}}`, `{{jamMulai}}`, `{{jamSelesai}}`.
+
+Catatan: jadwal di foto berlabel MPLS, jadi kemungkinan piket masa orientasi
+— **perlu dikonfirmasi ke client** apakah ini juga jadwal piket reguler.
+
+### 7.3 Reminder ngajar — `WA-GUR-05`
+
+Sumber data: `JadwalPelajaran` hasil impor Fase 3 (jadwal MA kelas X & XI).
+
+- **Rekap pagi, 06.30** — daftar seluruh jam mengajar hari itu dalam satu
+  pesan. Satu pesan per guru, bukan per jam, supaya tidak membanjiri.
+- **Per jam, 15 menit sebelum masuk** — opsional, disetel per guru.
+- Peubah: `{{nama}}`, `{{hari}}`, `{{daftarJam}}`, `{{mapel}}`, `{{kelas}}`,
+  `{{ruang}}`, `{{jamKe}}`.
+- **Bergantung pada Fase 1 butir 5** (`JadwalPelajaran.pegawaiId`): tanpa FK
+  ke pegawai, sistem tidak tahu nomor HP guru — pencocokan `guru` string ke
+  nama panggilan ("B. Hasni") tidak bisa menemukan `Orang.hp`.
+
+Reminder Madin (`JadwalDiniyah` → asatidz) mengikuti pola yang sama setelah
+Fase 2 selesai.
+
+### 7.4 Pengalihan nomor saat debugging
+
+**Selama pengembangan, semua notifikasi WA dialihkan ke satu nomor uji** agar
+tidak ada pesan yang lolos ke wali santri atau guru sungguhan.
+
+| Peran | Nomor | Format gateway |
+|---|---|---|
+| Penerima (semua notif saat debug) | `085607550989` | `6285607550989` |
+| Pengirim (perangkat tertaut) | `085735248244` | `6285735248244` |
+
+Implementasi — tambah dua env di `docker-compose.yml`, **jangan hardcode
+nomor di dalam kode**:
+
+```
+WA_DEBUG_REDIRECT=6285607550989   # kosongkan di produksi
+WA_SENDER_NUMBER=6285735248244    # nomor perangkat yang dipindai via QR
+```
+
+Di `lib/wa.ts`, tepat setelah `normalizeTarget()` (baris 28):
+
+- Bila `WA_DEBUG_REDIRECT` terisi → ganti nomor tujuan dengan nilai itu,
+  **tetapi tetap catat nomor asli** di `LogWa` (usulan: kolom baru
+  `nomorAsli`, atau sisipkan di `isi` sebagai prefiks
+  `[DEBUG → untuk 62812xxx]`). Tanpa jejak itu, log jadi tak berguna untuk
+  memverifikasi bahwa penerima yang benar sudah dihitung.
+- Pengalihan aktif **terlepas dari `WA_DRY_RUN`**, sehingga aman menyetel
+  `WA_DRY_RUN=false` untuk menguji pengiriman sungguhan.
+- `WA_SENDER_NUMBER` dipakai untuk memvalidasi bahwa perangkat yang tertaut
+  lewat QR memang nomor yang dimaksud — `tokenPengirim()` di
+  `lib/wa-gateway.ts` sekarang memakai perangkat pertama yang terhubung apa
+  adanya, tanpa memeriksa nomornya.
+
+**Wajib sebelum produksi**: kosongkan `WA_DEBUG_REDIRECT`. Selama masih
+terisi, tidak ada wali santri yang menerima notifikasi apa pun.
+
+---
+
 ## Yang masih perlu dari client
 
 Bukan blocker untuk Fase 1–3, tapi perlu sebelum produksi:
@@ -174,6 +276,10 @@ Bukan blocker untuk Fase 1–3, tapi perlu sebelum produksi:
 6. **SK Asrama Putri** — hanya Putra yang diserahkan.
 7. **Data keuangan** — isi template di `docs/templates/`.
 8. **Data santri pondok / penghuni asrama** — selain 31 pengurus putra.
+9. **Nomor HP guru & pegawai** — belum ada di `DATA GURU.xlsx`; tanpa ini
+   reminder piket dan ngajar (Fase 7) tidak punya tujuan kirim.
+10. **Konfirmasi jadwal piket** — jadwal di foto berlabel MPLS; apakah
+    berlaku juga sebagai piket reguler?
 
 ---
 
@@ -185,7 +291,13 @@ Fase 1 (skema + migrasi)  →  Fase 3 (importir MA & guru)  →  verifikasi
 Fase 2 (Madin)            →  Fase 3 (importir Madin)
      ↓
 Fase 4 (peran)  →  Fase 5 (template keuangan)  →  Fase 6 (fitur baru)
+     ↓
+Fase 7 (WA reminder) — butuh Fase 1 butir 5 (JadwalPelajaran.pegawaiId)
+                       dan Fase 3 (jadwal terimpor) lebih dulu
 ```
+
+Fase 7 tidak bisa didahulukan: tanpa FK guru→pegawai, sistem tidak tahu nomor
+HP tujuan; dan tanpa jadwal terimpor, tidak ada yang bisa diingatkan.
 
 Verifikasi tiap fase sesuai aturan keras: `npx tsc --noEmit`, lalu Playwright
 ke `http://202.59.200.26:3226` — login riil, sidebar sesuai `menu_peran`, tiap
