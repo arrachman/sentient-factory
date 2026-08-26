@@ -4,6 +4,38 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-26 — Data Induk: penjelajah lembaga→tingkat→kelas + penyaring
+
+`/induk` sebelumnya hanya punya satu kotak cari nama; 87 santri dari dua
+lembaga menumpuk dalam satu daftar datar tanpa cara menyempitkan.
+
+- Kolom baru **Lembaga & kelas**: pohon `unit → tingkat → kelas` memakai
+  `<details>` asli browser, jadi buka/tutup jalan tanpa JS klien. Tiap simpul
+  menampilkan cacah santri yang **sudah menghormati filter lain**, sehingga
+  angka di pohon = angka yang muncul saat simpul diklik (bukan cacah total
+  yang menyesatkan).
+- Penyaring cepat: status (Mukim/Kalong/Alumni/Keluar), jenis kelamin,
+  angkatan (diambil dari `tahunMasuk` yang benar-benar ada di data, bukan
+  daftar hardcode). Semua pilihan berupa **tautan**, bukan form — satu klik =
+  satu keadaan URL yang bisa di-bookmark, dibagikan, dan di-*back*.
+- Pencarian kini mencakup **NIS dan NISN**, bukan cuma nama.
+- `whereFilter` disusun sebagai daftar `AND` (`app/induk/filter.ts`) supaya
+  OR nama/NIS/NISN tidak bentrok dengan penyaring JK di relasi `orang` yang
+  sama — versi awal yang menempel `where.orang` + `where.OR` sekaligus akan
+  membuang syarat JK diam-diam.
+- Klik kelas mereset `?sel=` karena santri terpilih bisa tersaring keluar.
+- Baris daftar kini menampilkan NIS + badge status, tak lagi unit (unit sudah
+  jelas dari cabang pohon yang sedang dibuka).
+
+Diverifikasi lewat Chromium ke `http://202.59.200.26:3226` (login riil
+superadmin): 6 kombinasi filter dirender tanpa `pageerror`/`console.error`,
+dan cacahnya dicocokkan ke DB — MA=27, kelas X=8, Mukim+Putri=14, semua sama.
+
+Catatan operator: kolom `kelas.tingkat` untuk MA tidak konsisten di data hasil
+impor (`X`, `X1`, `X2`, `XI` hidup berdampingan), jadi pohon menampilkan
+"Tingkat X1"/"Tingkat X2" yang janggal. Ini **data**, bukan kode — perlu
+pembersihan di sisi impor/seed.
+
 ## 2026-08-26 — Fase 7: penjadwal notifikasi WA + reminder piket & ngajar
 
 Penjadwal yang sebelumnya **tidak pernah ada** akhirnya dibangun. 20 dari 38
