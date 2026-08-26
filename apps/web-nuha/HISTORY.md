@@ -4,6 +4,82 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-26 — `43d6745b` — Fase 3: importir XLSX data client nyata
+
+Data client sungguhan masuk ke DB, menggantikan sebagian data fiktif
+`proto-data.json`. Semua importir idempoten — dibuktikan dengan menjalankan
+dua kali dan menghitung baris, bukan dari status perintah.
+
+| Perintah | Hasil |
+|---|---|
+| `npm run import:guru-ma` | 17 Pegawai unit MA |
+| `npm run import:siswa-ma` | 19 Santri (11 kelas XI TA 2025/2026, 8 kelas X 2026/2027) |
+| `npm run import:siswa-smp` | 52 Santri (2 baris cacat dilewati) |
+| `npm run import:jadwal-ma` | 50 JadwalPelajaran, `pegawaiId` terisi 48/50 |
+
+**Yang perlu diketahui operator:**
+
+- **Importir SMP melewati baris cacat, tidak membatalkan seluruh berkas.**
+  Form pendataan diisi manual oleh banyak orang sehingga selalu ada sel salah
+  (ditemukan: NIK 17 digit di KELAS 8 baris 9, NISN kosong di baris 21). Baris
+  yang dilewati dicetak lengkap; perbaiki di berkas sumber lalu jalankan ulang.
+- **`import:presensi-ma` sengaja tidak menulis apa pun.** CSV client adalah
+  rekap agregat per siswa (`Total Hadir/Terlambat/Pulang`) tanpa kolom tanggal,
+  sedangkan `Presensi` berkunci `[santriId, tgl, sesi]`. Angka sumbernya juga
+  tidak konsisten: `Hari Tercatat` bernilai 1 di semua baris padahal
+  Hadir+Terlambat+Pulang mencapai 30. **Perlu ekspor presensi per-tanggal dari
+  client.**
+- **`alias-guru.ts` jadi 16 entri.** "B. Ifa" dipetakan ke Kholifatun Khasanah
+  — satu-satunya guru MA dengan mapel "Fisika, Kimia", dan "B. Ifa" hanya
+  muncul mengampu KIM/FIS. **Masih perlu konfirmasi client.**
+- **"TKA" dan "EKSTRA" bukan nama guru** → masuk `KODE_BUKAN_GURU`,
+  `pegawaiId` dibiarkan NULL. Konsekuensinya dua slot itu tidak akan menerima
+  reminder ngajar Fase 7.
+- **"P. Bismar" dipetakan ke ejaan `DATA GURU.xlsx`** (`Muhammmad`, tiga m)
+  karena berkas itulah sumber baris Pegawai — bukan ejaan SK (`Muh.`).
+- Pencocokan nama guru memakai bentuk yang diratakan (gelar dibuang, apostrof
+  lengkung U+2019 diseragamkan, huruf berulang dirapatkan) dan **hanya menerima
+  kecocokan tunggal**; nol atau ambigu ditolak dan diselesaikan dengan menambah
+  entri eksplisit di kamus, bukan dengan melonggarkan pencocokan.
+- SMP ternyata 52 siswa, bukan 38 seperti dugaan rencana — sheet
+  "KELAS 9 A&B" berisi dua rombel sekaligus. Rekap client menyebut 70;
+  selisihnya masih terbuka.
+
+## 2026-08-26 — `72e4967a` — Fase 1, 2 & 5: skema data client + importir keuangan
+
+Skema disiapkan agar data client bisa masuk apa adanya, plus importir CSV
+keuangan.
+
+- Model baru `TahunAjaran`; `Kelas` di-scope ke tahun ajaran
+  (`@@unique([unitId, nama, tahunAjaranId])`) karena "X" 2025/2026 dan "X"
+  2026/2027 berisi orang berbeda.
+- `StatusHadir` ditambah `Terlambat` dan `PulangCepat` — dua metrik utama di
+  presensi MA yang sebelumnya hilang saat impor.
+- `Santri.nis` jadi opsional: seluruh data client hanya punya NISN.
+- FK `Kelas.waliKelasId` dan `JadwalPelajaran.pegawaiId` menggantikan
+  pencocokan by-nama. Kolom string lama ditandai deprecated, tidak dihapus.
+- `Pegawai`, `Orang` (alamat terstruktur), `RelasiWali` diperluas; model baru
+  `ProfilKesehatan` dan `JadwalDiniyah` (Madin berbasis kitab, bukan kelas).
+- Periode aktif `2026/2027 Gasal` tidak lagi hardcode — kini baris
+  `TahunAjaran` yang di-seed.
+- Fase 5: importir CSV keuangan di `prisma/import/`. **Validasi seluruh berkas
+  lebih dulu; satu galat berarti batal tanpa menulis apa pun ke DB** — bukan
+  gagal separuh jalan. `Tagihan.dibayar` dihitung ulang dari `SUM(Pembayaran)`,
+  nilai di CSV hanya dipakai sebagai kondisi awal.
+
+**Jebakan migrasi yang sudah dibereskan** (catat untuk migrasi berikutnya):
+migrasi awal men-drop index unik `kelas(unit_id, nama)` sebelum penggantinya
+ada, padahal FK `kelas.unit_id` bersandar pada index itu → MySQL galat 1553.
+Urutannya dibalik dan ditambah index penopang `kelas_unit_id_idx`. Selain itu
+image `nuha-migrate` **harus di-build ulang** sebelum dijalankan (`docker
+compose build nuha-migrate`), dan setiap migrasi yang gagal separuh jalan
+meninggalkan DDL parsial yang harus diperiksa serta dibersihkan sebelum
+mencoba lagi.
+
+**Dampak operasional**: `vitest.config.mts` diperluas agar `include` mencakup
+`prisma/**/*.test.ts` — tanpa itu test importir tidak pernah dijalankan
+`npm test`.
+
 ## 2026-08-26 — `4ee19a5d` — Fase 7: notifikasi WA reminder piket & ngajar
 
 - **Temuan operasional penting**: dari 38 template WA di
