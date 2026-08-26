@@ -42,6 +42,24 @@ const perolehPeran = (nama: string) => {
 /** Prototype hanya memuat jadwal satu rombongan belajar. */
 const KELAS_JADWAL_PROTOTYPE = '8B';
 
+/**
+ * Menggantikan periode hardcode di app/kurikulum/kelas-guru.ts. Idempoten:
+ * dipanggil berkali-kali dari fungsi seed berbeda, cukup upsert lalu
+ * kembalikan tahun ajaran aktif (2026/2027 Gasal).
+ */
+async function seedTahunAjaran() {
+  const rows = [
+    { kode: '2025/2026', semester: 'Gasal', aktif: false },
+    { kode: '2026/2027', semester: 'Gasal', aktif: true },
+  ];
+  const tahunAjaran = await Promise.all(rows.map((row) => prisma.tahunAjaran.upsert({
+    where: { kode_semester: { kode: row.kode, semester: row.semester } },
+    create: row,
+    update: { aktif: row.aktif },
+  })));
+  return tahunAjaran.find((ta) => ta.aktif) ?? tahunAjaran[tahunAjaran.length - 1];
+}
+
 const gender = (value: unknown): JenisKelamin => String(value) === 'P' ? JenisKelamin.P : JenisKelamin.L;
 const pendaftarStatus = (value: unknown): StatusPendaftar => {
   const statuses: Record<string, StatusPendaftar> = { Baru: 'Baru', Verifikasi: 'Verifikasi', Seleksi: 'Seleksi', Lulus: 'Lulus', 'Tidak Lulus': 'TidakLulus', 'Daftar Ulang': 'DaftarUlang' };
@@ -198,9 +216,10 @@ async function seedJadwalLintasUnit() {
   // Pondok belum punya rombel apa pun, sehingga guru yang merangkap ustadz tak
   // punya tempat mengajar. Siapkan satu kelas diniyah sebagai wadahnya.
   if (pondok) {
+    const tahunAjaranAktif = await seedTahunAjaran();
     await prisma.kelas.upsert({
-      where: { unitId_nama: { unitId: pondok.id, nama: 'Diniyah Wustha' } },
-      create: { unitId: pondok.id, nama: 'Diniyah Wustha', tingkat: 'Wustha' },
+      where: { unitId_nama_tahunAjaranId: { unitId: pondok.id, nama: 'Diniyah Wustha', tahunAjaranId: tahunAjaranAktif.id } },
+      create: { unitId: pondok.id, nama: 'Diniyah Wustha', tingkat: 'Wustha', tahunAjaranId: tahunAjaranAktif.id },
       update: {},
     });
   }
@@ -496,6 +515,7 @@ async function main() {
   }
 
   const passwordHash = await bcrypt.hash('Nuha2026!', 12);
+  const tahunAjaranAktif = await seedTahunAjaran();
 
   const roles = await Promise.all(source.roles.map((row) => prisma.peran.upsert({
     where: { key: String(row.key) },
@@ -534,8 +554,8 @@ async function main() {
   for (const row of source.santri) {
     const unit = unitByKey.get(String(row.unit));
     const kelas = unit ? await prisma.kelas.upsert({
-      where: { unitId_nama: { unitId: unit.id, nama: String(row.kelas) } },
-      create: { unitId: unit.id, nama: String(row.kelas), tingkat: String(row.kelas).replace(/[^0-9X]/g, '') || '-' },
+      where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: String(row.kelas), tahunAjaranId: tahunAjaranAktif.id } },
+      create: { unitId: unit.id, nama: String(row.kelas), tingkat: String(row.kelas).replace(/[^0-9X]/g, '') || '-', tahunAjaranId: tahunAjaranAktif.id },
       update: {},
     }) : null;
     const asrama = asramaByName.get(String(row.asrama));
