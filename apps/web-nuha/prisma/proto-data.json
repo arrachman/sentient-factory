@@ -4328,6 +4328,24 @@
    "aktif": true
   },
   {
+   "kode": "WA-GUR-04",
+   "role": "Guru",
+   "judul": "Pengingat piket",
+   "pemicu": "Penjadwal — H-1 pukul 19.00 dan H-0 45 menit sebelum shift",
+   "waktu": "Terjadwal · H-1 19.00 & H-0 -45 menit",
+   "isi": "Assalamu'alaikum Ustadz/Ustadzah {{nama}}, {{catatan}} piket hari {{hari}} pukul {{jamMulai}}–{{jamSelesai}}. Mohon hadir tepat waktu di pos piket. — SIMTERPADU Nurul Huda Mergosono",
+   "aktif": true
+  },
+  {
+   "kode": "WA-GUR-05",
+   "role": "Guru",
+   "judul": "Rekap jadwal mengajar hari ini",
+   "pemicu": "Penjadwal — setiap pagi pukul 06.30",
+   "waktu": "Terjadwal · 06.30 tiap hari",
+   "isi": "Assalamu'alaikum Ustadz/Ustadzah {{nama}}, berikut jadwal mengajar Anda hari {{hari}}:\n{{daftarJam}}\n\nSelamat mengajar, semoga berkah. — SIMTERPADU Nurul Huda Mergosono",
+   "aktif": true
+  },
+  {
    "kode": "WA-UST-01",
    "role": "Ustadz / Musyrif",
    "judul": "Rekap absensi jamaah kamar",

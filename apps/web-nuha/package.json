@@ -20,7 +20,9 @@
     "import:siswa-ma": "tsx prisma/import/import-siswa-ma.ts",
     "import:siswa-smp": "tsx prisma/import/import-siswa-smp.ts",
     "import:jadwal-ma": "tsx prisma/import/import-jadwal-ma.ts",
-    "import:presensi-ma": "tsx prisma/import/import-presensi-ma.ts"
+    "import:presensi-ma": "tsx prisma/import/import-presensi-ma.ts",
+    "cron:tick": "tsx scripts/cron.ts",
+    "cron:loop": "tsx scripts/cron.ts --loop"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

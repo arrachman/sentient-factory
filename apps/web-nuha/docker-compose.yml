@@ -98,6 +98,30 @@ services:
       retries: 5
       start_period: 40s
 
+  # Penjadwal notifikasi WA — proses Node terpisah (bukan setInterval di
+  # nuha-app), lihat komentar di scripts/cron.ts. Pakai target `builder`
+  # yang sama seperti nuha-migrate karena butuh tsx (devDependency).
+  nuha-cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: nuha-cron
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql://${NUHA_MYSQL_USER:-nuha}:${NUHA_MYSQL_PASSWORD:-change_me}@nuha-mysql:3306/${NUHA_MYSQL_DATABASE:-nuha_simterpadu}
+      WA_DRY_RUN: ${WA_DRY_RUN:-true}
+      WA_GATEWAY_URL: ${WA_GATEWAY_URL:-http://wa-gateway:3204}
+      WA_GATEWAY_ACCOUNT_TOKEN: ${WA_GATEWAY_ACCOUNT_TOKEN:?WA_GATEWAY_ACCOUNT_TOKEN wajib diisi di .env}
+      WA_GATEWAY_TOKEN: ${WA_GATEWAY_TOKEN:-}
+      WA_DEBUG_REDIRECT: ${WA_DEBUG_REDIRECT:-}
+    command: sh -c "npx tsx scripts/cron.ts --loop"
+    depends_on:
+      nuha-migrate:
+        condition: service_completed_successfully
+      wa-gateway:
+        condition: service_started
+
 volumes:
   nuha_mysql_data:
     name: nuha_simterpadu_mysql_data

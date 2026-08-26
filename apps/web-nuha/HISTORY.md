@@ -4,6 +4,47 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-26 — Fase 7: penjadwal notifikasi WA + reminder piket & ngajar
+
+Penjadwal yang sebelumnya **tidak pernah ada** akhirnya dibangun. 20 dari 38
+template WA bertanda "Terjadwal" (`WA-KEU-02` jatuh tempo H-3 08.00,
+`WA-GUR-01` batas nilai 07.00, dst) selama ini **tidak pernah benar-benar
+terkirim** — yang jalan hanya kirim manual dan pemicu di server action.
+
+- Service `nuha-cron` terpisah di compose, **bukan** `setInterval` di Next.js:
+  `output: 'standalone'` bisa punya lebih dari satu instans sehingga pesan
+  akan terkirim ganda.
+- `AntreanNotifikasi` berkunci idempoten `[kodeTemplate, tujuanId,
+  tanggalJadwal]` — pencegahan ganda lewat kunci unik, bukan cek-lalu-tulis
+  yang bisa balapan. Dibuktikan: tiga kali jalan, tetap 10 baris.
+- Zona waktu WIB (UTC+7) ditangani eksplisit di `lib/penjadwal/waktu.ts`
+  tanpa lib tambahan — container default UTC.
+- Template baru `WA-GUR-04` (piket: H-1 19.00 dan H-0 45 menit sebelum shift)
+  dan `WA-GUR-05` (rekap ngajar 06.30, satu pesan per guru agar tidak
+  membanjiri). Semua pengiriman lewat `kirimWa()` sehingga tercatat di
+  `LogWa` + `AuditLog` seperti kirim manual.
+- **Ejaan hari beda antar tabel**: `jadwal_piket` memakai `Jum'at` (apostrof,
+  ikut foto sumber) sedangkan `jadwal_pelajaran` memakai `Jumat` polos.
+  Ditangani dua tabel nama hari terpisah, bukan locale.
+
+**Yang perlu diketahui operator — reminder belum bisa terkirim ke siapa pun:**
+
+- **Nol dari 29 pegawai punya nomor HP.** `DATA GURU.xlsx` tidak memuat kolom
+  itu sama sekali. Jadi seluruh 10 baris antrean berstatus
+  `DilewatiTanpaHp` — dicatat eksplisit di log, bukan diam-diam dilewati dan
+  bukan crash. **Penjadwalnya jalan dan teruji, tapi reminder baru sampai ke
+  guru setelah client menyerahkan nomor HP.** Tidak ada nomor palsu yang
+  diisikan ke DB untuk membuat ini "berhasil".
+- **Koreksi atas angka yang sempat mengkhawatirkan**: 67 dari 115 baris
+  `jadwal_pelajaran` memang ber-`pegawai_id` NULL, tetapi itu **bukan**
+  tanda pemetaan guru gagal. Rinciannya: 41 baris jadwal fiktif SMP + 5
+  Pondok dari seed prototype, 19 baris MA fiktif lain, dan dari data client
+  nyata (kelas X & XI) hanya **3**: `TKA` dan `EKSTRA` yang sengaja NULL
+  (kegiatan tanpa pengampu tunggal), plus satu baris seed basi
+  ("Pak Agus Salim", Sabtu XI jam 8 — punya kolom `ruang` yang tidak pernah
+  diisi importir). Pemetaan data client praktis lengkap: 48 dari 50 slot.
+- Baris seed fiktif itu masih perlu dibersihkan agar laporan tidak rancu.
+
 ## 2026-08-26 — Fase 4: struktur organisasi dari SK
 
 Model baru `JabatanStruktural` (migrasi aditif murni: satu `CREATE TABLE` +
