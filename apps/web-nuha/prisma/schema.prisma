@@ -319,8 +319,40 @@ model Pegawai {
   presensi        PresensiPegawai[]
   bebanJam        BebanJam[]
   arsipSk         ArsipSk[]
+  jabatanStruktural JabatanStruktural[]
 
   @@map("pegawai")
+}
+
+/// Struktur organisasi dari SK pengangkatan (unit MA, pengurus asrama, dst).
+/// SENGAJA BUKAN peran RBAC — jabatan struktural cuma metadata organisasi,
+/// akses menu tetap diatur lewat `Peran`/`MenuPeran`. Satu orang boleh
+/// menjabat lebih dari satu jabatan (contoh: Waka Sarpras + Kepala Lab),
+/// jadi kunci unik berbasis (skNomor, urutan), bukan pegawaiId tunggal.
+model JabatanStruktural {
+  id             BigInt    @id @default(autoincrement())
+  skNomor        String    @map("sk_nomor") @db.VarChar(64)
+  urutan         Int       @default(0)
+  jabatan        String    @db.VarChar(160)
+  /// Lingkup SK: "MA" atau "Pondok" (asrama putra), dst.
+  lingkup        String    @db.VarChar(32)
+  /// Sub-kelompok (mis. "Div. Keamanan") — NULL bila belum dikonfirmasi client
+  /// atau memang tidak berdivisi (Lurah/Sekretaris/Keuangan).
+  divisi         String?   @db.VarChar(120)
+  periodeMulai   DateTime  @map("periode_mulai") @db.Date
+  periodeSelesai DateTime  @map("periode_selesai") @db.Date
+  pegawaiId      BigInt?   @map("pegawai_id")
+  /// Nama persis seperti tertulis di SK — dipertahankan walau pegawaiId sudah cocok,
+  /// untuk audit trail sumber data.
+  namaMentah     String    @map("nama_mentah") @db.VarChar(160)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  pegawai Pegawai? @relation(fields: [pegawaiId], references: [id])
+
+  @@unique([skNomor, urutan])
+  @@index([lingkup])
+  @@map("jabatan_struktural")
 }
 
 model KomponenGaji {

@@ -4,6 +4,45 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-26 — Fase 4: struktur organisasi dari SK
+
+Model baru `JabatanStruktural` (migrasi aditif murni: satu `CREATE TABLE` +
+FK, nol perubahan tabel lama) berisi 40 baris dari dua SK: 9 pengurus MA
+(008/YKM-NH/SK-MA/VII/2026) dan 31 pengurus Asrama Putra
+(006/YKM-NH/SK-APa/VII/2026). Tab "Struktur" baru di `/kepegawaian`.
+
+**Keputusan desain: jabatan struktural BUKAN peran RBAC — nol peran baru
+ditambahkan** (tetap 12). `peran` mengatur akses menu; jabatan seperti
+"Kepala Laboratorium", "Wakil Ketua Bid. Humas", atau "Div. Keamanan" tidak
+butuh menu yang dibedakan — Kepala Madrasah memakai peran `kepma`, Lurah
+memakai `pengasuh`. Menjadikan 31 pengurus asrama sebagai peran login akan
+meledakkan RBAC tanpa guna. Jadi ini murni data organisasi.
+
+**Yang perlu diketahui operator:**
+
+- **Hanya 8 dari 40 baris tercocokkan ke `Pegawai`**, sisanya `pegawai_id`
+  NULL dengan `nama_mentah` terisi. Itu benar, bukan kegagalan impor:
+  "Tika Kartika, S.Pd" (Kepala Madrasah) dan "Dra. Nyai Hj. Roudlatul
+  Hasanah" memang tidak ada di tabel Pegawai, dan 30 dari 31 pengurus asrama
+  adalah santri/pengurus pondok, bukan pegawai.
+- **9 pengurus asrama ternyata ADA sebagai `Orang`** (santri) — dicek dengan
+  query nama. `JabatanStruktural` hanya punya FK ke `Pegawai`, jadi
+  keterkaitan itu **belum terekam**. Kalau nanti perlu, tambahkan `orangId`
+  nullable; sengaja tidak dilakukan sekarang agar tidak menebak lingkupnya.
+- **Batas divisi 28 pengurus asrama (no 4–31) SENGAJA tidak ditebak.** Di
+  ekstraksi PDF, label "Div. Pendidikan" muncul *setelah* nama ke-4 sehingga
+  tidak jelas apakah label mengawali atau mengakhiri kelompoknya. Semua
+  disimpan `jabatan='Pengurus'`, `divisi=NULL`. **Perlu konfirmasi client.**
+  Yang pasti: no 1–3 (Lurah, Sekretaris, Keuangan) memang tidak berdivisi.
+- **Satu orang boleh menjabat lebih dari satu kali** — kunci uniknya
+  `[skNomor, urutan]`, bukan per orang. Isma Izha Utama memegang 3 baris
+  (Waka Sarpras + Kepala Laboratorium di MA, dan no. 26 di asrama).
+- "Muhammad Bismar As Sidiq" di SK asrama **tidak** dipautkan ke
+  "Muhammmad Bismar As Sidiq, S.H" (guru MA) walau ejaannya mirip —
+  konteksnya beda (pengurus pondok vs guru), jadi tidak dipastikan.
+- Idempoten lewat upsert `[skNomor, urutan]`; dibuktikan dua kali jalan,
+  tetap 40 baris.
+
 ## 2026-08-26 — Fase 6: modul Kepegawaian (piket, jurnal, presensi, SK)
 
 Lima model baru (`JadwalPiket`, `JurnalMengajar`, `PresensiPegawai`,

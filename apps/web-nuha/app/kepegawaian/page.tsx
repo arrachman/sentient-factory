@@ -6,6 +6,7 @@ import { TabJurnal } from './TabJurnal';
 import { TabPresensi } from './TabPresensi';
 import { TabBebanJam } from './TabBebanJam';
 import { TabArsipSk } from './TabArsipSk';
+import { TabStruktur } from './TabStruktur';
 
 const TABS = [
   { key: 'piket', label: 'Guru Piket' },
@@ -13,6 +14,7 @@ const TABS = [
   { key: 'presensi', label: 'Presensi Pegawai' },
   { key: 'beban-jam', label: 'Beban Jam' },
   { key: 'arsip-sk', label: 'Arsip SK' },
+  { key: 'struktur', label: 'Struktur Organisasi' },
 ];
 
 export default async function KepegawaianPage({
@@ -36,6 +38,7 @@ export default async function KepegawaianPage({
       {aktif === 'presensi' && <TabPresensi />}
       {aktif === 'beban-jam' && <TabBebanJam />}
       {aktif === 'arsip-sk' && <TabArsipSk />}
+      {aktif === 'struktur' && <TabStruktur />}
     </Shell>
   );
 }
