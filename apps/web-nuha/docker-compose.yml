@@ -82,6 +82,9 @@ services:
       # kosong agar diambil dari perangkat terhubung hasil pindai QR.
       WA_GATEWAY_ACCOUNT_TOKEN: ${WA_GATEWAY_ACCOUNT_TOKEN:?WA_GATEWAY_ACCOUNT_TOKEN wajib diisi di .env}
       WA_GATEWAY_TOKEN: ${WA_GATEWAY_TOKEN:-}
+      # Pengalihan nomor saat debugging. Selama terisi, tidak ada wali santri
+      # yang menerima notifikasi — wajib dikosongkan sebelum produksi.
+      WA_DEBUG_REDIRECT: ${WA_DEBUG_REDIRECT:-}
       NUHA_PERIODE_GAJI: ${NUHA_PERIODE_GAJI:-}
     depends_on:
       nuha-migrate:
