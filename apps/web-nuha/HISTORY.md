@@ -4,6 +4,24 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-26 — Rapikan kelas MA jadi tingkat saja (perubahan data, bukan kode)
+
+Lanjutan pembersihan dummy: rombel MA contoh (`X-IPA-1`, `XII-Keagamaan`,
+`XI-IPA-2`, dst.) dihapus, disisakan tiga baris `kelas` di tahun ajaran aktif
+dengan `nama` = `tingkat` = `X`, `XI`, `XII`. Kelas SMP dan Pondok **tidak
+disentuh** atas permintaan user.
+
+Sekalian memperbaiki `tingkat` MA yang rusak: seed lama menurunkannya lewat
+`nama.replace(/[^0-9X]/g, '')`, sehingga `X-IPA-1` → `X1` dan `XI-IPA-2` → `X2`,
+dan `XII-Keagamaan` ikut tercatat tingkat `X`. Sekarang `tingkat` MA disamakan
+dengan nama tingkatnya.
+
+**Catatan**: `tingkat` bukan tabel sendiri melainkan kolom di `kelas`; daftar
+tingkat di `/induk` diturunkan dengan mengelompokkan baris `kelas`
+(`app/induk/pohon.ts`). Jadi tiap tingkat wajib punya minimal satu baris
+`kelas`, kalau tidak tingkatnya hilang dari pohon. Rombel MA yang sebenarnya
+ditambahkan lewat impor data nyata.
+
 ## 2026-08-26 — Hapus seluruh data dummy; seed dasar menggantikan seed prototype
 
 Basis data masih 100% berisi data contoh dari `prisma/proto-data.json`
