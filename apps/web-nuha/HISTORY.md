@@ -4,6 +4,39 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-26 — Akademik: penjelajah lembaga→tingkat→kelas + penyaring, sembunyikan 9 menu
+
+`/akademik` sebelumnya menaruh semua rombel dua lembaga dalam satu dropdown
+datar, dan tiap tab punya penyaringnya sendiri yang tak saling nyambung.
+
+- **Penjelajah bertingkat** (`Penjelajah.tsx` + `pohon.ts`): Semua pesantren →
+  SMP/MA/Pondok → tingkat → kelas, berupa chip dengan cacah santri. Cacah
+  dihitung dengan penyaring lain tetap berlaku tapi tanpa unit/tingkat/kelas
+  itu sendiri, jadi angka di chip = jumlah yang benar-benar didapat kalau
+  chip itu diklik. Ada remah roti untuk mundur satu tingkat.
+- **Penyaring bersama** (`filter.ts` + `BarisFilter.tsx`): pencarian, status,
+  jenis kelamin, program, angkatan, asrama, dan urutan. Pilihan program/
+  angkatan/asrama diambil dari data yang benar-benar ada — operator tak bisa
+  memilih nilai yang hasilnya nol. Tiap filter aktif tampil sebagai chip yang
+  bisa dicopot satu per satu, plus "Bersihkan semua".
+- Keadaan filter hidup di URL (bisa di-bookmark & dibagikan) dan **dipakai
+  bersama keempat tab** — Siswa, Presensi, Nilai, Rapor. Dropdown rombel di
+  tab Nilai & Rapor ikut menyempit mengikuti penjelajah.
+- Rombel bernama sama di tahun ajaran berbeda (data warisan punya dua "7A")
+  kini diberi keterangan TA supaya dua chip tak lagi kembar tak terbedakan.
+- **Menu disembunyikan** dari sidebar atas permintaan client: kurikulum,
+  poskestren, keuangan, lms, gaji, ujian, kunjungan, ppdb, laporan. Daftarnya
+  di `MENU_DISEMBUNYIKAN` (`components/templates/Shell.tsx`) — hapus kuncinya
+  untuk memunculkan lagi. **Ini penyembunyian navigasi saja**: halaman dan
+  `requirePage` tidak disentuh, jadi hak akses tak berubah dan URL langsung
+  masih bisa dibuka oleh peran yang berhak.
+- Gaya chip dipindah ke kelas bersama `.chip`/`.chip-aktif` di `globals.css`;
+  `app/induk/BarisFilter.tsx` ikut memakainya (sebelumnya gaya sebaris).
+
+Verifikasi: Playwright login `superadmin` ke `http://202.59.200.26:3226`,
+keempat tab dirender tanpa `pageerror`, drill-down SMP→7→7A menyempitkan
+hasil 87→60→11→1, sidebar terbukti tinggal 10 menu. `npx tsc --noEmit` bersih.
+
 ## 2026-08-26 — Data Induk: penjelajah lembaga→tingkat→kelas + penyaring
 
 `/induk` sebelumnya hanya punya satu kotak cari nama; 87 santri dari dua
