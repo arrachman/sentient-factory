@@ -1,25 +1,13 @@
 import Link from 'next/link';
 import { hrefInduk, jumlahFilterAktif, STATUS_SANTRI, type FilterInduk } from './filter';
 
-const CHIP: React.CSSProperties = {
-  display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px',
-  borderRadius: 999, fontSize: 11.5, fontWeight: 700, border: '1px solid var(--garis)',
-  background: '#fff', color: 'var(--teks-2)', whiteSpace: 'nowrap',
-};
-
-/** Satu tombol pilihan yang menyala saat nilainya sedang dipakai; klik ulang mematikannya. */
+/** Satu tombol pilihan yang menyala saat nilainya sedang dipakai; klik ulang mematikannya.
+ * Memakai kelas `.chip` bersama (globals.css), bukan gaya sebaris, supaya seragam
+ * dengan penjelajah di modul lain. */
 function Opsi({ f, ubah, aktif, anak }: { f: FilterInduk; ubah: Partial<FilterInduk>; aktif: boolean; anak: React.ReactNode }) {
   const mati = Object.fromEntries(Object.keys(ubah).map((k) => [k, undefined])) as Partial<FilterInduk>;
   return (
-    <Link
-      href={hrefInduk(f, aktif ? mati : ubah)}
-      style={{
-        ...CHIP,
-        background: aktif ? 'var(--hijau)' : '#fff',
-        borderColor: aktif ? 'var(--hijau)' : 'var(--garis)',
-        color: aktif ? 'var(--krem)' : 'var(--teks-2)',
-      }}
-    >
+    <Link href={hrefInduk(f, aktif ? mati : ubah)} className={`chip ${aktif ? 'chip-aktif' : ''}`} aria-pressed={aktif}>
       {anak}
     </Link>
   );
@@ -27,8 +15,8 @@ function Opsi({ f, ubah, aktif, anak }: { f: FilterInduk; ubah: Partial<FilterIn
 
 function Kelompok({ judul, anak }: { judul: string; anak: React.ReactNode }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
-      <span className="label" style={{ fontSize: 10.5 }}>{judul}</span>
+    <div className="chip-baris">
+      <span className="chip-label">{judul}</span>
       {anak}
     </div>
   );
@@ -53,9 +41,10 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
             defaultValue={f.q}
             placeholder="Cari nama, NIS, atau NISN…"
             aria-label="Cari santri"
+            className="input-cari"
             style={{ flex: 1, minWidth: 0 }}
           />
-          <button type="submit" className="btn-sekunder" style={{ padding: '7px 14px', fontSize: 12.5, borderRadius: 9, cursor: 'pointer' }}>
+          <button type="submit" className="btn btn-sekunder" style={{ padding: '9px 16px' }}>
             Cari
           </button>
         </form>
@@ -64,7 +53,8 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
             <strong style={{ color: 'var(--teks-kuat)' }}>{hasil}</strong> santri cocok
           </span>
           {aktif > 0 && (
-            <Link href="/induk" style={{ ...CHIP, borderStyle: 'dashed' }}>
+            <Link href="/induk" className="chip-copot">
+              <span className="x">×</span>
               Hapus {aktif} filter
             </Link>
           )}

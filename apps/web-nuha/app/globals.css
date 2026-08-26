@@ -156,6 +156,36 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
 .tab { padding: 9px 15px; border-radius: 9px; border: none; font-size: 13px; font-weight: 600; white-space: nowrap; background: transparent; color: var(--teks-2); cursor: pointer; }
 .tab.active { background: var(--hijau); color: var(--krem); }
 
+/* Penjelajah bertingkat — lembaga › tingkat › kelas */
+.penjelajah { display: flex; flex-direction: column; gap: 10px; }
+.remah { display: flex; flex-wrap: wrap; align-items: center; font-size: 12.5px; color: var(--teks-lembut); }
+.remah-item { display: inline-flex; align-items: center; }
+.remah-item b { color: var(--teks-kuat); }
+.remah-item a { color: var(--hijau-2); }
+.remah-pisah { margin: 0 7px; color: var(--teks-samar); }
+.chip-baris { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+.chip-label { width: 66px; flex-shrink: 0; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--teks-samar); }
+.chip {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px;
+  border: 1px solid var(--garis); background: #fff; font-size: 12.5px; font-weight: 600;
+  color: var(--teks-2); white-space: nowrap;
+}
+.chip:hover { border-color: var(--hijau-muda); background: var(--krem-3); color: var(--hijau-gelap); }
+.chip-angka { font-size: 11.5px; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--krem-4); color: var(--teks-lembut); }
+.chip-aktif { background: var(--hijau); border-color: var(--hijau); color: var(--krem); }
+.chip-aktif:hover { background: var(--hijau-gelap); border-color: var(--hijau-gelap); color: var(--krem); }
+.chip-aktif .chip-angka { background: rgba(255, 255, 255, .22); color: var(--krem); }
+
+/* Chip filter aktif yang bisa dicopot */
+.chip-copot { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; border: 1px dashed var(--garis-input); background: var(--krem-2); font-size: 12px; color: var(--teks-2); }
+.chip-copot:hover { border-style: solid; border-color: #e9a8a8; color: #991b1b; background: #fef2f2; }
+.chip-copot .x { font-weight: 700; color: var(--teks-samar); }
+.chip-copot:hover .x { color: #b91c1c; }
+
+@media (max-width: 640px) {
+  .chip-label { width: 100%; }
+}
+
 /* Progress */
 .bar { height: 8px; border-radius: 999px; background: var(--krem-4); overflow: hidden; }
 .bar > span { display: block; height: 100%; border-radius: 999px; background: var(--hijau); }
@@ -181,6 +211,14 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
   width: 100%; padding: 11px 13px; border: 1px solid var(--garis-input);
   border-radius: 10px; background: var(--krem-2); font-size: 13px; font-family: inherit; color: var(--teks);
 }
+
+/* Input pencarian yang berdiri sendiri di luar .field (mis. bilah penyaring) */
+.input-cari {
+  padding: 9px 13px; border: 1px solid var(--garis-input); border-radius: 10px;
+  background: var(--krem-2); font-size: 13px; font-family: inherit; color: var(--teks);
+}
+.input-cari::placeholder { color: var(--teks-samar); }
+.input-cari:focus-visible { outline: 2px solid var(--hijau-muda); outline-offset: 1px; border-color: var(--hijau-muda); background: #fff; }
 
 .login-wrap { display: grid; place-items: center; min-height: 100vh; padding: 60px 24px; }
 .login-card { width: 100%; max-width: 430px; background: #fff; border-radius: 20px; padding: 30px; box-shadow: 0 8px 32px rgba(10, 74, 43, 0.07); }
