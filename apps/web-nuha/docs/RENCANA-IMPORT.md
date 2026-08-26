@@ -208,8 +208,10 @@ piket MPLS, Senin–Sabtu, 3 shift/hari: 06.45–09.35, 09.35–11.40, 11.40–1
   sebelum shift** ("piket Anda mulai 07.30").
 - Peubah template: `{{nama}}`, `{{hari}}`, `{{jamMulai}}`, `{{jamSelesai}}`.
 
-Catatan: jadwal di foto berlabel MPLS, jadi kemungkinan piket masa orientasi
-— **perlu dikonfirmasi ke client** apakah ini juga jadwal piket reguler.
+**Dikonfirmasi client (2026-08-26)**: jadwal berlabel MPLS itu **dipakai
+sebagai jadwal piket reguler**, bukan khusus masa orientasi. Jadi 18 baris di
+foto (6 hari × 3 shift) diimpor apa adanya sebagai `JadwalPiket` berulang
+tiap pekan.
 
 ### 7.3 Reminder ngajar — `WA-GUR-05`
 
@@ -278,8 +280,8 @@ Bukan blocker untuk Fase 1–3, tapi perlu sebelum produksi:
 8. **Data santri pondok / penghuni asrama** — selain 31 pengurus putra.
 9. **Nomor HP guru & pegawai** — belum ada di `DATA GURU.xlsx`; tanpa ini
    reminder piket dan ngajar (Fase 7) tidak punya tujuan kirim.
-10. **Konfirmasi jadwal piket** — jadwal di foto berlabel MPLS; apakah
-    berlaku juga sebagai piket reguler?
+~~10. Konfirmasi jadwal piket~~ — **terjawab 2026-08-26**: jadwal MPLS di foto
+   dipakai sebagai jadwal piket reguler.
 
 ---
 
