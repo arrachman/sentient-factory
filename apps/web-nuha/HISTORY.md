@@ -4,6 +4,36 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-26 — `4ee19a5d` — Fase 7: notifikasi WA reminder piket & ngajar
+
+- **Temuan operasional penting**: dari 38 template WA di
+  `prisma/proto-data.json`, **20 bertanda "Terjadwal"** (mis. `WA-KEU-02`
+  jatuh tempo H-3 pukul 08.00, `WA-GUR-01` batas input nilai 07.00), tetapi
+  pencarian `cron|setInterval|scheduler|node-cron` di seluruh `app/` dan
+  `lib/` **tidak menemukan penjadwal apa pun**. Artinya seluruh notifikasi
+  terjadwal selama ini **tidak pernah benar-benar terkirim** — yang jalan
+  hanya kirim manual dan pemicu di dalam server action.
+- Fase 7.1: service `nuha-cron` terpisah di compose, bukan `setInterval` di
+  Next.js — `output: 'standalone'` bisa punya lebih dari satu instans
+  sehingga pesan akan terkirim ganda. `AntreanNotifikasi` diberi kunci
+  idempoten `[kodeTemplate, tujuanId, tanggalJadwal]`.
+- Fase 7.2 `WA-GUR-04` reminder piket — butuh model `JadwalPiket` baru
+  (`piket` di proto-data hanya array JSON tanpa model, tak bisa di-query).
+  Sumbernya foto jadwal piket MPLS; **perlu konfirmasi client** apakah
+  berlaku juga sebagai piket reguler.
+- Fase 7.3 `WA-GUR-05` reminder ngajar — rekap pagi 06.30, satu pesan per
+  guru. Bergantung pada `JadwalPelajaran.pegawaiId` (Fase 1 butir 5): tanpa
+  FK itu sistem tidak bisa menemukan nomor HP guru, karena jadwal hanya
+  menyimpan nama panggilan ("B. Hasni") yang tak cocok dengan `Orang`.
+- **Dampak operasional — pengalihan nomor saat debugging**: seluruh
+  notifikasi WA dialihkan ke `085607550989` (`6285607550989`), dikirim dari
+  perangkat `085735248244` (`6285735248244`). Diterapkan lewat env
+  `WA_DEBUG_REDIRECT` dan `WA_SENDER_NUMBER`, **tidak di-hardcode**.
+  Pengalihan aktif terlepas dari `WA_DRY_RUN` supaya aman menguji pengiriman
+  sungguhan; nomor tujuan asli tetap dicatat agar log tetap berguna.
+  **`WA_DEBUG_REDIRECT` wajib dikosongkan sebelum produksi** — selama masih
+  terisi, tidak ada wali santri yang menerima notifikasi apa pun.
+
 ## 2026-08-26 — `7d188296` — Rencana import data client + template keuangan
 
 - Audit 14 dokumen client di `docs/` (XLSX/PDF/DOCX/CSV) dibandingkan dengan
