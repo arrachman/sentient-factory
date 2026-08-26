@@ -4,6 +4,31 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-26 — Hapus seluruh data dummy; seed dasar menggantikan seed prototype
+
+Basis data masih 100% berisi data contoh dari `prisma/proto-data.json`
+(87 santri, 29 pegawai, semua ber-email `@nuha.local`) — impor xlsx nyata
+belum pernah dijalankan ke sana.
+
+- **`scripts/purge-dummy.ts`** (baru, `npm run db:purge-dummy -- --yakin`):
+  mengosongkan semua tabel operasional lalu menghapus semua `user`/`orang`
+  selain superadmin. Dipertahankan: RBAC (`peran`/`menu`/`menu_peran`), master
+  (`unit`, `kelas`, `tahun_ajaran`, `asrama`, `kamar`, `mata_pelajaran`,
+  `template_wa`) dan akun `superadmin`. Skrip menolak jalan bila superadmin
+  tak ditemukan, agar tak menghasilkan DB tanpa admin.
+- **`prisma/seed-dasar.ts`** (baru): seed minimum — peran, menu + grant,
+  unit, tahun ajaran, template WA, superadmin. **`nuha-migrate` kini memanggil
+  ini**, bukan `prisma/seed.ts`; tanpa perubahan itu `docker compose up`
+  berikutnya akan mengisi ulang data dummy. Seed prototype tetap ada sebagai
+  `npm run db:seed:demo`.
+- **`app/login/page.tsx`**: `defaultValue` kredensial demo dan blok "Akun demo"
+  dihapus — akunnya sudah tidak ada dan itu membocorkan sandi di halaman publik.
+
+**Dampak operator**: DB kini kosong dari data santri/pegawai. Login memakai
+`superadmin` (sandi dari `SUPERADMIN_PASSWORD`, bawaan `Nuha2026!` — ganti).
+Akun uji lain di CLAUDE.md sudah tidak berlaku. Backup pra-hapus ada di
+`temp/backup-sebelum-purge-2026-08-26.sql` (tidak di-commit).
+
 ## 2026-08-26 — Akademik: penjelajah lembaga→tingkat→kelas + penyaring, sembunyikan 9 menu
 
 `/akademik` sebelumnya menaruh semua rombel dua lembaga dalam satu dropdown

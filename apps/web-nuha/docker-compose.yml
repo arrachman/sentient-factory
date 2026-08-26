@@ -33,7 +33,10 @@ services:
     restart: "no"
     environment:
       DATABASE_URL: mysql://${NUHA_MYSQL_USER:-nuha}:${NUHA_MYSQL_PASSWORD:-change_me}@nuha-mysql:3306/${NUHA_MYSQL_DATABASE:-nuha_simterpadu}
-    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts"
+    # Hanya seed dasar (peran, menu, unit, template WA, superadmin). Data contoh
+    # prototype ada di prisma/seed.ts dan sengaja TIDAK dijalankan otomatis —
+    # pakai `npm run db:seed:demo` bila memang butuh isi demo.
+    command: sh -c "npx prisma migrate deploy && npx tsx prisma/seed-dasar.ts"
     depends_on:
       nuha-mysql:
         condition: service_healthy
