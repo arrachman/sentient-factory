@@ -416,10 +416,22 @@ async function seedPortalAccess() {
     await prisma.userPeran.upsert({ where: { userId_peranId: { userId: user.id, peranId: roleSantri.id } }, create: { userId: user.id, peranId: roleSantri.id }, update: {} });
   }
 
-  const waliRows = await prisma.relasiWali.findMany({ where: { utama: true }, include: { wali: true, anak: { include: { santri: true } } } });
+  // Data client menandai ayah DAN ibu sebagai kontak utama (lihat
+  // `import/lib/tulis-wali.ts`) — itu benar, keduanya memang dihubungi. Tapi
+  // akun portal wali berusername `wali.<nis>`, satu per santri, jadi harus
+  // dipilih satu pemegang akun. Dipilih `waliId` terkecil supaya deterministik
+  // dan idempoten; wali lain tetap ada sebagai relasi, hanya tanpa akun login.
+  const waliRows = await prisma.relasiWali.findMany({
+    where: { utama: true },
+    include: { wali: true, anak: { include: { santri: true } } },
+    orderBy: { waliId: 'asc' },
+  });
+  const sudahPunyaAkun = new Set<string>();
   for (const relasi of waliRows) {
     const nis = relasi.anak.santri?.nis;
     if (!nis) continue;
+    if (sudahPunyaAkun.has(nis)) continue;
+    sudahPunyaAkun.add(nis);
     const user = await prisma.user.upsert({
       where: { orangId: relasi.waliId },
       create: { orangId: relasi.waliId, email: relasi.wali.email ?? `wali.${nis}@nuha.local`, username: `wali.${nis}`, passwordHash },

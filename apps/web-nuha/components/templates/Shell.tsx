@@ -22,6 +22,7 @@ const HREF_BY_KEY: Record<string, string> = {
   ppdb: '/ppdb-panitia',
   laporan: '/laporan',
   pengaturan: '/pengaturan',
+  kepegawaian: '/kepegawaian',
   'portal-santri': '/portal/santri',
   'portal-wali': '/portal/wali',
   data: '/data',
@@ -32,7 +33,7 @@ const WARNA_IKON: Record<string, string> = {
   dashboard: '#F2B770', induk: '#93C5FD', akademik: '#86EFAC', kurikulum: '#FDBA74', ujian: '#FCD34D',
   pesantren: '#C4B5FD', poskestren: '#FCA5A5', keuangan: '#6EE7B7', gaji: '#FDE047',
   lms: '#7DD3FC', wa: '#4ADE80', kunjungan: '#F9A8D4', ppdb: '#A5B4FC',
-  laporan: '#67E8F9', pengaturan: '#D6D3D1', data: '#D6D3D1',
+  laporan: '#67E8F9', pengaturan: '#D6D3D1', data: '#D6D3D1', kepegawaian: '#93C5FD',
   'portal-santri': '#7DD3FC', 'portal-wali': '#F9A8D4',
 };
 

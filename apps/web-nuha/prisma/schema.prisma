@@ -198,7 +198,8 @@ model TahunAjaran {
   semester String  @db.VarChar(8)
   aktif    Boolean @default(false)
 
-  kelas Kelas[]
+  kelas    Kelas[]
+  bebanJam BebanJam[]
 
   @@unique([kode, semester])
   @@map("tahun_ajaran")
@@ -313,6 +314,11 @@ model Pegawai {
   slip       SlipGaji[]
   kelasWali  Kelas[]
   jadwalAmpu JadwalPelajaran[]
+  jadwalPiket     JadwalPiket[]
+  jurnalMengajar  JurnalMengajar[]
+  presensi        PresensiPegawai[]
+  bebanJam        BebanJam[]
+  arsipSk         ArsipSk[]
 
   @@map("pegawai")
 }
@@ -582,10 +588,114 @@ model JadwalPelajaran {
 
   unit    Unit?    @relation(fields: [unitId], references: [id])
   pegawai Pegawai? @relation(fields: [pegawaiId], references: [id])
+  jurnal  JurnalMengajar[]
 
   @@unique([hari, jamKe, kelas])
   @@index([guru])
   @@map("jadwal_pelajaran")
+}
+
+// ─────────────────────────────────────────────────────────────
+// Fase 6 — piket, jurnal mengajar, presensi & beban pegawai, arsip SK
+// ─────────────────────────────────────────────────────────────
+
+/// Jadwal piket guru mingguan (bukan per-tanggal). Sumber saat ini: foto
+/// jadwal piket MPLS yang dikonfirmasi client dipakai sebagai piket reguler
+/// (lihat RENCANA-IMPORT.md §Fase 7.2). Prasyarat reminder `WA-GUR-04`.
+model JadwalPiket {
+  id           Int     @id @default(autoincrement())
+  hari         String  @db.VarChar(16)
+  waktuMulai   String  @map("waktu_mulai") @db.VarChar(16)
+  waktuSelesai String  @map("waktu_selesai") @db.VarChar(16)
+  pegawaiId    BigInt? @map("pegawai_id")
+  urutan       Int     @default(0)
+
+  pegawai Pegawai? @relation(fields: [pegawaiId], references: [id])
+
+  // Satu shift = satu baris per (hari, jam mulai). Kunci ini yang membuat
+  // importir piket idempoten; tanpa itu setiap jalan ulang menduplikasi.
+  @@unique([hari, waktuMulai])
+  @@index([hari])
+  @@map("jadwal_piket")
+}
+
+/// Catatan mengajar per pertemuan (jurnal guru). Sumber: "PRESENSI DAN
+/// JURNAL JULI-AGUSTUS AJARAN BARU 2025_111924.xlsx". `jadwalId` opsional
+/// karena jurnal bisa dicatat untuk pertemuan yang tidak persis cocok ke
+/// satu baris `JadwalPelajaran` (mis. jam pengganti).
+model JurnalMengajar {
+  id          BigInt   @id @default(autoincrement())
+  pegawaiId   BigInt?  @map("pegawai_id")
+  jadwalId    Int?     @map("jadwal_id")
+  kelas       String?  @db.VarChar(32)
+  tgl         DateTime @db.Date
+  jamKe       Int?     @map("jam_ke")
+  materi      String?  @db.VarChar(255)
+  catatan     String?  @db.VarChar(255)
+  jumlahHadir Int?     @map("jumlah_hadir")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  pegawai Pegawai?         @relation(fields: [pegawaiId], references: [id])
+  jadwal  JadwalPelajaran? @relation(fields: [jadwalId], references: [id])
+
+  @@index([tgl])
+  @@index([pegawaiId, tgl])
+  @@map("jurnal_mengajar")
+}
+
+/// Presensi khusus pegawai — `Presensi` yang ada sekarang hanya untuk
+/// santri. Memakai `StatusHadir` yang sama (termasuk Terlambat/PulangCepat).
+model PresensiPegawai {
+  id        BigInt      @id @default(autoincrement())
+  pegawaiId BigInt      @map("pegawai_id")
+  tgl       DateTime    @db.Date
+  jamMasuk  String?     @map("jam_masuk") @db.VarChar(16)
+  jamPulang String?     @map("jam_pulang") @db.VarChar(16)
+  status    StatusHadir @default(Hadir)
+  ket       String?     @db.VarChar(255)
+
+  pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+
+  @@unique([pegawaiId, tgl])
+  @@map("presensi_pegawai")
+}
+
+/// Beban jam mengajar per pegawai per tahun ajaran. Strukturnya ada di SK
+/// Pembagian Tugas Guru 2026, tapi ANGKANYA KOSONG di dokumen client —
+/// model disiapkan lebih dulu, pengisian menunggu data dari client.
+model BebanJam {
+  id            BigInt  @id @default(autoincrement())
+  pegawaiId     BigInt  @map("pegawai_id")
+  tahunAjaranId Int?    @map("tahun_ajaran_id")
+  mapel         String? @db.VarChar(160)
+  jumlahJam     Int?    @map("jumlah_jam")
+  keterangan    String? @db.VarChar(255)
+
+  pegawai     Pegawai      @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+  tahunAjaran TahunAjaran? @relation(fields: [tahunAjaranId], references: [id])
+
+  @@index([pegawaiId])
+  @@map("beban_jam")
+}
+
+/// Arsip SK kepegawaian. Berkas asli TIDAK disajikan lewat `public/` —
+/// mengikuti pola `docs-assets/` + route bergerbang (lihat
+/// app/docs/tangkapan/[nama]/route.ts); `fileUrl` di sini menyimpan nama
+/// berkas relatif ke direktori aman itu, bukan URL publik.
+model ArsipSk {
+  id        BigInt   @id @default(autoincrement())
+  nomor     String   @db.VarChar(64)
+  judul     String   @db.VarChar(200)
+  tgl       DateTime @db.Date
+  jenis     String   @db.VarChar(64)
+  pegawaiId BigInt?  @map("pegawai_id")
+  fileUrl   String?  @map("file_url") @db.VarChar(255)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  pegawai Pegawai? @relation(fields: [pegawaiId], references: [id])
+
+  @@index([jenis])
+  @@map("arsip_sk")
 }
 
 /// Jadwal Madrasah Diniyah, terpisah dari `JadwalPelajaran` karena kuncinya

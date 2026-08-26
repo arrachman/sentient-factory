@@ -4,6 +4,42 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-26 — Fase 6: modul Kepegawaian (piket, jurnal, presensi, SK)
+
+Lima model baru (`JadwalPiket`, `JurnalMengajar`, `PresensiPegawai`,
+`BebanJam`, `ArsipSk`) lewat migrasi aditif — nol `DROP`/`TRUNCATE`, data
+lama utuh (87 santri, 29 pegawai). Menu `kepegawaian` + 5 tab, berkas SK
+disajikan lewat route bergerbang `berkas/[nama]/route.ts`, **bukan**
+`public/`.
+
+**Jadwal piket terisi 5 dari 17 baris.** Sumbernya foto tabel MPLS, yang
+client konfirmasi dipakai sebagai piket reguler. Yang perlu diketahui
+operator:
+
+- **12 baris dilewati, tidak membatalkan seluruh impor** (kebijakan sama
+  dengan `import-siswa-smp.ts`). Keduabelas nama itu tidak ada di tabel
+  `Pegawai` sama sekali — seluruhnya diduga **guru SMP, yang datanya memang
+  belum pernah diserahkan client**. Menahan 5 baris yang sudah pasti benar
+  berarti reminder piket Fase 7.2 tak bisa diuji sampai data itu tiba.
+- **Tiga ejaan diperbaiki lewat pemetaan eksplisit** (`EJAAN_FOTO` di
+  `import-piket.ts`), masing-masing hanya punya satu kandidat: "M. Bismar
+  As-Shidiq" → `Muhammmad Bismar As Sidiq` (tiga m), "Muchammad Said" →
+  `Fitri Muchammad Sa’id` (apostrof U+2019), "Warda Haizatil" →
+  `Wardatul Haizatil Husna`. Pencocokan itu sendiri **tidak dilonggarkan**.
+- **Jum'at hanya 2 shift**, bukan 3 seperti hari lain → total 17 baris, bukan
+  18. Shift kedua Jum'at (09.00-11.05) juga tidak nyambung dari shift pertama
+  (07.00-09.35) — kemungkinan salah cetak di sumber, **diimpor apa adanya**.
+- `JadwalPiket` diberi `@@unique([hari, waktuMulai])` supaya importir
+  idempoten; dibuktikan dengan jalan dua kali, tetap 5 baris.
+- `BebanJam` dan `ArsipSk` sengaja masih kosong (belum ada sumber datanya).
+
+**Bug seed yang ikut ketemu & dibereskan**: `seed.ts` mengasumsikan satu wali
+utama per santri, padahal importir data client menandai **ayah dan ibu**
+sebagai kontak utama (itu benar — keduanya dihubungi). Akibatnya seed jatuh
+dengan P2002 di `user_username_key` karena mencoba membuat dua akun
+`wali.<nis>`. Kini pemegang akun dipilih deterministik (`waliId` terkecil);
+wali lain tetap ada sebagai relasi, hanya tanpa akun login.
+
 ## 2026-08-26 — `43d6745b` — Fase 3: importir XLSX data client nyata
 
 Data client sungguhan masuk ke DB, menggantikan sebagian data fiktif
