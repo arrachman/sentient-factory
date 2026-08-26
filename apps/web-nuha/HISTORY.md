@@ -4,6 +4,33 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-26 — `7d188296` — Rencana import data client + template keuangan
+
+- Audit 14 dokumen client di `docs/` (XLSX/PDF/DOCX/CSV) dibandingkan dengan
+  `prisma/schema.prisma` dan `prisma/proto-data.json`. Hasilnya
+  `docs/RENCANA-IMPORT.md`: 6 fase, dari perubahan skema sampai fitur baru.
+- **MA dikonfirmasi baru berjalan 2 tahun** — hanya kelas X (8 siswa,
+  TA 2026/2027) dan XI (11 siswa, TA 2025/2026), total 19. Kelas XII belum
+  ada dan **bukan** data yang hilang; jadwal client pun hanya X & XI.
+- Temuan skema yang menghalangi impor: enum `StatusHadir` tidak punya
+  `Terlambat`/`PulangCepat` padahal itu metrik utama di presensi MA;
+  `Kelas` belum di-scope tahun ajaran sehingga "X" dua angkatan bertabrakan;
+  `Santri.nis` wajib tapi kolom NIS di seluruh data client kosong (hanya
+  NISN); jadwal memakai nama panggilan guru ("B. Hasni", "Miss Via") yang
+  tidak sama dengan nama resmi sehingga pencocokan by-nama pasti pecah.
+- Madrasah Diniyah diusulkan jadi `Unit` sendiri (7 jenjang I'dad–Enam,
+  22 asatidz) dengan model `JadwalDiniyah` terpisah — `JadwalPelajaran`
+  tidak cocok karena kuncinya `@@unique([hari, jamKe, kelas])` sedangkan
+  Madin berbasis kitab dan tempat non-kelas.
+- **Dampak operasional**: `prisma/proto-data.json` masih 100% fiktif; tidak
+  ada satu pun nama nyata dari client yang sudah masuk sistem.
+- Template keuangan di `docs/templates/` (tagihan, pembayaran, gaji, kas)
+  karena client belum menyerahkan data keuangan sama sekali. Kolomnya
+  mengikuti persis field model Prisma; NISN dipakai sebagai kunci santri
+  karena NIS belum ditetapkan.
+- **Berkas sumber client sengaja tidak di-commit** — memuat NIK, no. KK,
+  dan nomor HP siswa serta orang tua yang nyata.
+
 ## 2026-08-24 — `749ad0a4` — Pagination di pengguna, PPDB, tunggakan, kurikulum, CRUD generik
 
 - Molecule `components/molecules/Pagination.tsx` + util
