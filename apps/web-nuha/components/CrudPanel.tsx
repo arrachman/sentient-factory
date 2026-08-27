@@ -118,6 +118,12 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
       // Kotak centang mengirim satu entri per pilihan; gabungkan jadi daftar koma.
       else if (field.type === 'pilihan-banyak') payload[field.name] = form.getAll(field.name).join(',');
       else payload[field.name] = form.get(field.name);
+      // Field virtual dilewati validasi server (`coerce`), jadi yang wajib
+      // dijaga di sini — mis. wali yang harus punya minimal satu santri.
+      if (field.virtual && field.required && field.type === 'orang-banyak') {
+        const isi = String(payload[field.name] ?? '');
+        if (!isi || isi === '[]') return setMessage(`${field.label} wajib diisi minimal satu.`);
+      }
     }
     if (editing) payload.id = editing.id;
     await send(editing ? 'PATCH' : 'POST', payload);

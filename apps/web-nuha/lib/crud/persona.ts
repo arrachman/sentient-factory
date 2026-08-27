@@ -29,10 +29,14 @@ const peranWali: Field = {
   hint: 'Boleh lebih dari satu; yang pertama jadi wali utama.',
 };
 
+/**
+ * Wajib di persona Wali — status "wali" hanya ada sebagai relasi ke santri, jadi
+ * wali tanpa santri tidak akan pernah muncul lagi di daftarnya sendiri.
+ */
 const peranAnak: Field = {
   name: 'peranAnak', label: 'Santri yang diwalikan', type: 'orang-banyak', virtual: true, span: 3, group: 'Data perwalian',
-  hubungan: HUBUNGAN_WALI, hanyaSantri: true, placeholder: 'Klik untuk melihat daftar santri…',
-  hint: 'Boleh lebih dari satu santri.',
+  hubungan: HUBUNGAN_WALI, hanyaSantri: true, required: true, placeholder: 'Klik untuk melihat daftar santri…',
+  hint: 'Wajib minimal satu santri — status wali disimpan sebagai relasi ke santrinya.',
 };
 
 /**
