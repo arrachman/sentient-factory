@@ -4,6 +4,31 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Profil kelembagaan tiap unit & yayasan (`71b07f76`)
+
+Identitas lembaga (nama resmi, logo, kepala unit, alamat, NPSN) sebelumnya
+hardcoded di JSX ~14 berkas dan tak punya model. Tabel `unit` kini punya kolom
+profil: `nama_resmi`, `jenjang`, `npsn`, `akreditasi`, `tahun_berdiri`,
+`logo_path`, `alamat`, `telepon`, `email`, `website`, `kepala_nama`,
+`kepala_jabatan`, `kepala_pegawai_id` (FK ke `pegawai`), `visi`, `misi`.
+Tabel baru `profil_lembaga` (satu baris, `key = "yayasan"`) memuat identitas
+yayasan induk: ketua yayasan, pengasuh, akta, rekening resmi, nama Arab, visi
+& misi. Migrasi `20260827160000_profil_unit_lembaga`.
+
+Data seed-dasar mengisi keempat unit (SMP, MA, Pondok, Poskestren) + yayasan.
+Kepala MA memakai nama dari SK struktur (Tika Kartika, S.Pd); ketua yayasan
+`KH. Ahmad Zainuri, M.Ag.` dan sebagian NPSN masih nilai contoh yang perlu
+dikoreksi operator. `tautkanKepalaUnit()` memaut `kepala_pegawai_id` bila ada
+pegawai bernama sama — saat ini belum ada yang cocok, jadi tampilan jatuh ke
+teks `kepala_nama` (memang dirancang sebagai fallback).
+
+Tab Pengaturan → Unit berubah dari tabel ringkas jadi kartu profil per unit
+plus kartu profil yayasan di atasnya; masih read-only.
+
+Dampak: konsumen identitas lembaga (kop slip gaji, footer publik, rekening di
+portal wali) belum dipindahkan ke tabel ini — masih hardcoded, kandidat
+pekerjaan lanjutan.
+
 ## 2026-08-27 — Kelas: wali kelas & tahun pelajaran jadi lookup nama (`71b07f76`)
 
 Entitas `kelas` di /data/kelas sebelumnya menampilkan dan meminta ID mentah
