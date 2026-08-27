@@ -4,6 +4,18 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Kelola Data: aksi jadi ikon, limit paginasi (439bdcf2)
+
+Tombol aksi tambah/ubah/hapus di `CrudPanel` diganti ikon saja (plus,
+pensil, tong sampah — SVG inline, bukan dependensi baru) dengan
+`title`/`aria-label` untuk aksesibilitas; hemat ruang di tabel compact.
+Halaman `/data/[entity]` sekarang punya dropdown "Baris per halaman"
+(10/25/50/100, default 10, sebelumnya hardcode 25) lewat komponen
+klien baru `LimitPicker` (`components/molecules/LimitPicker.tsx`) dan
+util `bacaLimit`/`OPSI_LIMIT` di `components/utils/pagination.ts`.
+`engine.listRows` menerima parameter `ukuranHalaman` (default 10).
+Tidak ada perubahan skema atau akses.
+
 ## 2026-08-27 — Kelola Data: tabel compact, form jadi modal, vlookup unit/kelas/kamar (dcdb90ad)
 
 Halaman `/data` (Kelola Data): tabel CRUD kini padat (`table-compact`,
