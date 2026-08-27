@@ -4,7 +4,7 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
-## 2026-08-27 — Semua santri berstatus mukim (`PENDING`)
+## 2026-08-27 — Semua santri berstatus mukim (`bceca301`)
 
 Status `Kalong` dihapus dari model dan seluruh UI: semua data santri/siswa
 pasti mukim, bukan kalong.
