@@ -4,6 +4,13 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Filter /data/* otomatis saat diubah
+
+`components/molecules/FilterBar.tsx` jadi client component: dropdown filter
+langsung submit form GET saat `onChange`, kotak "Cari" submit setelah jeda
+ketik 400 ms (debounce). Tombol filter dan Reset tetap ada sebagai fallback
+tanpa JS. Berlaku untuk semua halaman `/data/<entity>`, bukan hanya `orang`.
+
 ## 2026-08-27 — Hapus panel "Hubungkan wali ke santri" di /data/orang
 
 Tombol `+ Hubungkan wali ke santri` di bawah tabel Identitas orang dihapus atas
