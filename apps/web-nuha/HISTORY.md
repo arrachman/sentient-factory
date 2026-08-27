@@ -4,6 +4,20 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Master data kesehatan santri + CRUD-nya (pending)
+
+Tabel `profil_kesehatan` yang selama ini hanya diisi importir MA kini punya
+halaman CRUD di `/data/profil-kesehatan` (hak akses menu Poskestren). Kolom
+baru: `gol_darah`, `alergi`, `catatan`, `updated_at`. Primary key dipindah dari
+`santri_id` ke `id` sintetis karena engine CRUD generik selalu memakai kolom
+`id`; `santri_id` tetap unik, jadi satu santri tetap hanya boleh punya satu
+profil. Migrasi `20260827090000_profil_kesehatan_crud` membuat unique index
+lebih dulu sebelum men-drop PK — FK ke `santri` masih membutuhkan indeks itu.
+
+Dampak operator: santri dipilih lewat dropdown nama, bukan diketik ID-nya.
+Profil kesehatan ini kondisi dasar sekali-isi; pemeriksaan per kunjungan tetap
+di modul Rekam medis.
+
 ## 2026-08-27 — Grup "Data pribadi" di form CRUD bisa dilipat (pending)
 
 Legend grup form kini bisa jadi tombol lipat. Grup di `GRUP_CIUT`
