@@ -9,12 +9,12 @@ function buildWhere(entity: Entity, filters: Filters): Record<string, unknown> |
   const and: Record<string, unknown>[] = [];
   const q = filters.q?.trim();
   if (q) {
-    const stringFields = entity.fields.filter((field) => !field.ref && (field.type === 'text' || field.type === 'textarea')).map((field) => field.name);
+    const stringFields = entity.fields.filter((field) => !field.ref && !field.virtual && (field.type === 'text' || field.type === 'textarea')).map((field) => field.name);
     if (stringFields.length) and.push({ OR: stringFields.map((name) => ({ [name]: { contains: q } })) });
   }
   for (const field of entity.fields) {
     const value = filters[field.name];
-    if (!value) continue;
+    if (!value || field.virtual) continue;
     if (field.ref) and.push({ [field.name]: field.ref.idType === 'bigint' ? BigInt(value) : Number(value) });
     else if (field.type === 'select') and.push({ [field.name]: value });
   }
@@ -57,6 +57,8 @@ export function coerce(entity: Entity, input: Record<string, unknown>, partial =
   const errors: string[] = [];
 
   for (const field of entity.fields) {
+    // Field virtual (mis. pilihan peran) ditangani hook `sesudahBuat`, bukan Prisma.
+    if (field.virtual) continue;
     if (!(field.name in input)) {
       if (!partial && field.required) errors.push(`${field.label} wajib diisi.`);
       continue;

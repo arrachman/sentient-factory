@@ -49,14 +49,28 @@ function PanelKeterkaitan({ kait }: { kait: Keterkaitan[] }) {
   </div>;
 }
 
+/** Nilai field yang men-drive `tampilBila` milik field lain. */
+function nilaiPemicu(fields: ClientField[], dipilih: Record<string, string>): Record<string, string> {
+  const hasil: Record<string, string> = {};
+  for (const field of fields) {
+    if (!field.tampilBila) continue;
+    const pemicu = fields.find((item) => item.name === field.tampilBila!.field);
+    if (!pemicu) continue;
+    hasil[pemicu.name] = dipilih[pemicu.name] ?? '';
+  }
+  return hasil;
+}
+
 export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Row | null>(null);
+  const [pilihan, setPilihan] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const refByField = new Map(entity.fields.filter((field) => field.refOptions).map((field) => [field.name, field.refOptions]));
   const adaKait = rows.some((row) => row._kait);
+  const pemicu = nilaiPemicu(entity.fields, pilihan);
 
   async function send(method: 'POST' | 'PATCH' | 'DELETE', payload: Record<string, unknown>) {
     setBusy(true);
@@ -70,12 +84,26 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
     router.refresh();
   }
 
+  /**
+   * Field peran hanya relevan saat membuat baris baru, dan turunannya hanya
+   * saat perannya cocok — sisanya bikin form panjang tanpa guna.
+   */
+  const terlihat = (field: ClientField) => {
+    if (field.hanyaBaru && editing) return false;
+    if (!field.tampilBila) return true;
+    const nilai = pemicu[field.tampilBila.field] ?? '';
+    return field.tampilBila.sama.includes(nilai);
+  };
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage('');
     const form = new FormData(event.currentTarget);
     const payload: Record<string, unknown> = {};
-    for (const field of entity.fields) payload[field.name] = field.type === 'boolean' ? form.get(field.name) === 'on' : form.get(field.name);
+    for (const field of entity.fields) {
+      if (!terlihat(field)) continue;
+      payload[field.name] = field.type === 'boolean' ? form.get(field.name) === 'on' : form.get(field.name);
+    }
     if (editing) payload.id = editing.id;
     await send(editing ? 'PATCH' : 'POST', payload);
   }
@@ -83,7 +111,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
   return <div className="card" style={{ marginTop: 16 }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
       <h3 className="card-judul" style={{ margin: 0 }}>{entity.label}</h3>
-      <button className="btn" type="button" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 38, padding: '0 16px' }} onClick={() => { setEditing(null); setOpen(!open); setMessage(''); }} data-testid={`tambah-${entity.key}`} title={open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`}><IkonTambah /> Tambah</button>
+      <button className="btn" type="button" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 38, padding: '0 16px' }} onClick={() => { setEditing(null); setPilihan({}); setOpen(!open); setMessage(''); }} data-testid={`tambah-${entity.key}`} title={open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`}><IkonTambah /> Tambah</button>
     </div>
     {message && <p className="muted" role="status" style={{ marginTop: 8 }}>{message}</p>}
 
@@ -99,7 +127,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
         {entity.deskripsi && <p className="kait-deskripsi">{entity.deskripsi}</p>}
         {editing?._kait && <PanelKeterkaitan kait={editing._kait} />}
         <form onSubmit={submit} data-testid={`form-${entity.key}`}>
-          {kelompokkan(entity.fields).map((grup) => <fieldset className="grup-form" key={grup.judul}>
+          {kelompokkan(entity.fields.filter(terlihat)).map((grup) => <fieldset className="grup-form" key={grup.judul}>
           <legend>{grup.judul}</legend>
           <div className="grid g3">
             {grup.fields.map((field) => <div className="field" key={field.name} style={field.span ? { gridColumn: `span ${field.span}` } : undefined}>
@@ -107,7 +135,12 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
                 {field.label}
                 {field.required && <span className="wajib" title="Wajib diisi"> *</span>}
               </label>
-              <InputField field={field} id={`${entity.key}-${field.name}`} row={editing ?? undefined} />
+              <InputField
+                field={field}
+                id={`${entity.key}-${field.name}`}
+                row={editing ?? undefined}
+                onPilih={field.name in pemicu ? (value) => setPilihan((prev) => ({ ...prev, [field.name]: value })) : undefined}
+              />
               {field.hint && <p className="petunjuk">{field.hint}</p>}
             </div>)}
           </div>

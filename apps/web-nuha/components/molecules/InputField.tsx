@@ -12,11 +12,13 @@ const nilaiAwal = (field: ClientField, row?: Row) => {
 /** Pilihan sedikit (≤3) lebih cepat dibaca sebagai tombol daripada dropdown. */
 const AMBANG_SEGMEN = 3;
 
-type Props = { field: ClientField; id: string; row?: Row };
+/** `onPilih` dipakai form untuk menampilkan field lanjutan sesuai opsi terpilih. */
+type Props = { field: ClientField; id: string; row?: Row; onPilih?: (nilai: string) => void };
 
 /** Satu kontrol form sesuai tipe field — segmented untuk opsi sedikit, toggle untuk boolean. */
-export function InputField({ field, id, row }: Props) {
+export function InputField({ field, id, row, onPilih }: Props) {
   const nilai = nilaiAwal(field, row);
+  const lapor = onPilih ? (event: { target: { value: string } }) => onPilih(event.target.value) : undefined;
 
   if (field.type === 'boolean') {
     const aktif = row ? Boolean(row[field.name]) : true;
@@ -39,12 +41,12 @@ export function InputField({ field, id, row }: Props) {
     if (field.options.length <= AMBANG_SEGMEN) {
       return <div className="segmen" role="radiogroup" aria-labelledby={`${id}-label`}>
         {field.options.map((option) => <label className="segmen-opsi" key={option}>
-          <input type="radio" name={field.name} value={option} required={field.required} defaultChecked={nilai === option} />
+          <input type="radio" name={field.name} value={option} required={field.required} defaultChecked={nilai === option} onChange={lapor} />
           <span>{field.optionLabels?.[option] ?? option}</span>
         </label>)}
       </div>;
     }
-    return <select id={id} name={field.name} required={field.required} defaultValue={nilai}>
+    return <select id={id} name={field.name} required={field.required} defaultValue={nilai} onChange={lapor}>
       <option value="">Pilih…</option>
       {field.options.map((option) => <option key={option} value={option}>{field.optionLabels?.[option] ?? option}</option>)}
     </select>;

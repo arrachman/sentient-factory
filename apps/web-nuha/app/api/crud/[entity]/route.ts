@@ -36,6 +36,10 @@ export async function POST(request: Request, context: { params: Promise<{ entity
   if (parsed.errors.length) return responseError(parsed.errors[0], 400);
   try {
     const row = await delegateFor(auth.entity).create({ data: parsed.data });
+    // Field virtual (mis. pilihan peran orang) ditindaklanjuti setelah barisnya ada.
+    if (auth.entity.sesudahBuat) {
+      await auth.entity.sesudahBuat(String(row.id), body as Record<string, unknown>, { id: auth.session.userId, nama: auth.session.nama });
+    }
     await recordAudit({ aksi: 'CRUD_CREATE', entitas: auth.entity.model, entitasId: String(row.id), ringkasan: `Membuat ${auth.entity.label}`, perubahan: parsed.data, aktor: { id: auth.session.userId, nama: auth.session.nama }, ip: requestIp(request) });
     return Response.json({ success: true, data: serialize(row), error: null }, { status: 201 });
   } catch (error) {

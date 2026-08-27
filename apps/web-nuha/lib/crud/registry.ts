@@ -1,4 +1,5 @@
 import type { Entity } from './types';
+import { FIELD_PERAN, daftarkanPeran } from './peran-orang';
 
 const text = (name: string, label: string, required = true) => ({ name, label, type: 'text' as const, required });
 const number = (name: string, label: string, required = false) => ({ name, label, type: 'number' as const, required, step: 1 });
@@ -28,9 +29,11 @@ export const ENTITIES: Entity[] = [
       { ...text('kecamatan', 'Kecamatan', false), group: 'Alamat', placeholder: 'Kedungkandang' },
       { ...text('kabupaten', 'Kota / kabupaten', false), group: 'Alamat', placeholder: 'Kota Malang' },
       { name: 'aktif', label: 'Status keaktifan', type: 'boolean', labelYa: 'Aktif', group: 'Status', span: 3, hint: 'Nonaktifkan alih-alih menghapus bila orang ini sudah tidak berkegiatan — riwayat di modul lain tetap utuh.' },
+      ...FIELD_PERAN,
     ],
     columns: columns(['nama', 'Nama'], ['jk', 'JK'], ['hp', 'HP'], ['email', 'Email'], ['aktif', 'Aktif']),
     orderBy: { nama: 'asc' },
+    sesudahBuat: daftarkanPeran,
   },
   { key: 'santri', menu: 'induk', model: 'santri', label: 'Santri', idType: 'bigint', fields: [number('orangId', 'ID Orang (buat dulu di menu Identitas Orang)', true), text('nis', 'NIS', false), text('nisn', 'NISN', false), { ...number('unitId', 'Unit'), ref: { model: 'unit', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kelasId', 'Kelas'), ref: { model: 'kelas', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kamarId', 'Kamar'), ref: { model: 'kamar', label: 'kode', orderBy: { kode: 'asc' } } }, { name: 'status', label: 'Status', type: 'select', options: ['Mukim', 'Kalong', 'Alumni', 'Keluar'], required: true }, text('program', 'Program', false), text('tahunMasuk', 'Tahun masuk', false)], columns: columns(['orangId', 'ID Orang'], ['nis', 'NIS'], ['nisn', 'NISN'], ['status', 'Status'], ['tahunMasuk', 'Tahun masuk']), orderBy: { createdAt: 'desc' } },
   { key: 'unit', menu: 'pengaturan', model: 'unit', label: 'Unit pendidikan', idType: 'int', fields: [text('key', 'Kode'), text('nama', 'Nama'), text('deskripsi', 'Deskripsi', false), { name: 'aktif', label: 'Aktif', type: 'boolean' }], columns: columns(['key', 'Kode'], ['nama', 'Nama'], ['deskripsi', 'Deskripsi'], ['aktif', 'Aktif']), orderBy: { nama: 'asc' } },

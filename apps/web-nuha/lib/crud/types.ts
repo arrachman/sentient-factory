@@ -33,6 +33,12 @@ export type Field = {
   labelYa?: string;
   /** Lebar kolom di grid form: 1 (default) sampai 3. */
   span?: 1 | 2 | 3;
+  /** Tidak disimpan ke kolom tabel; hanya dibaca oleh hook `sesudahBuat`. */
+  virtual?: boolean;
+  /** Hanya tampil saat menambah baris baru, bukan saat mengubah. */
+  hanyaBaru?: boolean;
+  /** Tampil hanya bila field lain bernilai salah satu dari `sama`. */
+  tampilBila?: { field: string; sama: string[] };
 };
 
 /** Tautan ke modul lain yang memakai baris ini (mis. Orang → Santri/Pegawai/Akun). */
@@ -53,6 +59,11 @@ export type Entity = {
   include?: Record<string, unknown>;
   orderBy?: Record<string, 'asc' | 'desc'>;
   take?: number;
+  /**
+   * Dijalankan setelah baris baru dibuat, untuk menindaklanjuti field virtual
+   * (mis. mendaftarkan orang baru sebagai santri/pegawai/wali).
+   */
+  sesudahBuat?: (id: string, input: Record<string, unknown>, aktor: { id: string; nama: string }) => Promise<void>;
 };
 
 /** Serializable field shape handed to the browser (no Prisma types cross over). */

@@ -4,6 +4,27 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Fitur: penentuan peran saat menambah identitas orang
+
+Form "Tambah identitas orang" (`/data/orang`) dapat bagian **Peran**: satu
+pilihan Santri / Guru / Staf / Wali murid / Belum ditentukan, dengan field
+lanjutan yang muncul sesuai pilihan (NIS + status, NIP + jabatan, atau anak +
+hubungan). Setelah identitas tersimpan, baris `santri` / `pegawai` /
+`relasi_wali` dibuat otomatis dan dicatat ke audit log (entitas
+`orang_peran`).
+
+Dampak operator: tidak perlu lagi membuat orang lalu menyalin ID Orang ke
+modul Santri/Kepegawaian secara manual. NIP yang dikosongkan diisi cadangan
+deterministik `NIP-<id>` (skema mewajibkan NIP unik) — perbaiki di modul
+Kepegawaian bila NIP resminya sudah ada. Bagian Peran hanya tampil saat
+menambah, tidak saat mengubah; peran yang sudah melekat tetap terlihat di
+panel keterkaitan.
+
+Teknis: registry CRUD kini mengenal field `virtual` (tidak dikirim ke Prisma),
+`hanyaBaru`, dan `tampilBila`, plus hook `sesudahBuat` per-entitas
+(`lib/crud/peran-orang.ts`). Hook idempoten — orang yang sudah punya baris
+santri/pegawai dibiarkan.
+
 ## 2026-08-27 — Refactor: relasi wali digabung ke halaman Identitas orang
 
 Halaman terpisah `/data/wali` dihapus. Fitur "Hubungkan wali ke santri",
