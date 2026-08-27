@@ -4,6 +4,25 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — `7b35e51e` Penamaan kelas: angka, huruf hanya bila >1 rombel
+
+Struktur rombel disetel sesuai kondisi riil: tiap tingkat hanya satu kelas,
+kecuali SMP kelas 9 yang punya dua (9A, 9B). Baris `kelas` di tahun ajaran
+aktif kini: SMP `7`, `8`, `9A`, `9B`; MA `10`, `11`, `12` (dulu `X`/`XI`/`XII`);
+Pondok `Diniyah Wustha`. Semua baris `kelas` warisan tanpa `tahun_ajaran_id`
+(7A–7C, 8A–8D, 9A–9C lama) dihapus — tidak ada santri/jadwal/sesi yang
+mereferensinya (DB memang masih kosong pasca seed-dasar).
+
+Importir ikut disesuaikan supaya tidak menghidupkan nama lama:
+`import-siswa-smp.ts` kini menurunkan nama kelas dari jumlah rombel per
+tingkat (huruf hanya dipakai bila tingkat itu punya >1 identitas kelas),
+`import-siswa-ma.ts` dan `import-jadwal-ma.ts` memakai `10`/`11` menggantikan
+`X`/`XI`.
+
+**Dampak operator**: jadwal MA yang sudah pernah diimpor dengan `kelas` =
+`X`/`XI` (tabel `jadwal_pelajaran`, dicocokkan lewat string, bukan FK) perlu
+diimpor ulang agar cocok dengan penamaan baru. Saat ini tabel itu kosong.
+
 ## 2026-08-26 — Rapikan kelas MA jadi tingkat saja (perubahan data, bukan kode)
 
 Lanjutan pembersihan dummy: rombel MA contoh (`X-IPA-1`, `XII-Keagamaan`,
