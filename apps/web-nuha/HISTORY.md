@@ -4,6 +4,54 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — CRUD khusus per persona: Santri, Guru, Staf, Wali santri
+
+Hash: `71b07f76` (entitas persona, ikut commit lookup kelas) + `71f9fbf4`
+(field wajib wali + dokumentasi).
+
+Halaman `/data` kini dibuka oleh kelompok **"Data orang per peran"** berisi
+empat pintasan CRUD satu-layar: `/data/santri-orang`, `/data/guru-orang`,
+`/data/staf-orang`, `/data/wali-orang`. Semuanya menulis ke tabel `orang`
+yang sama seperti "Identitas orang", tapi perannya sudah dikunci lewat
+`Entity.whereDasar` (klausa `where` yang selalu berlaku) — jadi tidak ada
+kotak centang peran yang perlu diisi, dan daftarnya hanya memuat orang yang
+memang berperan itu.
+
+Implementasi: `lib/crud/persona.ts` (resep per persona) + `lib/crud/orang-fields.ts`
+(field identitas dasar yang kini dipakai bersama entitas `orang` dan keempat
+persona, supaya labelnya tidak bercabang). `lampirkanKeterkaitan` sekarang
+memicu pada `entity.model === 'orang'`, bukan `entity.key === 'orang'`,
+sehingga badge peran juga tampil di halaman persona.
+
+Yang perlu diketahui operator:
+- **Menambah lewat persona = identitas + baris peran sekaligus.** Tidak perlu
+  lagi membuat orang dulu lalu menyalin ID Orang ke modul Santri/Kepegawaian.
+  NIP dibuatkan otomatis bila dikosongkan.
+- **Menghapus di halaman persona menghapus identitas orangnya**, dan baris
+  santri/pegawai/relasinya ikut terhapus (`onDelete: Cascade`). Untuk sekadar
+  menonaktifkan, pakai toggle "Status keaktifan".
+- **Persona Wali mewajibkan minimal satu santri.** Status wali hanya ada
+  sebagai relasi ke santri, jadi wali tanpa santri tersimpan tapi langsung
+  hilang dari daftarnya sendiri — bug ini ketemu saat verifikasi dan sudah
+  ditutup. Validasinya di klien (`CrudPanel`) karena `coerce` di server
+  melewati field virtual.
+- **Guru vs staf dibedakan dari kata "Guru" pada jabatan**, konsisten dengan
+  filter Kategori yang sudah ada. Mengganti jabatan bisa memindahkan orang
+  antar dua daftar itu.
+- Label lama diperjelas: `/data/santri` → "Santri (detail akademik)" dan
+  `/data/pegawai` → "Kepegawaian (detail)", untuk kolom lanjutan (unit, kelas,
+  kamar, rekening, jam mengajar). Kartu "Wali santri" yang dulu menunjuk
+  `/data/orang#wali` diganti pintasan persona.
+
+Verifikasi (Playwright ke `http://202.59.200.26:3226`, login riil): keempat
+kartu tampil; daftar tersaring benar (santri 89, guru 16, staf 1, wali 103);
+tambah berhasil di keempat persona dengan badge peran yang tepat
+(Santri/Pegawai/Pegawai/Wali); form ubah memuat NIS tersimpan dan perubahan
+tersimpan; wali tanpa santri ditolak dengan pesan; peran tanpa hak akses
+(akun santri) dialihkan ke `/`; baris DB dan `audit_log` (entitas
+`orang_peran`) dicek langsung di MySQL; data uji dihapus setelahnya. Tanpa
+`pageerror`. `npx tsc --noEmit` bersih.
+
 ## 2026-08-27 — Impor 11 siswa MA Kelas X TA 2025/2026 + koreksi `jk` wali
 
 Importir baru `prisma/import/import-siswa-ma-2025.ts` (`npm run
