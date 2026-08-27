@@ -3,9 +3,6 @@ import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/templates/Shell';
 import { JudulHalaman, Kosong, type TabDef } from '@/components';
-import { CrudPanel } from '@/components/CrudPanel';
-import { getEntity } from '@/lib/crud/registry';
-import { listRows, toClientEntity } from '@/lib/crud/engine';
 import { BarisFilter } from './BarisFilter';
 import { DaftarSantri } from './DaftarSantri';
 import { PohonLembaga } from './PohonLembaga';
@@ -43,8 +40,7 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
 
   const where = whereFilter(f);
 
-  const entitasSantri = getEntity('santri')!;
-  const [daftar, pohon, angkatan, barisCrud] = await Promise.all([
+  const [daftar, pohon, angkatan] = await Promise.all([
     prisma.santri.findMany({
       where,
       select: {
@@ -57,7 +53,6 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
     }),
     ambilPohon(f),
     ambilAngkatan(),
-    listRows(entitasSantri),
   ]);
 
   const selRaw = ambil('sel');
@@ -69,14 +64,17 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
 
   return (
     <Shell session={session} active="induk" title="Data Induk Santri">
-      <JudulHalaman
-        judul="Data Induk Santri & Siswa"
-        sub="Telusuri per lembaga, tingkat, dan kelas — lalu buka satu profil yang menyatukan data akademik, kepesantrenan, kesehatan, dan keuangan."
-      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
+        <JudulHalaman
+          judul="Data Induk Santri & Siswa"
+          sub="Telusuri per lembaga, tingkat, dan kelas — lalu buka satu profil yang menyatukan data akademik, kepesantrenan, kesehatan, dan keuangan."
+        />
+        <Link href="/data/santri" className="btn" style={{ marginTop: 4, whiteSpace: 'nowrap' }}>
+          + Tambah siswa
+        </Link>
+      </div>
 
       <BarisFilter f={f} angkatan={angkatan} hasil={daftar.length} />
-
-      <CrudPanel entity={toClientEntity(entitasSantri)} rows={barisCrud} />
 
       <div className="grid" style={{ gridTemplateColumns: '250px 300px 1fr', alignItems: 'start', marginTop: 14 }}>
         <div className="card" style={{ padding: 12 }}>

@@ -33,6 +33,7 @@ export function DaftarSantri({
           <Link
             key={String(baris.id)}
             href={hrefInduk(f, {}, { sel: baris.id, tab })}
+            className="baris-santri"
             style={{
               display: 'flex', gap: 10, alignItems: 'center', padding: '9px 10px', borderRadius: 10,
               borderLeft: `3px solid ${aktif ? 'var(--hijau)' : 'transparent'}`,
