@@ -58,8 +58,8 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
 
   return <div className="card" style={{ marginTop: 16 }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-      <h3 style={{ margin: 0 }}>{entity.label}</h3>
-      <button className="btn btn-icon" type="button" onClick={() => { setEditing(null); setOpen(!open); setMessage(''); }} data-testid={`tambah-${entity.key}`} title={open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`} aria-label={`Tambah ${entity.label.toLowerCase()}`}><IkonTambah /></button>
+      <h3 className="card-judul" style={{ margin: 0 }}>{entity.label}</h3>
+      <button className="btn" type="button" style={{ display: 'inline-flex', alignItems: 'center', gap: 7, height: 38, padding: '0 16px' }} onClick={() => { setEditing(null); setOpen(!open); setMessage(''); }} data-testid={`tambah-${entity.key}`} title={open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`}><IkonTambah /> Tambah</button>
     </div>
     {message && <p className="muted" role="status" style={{ marginTop: 8 }}>{message}</p>}
 
@@ -100,12 +100,12 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
 
     <div className="tabel-wrap">
       <table className="table-compact" style={{ marginTop: 12 }}>
-        <thead><tr>{entity.columns.map((column) => <th key={column.name}>{column.label}</th>)}<th style={{ textAlign: 'center' }}>Aksi</th></tr></thead>
+        <thead><tr>{entity.columns.map((column) => <th key={column.name}>{column.label}</th>)}<th style={{ textAlign: 'center', width: 1, whiteSpace: 'nowrap' }}>Aksi</th></tr></thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={entity.columns.length + 1} className="muted">Belum ada data.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={entity.columns.length + 1} className="empty">Tidak ada data yang cocok.</td></tr>}
           {rows.map((row) => <tr key={row.id} data-testid={`row-${entity.key}`}>
             {entity.columns.map((column) => <td key={column.name}>{display(row[column.name], refByField.get(column.name))}</td>)}
-            <td><div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+            <td style={{ width: 1, whiteSpace: 'nowrap' }}><div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
               <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Ubah" aria-label="Ubah" onClick={() => { setEditing(row); setOpen(true); setMessage(''); }}><IkonUbah /></button>
               <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Hapus" aria-label="Hapus" onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}><IkonHapus /></button>
             </div></td>

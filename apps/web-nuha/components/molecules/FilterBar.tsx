@@ -15,15 +15,15 @@ export function FilterBar({ entity, hrefBase, filters, limit }: Props) {
   const adaFilterAktif = Boolean(filters.q) || filterableFields.some((field) => filters[field.name]);
 
   return (
-    <form method="get" action={hrefBase} className="card" style={{ marginTop: 16, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+    <form method="get" action={hrefBase} className="card bilah-filter">
       <input type="hidden" name="limit" value={limit} />
-      <div className="field" style={{ minWidth: 200, flex: 1 }}>
+      <div className="bilah-filter-kolom" style={{ flex: '1 1 260px', maxWidth: 420 }}>
         <label htmlFor="filter-q">Cari</label>
-        <input id="filter-q" type="text" name="q" defaultValue={filters.q ?? ''} placeholder="Cari..." />
+        <input id="filter-q" type="text" name="q" defaultValue={filters.q ?? ''} placeholder="Cari nama, kode, atau kata kunci…" />
       </div>
       {filterableFields.map((field) => {
         const options = field.refOptions ?? (field.options ?? []).map((option) => ({ id: option, label: option }));
-        return <div className="field" key={field.name} style={{ minWidth: 160 }}>
+        return <div className="bilah-filter-kolom" key={field.name} style={{ flex: '0 1 190px' }}>
           <label htmlFor={`filter-${field.name}`}>{field.label}</label>
           <select id={`filter-${field.name}`} name={field.name} defaultValue={filters[field.name] ?? ''}>
             <option value="">Semua</option>
@@ -31,7 +31,7 @@ export function FilterBar({ entity, hrefBase, filters, limit }: Props) {
           </select>
         </div>;
       })}
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className="bilah-filter-aksi">
         <button className="btn" type="submit">Filter</button>
         {adaFilterAktif && <a className="btn btn-sekunder" href={`${hrefBase}?limit=${limit}`}>Reset</a>}
       </div>

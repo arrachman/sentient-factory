@@ -40,9 +40,6 @@ export default async function EntityPage({ params, searchParams }: { params: Pro
     </Link>
     <FilterBar entity={clientEntity} hrefBase={`/data/${key}`} filters={filters} limit={limit} />
     <CrudPanel entity={clientEntity} rows={rows} />
-    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
-      <LimitPicker limit={limit} hrefBase={`/data/${key}`} query={fq} />
-    </div>
     <Pagination
       halaman={halaman}
       totalHalaman={totalHalaman}
@@ -50,6 +47,7 @@ export default async function EntityPage({ params, searchParams }: { params: Pro
       jumlahBaris={rows.length}
       ukuranHalaman={limit}
       buatHref={(p) => `/data/${key}?halaman=${p}&limit=${limit}${fq}`}
+      ekstra={<LimitPicker limit={limit} hrefBase={`/data/${key}`} query={fq} />}
     />
   </Shell>;
 }

@@ -31,6 +31,12 @@ resmi) yang menggerbangi endpoint kelola perangkat gateway. Tanpa dua variabel
 wajib itu, compose menolak start. `WA_DRY_RUN=true` (bawaan) menahan pengiriman
 WA sungguhan — jangan setel false saat testing tanpa penerima yang diotorisasi.
 
+**Iterasi UI/kode (default)**: pakai `npm run dev` (hot reload), **jangan**
+`docker compose build` untuk tiap perubahan kecil — rebuild+redeploy standalone
+mahal dan tidak perlu saat masih iterasi. Rebuild Docker hanya saat memang mau
+verifikasi/deploy ke environment uji publik (`http://202.59.200.26:3226`), atau
+saat user eksplisit minta deploy.
+
 ## Arsitektur yang wajib diikuti
 
 1. **RBAC dinamis** — menu per peran hidup di tabel `menu`/`menu_peran`/
