@@ -4,6 +4,20 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Hapus panel "Hubungkan wali ke santri" di /data/orang
+
+Tombol `+ Hubungkan wali ke santri` di bawah tabel Identitas orang dihapus atas
+permintaan user. Karena tombol itu satu-satunya pintu masuk ke panelnya, seluruh
+`app/data/[entity]/wali/` ikut dihapus (FormRelasiWali, PencariOrang, PanelWali,
+actions, konstanta) — bukan hanya tombolnya, supaya tidak meninggalkan kode mati.
+
+**Dampak operasional:** relasi wali↔santri kini **hanya** bisa dibuat lewat
+bagian "Peran" pada form tambah identitas orang (peran Santri → tunjuk wali,
+atau peran Wali murid → tunjuk santri). Aksi hapus relasi dan "jadikan wali
+utama" yang dulu ada di panel itu tidak punya pengganti di UI — bila operator
+perlu mengubah relasi yang sudah ada, itu belum tersedia. `app/docs/isi.ts`
+bagian `kelola-data` sudah dikoreksi mengikuti keadaan baru.
+
 ## 2026-08-27 — UX: form identitas orang diringkas
 
 Putaran ketiga masukan tampilan pada modal Tambah/Ubah identitas orang:

@@ -210,15 +210,13 @@ export const BAGIAN: Bagian[] = [
     id: 'kelola-data',
     judul: 'Kelola Data & relasi wali',
     ringkas:
-      'CRUD data operasional per modul, dengan hak akses menu yang sama. Relasi wali↔santri tidak lagi berhalaman sendiri: panelnya menempel di bawah tabel Identitas orang.',
+      'CRUD data operasional per modul, dengan hak akses menu yang sama. Relasi wali↔santri tidak berhalaman sendiri: ditunjuk langsung dari bagian "Peran" pada form tambah identitas orang.',
     langkah: [
       { judul: 'Identitas orang lebih dahulu', detail: 'Satu baris orang dipakai ulang oleh Santri, Kepegawaian, Wali, dan akun login — jangan digandakan per peran. Panel keterkaitan menunjukkan peran apa saja yang sudah melekat.' },
       { judul: 'Tentukan perannya saat menambah', detail: 'Bagian "Peran" pada form tambah identitas menentukan sekaligus modul tempat orang itu terdaftar: Santri (isi NIS & status), Guru atau Staf (NIP & jabatan — NIP dibuatkan otomatis bila dikosongkan), Wali murid, atau "Belum ditentukan" bila hanya menyimpan identitas. Baris santri/pegawai/relasi wali dibuat otomatis dan dicatat ke audit (entitas orang_peran), jadi operator tidak perlu lagi menyalin ID Orang ke modul lain. Bagian ini hanya muncul saat menambah, bukan saat mengubah.' },
       { judul: 'Relasi wali banyak-ke-banyak', detail: 'Saat memilih peran Santri, walinya bisa langsung ditunjuk — boleh lebih dari satu (ayah, ibu, wali lain), masing-masing dengan hubungannya. Sebaliknya saat memilih peran Wali murid, satu wali bisa sekaligus mewakili beberapa santri; daftar kandidatnya dibatasi ke orang yang memang sudah terdaftar sebagai santri. Pemilihnya bukan checkbox: klik pada kolomnya langsung memunculkan maksimal lima kandidat, mengetik menyaringnya, dan barisnya diklik untuk menambah. Wali pertama pada santri yang belum punya wali utama otomatis menjadi utama; wali utama yang sudah ada tidak diturunkan diam-diam.' },
       { judul: 'Form dibuat ringkas', detail: 'Jenis kelamin dipilih lewat dua tombol ikon saja — biru untuk laki-laki, magenta untuk perempuan (namanya tetap terbaca pembaca layar dan tooltip). RT dan RW berbagi satu baris "RT / RW". Petunjuk di bawah input hanya disisakan pada field yang benar-benar rawan salah isi, dan panel "Terhubung ke modul lain" pindah ke bawah form supaya perhatian jatuh ke isian lebih dahulu.' },
-      { judul: 'Hubungkan wali ke santri', detail: 'Di halaman /data/orang bagian bawah (tautan #wali). Wali dicari dari identitas yang sudah ada; santri dipilih dari yang benar-benar terdaftar. Satu santri boleh punya beberapa wali, hanya satu berstatus utama.' },
-      { judul: 'Wali utama', detail: 'Penerima notifikasi WhatsApp dan pemegang akses portal wali. Menjadikan satu wali utama otomatis menurunkan yang sebelumnya.' },
-      { judul: 'Pencarian terpisah', detail: 'Filter panel wali memakai parameter sendiri (wq, whalaman, wlimit) supaya tidak mengganggu filter tabel Identitas orang di halaman yang sama.' },
+      { judul: 'Wali utama', detail: 'Penerima notifikasi WhatsApp dan pemegang akses portal wali. Wali pertama pada santri yang belum punya wali utama otomatis menjadi utama.' },
     ],
   },
   {
