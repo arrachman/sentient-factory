@@ -50,6 +50,14 @@ const WARNA_IKON: Record<string, string> = {
 
 const IKON_CADANGAN = 'M4 6h16v12H4z';
 
+export function IkonMenu({ menuKey, path, size = 17 }: { menuKey: string; path?: string | null; size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={WARNA_IKON[menuKey] ?? '#D6D3D1'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d={path || IKON_CADANGAN} />
+    </svg>
+  );
+}
+
 export async function Shell({ session, active, title, children }: { session: SessionPayload; active: string; title: string; children: React.ReactNode }) {
   const [menus, agenda] = await Promise.all([
     prisma.menu.findMany({
@@ -83,9 +91,7 @@ export async function Shell({ session, active, title, children }: { session: Ses
         <nav className="menu">
           {visible.map((menu) => (
             <Link key={menu.key} href={HREF_BY_KEY[menu.key]} className={`menuitem ${menu.key === active ? 'active' : ''}`}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={WARNA_IKON[menu.key] ?? '#D6D3D1'} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d={menu.icon || IKON_CADANGAN} />
-              </svg>
+              <IkonMenu menuKey={menu.key} path={menu.icon} />
               <span className="menulabel">{menu.label}</span>
             </Link>
           ))}
