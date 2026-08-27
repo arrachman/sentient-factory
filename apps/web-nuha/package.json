@@ -20,6 +20,7 @@
     "import:keuangan": "tsx prisma/import/keuangan.ts",
     "import:guru-ma": "tsx prisma/import/import-guru-ma.ts",
     "import:siswa-ma": "tsx prisma/import/import-siswa-ma.ts",
+    "import:siswa-ma-2025": "tsx prisma/import/import-siswa-ma-2025.ts",
     "import:siswa-ma-2026": "tsx prisma/import/import-siswa-ma-2026.ts",
     "import:siswa-ma-2026-g2": "tsx prisma/import/import-siswa-ma-2026-gelombang2.ts",
     "import:siswa-smp": "tsx prisma/import/import-siswa-smp.ts",

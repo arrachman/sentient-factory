@@ -152,6 +152,10 @@ model RelasiWali {
 // Unit, asrama, kelas
 // ─────────────────────────────────────────────────────────────
 
+/// Satu unit di bawah yayasan (SMP, MA, Pondok, Poskestren) beserta profil
+/// kelembagaannya. Sebelum ini identitas unit (nama resmi, logo, kepala,
+/// alamat) tersebar hardcoded di JSX; kolom-kolom profil di bawah menjadikan
+/// tabel ini satu-satunya sumber kebenaran.
 model Unit {
   id        Int     @id @default(autoincrement())
   key       String  @unique @db.VarChar(24)
@@ -159,13 +163,66 @@ model Unit {
   deskripsi String? @db.VarChar(255)
   aktif     Boolean @default(true)
 
-  kelas   Kelas[]
-  santri  Santri[]
-  pegawai Pegawai[]
-  jadwal  JadwalPelajaran[]
-  ujian   Ujian[]
+  /// Nama resmi lengkap untuk kop surat & halaman publik ("SMP Nurul Huda Mergosono").
+  namaResmi     String? @map("nama_resmi") @db.VarChar(200)
+  /// Jenjang/klasifikasi: "SMP", "MA", "Pesantren", "Layanan Kesehatan".
+  jenjang       String? @db.VarChar(48)
+  /// NPSN (sekolah) atau NSM/nomor statistik pesantren.
+  npsn          String? @db.VarChar(32)
+  akreditasi    String? @db.VarChar(8)
+  tahunBerdiri  Int?    @map("tahun_berdiri")
+  /// Path logo relatif terhadap `public/` (mis. `/assets/logo-nuha.webp`).
+  logoPath      String? @map("logo_path") @db.VarChar(255)
+  alamat        String? @db.VarChar(255)
+  telepon       String? @db.VarChar(32)
+  email         String? @db.VarChar(160)
+  website       String? @db.VarChar(160)
+  /// Nama kepala unit. Dipertahankan sebagai teks karena pegawai bisa belum
+  /// terdaftar; `kepalaPegawaiId` adalah sumber kebenaran bila terisi.
+  kepalaNama      String? @map("kepala_nama") @db.VarChar(160)
+  /// Sebutan jabatan kepala unit ("Kepala Sekolah", "Kepala Madrasah", "Pengasuh").
+  kepalaJabatan   String? @map("kepala_jabatan") @db.VarChar(120)
+  kepalaPegawaiId BigInt? @map("kepala_pegawai_id")
+  visi          String? @db.Text
+  misi          String? @db.Text
+
+  kelas         Kelas[]
+  santri        Santri[]
+  pegawai       Pegawai[]  @relation("PegawaiUnit")
+  jadwal        JadwalPelajaran[]
+  ujian         Ujian[]
+  kepalaPegawai Pegawai?   @relation("UnitKepala", fields: [kepalaPegawaiId], references: [id])
 
   @@map("unit")
+}
+
+/// Profil yayasan induk — satu baris (`key = "yayasan"`), memuat identitas yang
+/// dipakai lintas modul: kop slip gaji, footer publik, rekening resmi, pengasuh.
+model ProfilLembaga {
+  id            Int     @id @default(autoincrement())
+  key           String  @unique @db.VarChar(24)
+  nama          String  @db.VarChar(200)
+  namaArab      String? @map("nama_arab") @db.VarChar(160)
+  singkatan     String? @db.VarChar(48)
+  logoPath      String? @map("logo_path") @db.VarChar(255)
+  alamat        String? @db.VarChar(255)
+  telepon       String? @db.VarChar(32)
+  email         String? @db.VarChar(160)
+  website       String? @db.VarChar(160)
+  tahunBerdiri  Int?    @map("tahun_berdiri")
+  /// Nomor akta/badan hukum yayasan.
+  aktaNotaris   String? @map("akta_notaris") @db.VarChar(160)
+  ketuaNama     String? @map("ketua_nama") @db.VarChar(160)
+  pengasuhNama  String? @map("pengasuh_nama") @db.VarChar(160)
+  /// Rekening resmi untuk pembayaran wali ("BSI 7011-2345-6789 a.n. ...").
+  rekening      String? @db.VarChar(160)
+  visi          String? @db.Text
+  misi          String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("profil_lembaga")
 }
 
 model Kelas {
@@ -316,7 +373,8 @@ model Pegawai {
   updatedAt          DateTime @updatedAt @map("updated_at")
 
   orang      Orang             @relation(fields: [orangId], references: [id], onDelete: Cascade)
-  unit       Unit?             @relation(fields: [unitId], references: [id])
+  unit       Unit?             @relation("PegawaiUnit", fields: [unitId], references: [id])
+  unitDipimpin Unit[]          @relation("UnitKepala")
   komponen   KomponenGaji?
   slip       SlipGaji[]
   kelasWali  Kelas[]

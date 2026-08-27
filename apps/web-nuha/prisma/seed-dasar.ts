@@ -16,12 +16,123 @@ const prisma = new PrismaClient();
 type PrototypeData = Record<string, Array<Record<string, unknown>>>;
 const source = data as PrototypeData;
 
+const ALAMAT_PONDOK = 'Jl. Kol. Sugiono 3B No.103, Mergosono, Kedungkandang, Kota Malang, Jawa Timur';
+
+/**
+ * Unit beserta profil kelembagaannya. `kepalaNama` diisi teks di sini; FK
+ * `kepalaPegawaiId` dipautkan belakangan oleh `tautkanKepalaUnit()` bila
+ * pegawai dengan nama itu sudah terdaftar (seed contoh / data import).
+ */
 const UNIT_ROWS = [
-  { key: 'SMP', nama: 'SMP', deskripsi: 'Kelas 7–9, Kurikulum Merdeka.' },
-  { key: 'MA', nama: 'MA', deskripsi: 'Kelas 10–12, IPA / IPS / Keagamaan.' },
-  { key: 'Pondok', nama: 'Madin', deskripsi: 'Program Tahfidz dan Kitab Kuning.' },
-  { key: 'Poskestren', nama: 'Poskestren', deskripsi: 'Layanan kesehatan santri.' },
+  {
+    key: 'SMP',
+    nama: 'SMP',
+    deskripsi: 'Kelas 7–9, Kurikulum Merdeka.',
+    namaResmi: 'SMP Nurul Huda Mergosono',
+    jenjang: 'SMP',
+    npsn: '20539746',
+    akreditasi: 'B',
+    tahunBerdiri: 2004,
+    logoPath: '/assets/logo-nuha.webp',
+    alamat: ALAMAT_PONDOK,
+    telepon: '(0341) 361234',
+    email: 'smpnuhamergosono@gmail.com',
+    website: 'https://nuha.pesantren.web.id',
+    kepalaNama: 'Drs. Sulaiman Hadi, M.Pd.',
+    kepalaJabatan: 'Kepala Sekolah',
+    visi: 'Terwujudnya lulusan yang berakhlak pesantren, cakap akademik, dan mandiri.',
+    misi: 'Menyelenggarakan pembelajaran Kurikulum Merdeka yang berpadu dengan pembinaan diniyah; membiasakan ibadah dan adab harian; mengembangkan minat bakat santri.',
+  },
+  {
+    key: 'MA',
+    nama: 'MA',
+    deskripsi: 'Kelas 10–12, IPA / IPS / Keagamaan.',
+    namaResmi: 'MA Nurul Huda Mergosono',
+    jenjang: 'MA',
+    npsn: '131235730021',
+    akreditasi: 'B',
+    tahunBerdiri: 2010,
+    logoPath: '/assets/logo-nuha.webp',
+    alamat: ALAMAT_PONDOK,
+    telepon: '(0341) 361234',
+    email: 'manuhamergosono@gmail.com',
+    website: 'https://nuha.pesantren.web.id',
+    // Nama dari SK struktur MA (lihat prisma/import/import-struktur.ts).
+    kepalaNama: 'Tika Kartika, S.Pd',
+    kepalaJabatan: 'Kepala Madrasah',
+    visi: 'Madrasah yang unggul dalam tafaqquh fid-din dan siap melanjutkan ke perguruan tinggi.',
+    misi: 'Menguatkan penguasaan kitab dan Al-Qur’an; menyiapkan peminatan IPA, IPS, dan Keagamaan; membina karakter santri yang moderat.',
+  },
+  {
+    key: 'Pondok',
+    nama: 'Madin',
+    deskripsi: 'Program Tahfidz dan Kitab Kuning.',
+    namaResmi: 'Pondok Pesantren Salafiyah Syafi’iyah Nurul Huda Mergosono',
+    jenjang: 'Pesantren',
+    npsn: '512357301234',
+    tahunBerdiri: 1970,
+    logoPath: '/assets/logo-nuha.webp',
+    alamat: ALAMAT_PONDOK,
+    telepon: '(0341) 361234',
+    email: 'ppssnuhamergosono@gmail.com',
+    website: 'https://nuha.pesantren.web.id',
+    kepalaNama: 'Ust. Abdul Karim',
+    kepalaJabatan: 'Lurah Pondok',
+    visi: 'Pesantren salaf yang kuat pada sanad kitab dan Al-Qur’an, terbuka pada tata kelola modern.',
+    misi: 'Menyelenggarakan pengajian kitab kuning berjenjang; membina hafalan Al-Qur’an; menanamkan adab dan kemandirian santri mukim.',
+  },
+  {
+    key: 'Poskestren',
+    nama: 'Poskestren',
+    deskripsi: 'Layanan kesehatan santri.',
+    namaResmi: 'Poskestren Nurul Huda Mergosono',
+    jenjang: 'Layanan Kesehatan',
+    tahunBerdiri: 2016,
+    logoPath: '/assets/logo-nuha.webp',
+    alamat: ALAMAT_PONDOK,
+    telepon: '(0341) 361234',
+    email: 'poskestrennuha@gmail.com',
+    kepalaNama: 'Ns. Maimunah, S.Kep.',
+    kepalaJabatan: 'Penanggung Jawab Poskestren',
+    visi: 'Santri sehat, pesantren bersih, layanan kesehatan yang tersistem.',
+    misi: 'Menyediakan layanan kesehatan dasar santri bersama Puskesmas Kedungkandang; mencatat riwayat kesehatan santri; menggerakkan perilaku hidup bersih dan sehat.',
+  },
 ];
+
+/** Profil yayasan induk — satu baris, dipakai untuk kop surat & halaman publik. */
+const PROFIL_YAYASAN = {
+  key: 'yayasan',
+  nama: 'Yayasan Pendidikan Islam Nurul Huda Mergosono',
+  namaArab: 'مَعْهَدُ نُوْرُ الْهُدَى',
+  singkatan: 'PPSS Nurul Huda Mergosono',
+  logoPath: '/assets/logo-nuha.webp',
+  alamat: ALAMAT_PONDOK,
+  telepon: '(0341) 361234',
+  email: 'smpnuhamergosono@gmail.com',
+  website: 'https://nuha.pesantren.web.id',
+  tahunBerdiri: 1970,
+  aktaNotaris: 'Akta Yayasan No. 12/1998',
+  ketuaNama: 'KH. Ahmad Zainuri, M.Ag.',
+  pengasuhNama: 'KH. Masduqi Machfudz',
+  rekening: 'BSI 7011-2345-6789 a.n. PPSS Nurul Huda Mergosono',
+  visi: 'Menjadi lembaga pendidikan Islam yang melahirkan generasi berilmu, beramal, dan berakhlak mulia.',
+  misi: 'Menyelenggarakan pendidikan formal dan diniyah yang terpadu; mengelola pesantren secara amanah dan transparan; melayani umat lewat pendidikan, kesehatan, dan pemberdayaan.',
+};
+
+/**
+ * Memautkan `kepalaPegawaiId` ke pegawai yang namanya cocok dengan `kepalaNama`.
+ * Dilewati diam-diam bila pegawai belum ada (deployment nyata yang baru diseed).
+ */
+async function tautkanKepalaUnit() {
+  for (const row of UNIT_ROWS) {
+    const pegawai = await prisma.pegawai.findFirst({
+      where: { orang: { nama: row.kepalaNama } },
+      select: { id: true },
+    });
+    if (!pegawai) continue;
+    await prisma.unit.update({ where: { key: row.key }, data: { kepalaPegawaiId: pegawai.id } });
+  }
+}
 
 const TAHUN_AJARAN_ROWS = daftarTahunAjaran();
 
@@ -86,6 +197,12 @@ async function seedSuperAdmin() {
 async function main() {
   await seedPeranDanMenu();
   await Promise.all(UNIT_ROWS.map((row) => prisma.unit.upsert({ where: { key: row.key }, create: row, update: row })));
+  await prisma.profilLembaga.upsert({
+    where: { key: PROFIL_YAYASAN.key },
+    create: PROFIL_YAYASAN,
+    update: PROFIL_YAYASAN,
+  });
+  await tautkanKepalaUnit();
   await Promise.all(TAHUN_AJARAN_ROWS.map((row) => prisma.tahunAjaran.upsert({
     where: { kode_semester: { kode: row.kode, semester: row.semester } },
     create: row,

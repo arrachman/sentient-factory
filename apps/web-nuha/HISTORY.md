@@ -4,6 +4,23 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Kelas: wali kelas & tahun pelajaran jadi lookup nama (`PENDING`)
+
+Entitas `kelas` di /data/kelas sebelumnya menampilkan dan meminta ID mentah
+untuk wali kelas dan tahun pelajaran. Keduanya kini field `ref`: wali kelas
+menarik dari `pegawai` dengan label `orang.nama`, tahun pelajaran dari
+`tahunAjaran` dengan label `kode` + semester (opsi `labelTambahan` baru di
+`FieldRef`, dirangkai di `loadRefOptions`). Header kolom ikut disesuaikan
+(Unit / Wali kelas / Tahun pelajaran, tanpa awalan "ID").
+
+Data: wali kelas XI (MA "Kelas 2", id 22) diset ke Nisrina Nada Aulia, S.Hum
+(pegawai 12) dan wali kelas X (MA "Kelas 1", id 23) ke Rona Nadhiroh
+(pegawai 14) — kolom `wali_kelas_id` sekaligus teks `wali_kelas` legacy.
+
+Dampak: operator memilih dari dropdown, tidak lagi menyalin ID. Perubahan
+wali kelas via UI hanya menulis `wali_kelas_id`; kolom teks `wali_kelas`
+lama tidak ikut diperbarui dan memang sudah ditandai deprecated di schema.
+
 ## 2026-08-27 — Tombol simpan & batal form CRUD jadi ikon (`03a34c8b`)
 
 Baris aksi modal CRUD sebelumnya memakai dua tombol berteks ("Simpan

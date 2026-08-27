@@ -52,16 +52,26 @@ export async function tulisRelasiWali(
   const nik = data.nik?.trim() || null;
   const email = nik ? null : `wali.${kunciAnakUntukEmail}.${peran.toLowerCase()}@nuha.local`;
 
+  const jk = peran === 'Ibu' ? JenisKelamin.P : JenisKelamin.L;
+  /**
+   * `jk` ikut dikoreksi saat update — bukan hanya saat create: importir yang
+   * memakai kolom tunggal "wali" menulis peran `Wali` sehingga orangnya jatuh
+   * ke default `L`. Ketika importir lain kemudian mengenali orang yang sama
+   * sebagai Ibu (kunci NIK), jenis kelaminnya harus ikut benar. Peran `Wali`
+   * sendiri tidak menyiratkan jenis kelamin, jadi ia tidak menimpa apa pun.
+   */
+  const updateJk = peran === 'Wali' ? {} : { jk };
+
   const waliOrang = nik
     ? await prisma.orang.upsert({
         where: { nik },
-        create: { nama, jk: peran === 'Ibu' ? JenisKelamin.P : JenisKelamin.L, nik, hp: data.hp?.trim() || null },
-        update: { nama, hp: data.hp?.trim() || null },
+        create: { nama, jk, nik, hp: data.hp?.trim() || null },
+        update: { nama, hp: data.hp?.trim() || null, ...updateJk },
       })
     : await prisma.orang.upsert({
         where: { email: email! },
-        create: { nama, jk: peran === 'Ibu' ? JenisKelamin.P : JenisKelamin.L, email, hp: data.hp?.trim() || null },
-        update: { nama, hp: data.hp?.trim() || null },
+        create: { nama, jk, email, hp: data.hp?.trim() || null },
+        update: { nama, hp: data.hp?.trim() || null, ...updateJk },
       });
 
   const utama = await apakahUtama(anakOrangId, peran);

@@ -7,6 +7,7 @@ export type Filters = Record<string, string>;
 /** OR-contains across text fields for `q`, exact match for select/ref fields. */
 function buildWhere(entity: Entity, filters: Filters): Record<string, unknown> | undefined {
   const and: Record<string, unknown>[] = [];
+  if (entity.whereDasar) and.push(entity.whereDasar);
   const q = filters.q?.trim();
   if (q) {
     const stringFields = entity.fields.filter((field) => !field.ref && !field.virtual && (field.type === 'text' || field.type === 'textarea')).map((field) => field.name);
@@ -140,7 +141,11 @@ async function loadRefOptions(ref: NonNullable<Field['ref']>): Promise<{ id: str
   const delegate = client[ref.model];
   if (!delegate) throw new Error(`Model referensi "${ref.model}" tidak dikenal.`);
   const rows = await delegate.findMany({ include: ref.include, orderBy: ref.orderBy });
-  return rows.map((row) => ({ id: String(row.id), label: String(readPath(row, ref.label) ?? row.id) }));
+  return rows.map((row) => {
+    const utama = String(readPath(row, ref.label) ?? row.id);
+    const tambahan = ref.labelTambahan ? readPath(row, ref.labelTambahan) : undefined;
+    return { id: String(row.id), label: tambahan ? `${utama} ${String(tambahan)}` : utama };
+  });
 }
 
 export const toClientEntity = async (entity: Entity): Promise<ClientEntity> => ({

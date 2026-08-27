@@ -1,5 +1,7 @@
 import type { Entity } from './types';
 import { FIELD_PERAN, FILTER_KATEGORI_ORANG, daftarkanPeran, selaraskanPeran } from './peran-orang';
+import { FIELD_ORANG_DASAR } from './orang-fields';
+import { ENTITAS_PERSONA } from './persona';
 
 const text = (name: string, label: string, required = true) => ({ name, label, type: 'text' as const, required });
 const number = (name: string, label: string, required = false) => ({ name, label, type: 'number' as const, required, step: 1 });
@@ -18,26 +20,7 @@ export const ENTITIES: Entity[] = [
     deskripsi: 'Data dasar satu orang, dipakai ulang oleh modul Santri, Kepegawaian, Wali, dan akun login. Buat satu baris per orang — jangan digandakan per peran.',
     idType: 'bigint',
     fields: [
-      { ...text('nama', 'Nama lengkap'), group: 'Identitas', span: 2, placeholder: 'Windu Winarti' },
-      { name: 'jk', label: 'Jenis kelamin', type: 'select', options: ['L', 'P'], optionLabels: { L: 'Laki-laki', P: 'Perempuan' }, optionIcons: { L: 'lelaki', P: 'perempuan' }, ikonSaja: true, required: true, group: 'Identitas' },
-      { ...text('nik', 'NIK', false), group: 'Identitas', hint: '16 digit, harus unik.', placeholder: '3573xxxxxxxxxxxx' },
-      { ...text('tmpLahir', 'Tempat lahir', false), group: 'Identitas', placeholder: 'Malang' },
-      { ...date('tglLahir', 'Tanggal lahir', false), group: 'Identitas' },
-      { ...text('hp', 'No. HP', false), group: 'Kontak', hint: 'Nomor WhatsApp aktif.', placeholder: '081234567890' },
-      { ...text('email', 'Email', false), group: 'Kontak', hint: 'Harus unik; dipakai untuk login.', placeholder: 'nama@contoh.com' },
-      { name: 'alamat', label: 'Jalan / dusun & no. rumah', type: 'textarea', group: 'Alamat', span: 3, placeholder: 'Jl. Mergosono Gg. 4 No. 17' },
-      { ...text('rt', 'RT / RW', false), group: 'Alamat', pasangan: 'rw', placeholder: 'RT' },
-      { ...text('rw', 'RW', false), group: 'Alamat', tersembunyi: true, placeholder: 'RW' },
-      { ...text('kelurahan', 'Kelurahan / desa', false), group: 'Alamat', placeholder: 'Mergosono' },
-      { ...text('kecamatan', 'Kecamatan', false), group: 'Alamat', placeholder: 'Kedungkandang' },
-      { ...text('kabupaten', 'Kota / kabupaten', false), group: 'Alamat', span: 2, placeholder: 'Kota Malang' },
-      { ...number('anakKe', 'Anak ke-'), group: 'Data pribadi', placeholder: '2' },
-      { ...number('jumlahSaudara', 'Jumlah saudara kandung'), group: 'Data pribadi', placeholder: '3' },
-      { ...text('asalSekolah', 'Asal sekolah', false), group: 'Data pribadi', placeholder: 'SDN Mergosono 2' },
-      { ...text('pendidikanTerakhir', 'Pendidikan terakhir', false), group: 'Data pribadi', placeholder: 'SD / SMP / SMA / S1' },
-      { ...text('hobi', 'Hobi', false), group: 'Data pribadi', span: 2, placeholder: 'Sepak bola, kaligrafi' },
-      { ...text('citaCita', 'Cita-cita', false), group: 'Data pribadi', placeholder: 'Guru' },
-      { name: 'aktif', label: 'Status keaktifan', type: 'boolean', labelYa: 'Aktif', group: 'Status', span: 3, hint: 'Nonaktifkan alih-alih menghapus — riwayat modul lain tetap utuh.' },
+      ...FIELD_ORANG_DASAR,
       ...FIELD_PERAN,
       FILTER_KATEGORI_ORANG,
     ],
@@ -46,7 +29,7 @@ export const ENTITIES: Entity[] = [
     sesudahBuat: daftarkanPeran,
     sesudahUbah: selaraskanPeran,
   },
-  { key: 'santri', menu: 'induk', model: 'santri', label: 'Santri', idType: 'bigint', fields: [number('orangId', 'ID Orang (buat dulu di menu Identitas Orang)', true), text('nis', 'NIS', false), text('nisn', 'NISN', false), { ...number('unitId', 'Unit'), ref: { model: 'unit', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kelasId', 'Kelas'), ref: { model: 'kelas', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kamarId', 'Kamar'), ref: { model: 'kamar', label: 'kode', orderBy: { kode: 'asc' } } }, { name: 'status', label: 'Status', type: 'select', options: ['Mukim', 'Alumni', 'Keluar'], required: true }, text('program', 'Program', false), text('tahunMasuk', 'Tahun masuk', false)], columns: columns(['orangId', 'ID Orang'], ['nis', 'NIS'], ['nisn', 'NISN'], ['status', 'Status'], ['tahunMasuk', 'Tahun masuk']), orderBy: { createdAt: 'desc' } },
+  { key: 'santri', menu: 'induk', model: 'santri', label: 'Santri (detail akademik)', deskripsi: 'Data akademik per santri: unit, kelas, kamar, program, tahun masuk. Untuk menambah santri baru beserta identitas dan walinya, pakai pintasan persona "Santri".', idType: 'bigint', fields: [number('orangId', 'ID Orang (buat dulu di menu Identitas Orang)', true), text('nis', 'NIS', false), text('nisn', 'NISN', false), { ...number('unitId', 'Unit'), ref: { model: 'unit', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kelasId', 'Kelas'), ref: { model: 'kelas', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kamarId', 'Kamar'), ref: { model: 'kamar', label: 'kode', orderBy: { kode: 'asc' } } }, { name: 'status', label: 'Status', type: 'select', options: ['Mukim', 'Alumni', 'Keluar'], required: true }, text('program', 'Program', false), text('tahunMasuk', 'Tahun masuk', false)], columns: columns(['orangId', 'ID Orang'], ['nis', 'NIS'], ['nisn', 'NISN'], ['status', 'Status'], ['tahunMasuk', 'Tahun masuk']), orderBy: { createdAt: 'desc' } },
   { key: 'unit', menu: 'pengaturan', model: 'unit', label: 'Unit pendidikan', idType: 'int', fields: [text('key', 'Kode'), text('nama', 'Nama'), text('deskripsi', 'Deskripsi', false), { name: 'aktif', label: 'Aktif', type: 'boolean' }], columns: columns(['key', 'Kode'], ['nama', 'Nama'], ['deskripsi', 'Deskripsi'], ['aktif', 'Aktif']), orderBy: { nama: 'asc' } },
   { key: 'asrama', menu: 'pesantren', model: 'asrama', label: 'Asrama', idType: 'int', fields: [text('nama', 'Nama'), { name: 'jk', label: 'Jenis kelamin', type: 'select', options: ['L', 'P'], required: true }, number('kapasitas', 'Kapasitas'), text('musyrif', 'Musyrif', false)], columns: columns(['nama', 'Nama'], ['jk', 'JK'], ['kapasitas', 'Kapasitas'], ['musyrif', 'Musyrif']), orderBy: { nama: 'asc' } },
   { key: 'halaqah', menu: 'pesantren', model: 'halaqah', label: 'Halaqah', idType: 'int', fields: [text('nama', 'Nama'), text('ustadz', 'Ustadz'), text('waktu', 'Waktu'), text('tempat', 'Tempat'), text('jenjang', 'Jenjang'), number('anggota', 'Anggota')], columns: columns(['nama', 'Nama'], ['ustadz', 'Ustadz'], ['waktu', 'Waktu'], ['tempat', 'Tempat'], ['anggota', 'Anggota']), orderBy: { nama: 'asc' } },
@@ -88,9 +71,10 @@ export const ENTITIES: Entity[] = [
   { key: 'template-wa', menu: 'wa', model: 'templateWa', label: 'Template WhatsApp', idType: 'int', fields: [text('kode', 'Kode'), text('role', 'Penerima'), text('judul', 'Judul'), text('pemicu', 'Pemicu'), text('waktu', 'Waktu', false), { name: 'isi', label: 'Isi pesan', type: 'textarea', required: true }, { name: 'aktif', label: 'Aktif', type: 'boolean' }], columns: columns(['kode', 'Kode'], ['role', 'Penerima'], ['judul', 'Judul'], ['pemicu', 'Pemicu'], ['aktif', 'Aktif']), orderBy: { kode: 'asc' } },
   { key: 'pengumuman', menu: 'dashboard', model: 'pengumuman', label: 'Pengumuman', idType: 'bigint', fields: [date('tgl', 'Tanggal'), text('judul', 'Judul'), { name: 'isi', label: 'Isi', type: 'textarea', required: true }, text('target', 'Target')], columns: columns(['tgl', 'Tanggal'], ['judul', 'Judul'], ['target', 'Target']), orderBy: { tgl: 'desc' } },
   { key: 'agenda', menu: 'dashboard', model: 'agenda', label: 'Agenda', idType: 'bigint', fields: [date('tgl', 'Tanggal'), text('jam', 'Jam', false), text('judul', 'Judul'), text('unit', 'Unit', false)], columns: columns(['tgl', 'Tanggal'], ['jam', 'Jam'], ['judul', 'Judul'], ['unit', 'Unit']), orderBy: { tgl: 'desc' } },
-  { key: 'pegawai', menu: 'kepegawaian', model: 'pegawai', label: 'Kepegawaian', idType: 'bigint', fields: [number('orangId', 'ID Orang (buat dulu di menu Identitas Orang)', true), text('nip', 'NIP'), { ...number('unitId', 'Unit', false), ref: { model: 'unit', label: 'nama', orderBy: { nama: 'asc' } } }, text('jabatan', 'Jabatan'), text('status', 'Status'), text('rekening', 'Rekening', false), text('pendidikanTerakhir', 'Pendidikan terakhir', false), text('mapelDiampu', 'Mapel diampu', false), text('tugasTambahan', 'Tugas tambahan', false), number('jamMengajar', 'Jam mengajar', false), text('tmpTglLahir', 'Tempat/tgl lahir', false)], columns: columns(['nip', 'NIP'], ['jabatan', 'Jabatan'], ['status', 'Status'], ['mapelDiampu', 'Mapel diampu'], ['jamMengajar', 'Jam mengajar']), orderBy: { nip: 'asc' } },
+  { key: 'pegawai', menu: 'kepegawaian', model: 'pegawai', label: 'Kepegawaian (detail)', deskripsi: 'Data kepegawaian per orang: unit, rekening, mapel diampu, jam mengajar. Untuk menambah guru atau staf baru beserta identitasnya, pakai pintasan persona "Guru" / "Staf".', idType: 'bigint', fields: [number('orangId', 'ID Orang (buat dulu di menu Identitas Orang)', true), text('nip', 'NIP'), { ...number('unitId', 'Unit', false), ref: { model: 'unit', label: 'nama', orderBy: { nama: 'asc' } } }, text('jabatan', 'Jabatan'), text('status', 'Status'), text('rekening', 'Rekening', false), text('pendidikanTerakhir', 'Pendidikan terakhir', false), text('mapelDiampu', 'Mapel diampu', false), text('tugasTambahan', 'Tugas tambahan', false), number('jamMengajar', 'Jam mengajar', false), text('tmpTglLahir', 'Tempat/tgl lahir', false)], columns: columns(['nip', 'NIP'], ['jabatan', 'Jabatan'], ['status', 'Status'], ['mapelDiampu', 'Mapel diampu'], ['jamMengajar', 'Jam mengajar']), orderBy: { nip: 'asc' } },
   { key: 'tahun-ajaran', menu: 'pengaturan', model: 'tahunAjaran', label: 'Tahun pelajaran', idType: 'int', fields: [text('kode', 'Kode (mis. 2026/2027)'), text('semester', 'Semester (Gasal/Genap)'), { name: 'aktif', label: 'Aktif', type: 'boolean' }], columns: columns(['kode', 'Kode'], ['semester', 'Semester'], ['aktif', 'Aktif']), orderBy: { kode: 'desc' } },
-  { key: 'kelas', menu: 'kurikulum', model: 'kelas', label: 'Kelas', idType: 'int', fields: [{ ...number('unitId', 'Unit', true), ref: { model: 'unit', label: 'nama', orderBy: { nama: 'asc' } } }, text('nama', 'Nama kelas'), text('tingkat', 'Tingkat'), number('waliKelasId', 'ID Pegawai wali kelas', false), number('tahunAjaranId', 'ID Tahun pelajaran', false)], columns: columns(['nama', 'Nama'], ['tingkat', 'Tingkat'], ['unitId', 'ID Unit'], ['waliKelasId', 'ID Wali kelas'], ['tahunAjaranId', 'ID Tahun pelajaran']), orderBy: { nama: 'asc' } },
+  { key: 'kelas', menu: 'kurikulum', model: 'kelas', label: 'Kelas', idType: 'int', fields: [{ ...number('unitId', 'Unit', true), ref: { model: 'unit', label: 'nama', orderBy: { nama: 'asc' } } }, text('nama', 'Nama kelas'), text('tingkat', 'Tingkat'), { ...number('waliKelasId', 'Wali kelas', false), ref: { model: 'pegawai', label: 'orang.nama', include: { orang: true }, orderBy: { nip: 'asc' }, idType: 'bigint' } }, { ...number('tahunAjaranId', 'Tahun pelajaran', false), ref: { model: 'tahunAjaran', label: 'kode', labelTambahan: 'semester', orderBy: { kode: 'desc' } } }], columns: columns(['nama', 'Nama'], ['tingkat', 'Tingkat'], ['unitId', 'Unit'], ['waliKelasId', 'Wali kelas'], ['tahunAjaranId', 'Tahun pelajaran']), orderBy: { nama: 'asc' } },
+  ...ENTITAS_PERSONA,
 ];
 
 export const getEntity = (key: string) => ENTITIES.find((entity) => entity.key === key);

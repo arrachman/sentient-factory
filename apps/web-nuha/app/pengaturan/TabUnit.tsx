@@ -1,31 +1,92 @@
+import Image from 'next/image';
 import { prisma } from '@/lib/prisma';
-import { Badge, Kosong, Tabel } from '@/components';
+import { Badge, Kosong } from '@/components';
 
-/** Unit di bawah yayasan beserta populasi santri & pegawai per unit. */
+/** Baris "Label : nilai" pada kartu profil; menyembunyikan diri bila kosong. */
+function Baris({ label, nilai }: { label: string; nilai?: string | number | null }) {
+  if (nilai === null || nilai === undefined || nilai === '') return null;
+  return (
+    <div style={{ display: 'flex', gap: 10, fontSize: 13, lineHeight: 1.7 }}>
+      <span className="muted" style={{ minWidth: 118, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontWeight: 500 }}>{nilai}</span>
+    </div>
+  );
+}
+
+/** Profil yayasan induk beserta kartu profil tiap unit di bawahnya. */
 export async function TabUnit() {
-  const units = await prisma.unit.findMany({
-    include: { _count: { select: { santri: true, pegawai: true, kelas: true } } },
-    orderBy: { nama: 'asc' },
-  });
+  const [yayasan, units] = await Promise.all([
+    prisma.profilLembaga.findUnique({ where: { key: 'yayasan' } }),
+    prisma.unit.findMany({
+      include: {
+        _count: { select: { santri: true, pegawai: true, kelas: true } },
+        kepalaPegawai: { include: { orang: { select: { nama: true } } } },
+      },
+      orderBy: { nama: 'asc' },
+    }),
+  ]);
 
   return (
-    <div className="card">
-      <h3 className="card-judul" style={{ marginBottom: 14 }}>Unit di bawah yayasan</h3>
+    <div style={{ display: 'grid', gap: 16 }}>
+      {yayasan && (
+        <div className="card">
+          <h3 className="card-judul" style={{ marginBottom: 14 }}>Profil yayasan</h3>
+          <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+            {yayasan.logoPath && (
+              <Image src={yayasan.logoPath} alt={`Logo ${yayasan.nama}`} width={72} height={72} style={{ objectFit: 'contain' }} />
+            )}
+            <div style={{ flex: 1, minWidth: 260, display: 'grid', gap: 3 }}>
+              <div style={{ fontWeight: 700, fontSize: 15 }}>{yayasan.nama}</div>
+              {yayasan.namaArab && <div className="muted" style={{ marginBottom: 6 }}>{yayasan.namaArab}</div>}
+              <Baris label="Ketua yayasan" nilai={yayasan.ketuaNama} />
+              <Baris label="Pengasuh" nilai={yayasan.pengasuhNama} />
+              <Baris label="Berdiri" nilai={yayasan.tahunBerdiri} />
+              <Baris label="Akta" nilai={yayasan.aktaNotaris} />
+              <Baris label="Alamat" nilai={yayasan.alamat} />
+              <Baris label="Telepon" nilai={yayasan.telepon} />
+              <Baris label="Email" nilai={yayasan.email} />
+              <Baris label="Rekening" nilai={yayasan.rekening} />
+              <Baris label="Visi" nilai={yayasan.visi} />
+              <Baris label="Misi" nilai={yayasan.misi} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {units.length === 0 ? (
-        <Kosong pesan="Belum ada unit terdaftar." />
+        <div className="card"><Kosong pesan="Belum ada unit terdaftar." /></div>
       ) : (
-        <Tabel kolom={['Unit', 'Kode', 'Deskripsi', { label: 'Santri', num: true }, { label: 'Pegawai', num: true }, 'Status']}>
-          {units.map((unit) => (
-            <tr key={unit.id}>
-              <td style={{ fontWeight: 600 }}>{unit.nama}</td>
-              <td className="muted">{unit.key}</td>
-              <td className="muted">{unit.deskripsi ?? '-'}</td>
-              <td className="num" style={{ fontWeight: 700 }}>{unit._count.santri}</td>
-              <td className="num">{unit._count.pegawai}</td>
-              <td><Badge status={unit.aktif ? 'Aktif' : 'Nonaktif'} /></td>
-            </tr>
-          ))}
-        </Tabel>
+        units.map((unit) => (
+          <div className="card" key={unit.id}>
+            <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+              {unit.logoPath && (
+                <Image src={unit.logoPath} alt={`Logo ${unit.namaResmi ?? unit.nama}`} width={60} height={60} style={{ objectFit: 'contain' }} />
+              )}
+              <div style={{ flex: 1, minWidth: 260, display: 'grid', gap: 3 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
+                  <span style={{ fontWeight: 700, fontSize: 15 }}>{unit.namaResmi ?? unit.nama}</span>
+                  <span className="muted" style={{ fontSize: 12 }}>{unit.key}</span>
+                  <Badge status={unit.aktif ? 'Aktif' : 'Nonaktif'} />
+                </div>
+                <Baris label={unit.kepalaJabatan ?? 'Kepala unit'} nilai={unit.kepalaPegawai?.orang.nama ?? unit.kepalaNama} />
+                <Baris label="Jenjang" nilai={unit.jenjang} />
+                <Baris label="NPSN / NSM" nilai={unit.npsn} />
+                <Baris label="Akreditasi" nilai={unit.akreditasi} />
+                <Baris label="Berdiri" nilai={unit.tahunBerdiri} />
+                <Baris label="Alamat" nilai={unit.alamat} />
+                <Baris label="Telepon" nilai={unit.telepon} />
+                <Baris label="Email" nilai={unit.email} />
+                <Baris label="Deskripsi" nilai={unit.deskripsi} />
+                <Baris label="Visi" nilai={unit.visi} />
+                <Baris label="Misi" nilai={unit.misi} />
+                <Baris
+                  label="Populasi"
+                  nilai={`${unit._count.santri} santri · ${unit._count.pegawai} pegawai · ${unit._count.kelas} kelas`}
+                />
+              </div>
+            </div>
+          </div>
+        ))
       )}
     </div>
   );

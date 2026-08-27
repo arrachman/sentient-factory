@@ -8,6 +8,8 @@ export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'datetime' | '
 export type FieldRef = {
   model: string;
   label: string;
+  /** Path kedua yang digabung ke label, mis. tahun ajaran "2026/2027 Gasal". */
+  labelTambahan?: string;
   include?: Record<string, unknown>;
   orderBy?: Record<string, 'asc' | 'desc'>;
   idType?: 'int' | 'bigint';
@@ -79,6 +81,12 @@ export type Entity = {
   /** Form lebar 3 kolom (modal melebar) — untuk entitas berfield banyak. */
   formLebar?: boolean;
   idType: 'int' | 'bigint';
+  /**
+   * Klausa `where` yang selalu berlaku, di luar filter operator. Dipakai entitas
+   * persona yang berbagi satu tabel (`orang`) tapi hanya menampilkan barisnya
+   * yang berperan tertentu.
+   */
+  whereDasar?: Record<string, unknown>;
   fields: Field[];
   columns: Column[];
   include?: Record<string, unknown>;

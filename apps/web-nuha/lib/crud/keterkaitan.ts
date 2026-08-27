@@ -74,7 +74,9 @@ async function kaitOrang(rows: Row[]): Promise<Map<string, PeranTersimpan>> {
  * supaya form ubah bisa memuat peran yang sudah ada (`row[field.name]`).
  */
 export async function lampirkanKeterkaitan(entity: Entity, rows: Row[]): Promise<Row[]> {
-  if (entity.key !== 'orang') return rows;
+  // Berlaku untuk semua entitas yang barisnya adalah `orang` — termasuk
+  // entitas persona (Santri, Guru, Staf, Wali) yang berbagi tabel yang sama.
+  if (entity.model !== 'orang') return rows;
   const peta = await kaitOrang(rows);
   return rows.map((row) => {
     const info = peta.get(row.id);
