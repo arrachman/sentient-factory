@@ -4,6 +4,13 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Fix: ikon tombol aksi Kelola Data belum center (31a36747)
+
+Ikon pensil/tong sampah di `.btn-icon` sebelumnya sedikit menempel ke
+kiri-atas dalam tombol bundar karena `line-height` default dan SVG
+inline yang bukan `display: block`. Ditambah `line-height: 0` pada
+`.btn-icon` dan `display: block; flex-shrink: 0` pada `.btn-icon svg`.
+
 ## 2026-08-27 — Kelola Data: aksi jadi ikon, limit paginasi (439bdcf2)
 
 Tombol aksi tambah/ubah/hapus di `CrudPanel` diganti ikon saja (plus,
