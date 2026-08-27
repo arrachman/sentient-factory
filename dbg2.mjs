@@ -1,0 +1,12 @@
+import { chromium } from 'playwright';
+const B='http://202.59.200.26:3226';
+const b=await chromium.launch(); const p=await b.newPage();
+await p.goto(B+'/login',{waitUntil:'networkidle'});
+await p.fill('input[name=identifier]','superadmin');
+await p.fill('input[type=password]','Nuha2026!');
+await p.click('form button');
+await p.waitForURL(u=>!u.pathname.includes('login'),{timeout:20000});
+await p.goto(B+'/kepegawaian?tab=daftar',{waitUntil:'networkidle'});
+const t=await p.locator('main').innerText();
+console.log(t.slice(0,1500));
+await b.close();
