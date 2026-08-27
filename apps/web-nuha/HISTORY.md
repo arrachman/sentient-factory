@@ -4,6 +4,17 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Tombol simpan & batal form CRUD jadi ikon (`03a34c8b`)
+
+Baris aksi modal CRUD sebelumnya memakai dua tombol berteks ("Simpan
+perubahan" / "Batal") yang memakan lebar. Keduanya kini tombol ikon 28×28
+seperti tombol Ubah/Hapus di tabel: centang untuk simpan (varian baru
+`.btn-icon-utama`, hijau solid) dan silang untuk batal. Label tetap tersedia
+lewat `title` + `aria-label`, termasuk keadaan "Menyimpan…" saat submit.
+
+Dampak: tidak ada perubahan perilaku; operator yang hafal posisi teks tombol
+perlu mengenali ikonnya.
+
 ## 2026-08-27 — Rapikan tampilan chip kotak centang peran (`c75d165f`)
 
 Chip "Daftarkan sebagai" memakai kotak centang bawaan browser sehingga ukuran
