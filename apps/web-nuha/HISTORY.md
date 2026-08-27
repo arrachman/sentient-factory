@@ -4,6 +4,16 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Tambah siswa dipindah dari Data Induk ke Kelola Data (61eb21d7)
+
+Halaman `/induk` (Data Induk) tidak lagi merender `CrudPanel` santri di
+bawah baris filter — form tambah/ubah/hapus itu memecah fokus tampilan
+master-detail (penjelajah lembaga → daftar → profil). Diganti tombol
+"+ Tambah siswa" di header halaman yang mengarah ke `/data/santri`, tempat
+CRUD entitas `santri` sudah tersedia lewat registry (`lib/crud/registry.ts`).
+Tidak ada perubahan skema atau akses; hanya penempatan UI. Baris daftar
+santri juga dapat hover state (`.baris-santri:hover`) untuk feedback klik.
+
 ## 2026-08-27 — Diniyah pondok jadi kelas 1–6
 
 Unit Pondok Pesantren tidak lagi memakai satu rombel `Diniyah Wustha`.
