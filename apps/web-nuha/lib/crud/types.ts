@@ -39,7 +39,7 @@ export type Entity = {
 };
 
 /** Serializable field shape handed to the browser (no Prisma types cross over). */
-export type ClientField = Omit<Field, 'ref'> & { options?: string[] };
+export type ClientField = Omit<Field, 'ref'> & { options?: string[]; refOptions?: { id: string; label: string }[] };
 
 export type ClientEntity = {
   key: string;

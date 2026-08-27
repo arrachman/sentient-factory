@@ -95,9 +95,23 @@ export async function listRows(entity: Entity, halaman = 1): Promise<Row[]> {
   return rows.map((row) => ({ ...(serialize(row) as Record<string, unknown>), id: String(row.id) }));
 }
 
-export const toClientEntity = (entity: Entity): ClientEntity => ({
+const readPath = (row: Record<string, unknown>, path: string): unknown =>
+  path.split('.').reduce<unknown>((acc, key) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined), row);
+
+/** Loads `id -> label` options for a "vlookup" field, e.g. santri.unitId pointing at Unit.nama. */
+async function loadRefOptions(ref: NonNullable<Field['ref']>): Promise<{ id: string; label: string }[]> {
+  const client = prisma as unknown as Record<string, Delegate>;
+  const delegate = client[ref.model];
+  if (!delegate) throw new Error(`Model referensi "${ref.model}" tidak dikenal.`);
+  const rows = await delegate.findMany({ include: ref.include, orderBy: ref.orderBy });
+  return rows.map((row) => ({ id: String(row.id), label: String(readPath(row, ref.label) ?? row.id) }));
+}
+
+export const toClientEntity = async (entity: Entity): Promise<ClientEntity> => ({
   key: entity.key,
   label: entity.label,
-  fields: entity.fields.map(({ ref: _ref, ...field }) => field),
+  fields: await Promise.all(entity.fields.map(async ({ ref, ...field }) => (
+    ref ? { ...field, refOptions: await loadRefOptions(ref) } : field
+  ))),
   columns: entity.columns,
 });

@@ -20,17 +20,18 @@ export default async function EntityPage({ params, searchParams }: { params: Pro
   const session = await requirePage(entity.menu);
   const sp = await searchParams;
   const halaman = bacaHalaman(sp);
-  const [rows, total, menuInfo] = await Promise.all([
+  const [rows, total, menuInfo, clientEntity] = await Promise.all([
     listRows(entity, halaman),
     countRows(entity),
     prisma.menu.findUnique({ where: { key: entity.menu }, select: { icon: true } }),
+    toClientEntity(entity),
   ]);
   const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN_CRUD));
   return <Shell session={session} active="data" title={entity.label}>
     <Link href="/data" className="muted" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
       <IkonMenu menuKey={entity.menu} path={menuInfo?.icon} size={15} /> &larr; Kembali ke Kelola Data
     </Link>
-    <CrudPanel entity={toClientEntity(entity)} rows={rows} />
+    <CrudPanel entity={clientEntity} rows={rows} />
     <Pagination
       halaman={halaman}
       totalHalaman={totalHalaman}

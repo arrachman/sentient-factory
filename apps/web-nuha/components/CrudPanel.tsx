@@ -11,8 +11,12 @@ const inputValue = (field: ClientField, row?: Row) => {
   return String(raw);
 };
 
-const display = (value: unknown) => {
+const display = (value: unknown, refOptions?: ClientField['refOptions']) => {
   if (value === null || value === undefined || value === '') return '—';
+  if (refOptions) {
+    const match = refOptions.find((option) => option.id === String(value));
+    if (match) return match.label;
+  }
   if (typeof value === 'boolean') return value ? 'Ya' : 'Tidak';
   const text = String(value);
   return /^\d{4}-\d{2}-\d{2}T/.test(text) ? new Date(text).toLocaleDateString('id-ID') : text;
@@ -24,6 +28,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const refByField = new Map(entity.fields.filter((field) => field.refOptions).map((field) => [field.name, field.refOptions]));
 
   async function send(method: 'POST' | 'PATCH' | 'DELETE', payload: Record<string, unknown>) {
     setBusy(true);
@@ -54,40 +59,55 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
     </div>
     {message && <p className="muted" role="status" style={{ marginTop: 8 }}>{message}</p>}
 
-    {(open || editing) && <form onSubmit={submit} style={{ marginTop: 12 }} data-testid={`form-${entity.key}`}>
-      <div className="grid g3">
-        {entity.fields.map((field) => <div className="field" key={field.name}>
-          <label htmlFor={`${entity.key}-${field.name}`}>{field.label}</label>
-          {field.type === 'textarea'
-            ? <textarea id={`${entity.key}-${field.name}`} name={field.name} required={field.required} defaultValue={inputValue(field, editing ?? undefined)} rows={3} />
-            : field.type === 'select'
-              ? <select id={`${entity.key}-${field.name}`} name={field.name} required={field.required} defaultValue={inputValue(field, editing ?? undefined)}>
-                  <option value="">Pilih…</option>
-                  {field.options?.map((option) => <option key={option} value={option}>{option}</option>)}
-                </select>
-              : field.type === 'boolean'
-                ? <input id={`${entity.key}-${field.name}`} name={field.name} type="checkbox" defaultChecked={editing ? Boolean(editing[field.name]) : true} />
-                : <input id={`${entity.key}-${field.name}`} name={field.name} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'} step={field.step} required={field.required} defaultValue={inputValue(field, editing ?? undefined)} />}
-        </div>)}
+    {(open || editing) && <div className="modal-overlay" onClick={() => { setEditing(null); setOpen(false); }}>
+      <div className="modal" onClick={(event) => event.stopPropagation()}>
+        <div className="modal-head">
+          <h3>{editing ? `Ubah ${entity.label.toLowerCase()}` : `Tambah ${entity.label.toLowerCase()}`}</h3>
+          <button className="btn btn-sekunder" type="button" onClick={() => { setEditing(null); setOpen(false); }}>Tutup</button>
+        </div>
+        <form onSubmit={submit} data-testid={`form-${entity.key}`}>
+          <div className="grid g3">
+            {entity.fields.map((field) => <div className="field" key={field.name}>
+              <label htmlFor={`${entity.key}-${field.name}`}>{field.label}</label>
+              {field.refOptions
+                ? <select id={`${entity.key}-${field.name}`} name={field.name} required={field.required} defaultValue={inputValue(field, editing ?? undefined)}>
+                    <option value="">Pilih…</option>
+                    {field.refOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+                  </select>
+                : field.type === 'textarea'
+                  ? <textarea id={`${entity.key}-${field.name}`} name={field.name} required={field.required} defaultValue={inputValue(field, editing ?? undefined)} rows={3} />
+                  : field.type === 'select'
+                    ? <select id={`${entity.key}-${field.name}`} name={field.name} required={field.required} defaultValue={inputValue(field, editing ?? undefined)}>
+                        <option value="">Pilih…</option>
+                        {field.options?.map((option) => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    : field.type === 'boolean'
+                      ? <input id={`${entity.key}-${field.name}`} name={field.name} type="checkbox" defaultChecked={editing ? Boolean(editing[field.name]) : true} />
+                      : <input id={`${entity.key}-${field.name}`} name={field.name} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'} step={field.step} required={field.required} defaultValue={inputValue(field, editing ?? undefined)} />}
+            </div>)}
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn" disabled={busy} type="submit">{busy ? 'Menyimpan…' : editing ? 'Simpan perubahan' : 'Simpan'}</button>
+            <button className="btn btn-sekunder" type="button" onClick={() => { setEditing(null); setOpen(false); }}>Batal</button>
+          </div>
+        </form>
       </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <button className="btn" disabled={busy} type="submit">{busy ? 'Menyimpan…' : editing ? 'Simpan perubahan' : 'Simpan'}</button>
-        <button className="btn btn-sekunder" type="button" onClick={() => { setEditing(null); setOpen(false); }}>Batal</button>
-      </div>
-    </form>}
+    </div>}
 
-    <table style={{ marginTop: 12 }}>
-      <thead><tr>{entity.columns.map((column) => <th key={column.name}>{column.label}</th>)}<th>Aksi</th></tr></thead>
-      <tbody>
-        {rows.length === 0 && <tr><td colSpan={entity.columns.length + 1} className="muted">Belum ada data.</td></tr>}
-        {rows.map((row) => <tr key={row.id} data-testid={`row-${entity.key}`}>
-          {entity.columns.map((column) => <td key={column.name}>{display(row[column.name])}</td>)}
-          <td><div style={{ display: 'flex', gap: 6 }}>
-            <button className="btn btn-sekunder" type="button" disabled={busy} onClick={() => { setEditing(row); setOpen(true); setMessage(''); }}>Ubah</button>
-            <button className="btn btn-sekunder" type="button" disabled={busy} onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}>Hapus</button>
-          </div></td>
-        </tr>)}
-      </tbody>
-    </table>
+    <div className="tabel-wrap">
+      <table className="table-compact" style={{ marginTop: 12 }}>
+        <thead><tr>{entity.columns.map((column) => <th key={column.name}>{column.label}</th>)}<th>Aksi</th></tr></thead>
+        <tbody>
+          {rows.length === 0 && <tr><td colSpan={entity.columns.length + 1} className="muted">Belum ada data.</td></tr>}
+          {rows.map((row) => <tr key={row.id} data-testid={`row-${entity.key}`}>
+            {entity.columns.map((column) => <td key={column.name}>{display(row[column.name], refByField.get(column.name))}</td>)}
+            <td><div style={{ display: 'flex', gap: 6 }}>
+              <button className="btn btn-sekunder" type="button" disabled={busy} onClick={() => { setEditing(row); setOpen(true); setMessage(''); }}>Ubah</button>
+              <button className="btn btn-sekunder" type="button" disabled={busy} onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}>Hapus</button>
+            </div></td>
+          </tr>)}
+        </tbody>
+      </table>
+    </div>
   </div>;
 }
