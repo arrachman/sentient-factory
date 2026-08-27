@@ -1,5 +1,6 @@
 export * from './Card';
 export * from './JudulHalaman';
+export * from './LimitPicker';
 export * from './Pagination';
 export * from './StatCard';
 export * from './Tabel';

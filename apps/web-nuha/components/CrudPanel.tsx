@@ -11,6 +11,10 @@ const inputValue = (field: ClientField, row?: Row) => {
   return String(raw);
 };
 
+const IkonTambah = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>;
+const IkonUbah = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>;
+const IkonHapus = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" /><path d="M10 11v6M14 11v6" /></svg>;
+
 const display = (value: unknown, refOptions?: ClientField['refOptions']) => {
   if (value === null || value === undefined || value === '') return '—';
   if (refOptions) {
@@ -55,7 +59,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
   return <div className="card" style={{ marginTop: 16 }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
       <h3 style={{ margin: 0 }}>{entity.label}</h3>
-      <button className="btn" type="button" onClick={() => { setEditing(null); setOpen(!open); setMessage(''); }} data-testid={`tambah-${entity.key}`}>{open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`}</button>
+      <button className="btn btn-icon" type="button" onClick={() => { setEditing(null); setOpen(!open); setMessage(''); }} data-testid={`tambah-${entity.key}`} title={open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`} aria-label={`Tambah ${entity.label.toLowerCase()}`}><IkonTambah /></button>
     </div>
     {message && <p className="muted" role="status" style={{ marginTop: 8 }}>{message}</p>}
 
@@ -102,8 +106,8 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
           {rows.map((row) => <tr key={row.id} data-testid={`row-${entity.key}`}>
             {entity.columns.map((column) => <td key={column.name}>{display(row[column.name], refByField.get(column.name))}</td>)}
             <td><div style={{ display: 'flex', gap: 6 }}>
-              <button className="btn btn-sekunder" type="button" disabled={busy} onClick={() => { setEditing(row); setOpen(true); setMessage(''); }}>Ubah</button>
-              <button className="btn btn-sekunder" type="button" disabled={busy} onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}>Hapus</button>
+              <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Ubah" aria-label="Ubah" onClick={() => { setEditing(row); setOpen(true); setMessage(''); }}><IkonUbah /></button>
+              <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Hapus" aria-label="Hapus" onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}><IkonHapus /></button>
             </div></td>
           </tr>)}
         </tbody>

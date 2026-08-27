@@ -79,18 +79,16 @@ function convert(field: Field, raw: unknown, errors: string[]): unknown {
   }
 }
 
-const UKURAN_HALAMAN_CRUD = 25;
-
 export async function countRows(entity: Entity): Promise<number> {
   return delegateFor(entity).count();
 }
 
-export async function listRows(entity: Entity, halaman = 1): Promise<Row[]> {
+export async function listRows(entity: Entity, halaman = 1, ukuranHalaman = 10): Promise<Row[]> {
   const rows = await delegateFor(entity).findMany({
     include: entity.include,
     orderBy: entity.orderBy,
-    skip: (Math.max(1, halaman) - 1) * UKURAN_HALAMAN_CRUD,
-    take: UKURAN_HALAMAN_CRUD,
+    skip: (Math.max(1, halaman) - 1) * ukuranHalaman,
+    take: ukuranHalaman,
   });
   return rows.map((row) => ({ ...(serialize(row) as Record<string, unknown>), id: String(row.id) }));
 }

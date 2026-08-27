@@ -9,3 +9,11 @@ export const satu = (v: string | string[] | undefined) => (Array.isArray(v) ? v[
 export function bacaHalaman(sp: SearchParams) {
   return Math.max(1, Number(satu(sp.halaman)) || 1);
 }
+
+export const OPSI_LIMIT = [10, 25, 50, 100];
+
+/** Baca jumlah baris per halaman dari searchParams, default 10, dibatasi ke OPSI_LIMIT. */
+export function bacaLimit(sp: SearchParams, def = 10) {
+  const nilai = Number(satu(sp.limit));
+  return OPSI_LIMIT.includes(nilai) ? nilai : def;
+}
