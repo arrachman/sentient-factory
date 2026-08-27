@@ -4,6 +4,35 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Satu orang boleh memegang beberapa peran sekaligus (`792fbe22`)
+
+Sebelumnya "Daftarkan sebagai" di `/data/orang` adalah pilihan tunggal, sehingga
+satu identitas tidak bisa tercatat sebagai santri **dan** guru — padahal di
+pesantren perangkapan itu lumrah (santri senior yang mengajar ngaji, guru yang
+juga wali dari santri lain). Kini pilihannya kotak centang dan boleh lebih dari
+satu; baris `santri` dan `pegawai` dibuat berdampingan untuk `orang` yang sama.
+
+Perubahan teknis: tipe field baru `pilihan-banyak` (`lib/crud/types.ts`,
+dirender di `InputField`, divalidasi di `engine.ts`), `peranOrang` dikirim
+sebagai daftar dipisah koma, `daftarkanPeran`/`selaraskanPeran` tidak lagi
+saling meniadakan per peran, dan `keterkaitan.ts` mengembalikan **semua** peran
+yang melekat (dulu hanya satu "pemenang") sehingga form ubah memuat centangnya
+dengan benar.
+
+Yang perlu diketahui operator:
+- Opsi "Belum ditentukan" hilang — tidak mencentang apa pun artinya sama.
+- Guru dan Staf berbagi satu baris `pegawai`; bila keduanya dicentang, jabatan
+  Guru yang dipakai (kategori orang tetap disimpulkan dari kata "Guru" di
+  `jabatan`).
+- Peran yang centangnya dilepas **tidak** dicabut diam-diam — modul nilai,
+  presensi, dan penggajian masih merujuknya; cabut lewat modul asalnya.
+
+Verifikasi lewat Chromium ke `http://202.59.200.26:3226`: login superadmin,
+centang Santri + Guru sekaligus → NIS & NIP keduanya muncul, tersimpan sebagai
+satu `orang` dengan baris santri (NIS) *dan* pegawai (NIP) di DB, badge tabel
+menampilkan "Santri Pegawai", form ubah memuat kedua centang beserta isiannya,
+tanpa `pageerror`. Baris uji dihapus kembali.
+
 ## 2026-08-27 — 17 alumni SMP naik ke MA angkatan 2026/2027 beserta wali (`e5ae2819`)
 
 Impor gelombang 2 dari tabel operator format Dinkes (24 baris, identitas siswa +
