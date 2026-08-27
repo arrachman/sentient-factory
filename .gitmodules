@@ -1,0 +1,3 @@
+[submodule "apps/web-althea"]
+	path = apps/web-althea
+	url = https://github.com/arrachman/web-althea
