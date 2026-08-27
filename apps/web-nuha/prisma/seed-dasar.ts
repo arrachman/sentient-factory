@@ -10,6 +10,7 @@
 import { PrismaClient, JenisKelamin } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import data from './proto-data.json';
+import { daftarTahunAjaran } from './tahun-ajaran';
 
 const prisma = new PrismaClient();
 type PrototypeData = Record<string, Array<Record<string, unknown>>>;
@@ -22,10 +23,7 @@ const UNIT_ROWS = [
   { key: 'Poskestren', nama: 'Poskestren', deskripsi: 'Layanan kesehatan santri.' },
 ];
 
-const TAHUN_AJARAN_ROWS = [
-  { kode: '2025/2026', semester: 'Gasal', aktif: false },
-  { kode: '2026/2027', semester: 'Gasal', aktif: true },
-];
+const TAHUN_AJARAN_ROWS = daftarTahunAjaran();
 
 async function seedPeranDanMenu() {
   const roles = await Promise.all(source.roles.map((row) => prisma.peran.upsert({

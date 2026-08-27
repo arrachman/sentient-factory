@@ -4,6 +4,15 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Tahun pelajaran 2024/2025 s.d. berjalan, Gasal + Genap (pending)
+
+Daftar tahun pelajaran dipindah ke `prisma/tahun-ajaran.ts`: dibangkitkan dari
+2024/2025 sampai tahun pelajaran berjalan (dihitung dari tanggal, mulai Juli),
+masing-masing dengan semester Gasal dan Genap. `prisma/seed.ts` dan
+`prisma/seed-dasar.ts` memakai sumber yang sama; upsert tetap idempoten.
+Dampak: tabel `tahun_ajaran` kini 6 baris (2024/2025 … 2026/2027), aktif =
+2026/2027 Gasal. Baris lama tidak dihapus.
+
 ## 2026-08-27 — Bagian "Peran" bisa diubah, bukan hanya saat menambah (pending)
 
 Form ubah identitas orang kini menampilkan bagian "Daftarkan sebagai" beserta

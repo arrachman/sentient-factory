@@ -2,6 +2,7 @@ import { PrismaClient, JenisKelamin, StatusPendaftar, StatusSantri } from '@pris
 import bcrypt from 'bcryptjs';
 import data from './proto-data.json';
 import { seedCbt } from './seed-cbt';
+import { seedTahunAjaran as seedTahunAjaranRows } from './tahun-ajaran';
 
 const prisma = new PrismaClient();
 type PrototypeData = Record<string, Array<Record<string, unknown>>>;
@@ -44,21 +45,10 @@ const KELAS_JADWAL_PROTOTYPE = '8B';
 
 /**
  * Menggantikan periode hardcode di app/kurikulum/kelas-guru.ts. Idempoten:
- * dipanggil berkali-kali dari fungsi seed berbeda, cukup upsert lalu
- * kembalikan tahun ajaran aktif (2026/2027 Gasal).
+ * dipanggil berkali-kali dari fungsi seed berbeda; daftar 2024/2025 s.d.
+ * tahun pelajaran berjalan (Gasal + Genap) ada di prisma/tahun-ajaran.ts.
  */
-async function seedTahunAjaran() {
-  const rows = [
-    { kode: '2025/2026', semester: 'Gasal', aktif: false },
-    { kode: '2026/2027', semester: 'Gasal', aktif: true },
-  ];
-  const tahunAjaran = await Promise.all(rows.map((row) => prisma.tahunAjaran.upsert({
-    where: { kode_semester: { kode: row.kode, semester: row.semester } },
-    create: row,
-    update: { aktif: row.aktif },
-  })));
-  return tahunAjaran.find((ta) => ta.aktif) ?? tahunAjaran[tahunAjaran.length - 1];
-}
+const seedTahunAjaran = () => seedTahunAjaranRows(prisma);
 
 const gender = (value: unknown): JenisKelamin => String(value) === 'P' ? JenisKelamin.P : JenisKelamin.L;
 const pendaftarStatus = (value: unknown): StatusPendaftar => {
