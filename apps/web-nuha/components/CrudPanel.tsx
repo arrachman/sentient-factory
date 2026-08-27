@@ -8,6 +8,7 @@ import { InputField } from '@/components/molecules/InputField';
 const IkonTambah = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>;
 const IkonUbah = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M4 20h4L19.5 8.5a2.12 2.12 0 0 0-3-3L5 17v3Z" /><path d="M14.5 6.5l3 3" /></svg>;
 const IkonHapus = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M4 7h16" /><path d="M10 4h4" /><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" /><path d="M10 11v6M14 11v6" /></svg>;
+const IkonSimpan = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M20 6 9 17l-5-5" /></svg>;
 const IkonTutup = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M18 6 6 18M6 6l12 12" /></svg>;
 
 /** Grup yang dilipat secara bawaan: isian pelengkap, bukan data utama. */
@@ -192,8 +193,8 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
           {editing?._kait && <PanelKeterkaitan kait={editing._kait} />}
           <div className="modal-aksi">
             <span className="muted" style={{ fontSize: 12, marginRight: 'auto' }}><span className="wajib">*</span> wajib diisi</span>
-            <button className="btn" disabled={busy} type="submit">{busy ? 'Menyimpan…' : editing ? 'Simpan perubahan' : 'Simpan'}</button>
-            <button className="btn btn-sekunder" type="button" onClick={() => { setEditing(null); setOpen(false); }}>Batal</button>
+            <button className="btn btn-icon btn-icon-utama" disabled={busy} type="submit" title={busy ? 'Menyimpan…' : editing ? 'Simpan perubahan' : 'Simpan'} aria-label={busy ? 'Menyimpan…' : editing ? 'Simpan perubahan' : 'Simpan'}><IkonSimpan /></button>
+            <button className="btn btn-sekunder btn-icon" type="button" title="Batal" aria-label="Batal" onClick={() => { setEditing(null); setOpen(false); }}><IkonTutup /></button>
           </div>
         </form>
       </div>

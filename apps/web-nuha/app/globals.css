@@ -244,6 +244,9 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
 .btn-icon:hover { background: var(--krem); color: var(--hijau-gelap); border-color: var(--hijau); }
 .btn-icon:focus-visible { outline: 2px solid var(--hijau); outline-offset: 1px; }
 .btn-icon:disabled { opacity: .45; cursor: not-allowed; }
+/* Varian ikon utama: tetap hijau solid seperti .btn biasa */
+.btn-icon-utama { color: #fff; }
+.btn-icon-utama:hover { background: var(--hijau-gelap); color: #fff; border-color: var(--hijau-gelap); }
 .btn-icon-bahaya:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
 
 .field { margin-bottom: 14px; }
