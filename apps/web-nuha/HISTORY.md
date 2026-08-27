@@ -4,6 +4,14 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Kelola Data: filter server-side di /data/[entity] (174d1cd5)
+
+`FilterBar` baru (form GET, tanpa JS) di atas tiap tabel `/data/[entity]`:
+kotak cari bebas (`q`, contains case-sensitive di kolom text/textarea) dan
+dropdown per kolom `select`/vlookup yang tampil di tabel (exact match).
+`lib/crud/engine.ts` membangun `where` Prisma dari filter tersebut; limit
+picker dan paginasi mempertahankan filter aktif lewat query string.
+
 ## 2026-08-27 — Fix: ikon tombol aksi Kelola Data belum center (31a36747)
 
 Ikon pensil/tong sampah di `.btn-icon` sebelumnya sedikit menempel ke
