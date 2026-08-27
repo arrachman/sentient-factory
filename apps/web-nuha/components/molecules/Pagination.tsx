@@ -11,28 +11,40 @@ type Props = {
   ekstra?: ReactNode;
 };
 
-const JEDA = 'jeda';
+const GAYA_TOMBOL = {
+  minWidth: 34,
+  textAlign: 'center' as const,
+  padding: '7px 10px',
+  borderRadius: 9,
+  textDecoration: 'none',
+  fontSize: 12.5,
+  fontWeight: 600,
+};
 
-/** Ringkas daftar halaman jadi maks ~7 slot: 1 … n-1 [n] n+1 … total. */
-function slotHalaman(halaman: number, totalHalaman: number): (number | typeof JEDA)[] {
-  if (totalHalaman <= 7) return Array.from({ length: totalHalaman }, (_, i) => i + 1);
-  const sekitar = new Set([1, totalHalaman, halaman, halaman - 1, halaman + 1]);
-  if (halaman <= 3) [2, 3, 4].forEach((p) => sekitar.add(p));
-  if (halaman >= totalHalaman - 2) [totalHalaman - 3, totalHalaman - 2, totalHalaman - 1].forEach((p) => sekitar.add(p));
-  const nomor = [...sekitar].filter((p) => p >= 1 && p <= totalHalaman).sort((a, b) => a - b);
-  const slot: (number | typeof JEDA)[] = [];
-  nomor.forEach((p, i) => {
-    if (i > 0 && p - nomor[i - 1] > 1) slot.push(JEDA);
-    slot.push(p);
-  });
-  return slot;
+type TombolProps = { label: string; judul: string; tujuan: number; aktif: boolean; buatHref: (halaman: number) => string };
+
+/** Satu tombol navigasi; jadi <span> non-klik saat sudah di ujung. */
+function TombolNav({ label, judul, tujuan, aktif, buatHref }: TombolProps) {
+  if (!aktif) {
+    return (
+      <span className="btn-sekunder" aria-disabled="true" title={judul} style={{ ...GAYA_TOMBOL, opacity: 0.45, cursor: 'default' }}>
+        {label}
+      </span>
+    );
+  }
+  return (
+    <a className="btn-sekunder" href={buatHref(tujuan)} title={judul} aria-label={judul} style={GAYA_TOMBOL}>
+      {label}
+    </a>
+  );
 }
 
-/** Footer pager: "Menampilkan X–Y dari Z" + link nomor halaman. Dipakai bersama util `bacaHalaman`. */
+/** Footer pager: "Menampilkan X–Y dari Z" + navigasi awal/sebelumnya/berikutnya/akhir. Dipakai bersama util `bacaHalaman`. */
 export function Pagination({ halaman, totalHalaman, total, jumlahBaris, ukuranHalaman, buatHref, ekstra }: Props) {
   const awal = jumlahBaris === 0 ? 0 : (halaman - 1) * ukuranHalaman + 1;
   const akhir = (halaman - 1) * ukuranHalaman + jumlahBaris;
-  const slot = slotHalaman(halaman, totalHalaman);
+  const adaSebelum = halaman > 1;
+  const adaSesudah = halaman < totalHalaman;
   return (
     <div className="bilah-footer">
       <span className="muted" style={{ fontSize: 12.5 }}>
@@ -40,19 +52,17 @@ export function Pagination({ halaman, totalHalaman, total, jumlahBaris, ukuranHa
       </span>
       <div className="bilah-footer-kanan">
         {ekstra}
-        {totalHalaman > 1 && <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          {slot.map((p, i) => p === JEDA
-            ? <span key={`jeda-${i}`} className="muted" style={{ padding: '0 2px', fontSize: 12.5 }}>…</span>
-            : <a
-                key={p}
-                href={buatHref(p)}
-                aria-current={p === halaman ? 'page' : undefined}
-                className={`btn-sekunder ${p === halaman ? 'active' : ''}`}
-                style={{ minWidth: 34, textAlign: 'center', padding: '7px 10px', borderRadius: 9, textDecoration: 'none', fontSize: 12.5, fontWeight: 600 }}
-              >
-                {p}
-              </a>)}
-        </div>}
+        {totalHalaman > 1 && (
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+            <TombolNav label="«" judul="Halaman pertama" tujuan={1} aktif={adaSebelum} buatHref={buatHref} />
+            <TombolNav label="‹" judul="Halaman sebelumnya" tujuan={halaman - 1} aktif={adaSebelum} buatHref={buatHref} />
+            <span className="muted" style={{ padding: '0 4px', fontSize: 12.5, fontWeight: 600 }}>
+              Halaman {halaman} dari {totalHalaman}
+            </span>
+            <TombolNav label="›" judul="Halaman berikutnya" tujuan={halaman + 1} aktif={adaSesudah} buatHref={buatHref} />
+            <TombolNav label="»" judul="Halaman terakhir" tujuan={totalHalaman} aktif={adaSesudah} buatHref={buatHref} />
+          </div>
+        )}
       </div>
     </div>
   );
