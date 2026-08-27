@@ -175,13 +175,13 @@ async function jalankan(): Promise<void> {
   console.log(`Validasi lolos: ${siapXi.length} siswa (kelas 11, ${pathXi}) + ${siapX.length} siswa (kelas 10, ${pathX}). Menulis ke database...`);
 
   const kelasXi = await prisma.kelas.upsert({
-    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: '11', tahunAjaranId: tahunAjaran.id } },
-    create: { unitId: unit.id, nama: '11', tingkat: '11', tahunAjaranId: tahunAjaran.id },
+    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: 'Kelas 2', tahunAjaranId: tahunAjaran.id } },
+    create: { unitId: unit.id, nama: 'Kelas 2', tingkat: '11', tahunAjaranId: tahunAjaran.id },
     update: {},
   });
   const kelasX = await prisma.kelas.upsert({
-    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: '10', tahunAjaranId: tahunAjaran.id } },
-    create: { unitId: unit.id, nama: '10', tingkat: '10', tahunAjaranId: tahunAjaran.id },
+    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: 'Kelas 1', tahunAjaranId: tahunAjaran.id } },
+    create: { unitId: unit.id, nama: 'Kelas 1', tingkat: '10', tahunAjaranId: tahunAjaran.id },
     update: {},
   });
 

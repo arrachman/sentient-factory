@@ -218,10 +218,11 @@ async function seedJadwalLintasUnit() {
   if (pondok) {
     const tahunAjaranAktif = await seedTahunAjaran();
     for (let tingkat = 1; tingkat <= 6; tingkat += 1) {
-      const nama = String(tingkat);
+      const nama = `Kelas ${tingkat}`;
+      const tingkatStr = String(tingkat);
       await prisma.kelas.upsert({
         where: { unitId_nama_tahunAjaranId: { unitId: pondok.id, nama, tahunAjaranId: tahunAjaranAktif.id } },
-        create: { unitId: pondok.id, nama, tingkat: nama, tahunAjaranId: tahunAjaranAktif.id },
+        create: { unitId: pondok.id, nama, tingkat: tingkatStr, tahunAjaranId: tahunAjaranAktif.id },
         update: {},
       });
     }

@@ -201,8 +201,9 @@ async function jalankan(): Promise<void> {
   console.log(`Validasi lolos: ${semua.length} siswa SMP dari "${path}". Menulis ke database...`);
 
   // Huruf rombel hanya dipakai ketika tingkatnya memang terbagi lebih dari satu
-  // rombel (mis. 9A & 9B). Tingkat dengan rombel tunggal cukup bernama angka
-  // ("7", "8") — itu penamaan resmi yang dipakai pesantren.
+  // rombel (mis. kelas 3A & 3B untuk tingkat 9). Tingkat dengan rombel tunggal
+  // cukup bernama "Kelas <urutan>" — angka urutan lokal SMP (7→1, 8→2, 9→3),
+  // bukan nomor tingkat sekolah.
   const identitasPerTingkat = new Map<string, Set<string>>();
   for (const s of semua) {
     const tingkat = SHEET_KE_TINGKAT[s.sheet];
@@ -216,8 +217,9 @@ async function jalankan(): Promise<void> {
 
   for (const s of semua) {
     const tingkat = SHEET_KE_TINGKAT[s.sheet];
+    const urutanLokal = Number(tingkat) - 6;
     const rombelTunggal = (identitasPerTingkat.get(tingkat)?.size ?? 1) <= 1;
-    const namaKelas = rombelTunggal ? tingkat : `${tingkat}${s.identitasKelas}`;
+    const namaKelas = rombelTunggal ? `Kelas ${urutanLokal}` : `Kelas ${urutanLokal}${s.identitasKelas}`;
     let kelasId = kelasCache.get(namaKelas);
     if (kelasId === undefined) {
       const kelas = await prisma.kelas.upsert({
