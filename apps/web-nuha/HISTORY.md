@@ -4,6 +4,40 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Impor 11 siswa MA Kelas X TA 2025/2026 + koreksi `jk` wali
+
+Importir baru `prisma/import/import-siswa-ma-2025.ts` (`npm run
+import:siswa-ma-2025`) memuat 11 siswa MA Kelas 1 (tingkat 10) tahun ajaran
+**2025/2026 Gasal** dari tiga tabel operator sekaligus: data diri, data wali
+murid (blok Ayah + Ibu), dan data kesehatan. Pengecekan sebelum menulis:
+tidak satu pun dari 11 NIK/NISN sudah ada — semuanya baris baru. Hasil:
+11 `Santri` + 22 `RelasiWali` + 8 `ProfilKesehatan`.
+
+Yang perlu diketahui operator:
+- **Muhammad Fajar Putra Sulhari** tidak punya NIS di tabel sumber → NIS
+  dibuat otomatis `2025MA007`. Sepuluh sisanya memakai NIS resmi 18 digit.
+- **Tanpa profil kesehatan** (kolom sumber kosong / tak ada barisnya):
+  Muhammad Abdulloh Azamy, Muhammad Fajar Putra Sulhari, Muhammad Hamdan
+  Zaini. Tab Kesehatan menampilkan "belum diisi", bukan angka nol.
+- Kolom "NAMA WALI" (wali pihak ketiga) kosong di seluruh 11 baris, jadi
+  hanya relasi Ayah & Ibu yang dibuat. Ayah Ahmad Shafly (Aminudin), ayah
+  Dinda (Abdul Holik), dan ibu Hamdan (Noer Laila) hanya diketahui namanya —
+  tanpa NIK/TTL/pekerjaan, sesuai sumber.
+
+Sekalian memperbaiki cacat di `prisma/import/lib/tulis-wali.ts`: `Orang.jk`
+hanya diset saat *create*, tak pernah dikoreksi saat *update*. Akibatnya wali
+yang lebih dulu masuk lewat importir berkolom-tunggal (peran `Wali`, default
+`L`) tetap tercatat laki-laki ketika importir lain mengenalinya sebagai Ibu.
+Ditemukan 7 ibu angkatan 2026 ber-`jk = L`; setelah helper diperbaiki dan
+`npm run import:siswa-ma-2026` dijalankan ulang (idempoten), tinggal 0. Peran
+`Wali` sengaja tidak menimpa `jk` karena tidak menyiratkan jenis kelamin.
+
+Verifikasi: `npx tsc --noEmit` bersih; importir dijalankan dua kali (run ke-2
+seluruhnya `[perbarui]`, 0 duplikat NISN); Playwright ke
+`http://202.59.200.26:3226` login `superadmin`, tab Biodata/Wali/Kesehatan
+untuk 4 santri sampel merender tanpa `pageerror`, dan `guru.1` yang membuka
+`/induk` diarahkan ke `/login`.
+
 ## 2026-08-27 — Profil kelembagaan tiap unit & yayasan (`71b07f76`)
 
 Identitas lembaga (nama resmi, logo, kepala unit, alamat, NPSN) sebelumnya
