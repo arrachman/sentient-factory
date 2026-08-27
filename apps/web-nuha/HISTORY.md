@@ -4,6 +4,14 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Tahun pelajaran sampai 2030/2031 (`87153933`)
+
+`prisma/tahun-ajaran.ts` kini men-generate tahun pelajaran 2024/2025 s.d.
+minimal 2030/2031 (Gasal + Genap, 14 baris), bukan berhenti di tahun berjalan.
+Kalau tahun berjalan melewati 2030 daftar tetap ikut maju sendiri. Yang aktif
+tetap semester berjalan (kini 2026/2027 Gasal). Dampak operator: jalankan seed
+(`nuha-migrate`) agar baris tahun baru muncul di Pengaturan → Tahun ajaran.
+
 ## 2026-08-27 — Master data kesehatan santri + CRUD-nya (pending)
 
 Tabel `profil_kesehatan` yang selama ini hanya diisi importir MA kini punya
