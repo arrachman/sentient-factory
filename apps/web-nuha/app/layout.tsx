@@ -12,9 +12,9 @@ export const metadata: Metadata = {
   title: 'SIMTERPADU | Nurul Huda Mergosono',
   description: 'Sistem Informasi Manajemen Terpadu Yayasan Pendidikan Islam Nurul Huda Mergosono.',
   icons: {
-    icon: '/assets/logo-nuha.webp',
-    shortcut: '/assets/logo-nuha.webp',
-    apple: '/assets/logo-nuha.webp',
+    icon: '/assets/logo-nuha-favicon.webp',
+    shortcut: '/assets/logo-nuha-favicon.webp',
+    apple: '/assets/logo-nuha-favicon.webp',
   },
 };
 
