@@ -20,7 +20,25 @@ type Props = {
   placeholder?: string;
   /** Hanya tampilkan orang yang sudah terdaftar sebagai santri. */
   hanyaSantri?: boolean;
+  /** Relasi yang sudah tersimpan, JSON `[{ id, hubungan }]` — untuk form ubah. */
+  nilaiAwal?: string;
 };
+
+type RelasiAwal = { id: string; hubungan: string };
+
+/** Baca nilai tersimpan; bentuk apa pun selain daftar relasi diabaikan. */
+function baca(mentah?: string): RelasiAwal[] {
+  if (!mentah) return [];
+  try {
+    const terurai = JSON.parse(mentah);
+    if (!Array.isArray(terurai)) return [];
+    return terurai
+      .filter((item): item is RelasiAwal => Boolean(item) && typeof item === 'object' && /^\d+$/.test(String((item as RelasiAwal).id)))
+      .map((item) => ({ id: String(item.id), hubungan: String(item.hubungan ?? '') }));
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Relasi wali↔santri itu banyak-ke-banyak: satu santri boleh punya beberapa
@@ -28,12 +46,36 @@ type Props = {
  * bisa menumpuk beberapa orang sekaligus, masing-masing dengan hubungannya —
  * bukan satu dropdown seperti sebelumnya.
  */
-export function PemilihBanyakOrang({ name, label, id, hint, hubungan, placeholder, hanyaSantri }: Props) {
+export function PemilihBanyakOrang({ name, label, id, hint, hubungan, placeholder, hanyaSantri, nilaiAwal }: Props) {
   const [ketik, setKetik] = useState('');
   const [hasil, setHasil] = useState<OpsiOrang[]>([]);
   const [dipilih, setDipilih] = useState<PilihanRelasi[]>([]);
   const [memuat, setMemuat] = useState(false);
   const [terbuka, setTerbuka] = useState(false);
+
+  // Form ubah hanya tahu id relasi yang tersimpan; namanya diambil sekali agar
+  // daftar terpilih tampil terisi, bukan kosong seolah belum ada relasi.
+  useEffect(() => {
+    const awal = baca(nilaiAwal);
+    if (!awal.length) { setDipilih([]); return; }
+    let batal = false;
+    (async () => {
+      try {
+        const response = await fetch(`/api/orang/cari?ids=${awal.map((item) => item.id).join(',')}`);
+        const json = await response.json();
+        if (batal || !json.success) return;
+        const peta = new Map<string, OpsiOrang>((json.data as OpsiOrang[]).map((item) => [item.id, item]));
+        setDipilih(awal.flatMap((item) => {
+          const orang = peta.get(item.id);
+          return orang ? [{ orang, hubungan: hubungan.includes(item.hubungan) ? item.hubungan : hubungan[0] }] : [];
+        }));
+      } catch {
+        // Gagal memuat nama: biarkan kosong daripada menampilkan id mentah.
+      }
+    })();
+    return () => { batal = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nilaiAwal]);
 
   useEffect(() => {
     // Tanpa fokus tidak perlu memanggil server; dengan fokus, ketikan kosong

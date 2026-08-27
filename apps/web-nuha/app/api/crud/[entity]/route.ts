@@ -66,6 +66,10 @@ async function updateOrDelete(request: Request, context: { params: Promise<{ ent
   try {
     const data = action === 'delete' ? await delegate.delete({ where: { id: castId(auth.entity, idResult.data) } }) : (() => { const parsed = coerce(auth.entity, body ?? {}, true); if (parsed.errors.length) throw new Error(parsed.errors[0]); return delegate.update({ where: { id: castId(auth.entity, idResult.data) }, data: parsed.data }); })();
     const row = await data;
+    // Field virtual (peran orang) diselaraskan setelah kolomnya tersimpan.
+    if (action === 'update' && auth.entity.sesudahUbah) {
+      await auth.entity.sesudahUbah(idResult.data, body ?? {}, { id: auth.session.userId, nama: auth.session.nama });
+    }
     await recordAudit({ aksi: action === 'delete' ? 'CRUD_DELETE' : 'CRUD_UPDATE', entitas: auth.entity.model, entitasId: idResult.data, ringkasan: `${action === 'delete' ? 'Menghapus' : 'Mengubah'} ${auth.entity.label}`, aktor: { id: auth.session.userId, nama: auth.session.nama }, ip: requestIp(request) });
     return Response.json({ success: true, data: serialize(row), error: null });
   } catch (error) {

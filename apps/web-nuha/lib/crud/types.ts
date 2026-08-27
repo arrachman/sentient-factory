@@ -84,6 +84,11 @@ export type Entity = {
    * (mis. mendaftarkan orang baru sebagai santri/pegawai/wali).
    */
   sesudahBuat?: (id: string, input: Record<string, unknown>, aktor: { id: string; nama: string }) => Promise<void>;
+  /**
+   * Dijalankan setelah baris diubah: menyelaraskan peran & relasi dengan
+   * pilihan baru (mis. santri yang ternyata pegawai, atau daftar wali berubah).
+   */
+  sesudahUbah?: (id: string, input: Record<string, unknown>, aktor: { id: string; nama: string }) => Promise<void>;
 };
 
 /** Serializable field shape handed to the browser (no Prisma types cross over). */

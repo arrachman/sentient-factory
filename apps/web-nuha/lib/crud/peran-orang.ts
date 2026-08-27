@@ -32,7 +32,6 @@ export const FIELD_PERAN: Field[] = [
     type: 'select',
     required: true,
     virtual: true,
-    hanyaBaru: true,
     span: 3,
     group: 'Peran',
     options: [...PERAN_ORANG],
@@ -44,7 +43,6 @@ export const FIELD_PERAN: Field[] = [
     label: 'NIS',
     type: 'text',
     virtual: true,
-    hanyaBaru: true,
     group: 'Peran',
     tampilBila: tampilBila(['santri']),
     hint: 'Kosongkan bila belum ada.',
@@ -55,7 +53,6 @@ export const FIELD_PERAN: Field[] = [
     label: 'Status santri',
     type: 'select',
     virtual: true,
-    hanyaBaru: true,
     group: 'Peran',
     options: ['Mukim', 'Kalong'],
     tampilBila: tampilBila(['santri']),
@@ -65,7 +62,6 @@ export const FIELD_PERAN: Field[] = [
     label: 'NIP',
     type: 'text',
     virtual: true,
-    hanyaBaru: true,
     group: 'Peran',
     tampilBila: tampilBila(['guru', 'staf']),
     hint: 'Kosongkan untuk dibuatkan otomatis.',
@@ -76,17 +72,30 @@ export const FIELD_PERAN: Field[] = [
     label: 'Jabatan',
     type: 'text',
     virtual: true,
-    hanyaBaru: true,
     group: 'Peran',
     tampilBila: tampilBila(['guru', 'staf']),
     placeholder: 'Guru Mapel / Tata Usaha',
+    hint: 'Menentukan kategori: yang memuat kata "Guru" terbaca sebagai guru.',
+  },
+  {
+    // Jabatan struktural (SK) sengaja terpisah dari `peranJabatan`: kategori
+    // orang disimpulkan dari `jabatan`, jadi menaruh "Waka Kurikulum" di sana
+    // akan membuat guru terbaca staf. Lihat FILTER_KATEGORI_ORANG di bawah.
+    name: 'peranTugasTambahan',
+    label: 'Tugas tambahan / jabatan struktural',
+    type: 'text',
+    virtual: true,
+    span: 3,
+    group: 'Peran',
+    tampilBila: tampilBila(['guru', 'staf']),
+    placeholder: 'Waka Kurikulum / Wali Kelas 10',
+    hint: 'Opsional. Jabatan dari SK, bukan penentu hak akses menu.',
   },
   {
     name: 'peranWali',
     label: 'Wali santri ini',
     type: 'orang-banyak',
     virtual: true,
-    hanyaBaru: true,
     span: 3,
     group: 'Peran',
     hubungan: HUBUNGAN_WALI,
@@ -99,7 +108,6 @@ export const FIELD_PERAN: Field[] = [
     label: 'Santri yang diwalikan',
     type: 'orang-banyak',
     virtual: true,
-    hanyaBaru: true,
     span: 3,
     group: 'Peran',
     hubungan: HUBUNGAN_WALI,
@@ -140,8 +148,8 @@ const teks = (input: Record<string, unknown>, key: string) => String(input[key] 
 /** NIP wajib & unik di skema, jadi sediakan cadangan yang deterministik. */
 const nipCadangan = (orangId: string) => `NIP-${orangId.padStart(6, '0')}`;
 
-async function catat(orangId: string, ringkasan: string, perubahan: Record<string, unknown>, aktor: { id: string; nama: string }) {
-  await recordAudit({ aksi: 'CRUD_CREATE', entitas: 'orang_peran', entitasId: orangId, ringkasan, perubahan, aktor });
+async function catat(orangId: string, ringkasan: string, perubahan: Record<string, unknown>, aktor: { id: string; nama: string }, aksi: 'CRUD_CREATE' | 'CRUD_UPDATE' | 'CRUD_DELETE' = 'CRUD_CREATE') {
+  await recordAudit({ aksi, entitas: 'orang_peran', entitasId: orangId, ringkasan, perubahan, aktor });
 }
 
 type Relasi = { id: string; hubungan: string };
@@ -220,8 +228,9 @@ export async function daftarkanPeran(orangId: string, input: Record<string, unkn
     if (await prisma.pegawai.count({ where: { orangId: id } })) return;
     const nip = teks(input, 'peranNip') || nipCadangan(orangId);
     const jabatan = teks(input, 'peranJabatan') || (peran === 'guru' ? 'Guru Mapel' : 'Staf');
-    await prisma.pegawai.create({ data: { orangId: id, nip, jabatan, status: 'Aktif' } });
-    await catat(orangId, `Mendaftarkan sebagai ${LABEL_PERAN[peran].toLowerCase()} (NIP ${nip})`, { peran, nip, jabatan }, aktor);
+    const tugasTambahan = teks(input, 'peranTugasTambahan') || null;
+    await prisma.pegawai.create({ data: { orangId: id, nip, jabatan, tugasTambahan, status: 'Aktif' } });
+    await catat(orangId, `Mendaftarkan sebagai ${LABEL_PERAN[peran].toLowerCase()} (NIP ${nip})`, { peran, nip, jabatan, tugasTambahan }, aktor);
     return;
   }
 
@@ -233,4 +242,77 @@ export async function daftarkanPeran(orangId: string, input: Record<string, unkn
       await catat(orangId, `Mendaftarkan sebagai ${anak.hubungan} dari orang #${anak.id}`, { peran, anakId: anak.id, hubungan: anak.hubungan }, aktor);
     }
   }
+}
+
+/** Relasi yang dicabut operator ikut hilang; yang tersisa disesuaikan hubungannya. */
+async function selaraskanRelasi(
+  orangId: string,
+  arah: 'wali' | 'anak',
+  daftar: Relasi[],
+  id: bigint,
+  aktor: { id: string; nama: string },
+): Promise<void> {
+  const kunci = arah === 'wali' ? { anakId: id } : { waliId: id };
+  const lama = await prisma.relasiWali.findMany({ where: kunci, select: { waliId: true, anakId: true } });
+  const tetap = new Set(daftar.map((item) => item.id));
+  for (const baris of lama) {
+    const lawan = String(arah === 'wali' ? baris.waliId : baris.anakId);
+    if (tetap.has(lawan)) continue;
+    await prisma.relasiWali.delete({ where: { waliId_anakId: { waliId: baris.waliId, anakId: baris.anakId } } });
+    await catat(orangId, `Mencabut relasi wali dengan orang #${lawan}`, { arah, lawan }, aktor, 'CRUD_DELETE');
+  }
+  for (const item of daftar) {
+    const [waliId, anakId] = arah === 'wali' ? [BigInt(item.id), id] : [id, BigInt(item.id)];
+    if (await sambungkanWali(waliId, anakId, item.hubungan)) {
+      await catat(orangId, `Menetapkan relasi ${item.hubungan} dengan orang #${item.id}`, { arah, lawan: item.id, hubungan: item.hubungan }, aktor, 'CRUD_UPDATE');
+    }
+  }
+}
+
+/**
+ * Selaraskan peran setelah identitas diubah. Baris santri/pegawai yang sudah
+ * ada diperbarui, bukan digandakan; dan peran yang tidak lagi dipilih **tidak**
+ * dihapus diam-diam — modul lain (nilai, presensi, gaji) masih merujuknya, jadi
+ * pencabutannya dilakukan sengaja lewat modul asalnya. Relasi wali, yang tidak
+ * dirujuk modul lain, memang ikut dicabut sesuai isi daftar.
+ */
+export async function selaraskanPeran(orangId: string, input: Record<string, unknown>, aktor: { id: string; nama: string }): Promise<void> {
+  const peran = teks(input, 'peranOrang') as PeranOrang;
+  if (!peran || !PERAN_ORANG.includes(peran)) return;
+  const id = BigInt(orangId);
+
+  if (peran === 'santri') {
+    const nis = teks(input, 'peranNis') || null;
+    const status = teks(input, 'peranStatusSantri') === 'Kalong' ? 'Kalong' : 'Mukim';
+    const ada = await prisma.santri.count({ where: { orangId: id } });
+    if (ada) {
+      await prisma.santri.update({ where: { orangId: id }, data: { nis, status } });
+      await catat(orangId, `Memperbarui data santri${nis ? ` (NIS ${nis})` : ''}`, { nis, status }, aktor, 'CRUD_UPDATE');
+    } else {
+      await prisma.santri.create({ data: { orangId: id, nis, status } });
+      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran, nis, status }, aktor);
+    }
+    if ('peranWali' in input) await selaraskanRelasi(orangId, 'wali', bacaRelasi(input, 'peranWali'), id, aktor);
+    return;
+  }
+
+  if (peran === 'guru' || peran === 'staf') {
+    const jabatan = teks(input, 'peranJabatan') || (peran === 'guru' ? 'Guru Mapel' : 'Staf');
+    const ada = await prisma.pegawai.findUnique({ where: { orangId: id }, select: { nip: true } });
+    const nip = teks(input, 'peranNip') || ada?.nip || nipCadangan(orangId);
+    const tugasTambahan = teks(input, 'peranTugasTambahan') || null;
+    if (ada) {
+      await prisma.pegawai.update({ where: { orangId: id }, data: { nip, jabatan, tugasTambahan } });
+      await catat(orangId, `Memperbarui data pegawai (NIP ${nip})`, { nip, jabatan, tugasTambahan }, aktor, 'CRUD_UPDATE');
+    } else {
+      await prisma.pegawai.create({ data: { orangId: id, nip, jabatan, tugasTambahan, status: 'Aktif' } });
+      await catat(orangId, `Mendaftarkan sebagai ${LABEL_PERAN[peran].toLowerCase()} (NIP ${nip})`, { peran, nip, jabatan, tugasTambahan }, aktor);
+    }
+    return;
+  }
+
+  if (peran === 'wali' && 'peranAnak' in input) {
+    await selaraskanRelasi(orangId, 'anak', bacaRelasi(input, 'peranAnak'), id, aktor);
+  }
+  // `belum`: tidak ada yang dibuat maupun dihapus.
 }

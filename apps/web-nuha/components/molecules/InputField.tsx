@@ -31,6 +31,7 @@ export function InputField({ field, id, row, onPilih }: Props) {
       hubungan={field.hubungan ?? ['Wali']}
       placeholder={field.placeholder}
       hanyaSantri={field.hanyaSantri}
+      nilaiAwal={nilai || undefined}
     />;
   }
 

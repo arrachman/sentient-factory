@@ -18,9 +18,12 @@ export async function GET(request: Request) {
   // `santri=1` dipakai pemilih wali: hanya orang yang benar-benar terdaftar
   // sebagai santri yang boleh jadi pihak "anak" dalam relasi wali.
   const hanyaSantri = params.get('santri') === '1';
+  // `ids=1,2` dipakai form ubah untuk memuat nama orang yang sudah terpilih —
+  // tanpa ini pemilih hanya menyimpan id dan tampil kosong saat dibuka lagi.
+  const ids = (params.get('ids') ?? '').split(',').map((item) => item.trim()).filter((item) => /^\d+$/.test(item));
 
   const rows = await prisma.orang.findMany({
-    where: {
+    where: ids.length ? { id: { in: ids.map((item) => BigInt(item)) } } : {
       AND: [
         // `q` kosong sah: pemilih menampilkan saran awal begitu diklik.
         ...(q ? [{ OR: [{ nama: { contains: q } }, { nik: { contains: q } }, { hp: { contains: q } }] }] : []),
@@ -29,7 +32,7 @@ export async function GET(request: Request) {
     },
     select: { id: true, nama: true, hp: true, nik: true, santri: { select: { nis: true } } },
     orderBy: { nama: 'asc' },
-    take: BATAS,
+    take: ids.length ? ids.length : BATAS,
   });
 
   return NextResponse.json({

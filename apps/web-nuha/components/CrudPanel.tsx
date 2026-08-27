@@ -50,13 +50,15 @@ function PanelKeterkaitan({ kait }: { kait: Keterkaitan[] }) {
 }
 
 /** Nilai field yang men-drive `tampilBila` milik field lain. */
-function nilaiPemicu(fields: ClientField[], dipilih: Record<string, string>): Record<string, string> {
+function nilaiPemicu(fields: ClientField[], dipilih: Record<string, string>, row?: Row | null): Record<string, string> {
   const hasil: Record<string, string> = {};
   for (const field of fields) {
     if (!field.tampilBila) continue;
     const pemicu = fields.find((item) => item.name === field.tampilBila!.field);
     if (!pemicu) continue;
-    hasil[pemicu.name] = dipilih[pemicu.name] ?? '';
+    // Saat mengubah baris, nilai tersimpan jadi titik awal — tanpa itu field
+    // lanjutan (NIS, NIP, daftar wali) tersembunyi walau perannya sudah ada.
+    hasil[pemicu.name] = dipilih[pemicu.name] ?? String(row?.[pemicu.name] ?? '');
   }
   return hasil;
 }
@@ -70,7 +72,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
   const [message, setMessage] = useState('');
   const refByField = new Map(entity.fields.filter((field) => field.refOptions).map((field) => [field.name, field.refOptions]));
   const adaKait = rows.some((row) => row._kait);
-  const pemicu = nilaiPemicu(entity.fields, pilihan);
+  const pemicu = nilaiPemicu(entity.fields, pilihan, editing);
 
   async function send(method: 'POST' | 'PATCH' | 'DELETE', payload: Record<string, unknown>) {
     setBusy(true);
@@ -186,7 +188,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
                 : row._kait!.map((item, i) => <span key={`${item.label}-${i}`} className={`badge badge-${item.nada ?? 'netral'}`} title={item.detail}>{item.label}</span>)}
             </span></td>}
             <td style={{ width: 1, whiteSpace: 'nowrap' }}><div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-              <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Ubah" aria-label="Ubah" onClick={() => { setEditing(row); setOpen(true); setMessage(''); }}><IkonUbah /></button>
+              <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Ubah" aria-label="Ubah" onClick={() => { setEditing(row); setPilihan({}); setOpen(true); setMessage(''); }}><IkonUbah /></button>
               <button className="btn btn-sekunder btn-icon btn-icon-bahaya" type="button" disabled={busy} title="Hapus" aria-label="Hapus" onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}><IkonHapus /></button>
             </div></td>
           </tr>)}

@@ -4,6 +4,19 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Bagian "Peran" bisa diubah, bukan hanya saat menambah (pending)
+
+Form ubah identitas orang kini menampilkan bagian "Daftarkan sebagai" beserta
+turunannya (NIS/status, NIP/jabatan/tugas tambahan, daftar wali & santri),
+terisi dari relasi yang sudah ada. Menyimpan memperbarui baris santri/pegawai
+yang ada — tidak menggandakan. Relasi wali yang dibuang dari daftar benar-benar
+dicabut dan dicatat ke audit (`orang_peran`).
+
+Dampak operasional: peran lama **tidak** ikut terhapus saat pilihan peran
+diganti (mis. santri → guru), karena nilai/presensi/gaji masih merujuknya —
+pencabutan dilakukan sengaja lewat modul asalnya. Endpoint
+`/api/orang/cari` menerima `?ids=` untuk memuat nama relasi tersimpan.
+
 ## 2026-08-27 — Field data pribadi di Identitas Orang (babfded3)
 
 Form `/data/orang` kini punya grup **Data pribadi**: anak ke-, jumlah saudara
