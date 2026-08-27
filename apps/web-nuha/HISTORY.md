@@ -4,6 +4,31 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Impor 8 siswa MA angkatan 2026/2027 (`PENDING`)
+
+Importir baru `prisma/import/import-siswa-ma-2026.ts` (`npm run
+import:siswa-ma-2026`) memasukkan 8 siswa MA ke **Kelas 1 (tingkat 10)** pada
+TA aktif 2026/2027 Gasal, lengkap dengan wali (Ayah & Ibu) dan profil
+kesehatan. Data sumber ditulis literal di berkas skrip — operator
+menyerahkannya sebagai tabel teks, bukan XLSX.
+
+- 6 dari 8 santri sudah ada dari impor terdahulu yang tak lengkap: berstatus
+  `Alumni`, tanpa kelas/tahun masuk, tanpa No. KK/anak ke/hobi/cita-cita/asal
+  sekolah, dan hanya punya 1 baris `RelasiWali` berlabel "Wali". Semuanya
+  diperbaiki: status → `Mukim`, tahun masuk 2026, NIS `2026MA001`–`2026MA008`.
+- **Errena Tembang Sosialista Tazheva** sebelumnya tersimpan dengan NISN
+  `0112234300`, sedangkan tabel operator menulis `0112234304`. Pencocokan
+  sekarang mendahulukan **NIK** di atas NISN, jadi baris lama dikoreksi
+  (NISN diperbarui) — bukan jadi santri kedua. Operator perlu memastikan mana
+  NISN yang benar di Dapodik.
+- Jenis kelamin Achmad Tsaaqib dikoreksi dari `P` → `L`.
+- Wali sekarang 16 baris (Ayah+Ibu per santri). Ayah Aisyah (Akhmad Gozali)
+  dan ayah Siti Munawaroh (Djoko Poerwoto) hanya punya nama — sumber tidak
+  mengisi NIK/TTL/pekerjaan.
+- `Orang.alamat` hasil pembersihan manual di DB **tidak** ditimpa versi ALL
+  CAPS dari tabel operator; alamat sumber hanya dipakai bila kolomnya kosong.
+- Idempoten: dijalankan dua kali, tidak ada duplikat.
+
 ## 2026-08-27 — Semua santri berstatus mukim (`bceca301`)
 
 Status `Kalong` dihapus dari model dan seluruh UI: semua data santri/siswa

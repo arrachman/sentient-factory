@@ -259,10 +259,13 @@ const DATA: BarisSiswa[] = [
   },
 ];
 
-/** Judul-kasus sederhana, dipakai agar nama tidak tersimpan ALL CAPS seperti di sheet. */
+/**
+ * Judul-kasus sederhana, dipakai agar nama tidak tersimpan ALL CAPS seperti di
+ * sheet. Apostrof **tidak** dianggap pembatas kata: "Syar'i" bukan "Syar'I".
+ */
 const judulKasus = (teks: string): string => teks
   .toLowerCase()
-  .replace(/(^|[\s.'-])([a-z])/g, (_, sep: string, huruf: string) => sep + huruf.toUpperCase());
+  .replace(/(^|[\s.-])([a-z])/g, (_, sep: string, huruf: string) => sep + huruf.toUpperCase());
 
 /** Ambil "04"/"05" dari "RT 04/ RW 05" — sebagian baris memakai spasi setelah garis miring. */
 const ambilRtRw = (alamat: string): { rt: string | null; rw: string | null } => {
@@ -313,8 +316,12 @@ async function jalankan(): Promise<void> {
     const emailSintetis = `santri.${s.nisn}@nuha.local`;
     const hp = bersihkanHp(s.hp);
 
-    const adaSebelumnya = await prisma.orang.findUnique({
-      where: { email: emailSintetis },
+    // Pencocokan NIK lebih dulu, baru email sintetis berbasis NISN: impor
+    // terdahulu pernah memuat NISN yang beda satu digit untuk orang yang sama
+    // (Errena, ...300 vs ...304). NIK 16 digit adalah identitas yang lebih kuat,
+    // jadi baris lama itu dikoreksi — bukan diduplikasi jadi santri kedua.
+    const adaSebelumnya = await prisma.orang.findFirst({
+      where: { OR: [{ nik: s.nik }, { email: emailSintetis }] },
       select: { id: true, alamat: true, hp: true },
     });
 
@@ -338,24 +345,25 @@ async function jalankan(): Promise<void> {
       hp: hp ?? bersihkanHp(adaSebelumnya?.hp),
     };
 
-    const orang = await prisma.orang.upsert({
-      where: { email: emailSintetis },
-      create: { ...isiOrang, email: emailSintetis },
-      update: isiOrang,
-    });
+    const orang = adaSebelumnya
+      ? await prisma.orang.update({
+        where: { id: adaSebelumnya.id },
+        data: { ...isiOrang, email: emailSintetis },
+      })
+      : await prisma.orang.create({ data: { ...isiOrang, email: emailSintetis } });
 
     const nis = buatNis(TAHUN_MASUK, KODE_UNIT, urut);
-    const santri = await prisma.santri.upsert({
-      where: { nisn: s.nisn },
-      create: {
-        orangId: orang.id, nis, nisn: s.nisn, unitId: unit.id, kelasId: kelas.id,
-        status: StatusSantri.Mukim, tahunMasuk: TAHUN_MASUK,
-      },
-      update: {
-        orangId: orang.id, nis, unitId: unit.id, kelasId: kelas.id,
-        status: StatusSantri.Mukim, tahunMasuk: TAHUN_MASUK,
-      },
+    const isiSantri = {
+      nis, nisn: s.nisn, unitId: unit.id, kelasId: kelas.id,
+      status: StatusSantri.Mukim, tahunMasuk: TAHUN_MASUK,
+    };
+    const santriLama = await prisma.santri.findFirst({
+      where: { OR: [{ orangId: orang.id }, { nisn: s.nisn }] },
+      select: { id: true },
     });
+    const santri = santriLama
+      ? await prisma.santri.update({ where: { id: santriLama.id }, data: { orangId: orang.id, ...isiSantri } })
+      : await prisma.santri.create({ data: { orangId: orang.id, ...isiSantri } });
 
     if (s.ayah) await tulisRelasiWali(orang.id, s.nisn, 'Ayah', { ...s.ayah, nama: judulKasus(s.ayah.nama), hp: bersihkanHp(s.ayah.hp) });
     if (s.ibu) await tulisRelasiWali(orang.id, s.nisn, 'Ibu', { ...s.ibu, nama: judulKasus(s.ibu.nama), hp: bersihkanHp(s.ibu.hp) });
