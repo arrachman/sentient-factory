@@ -4,6 +4,15 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Diniyah pondok jadi kelas 1–6
+
+Unit Pondok Pesantren tidak lagi memakai satu rombel `Diniyah Wustha`.
+Diganti enam baris `kelas` di tahun ajaran aktif dengan `nama` = `tingkat` =
+`1`…`6`, satu rombel per tingkat. `prisma/seed.ts` ikut disesuaikan (loop
+1–6, idempoten) supaya seed demo tidak menghidupkan `Diniyah Wustha` lagi.
+Pengurutan tingkat di `app/akademik/pohon.ts` sudah numerik, jadi 1–6 tampil
+berurutan tanpa perubahan kode.
+
 ## 2026-08-27 — `7b35e51e` Penamaan kelas: angka, huruf hanya bila >1 rombel
 
 Struktur rombel disetel sesuai kondisi riil: tiap tingkat hanya satu kelas,

@@ -213,15 +213,18 @@ async function seedJadwalLintasUnit() {
     prisma.unit.findMany(),
   ]);
   const pondok = unitSemua.find((unit) => unit.nama.startsWith('Pondok'));
-  // Pondok belum punya rombel apa pun, sehingga guru yang merangkap ustadz tak
-  // punya tempat mengajar. Siapkan satu kelas diniyah sebagai wadahnya.
+  // Diniyah pondok berjenjang kelas 1–6, satu rombel per tingkat, jadi guru
+  // yang merangkap ustadz punya tempat mengajar di tiap jenjangnya.
   if (pondok) {
     const tahunAjaranAktif = await seedTahunAjaran();
-    await prisma.kelas.upsert({
-      where: { unitId_nama_tahunAjaranId: { unitId: pondok.id, nama: 'Diniyah Wustha', tahunAjaranId: tahunAjaranAktif.id } },
-      create: { unitId: pondok.id, nama: 'Diniyah Wustha', tingkat: 'Wustha', tahunAjaranId: tahunAjaranAktif.id },
-      update: {},
-    });
+    for (let tingkat = 1; tingkat <= 6; tingkat += 1) {
+      const nama = String(tingkat);
+      await prisma.kelas.upsert({
+        where: { unitId_nama_tahunAjaranId: { unitId: pondok.id, nama, tahunAjaranId: tahunAjaranAktif.id } },
+        create: { unitId: pondok.id, nama, tingkat: nama, tahunAjaranId: tahunAjaranAktif.id },
+        update: {},
+      });
+    }
   }
   // Diambil setelah kelas diniyah dipastikan ada.
   const kelasSemua = await prisma.kelas.findMany({ include: { unit: true }, orderBy: { nama: 'asc' } });
