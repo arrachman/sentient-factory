@@ -44,6 +44,7 @@ model Orang {
   hobi          String?      @db.VarChar(255)
   citaCita      String?      @map("cita_cita") @db.VarChar(160)
   asalSekolah   String?      @map("asal_sekolah") @db.VarChar(160)
+  pendidikanTerakhir String? @map("pendidikan_terakhir") @db.VarChar(80)
   hp            String?      @db.VarChar(32)
   email         String?      @unique @db.VarChar(160)
   fotoUrl       String?      @map("foto_url") @db.VarChar(255)

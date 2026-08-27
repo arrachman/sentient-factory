@@ -4,6 +4,20 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Tempat/tgl lahir & pendidikan terakhir di Identitas Orang (`PENDING`)
+
+Form `/data/orang` menambah tiga isian opsional: **Tempat lahir** dan **Tanggal
+lahir** (grup Identitas, pemilih tanggal) memakai kolom `tmp_lahir`/`tgl_lahir`
+yang sudah ada di tabel `orang` tapi belum pernah bisa diisi dari UI, plus
+**Pendidikan terakhir** (grup Data pribadi) lewat kolom baru
+`orang.pendidikan_terakhir` VARCHAR(80) NULL.
+
+Dampak operator: kolom `pendidikan_terakhir` pada `pegawai` tetap ada dan tidak
+diubah — untuk sementara pendidikan bisa tercatat di dua tempat, yang di `orang`
+berlaku untuk semua peran (guru, staf, wali), bukan hanya pegawai. Migrasi
+`20260827140000_orang_pendidikan_terakhir` sudah di-apply ke DB uji; jalankan
+`prisma migrate deploy` di environment lain.
+
 ## 2026-08-27 — Impor 8 siswa MA angkatan 2026/2027 (`PENDING`)
 
 Importir baru `prisma/import/import-siswa-ma-2026.ts` (`npm run
