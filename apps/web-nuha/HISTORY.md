@@ -4,6 +4,16 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Rapikan form modal CRUD (151f6d01)
+
+Form di modal `/data/*` sekarang 2 kolom (dari 3) sehingga field tak lagi
+sempit dan lebar-baris tidak berselang-seling; `span > 1` berarti selebar
+baris penuh. Semua kontrol setinggi 40 px (input, select, segmented jenis
+kelamin) agar sebaris rapi; textarea tetap fleksibel. Deskripsi entitas
+dipindah ke kotak lembut di atas form, tombol Simpan/Batal dipisah garis di
+bawah, dan jarak antar-grup dibuat konsisten. Fokus-state kini seragam pada
+semua input form. Murni tampilan — perilaku dan data tidak berubah.
+
 ## 2026-08-27 — Filter /data/* otomatis saat diubah
 
 `components/molecules/FilterBar.tsx` jadi client component: dropdown filter
