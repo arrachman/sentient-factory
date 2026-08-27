@@ -307,13 +307,18 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
 /* Pilihan ganda (mis. peran orang): kotak centang eksplisit yang bisa melipat,
    supaya tidak salah terbaca sebagai pilihan tunggal seperti .segmen. */
 .centang-chip { display: flex; flex-wrap: wrap; gap: 8px; }
-.centang-chip-opsi { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border: 1px solid var(--garis-input); border-radius: 10px; background: var(--krem-2); cursor: pointer; transition: background 0.12s, border-color 0.12s; }
-.centang-chip-opsi input { width: 15px; height: 15px; margin: 0; accent-color: var(--hijau); cursor: pointer; }
-.centang-chip-opsi span { font-size: 12.5px; font-weight: 600; color: var(--teks-lembut); white-space: nowrap; }
-.centang-chip-opsi:hover { background: rgba(10, 74, 43, 0.07); }
-.centang-chip-opsi:has(input:checked) { border-color: var(--hijau); background: rgba(10, 74, 43, 0.09); }
+.centang-chip-opsi { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px 7px 10px; border: 1px solid var(--garis-input); border-radius: 999px; background: var(--krem-2); cursor: pointer; transition: background 0.12s, border-color 0.12s, box-shadow 0.12s; }
+/* Kotak centang bawaan browser ukurannya tak seragam lintas platform dan
+   terlihat mentah di dalam chip; disembunyikan, indikatornya digambar sendiri. */
+.centang-chip-opsi input { position: absolute; opacity: 0; width: 0; height: 0; margin: 0; }
+.centang-chip-opsi span { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--teks-lembut); white-space: nowrap; }
+.centang-chip-opsi span::before { content: ''; flex: none; width: 15px; height: 15px; border: 1.5px solid var(--garis-input); border-radius: 5px; background: #fff; transition: background 0.12s, border-color 0.12s; }
+.centang-chip-opsi:hover { border-color: var(--hijau-muda); background: rgba(10, 74, 43, 0.05); }
+.centang-chip-opsi:has(input:checked) { border-color: var(--hijau); background: rgba(10, 74, 43, 0.08); }
 .centang-chip-opsi:has(input:checked) span { color: var(--hijau-gelap); }
-.centang-chip-opsi:has(input:focus-visible) { outline: 2px solid var(--hijau-muda); outline-offset: 1px; }
+/* Centang digambar sebagai garis miring pada kotak indikator. */
+.centang-chip-opsi:has(input:checked) span::before { border-color: var(--hijau); background: var(--hijau) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.3l2.4 2.4 4.6-5' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px 11px no-repeat; }
+.centang-chip-opsi:has(input:focus-visible) { outline: 2px solid var(--hijau-muda); outline-offset: 2px; }
 
 /* Toggle boolean: jelas menyala/mati, bukan checkbox bawaan browser */
 /* label.toggle — specificity harus mengalahkan `.field label { display: block }` */
