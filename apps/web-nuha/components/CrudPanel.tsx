@@ -10,6 +10,11 @@ const IkonUbah = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="non
 const IkonHapus = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M4 7h16" /><path d="M10 4h4" /><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" /><path d="M10 11v6M14 11v6" /></svg>;
 const IkonTutup = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M18 6 6 18M6 6l12 12" /></svg>;
 
+/** Grup yang dilipat secara bawaan: isian pelengkap, bukan data utama. */
+const GRUP_CIUT = new Set(['Data pribadi']);
+
+const IkonLipat = ({ terbuka }: { terbuka: boolean }) => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ transform: terbuka ? 'rotate(90deg)' : undefined, transition: 'transform 0.15s' }}><path d="M9 6l6 6-6 6" /></svg>;
+
 const display = (value: unknown, refOptions?: ClientField['refOptions']) => {
   if (value === null || value === undefined || value === '') return '—';
   if (refOptions) {
@@ -70,6 +75,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const [dibuka, setDibuka] = useState<Set<string>>(new Set());
   const refByField = new Map(entity.fields.filter((field) => field.refOptions).map((field) => [field.name, field.refOptions]));
   const adaKait = rows.some((row) => row._kait);
   const pemicu = nilaiPemicu(entity.fields, pilihan, editing);
@@ -115,7 +121,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
   return <div className="card" style={{ marginTop: 16 }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
       <h3 className="card-judul" style={{ margin: 0 }}>{entity.label}</h3>
-      <button className="btn" type="button" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 38, padding: 0 }} onClick={() => { setEditing(null); setPilihan({}); setOpen(!open); setMessage(''); }} data-testid={`tambah-${entity.key}`} aria-label={open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`} title={open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`}><IkonTambah /></button>
+      <button className="btn" type="button" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 38, padding: 0 }} onClick={() => { setEditing(null); setPilihan({}); setDibuka(new Set()); setOpen(!open); setMessage(''); }} data-testid={`tambah-${entity.key}`} aria-label={open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`} title={open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`}><IkonTambah /></button>
     </div>
     {message && <p className="muted" role="status" style={{ marginTop: 8 }}>{message}</p>}
 
@@ -130,9 +136,22 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
         </div>
         {entity.deskripsi && <p className="kait-deskripsi">{entity.deskripsi}</p>}
         <form onSubmit={submit} data-testid={`form-${entity.key}`}>
-          {kelompokkan(entity.fields.filter(terlihat)).map((grup) => <fieldset className="grup-form" key={grup.judul}>
-          <legend>{grup.judul}</legend>
-          <div className="grid g2 grid-form">
+          {kelompokkan(entity.fields.filter(terlihat)).map((grup) => {
+          const bisaLipat = GRUP_CIUT.has(grup.judul);
+          const terbuka = !bisaLipat || dibuka.has(grup.judul);
+          return <fieldset className="grup-form" key={grup.judul}>
+          <legend>
+            {bisaLipat
+              ? <button className="grup-lipat" type="button" aria-expanded={terbuka} onClick={() => setDibuka((prev) => {
+                  const next = new Set(prev);
+                  if (next.has(grup.judul)) next.delete(grup.judul); else next.add(grup.judul);
+                  return next;
+                })}><IkonLipat terbuka={terbuka} />{grup.judul}</button>
+              : grup.judul}
+          </legend>
+          {/* Dilipat pakai `display: none`, bukan unmount — nilai isian tetap
+              terkirim walau grupnya sedang tertutup. */}
+          <div className="grid g2 grid-form" style={terbuka ? undefined : { display: 'none' }}>
             {grup.fields.map((field) => {
               const pasangan = field.pasangan ? entity.fields.find((item) => item.name === field.pasangan) : undefined;
               // Form dua kolom: span > 1 selalu berarti "selebar baris".
@@ -158,7 +177,8 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
               </div>;
             })}
           </div>
-          </fieldset>)}
+          </fieldset>;
+          })}
           {/* Keterkaitan adalah konteks, bukan isian — taruh setelah field
               supaya mata operator langsung jatuh ke form. */}
           {editing?._kait && <PanelKeterkaitan kait={editing._kait} />}
@@ -188,7 +208,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
                 : row._kait!.map((item, i) => <span key={`${item.label}-${i}`} className={`badge badge-${item.nada ?? 'netral'}`} title={item.detail}>{item.label}</span>)}
             </span></td>}
             <td style={{ width: 1, whiteSpace: 'nowrap' }}><div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
-              <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Ubah" aria-label="Ubah" onClick={() => { setEditing(row); setPilihan({}); setOpen(true); setMessage(''); }}><IkonUbah /></button>
+              <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Ubah" aria-label="Ubah" onClick={() => { setEditing(row); setPilihan({}); setDibuka(new Set()); setOpen(true); setMessage(''); }}><IkonUbah /></button>
               <button className="btn btn-sekunder btn-icon btn-icon-bahaya" type="button" disabled={busy} title="Hapus" aria-label="Hapus" onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}><IkonHapus /></button>
             </div></td>
           </tr>)}

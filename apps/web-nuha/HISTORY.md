@@ -4,6 +4,18 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Grup "Data pribadi" di form CRUD bisa dilipat (pending)
+
+Legend grup form kini bisa jadi tombol lipat. Grup di `GRUP_CIUT`
+(`components/CrudPanel.tsx`) — saat ini hanya "Data pribadi" — tertutup secara
+bawaan tiap kali modal dibuka, jadi form Identitas Orang langsung fokus ke data
+utama. Isian yang dilipat disembunyikan dengan `display: none`, bukan
+di-unmount, sehingga nilainya tetap terkirim saat disimpan walau grupnya
+tertutup.
+
+Dampak operator: klik judul "Data pribadi" untuk membuka anak ke-, jumlah
+saudara, asal sekolah, hobi, cita-cita.
+
 ## 2026-08-27 — Tahun pelajaran 2024/2025 s.d. berjalan, Gasal + Genap (pending)
 
 Daftar tahun pelajaran dipindah ke `prisma/tahun-ajaran.ts`: dibangkitkan dari

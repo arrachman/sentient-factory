@@ -281,11 +281,18 @@ model Santri {
 /// Profil kesehatan sekali-isi (BB, TB, riwayat penyakit) — beda dari `RekamMedis`
 /// yang mencatat per-kunjungan poskestren.
 model ProfilKesehatan {
-  santriId        BigInt   @id @map("santri_id")
+  /// PK sintetis supaya modul CRUD generik (yang selalu memakai kolom `id`)
+  /// bisa mengelola tabel ini; `santriId` tetap unik — satu profil per santri.
+  id              BigInt   @id @default(autoincrement())
+  santriId        BigInt   @unique @map("santri_id")
   beratKg         Decimal? @map("berat_kg") @db.Decimal(5, 2)
   tinggiCm        Decimal? @map("tinggi_cm") @db.Decimal(5, 2)
+  golDarah        String?  @map("gol_darah") @db.VarChar(3)
   riwayatPenyakit String?  @map("riwayat_penyakit") @db.VarChar(255)
+  alergi          String?  @db.VarChar(255)
   kebutuhanKhusus String?  @map("kebutuhan_khusus") @db.VarChar(255)
+  catatan         String?  @db.Text
+  updatedAt       DateTime @updatedAt @map("updated_at")
 
   santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
 
