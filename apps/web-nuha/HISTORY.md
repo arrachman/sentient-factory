@@ -4,6 +4,29 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — 17 alumni SMP naik ke MA angkatan 2026/2027 beserta wali (`PENDING`)
+
+Impor gelombang 2 dari tabel operator format Dinkes (24 baris, identitas siswa +
+satu kolom "NAMA IBU/AYAH/WALI"), lewat skrip baru
+`prisma/import/import-siswa-ma-2026-gelombang2.ts` (`npm run import:siswa-ma-2026-g2`).
+
+Hasil pengecekan: **ke-24 NIK sudah ada** di tabel `orang`. Tujuh di antaranya
+sudah jadi siswa MA lewat impor gelombang 1 (NIS `2026MA001`–`2026MA008`) dengan
+relasi Ayah + Ibu yang lebih lengkap, jadi baris-baris itu **dilewati** agar data
+walinya tidak tergerus. Tujuh belas sisanya masih `unit = SMP`, `status = Alumni`,
+tanpa kelas dan tanpa satu pun `relasi_wali` — merekalah alumni SMP yang naik ke
+MA; skrip memindahkan mereka ke unit MA, Kelas 1 (tingkat 10), status `Mukim`,
+`tahun_masuk = 2026`, memberi NIS `2026MA009`–`2026MA025`, mengisi NISN/HP/asal
+sekolah, dan menulis walinya.
+
+Dampak operator: santri MA kini 25 (dari 8), santri SMP turun 69 → 52. Kolom wali
+di sumber tidak membedakan ayah/ibu, jadi relasi ke-17 anak itu ditulis dengan
+peran `Wali` dan otomatis jadi kontak utama notifikasi (mereka belum punya
+Ayah/Ibu). Bila operator kemudian mengirim sheet wali lengkap, jalankan importir
+yang memisah Ayah/Ibu — peran `Wali` akan berhenti jadi kontak utama sendirinya.
+Alumni SMP yang dipindah tidak punya nilai/presensi, jadi tidak ada data akademik
+yang tertinggal. Skrip idempoten (jalan kedua: 0 diproses, 24 dilewati).
+
 ## 2026-08-27 — Tempat/tgl lahir & pendidikan terakhir di Identitas Orang (`PENDING`)
 
 Form `/data/orang` menambah tiga isian opsional: **Tempat lahir** dan **Tanggal
