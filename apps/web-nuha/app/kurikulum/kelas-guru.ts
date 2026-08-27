@@ -65,7 +65,7 @@ export async function ambilKelasGuru(namaGuru: string): Promise<GrupUnit[]> {
 
     const peran: string[] = [];
     if (kelas?.waliKelas === namaGuru) peran.push('Wali Kelas');
-    if (contoh.unit?.nama.startsWith('Pondok')) peran.push('Ustadz Diniyah');
+    if (contoh.unit?.key === 'Pondok') peran.push('Ustadz Diniyah');
 
     let nilaiMasuk = 0;
     let rerataNilai: number | null = null;

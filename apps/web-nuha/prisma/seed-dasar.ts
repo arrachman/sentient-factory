@@ -16,9 +16,9 @@ type PrototypeData = Record<string, Array<Record<string, unknown>>>;
 const source = data as PrototypeData;
 
 const UNIT_ROWS = [
-  { key: 'SMP', nama: 'SMP Nurul Huda Mergosono', deskripsi: 'Kelas 7–9, Kurikulum Merdeka.' },
-  { key: 'MA', nama: 'MA Nurul Huda Mergosono', deskripsi: 'Kelas 10–12, IPA / IPS / Keagamaan.' },
-  { key: 'Pondok', nama: 'Pondok Pesantren', deskripsi: 'Program Tahfidz dan Kitab Kuning.' },
+  { key: 'SMP', nama: 'SMP', deskripsi: 'Kelas 7–9, Kurikulum Merdeka.' },
+  { key: 'MA', nama: 'MA', deskripsi: 'Kelas 10–12, IPA / IPS / Keagamaan.' },
+  { key: 'Pondok', nama: 'Madin', deskripsi: 'Program Tahfidz dan Kitab Kuning.' },
   { key: 'Poskestren', nama: 'Poskestren', deskripsi: 'Layanan kesehatan santri.' },
 ];
 

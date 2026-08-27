@@ -18,7 +18,9 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
   const whereDasar = whereFilter({ ...f, unitId: undefined, kelasId: undefined });
 
   const [unitRows, kelasRows, cacah, total, tanpaKelas] = await Promise.all([
-    prisma.unit.findMany({ where: { aktif: true }, orderBy: { nama: 'asc' } }),
+    // Poskestren bukan lembaga tempat santri terdaftar (layanan kesehatan,
+    // bukan jenjang) — dikeluarkan dari pohon induk santri.
+    prisma.unit.findMany({ where: { aktif: true, key: { not: 'Poskestren' } }, orderBy: { nama: 'asc' } }),
     prisma.kelas.findMany({ orderBy: [{ tingkat: 'asc' }, { nama: 'asc' }] }),
     prisma.santri.groupBy({ by: ['kelasId'], where: whereDasar, _count: { _all: true } }),
     prisma.santri.count({ where: whereDasar }),

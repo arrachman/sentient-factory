@@ -212,7 +212,7 @@ async function seedJadwalLintasUnit() {
     prisma.mataPelajaran.findMany({ orderBy: { kode: 'asc' } }),
     prisma.unit.findMany(),
   ]);
-  const pondok = unitSemua.find((unit) => unit.nama.startsWith('Pondok'));
+  const pondok = unitSemua.find((unit) => unit.key === 'Pondok');
   // Diniyah pondok berjenjang kelas 1–6, satu rombel per tingkat, jadi guru
   // yang merangkap ustadz punya tempat mengajar di tiap jenjangnya.
   if (pondok) {
@@ -573,9 +573,9 @@ async function main() {
   const roleByKey = new Map(roles.map((role) => [role.key, role]));
 
   const unitRows = [
-    { key: 'SMP', nama: 'SMP Nurul Huda Mergosono', deskripsi: 'Kelas 7–9, Kurikulum Merdeka, 12 rombel.' },
-    { key: 'MA', nama: 'MA Nurul Huda Mergosono', deskripsi: 'Kelas 10–12, IPA / IPS / Keagamaan.' },
-    { key: 'Pondok', nama: 'Pondok Pesantren', deskripsi: 'Program Tahfidz dan Kitab Kuning.' },
+    { key: 'SMP', nama: 'SMP', deskripsi: 'Kelas 7–9, Kurikulum Merdeka, 12 rombel.' },
+    { key: 'MA', nama: 'MA', deskripsi: 'Kelas 10–12, IPA / IPS / Keagamaan.' },
+    { key: 'Pondok', nama: 'Madin', deskripsi: 'Program Tahfidz dan Kitab Kuning.' },
     { key: 'Poskestren', nama: 'Poskestren', deskripsi: 'Layanan kesehatan santri.' },
   ];
   const units = await Promise.all(unitRows.map((row) => prisma.unit.upsert({ where: { key: row.key }, create: row, update: row })));
