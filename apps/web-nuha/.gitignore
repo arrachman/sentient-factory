@@ -4,3 +4,12 @@ node_modules
 .env.local
 next-env.d.ts
 tsconfig.tsbuildinfo
+
+# Data sumber mentah (PII: data siswa/guru/SK) — jangan pernah di-commit
+docs/*.xlsx
+docs/*.pdf
+docs/*.docx
+docs/*.csv
+docs/*.jpeg
+docs/*.jpg
+docs/*.png

@@ -1,12 +1,17 @@
 import { prisma } from '@/lib/prisma';
-import { Kosong } from '@/components';
+import { Kosong, type SearchParams } from '@/components';
+import { bacaFilter } from './filter';
+import { bacaPohon } from './pohon';
+import { bacaKelasOpsi } from './kelas-opsi';
+import { Penjelajah } from './Penjelajah';
 
-type Params = Record<string, string | string[] | undefined>;
-const satu = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? '';
+type Params = SearchParams;
 
 export async function TabRapor({ searchParams }: { searchParams: Params }) {
-  const kelasOpts = await prisma.kelas.findMany({ include: { unit: true }, orderBy: { nama: 'asc' } });
-  const kelasId = Number(satu(searchParams.kelas)) || kelasOpts[0]?.id;
+  const f = bacaFilter(searchParams);
+  const [pohon, kelasOpts] = await Promise.all([bacaPohon(f), bacaKelasOpsi(f)]);
+  // Rombel dari penjelajah menang; kalau belum dipilih, ambil yang pertama tersisa.
+  const kelasId = (f.kelasId && kelasOpts.some((k) => k.id === f.kelasId) ? f.kelasId : 0) || kelasOpts[0]?.id;
   const kelas = kelasOpts.find((k) => k.id === kelasId);
 
   const siswa = kelasId
@@ -24,6 +29,10 @@ export async function TabRapor({ searchParams }: { searchParams: Params }) {
     : [];
 
   return (
+    <>
+    <div className="card" style={{ marginBottom: 16 }}>
+      <Penjelajah f={f} pohon={pohon} tab="rapor" />
+    </div>
     <div className="card">
       <h3 className="card-judul">Cetak rapor</h3>
       <p className="card-sub" style={{ maxWidth: 640 }}>
@@ -33,6 +42,8 @@ export async function TabRapor({ searchParams }: { searchParams: Params }) {
       </p>
       <form method="get" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end', margin: '16px 0' }}>
         <input type="hidden" name="tab" value="rapor" />
+        {f.unit && <input type="hidden" name="unit" value={f.unit} />}
+        {f.tingkat && <input type="hidden" name="tingkat" value={f.tingkat} />}
         <div className="field" style={{ minWidth: 170, marginBottom: 0 }}>
           <label>Rombel</label>
           <select name="kelas" defaultValue={kelasId}>
@@ -78,5 +89,6 @@ export async function TabRapor({ searchParams }: { searchParams: Params }) {
         </div>
       )}
     </div>
+    </>
   );
 }

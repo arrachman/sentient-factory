@@ -4,6 +4,334 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Diniyah pondok jadi kelas 1–6
+
+Unit Pondok Pesantren tidak lagi memakai satu rombel `Diniyah Wustha`.
+Diganti enam baris `kelas` di tahun ajaran aktif dengan `nama` = `tingkat` =
+`1`…`6`, satu rombel per tingkat. `prisma/seed.ts` ikut disesuaikan (loop
+1–6, idempoten) supaya seed demo tidak menghidupkan `Diniyah Wustha` lagi.
+Pengurutan tingkat di `app/akademik/pohon.ts` sudah numerik, jadi 1–6 tampil
+berurutan tanpa perubahan kode.
+
+## 2026-08-27 — `7b35e51e` Penamaan kelas: angka, huruf hanya bila >1 rombel
+
+Struktur rombel disetel sesuai kondisi riil: tiap tingkat hanya satu kelas,
+kecuali SMP kelas 9 yang punya dua (9A, 9B). Baris `kelas` di tahun ajaran
+aktif kini: SMP `7`, `8`, `9A`, `9B`; MA `10`, `11`, `12` (dulu `X`/`XI`/`XII`);
+Pondok `Diniyah Wustha`. Semua baris `kelas` warisan tanpa `tahun_ajaran_id`
+(7A–7C, 8A–8D, 9A–9C lama) dihapus — tidak ada santri/jadwal/sesi yang
+mereferensinya (DB memang masih kosong pasca seed-dasar).
+
+Importir ikut disesuaikan supaya tidak menghidupkan nama lama:
+`import-siswa-smp.ts` kini menurunkan nama kelas dari jumlah rombel per
+tingkat (huruf hanya dipakai bila tingkat itu punya >1 identitas kelas),
+`import-siswa-ma.ts` dan `import-jadwal-ma.ts` memakai `10`/`11` menggantikan
+`X`/`XI`.
+
+**Dampak operator**: jadwal MA yang sudah pernah diimpor dengan `kelas` =
+`X`/`XI` (tabel `jadwal_pelajaran`, dicocokkan lewat string, bukan FK) perlu
+diimpor ulang agar cocok dengan penamaan baru. Saat ini tabel itu kosong.
+
+## 2026-08-26 — Rapikan kelas MA jadi tingkat saja (perubahan data, bukan kode)
+
+Lanjutan pembersihan dummy: rombel MA contoh (`X-IPA-1`, `XII-Keagamaan`,
+`XI-IPA-2`, dst.) dihapus, disisakan tiga baris `kelas` di tahun ajaran aktif
+dengan `nama` = `tingkat` = `X`, `XI`, `XII`. Kelas SMP dan Pondok **tidak
+disentuh** atas permintaan user.
+
+Sekalian memperbaiki `tingkat` MA yang rusak: seed lama menurunkannya lewat
+`nama.replace(/[^0-9X]/g, '')`, sehingga `X-IPA-1` → `X1` dan `XI-IPA-2` → `X2`,
+dan `XII-Keagamaan` ikut tercatat tingkat `X`. Sekarang `tingkat` MA disamakan
+dengan nama tingkatnya.
+
+**Catatan**: `tingkat` bukan tabel sendiri melainkan kolom di `kelas`; daftar
+tingkat di `/induk` diturunkan dengan mengelompokkan baris `kelas`
+(`app/induk/pohon.ts`). Jadi tiap tingkat wajib punya minimal satu baris
+`kelas`, kalau tidak tingkatnya hilang dari pohon. Rombel MA yang sebenarnya
+ditambahkan lewat impor data nyata.
+
+## 2026-08-26 — Hapus seluruh data dummy; seed dasar menggantikan seed prototype
+
+Basis data masih 100% berisi data contoh dari `prisma/proto-data.json`
+(87 santri, 29 pegawai, semua ber-email `@nuha.local`) — impor xlsx nyata
+belum pernah dijalankan ke sana.
+
+- **`scripts/purge-dummy.ts`** (baru, `npm run db:purge-dummy -- --yakin`):
+  mengosongkan semua tabel operasional lalu menghapus semua `user`/`orang`
+  selain superadmin. Dipertahankan: RBAC (`peran`/`menu`/`menu_peran`), master
+  (`unit`, `kelas`, `tahun_ajaran`, `asrama`, `kamar`, `mata_pelajaran`,
+  `template_wa`) dan akun `superadmin`. Skrip menolak jalan bila superadmin
+  tak ditemukan, agar tak menghasilkan DB tanpa admin.
+- **`prisma/seed-dasar.ts`** (baru): seed minimum — peran, menu + grant,
+  unit, tahun ajaran, template WA, superadmin. **`nuha-migrate` kini memanggil
+  ini**, bukan `prisma/seed.ts`; tanpa perubahan itu `docker compose up`
+  berikutnya akan mengisi ulang data dummy. Seed prototype tetap ada sebagai
+  `npm run db:seed:demo`.
+- **`app/login/page.tsx`**: `defaultValue` kredensial demo dan blok "Akun demo"
+  dihapus — akunnya sudah tidak ada dan itu membocorkan sandi di halaman publik.
+
+**Dampak operator**: DB kini kosong dari data santri/pegawai. Login memakai
+`superadmin` (sandi dari `SUPERADMIN_PASSWORD`, bawaan `Nuha2026!` — ganti).
+Akun uji lain di CLAUDE.md sudah tidak berlaku. Backup pra-hapus ada di
+`temp/backup-sebelum-purge-2026-08-26.sql` (tidak di-commit).
+
+## 2026-08-26 — Akademik: penjelajah lembaga→tingkat→kelas + penyaring, sembunyikan 9 menu
+
+`/akademik` sebelumnya menaruh semua rombel dua lembaga dalam satu dropdown
+datar, dan tiap tab punya penyaringnya sendiri yang tak saling nyambung.
+
+- **Penjelajah bertingkat** (`Penjelajah.tsx` + `pohon.ts`): Semua pesantren →
+  SMP/MA/Pondok → tingkat → kelas, berupa chip dengan cacah santri. Cacah
+  dihitung dengan penyaring lain tetap berlaku tapi tanpa unit/tingkat/kelas
+  itu sendiri, jadi angka di chip = jumlah yang benar-benar didapat kalau
+  chip itu diklik. Ada remah roti untuk mundur satu tingkat.
+- **Penyaring bersama** (`filter.ts` + `BarisFilter.tsx`): pencarian, status,
+  jenis kelamin, program, angkatan, asrama, dan urutan. Pilihan program/
+  angkatan/asrama diambil dari data yang benar-benar ada — operator tak bisa
+  memilih nilai yang hasilnya nol. Tiap filter aktif tampil sebagai chip yang
+  bisa dicopot satu per satu, plus "Bersihkan semua".
+- Keadaan filter hidup di URL (bisa di-bookmark & dibagikan) dan **dipakai
+  bersama keempat tab** — Siswa, Presensi, Nilai, Rapor. Dropdown rombel di
+  tab Nilai & Rapor ikut menyempit mengikuti penjelajah.
+- Rombel bernama sama di tahun ajaran berbeda (data warisan punya dua "7A")
+  kini diberi keterangan TA supaya dua chip tak lagi kembar tak terbedakan.
+- **Menu disembunyikan** dari sidebar atas permintaan client: kurikulum,
+  poskestren, keuangan, lms, gaji, ujian, kunjungan, ppdb, laporan. Daftarnya
+  di `MENU_DISEMBUNYIKAN` (`components/templates/Shell.tsx`) — hapus kuncinya
+  untuk memunculkan lagi. **Ini penyembunyian navigasi saja**: halaman dan
+  `requirePage` tidak disentuh, jadi hak akses tak berubah dan URL langsung
+  masih bisa dibuka oleh peran yang berhak.
+- Gaya chip dipindah ke kelas bersama `.chip`/`.chip-aktif` di `globals.css`;
+  `app/induk/BarisFilter.tsx` ikut memakainya (sebelumnya gaya sebaris).
+
+Verifikasi: Playwright login `superadmin` ke `http://202.59.200.26:3226`,
+keempat tab dirender tanpa `pageerror`, drill-down SMP→7→7A menyempitkan
+hasil 87→60→11→1, sidebar terbukti tinggal 10 menu. `npx tsc --noEmit` bersih.
+
+## 2026-08-26 — Data Induk: penjelajah lembaga→tingkat→kelas + penyaring
+
+`/induk` sebelumnya hanya punya satu kotak cari nama; 87 santri dari dua
+lembaga menumpuk dalam satu daftar datar tanpa cara menyempitkan.
+
+- Kolom baru **Lembaga & kelas**: pohon `unit → tingkat → kelas` memakai
+  `<details>` asli browser, jadi buka/tutup jalan tanpa JS klien. Tiap simpul
+  menampilkan cacah santri yang **sudah menghormati filter lain**, sehingga
+  angka di pohon = angka yang muncul saat simpul diklik (bukan cacah total
+  yang menyesatkan).
+- Penyaring cepat: status (Mukim/Kalong/Alumni/Keluar), jenis kelamin,
+  angkatan (diambil dari `tahunMasuk` yang benar-benar ada di data, bukan
+  daftar hardcode). Semua pilihan berupa **tautan**, bukan form — satu klik =
+  satu keadaan URL yang bisa di-bookmark, dibagikan, dan di-*back*.
+- Pencarian kini mencakup **NIS dan NISN**, bukan cuma nama.
+- `whereFilter` disusun sebagai daftar `AND` (`app/induk/filter.ts`) supaya
+  OR nama/NIS/NISN tidak bentrok dengan penyaring JK di relasi `orang` yang
+  sama — versi awal yang menempel `where.orang` + `where.OR` sekaligus akan
+  membuang syarat JK diam-diam.
+- Klik kelas mereset `?sel=` karena santri terpilih bisa tersaring keluar.
+- Baris daftar kini menampilkan NIS + badge status, tak lagi unit (unit sudah
+  jelas dari cabang pohon yang sedang dibuka).
+
+Diverifikasi lewat Chromium ke `http://202.59.200.26:3226` (login riil
+superadmin): 6 kombinasi filter dirender tanpa `pageerror`/`console.error`,
+dan cacahnya dicocokkan ke DB — MA=27, kelas X=8, Mukim+Putri=14, semua sama.
+
+Catatan operator: kolom `kelas.tingkat` untuk MA tidak konsisten di data hasil
+impor (`X`, `X1`, `X2`, `XI` hidup berdampingan), jadi pohon menampilkan
+"Tingkat X1"/"Tingkat X2" yang janggal. Ini **data**, bukan kode — perlu
+pembersihan di sisi impor/seed.
+
+## 2026-08-26 — Fase 7: penjadwal notifikasi WA + reminder piket & ngajar
+
+Penjadwal yang sebelumnya **tidak pernah ada** akhirnya dibangun. 20 dari 38
+template WA bertanda "Terjadwal" (`WA-KEU-02` jatuh tempo H-3 08.00,
+`WA-GUR-01` batas nilai 07.00, dst) selama ini **tidak pernah benar-benar
+terkirim** — yang jalan hanya kirim manual dan pemicu di server action.
+
+- Service `nuha-cron` terpisah di compose, **bukan** `setInterval` di Next.js:
+  `output: 'standalone'` bisa punya lebih dari satu instans sehingga pesan
+  akan terkirim ganda.
+- `AntreanNotifikasi` berkunci idempoten `[kodeTemplate, tujuanId,
+  tanggalJadwal]` — pencegahan ganda lewat kunci unik, bukan cek-lalu-tulis
+  yang bisa balapan. Dibuktikan: tiga kali jalan, tetap 10 baris.
+- Zona waktu WIB (UTC+7) ditangani eksplisit di `lib/penjadwal/waktu.ts`
+  tanpa lib tambahan — container default UTC.
+- Template baru `WA-GUR-04` (piket: H-1 19.00 dan H-0 45 menit sebelum shift)
+  dan `WA-GUR-05` (rekap ngajar 06.30, satu pesan per guru agar tidak
+  membanjiri). Semua pengiriman lewat `kirimWa()` sehingga tercatat di
+  `LogWa` + `AuditLog` seperti kirim manual.
+- **Ejaan hari beda antar tabel**: `jadwal_piket` memakai `Jum'at` (apostrof,
+  ikut foto sumber) sedangkan `jadwal_pelajaran` memakai `Jumat` polos.
+  Ditangani dua tabel nama hari terpisah, bukan locale.
+
+**Yang perlu diketahui operator — reminder belum bisa terkirim ke siapa pun:**
+
+- **Nol dari 29 pegawai punya nomor HP.** `DATA GURU.xlsx` tidak memuat kolom
+  itu sama sekali. Jadi seluruh 10 baris antrean berstatus
+  `DilewatiTanpaHp` — dicatat eksplisit di log, bukan diam-diam dilewati dan
+  bukan crash. **Penjadwalnya jalan dan teruji, tapi reminder baru sampai ke
+  guru setelah client menyerahkan nomor HP.** Tidak ada nomor palsu yang
+  diisikan ke DB untuk membuat ini "berhasil".
+- **Koreksi atas angka yang sempat mengkhawatirkan**: 67 dari 115 baris
+  `jadwal_pelajaran` memang ber-`pegawai_id` NULL, tetapi itu **bukan**
+  tanda pemetaan guru gagal. Rinciannya: 41 baris jadwal fiktif SMP + 5
+  Pondok dari seed prototype, 19 baris MA fiktif lain, dan dari data client
+  nyata (kelas X & XI) hanya **3**: `TKA` dan `EKSTRA` yang sengaja NULL
+  (kegiatan tanpa pengampu tunggal), plus satu baris seed basi
+  ("Pak Agus Salim", Sabtu XI jam 8 — punya kolom `ruang` yang tidak pernah
+  diisi importir). Pemetaan data client praktis lengkap: 48 dari 50 slot.
+- Baris seed fiktif itu masih perlu dibersihkan agar laporan tidak rancu.
+
+## 2026-08-26 — Fase 4: struktur organisasi dari SK
+
+Model baru `JabatanStruktural` (migrasi aditif murni: satu `CREATE TABLE` +
+FK, nol perubahan tabel lama) berisi 40 baris dari dua SK: 9 pengurus MA
+(008/YKM-NH/SK-MA/VII/2026) dan 31 pengurus Asrama Putra
+(006/YKM-NH/SK-APa/VII/2026). Tab "Struktur" baru di `/kepegawaian`.
+
+**Keputusan desain: jabatan struktural BUKAN peran RBAC — nol peran baru
+ditambahkan** (tetap 12). `peran` mengatur akses menu; jabatan seperti
+"Kepala Laboratorium", "Wakil Ketua Bid. Humas", atau "Div. Keamanan" tidak
+butuh menu yang dibedakan — Kepala Madrasah memakai peran `kepma`, Lurah
+memakai `pengasuh`. Menjadikan 31 pengurus asrama sebagai peran login akan
+meledakkan RBAC tanpa guna. Jadi ini murni data organisasi.
+
+**Yang perlu diketahui operator:**
+
+- **Hanya 8 dari 40 baris tercocokkan ke `Pegawai`**, sisanya `pegawai_id`
+  NULL dengan `nama_mentah` terisi. Itu benar, bukan kegagalan impor:
+  "Tika Kartika, S.Pd" (Kepala Madrasah) dan "Dra. Nyai Hj. Roudlatul
+  Hasanah" memang tidak ada di tabel Pegawai, dan 30 dari 31 pengurus asrama
+  adalah santri/pengurus pondok, bukan pegawai.
+- **9 pengurus asrama ternyata ADA sebagai `Orang`** (santri) — dicek dengan
+  query nama. `JabatanStruktural` hanya punya FK ke `Pegawai`, jadi
+  keterkaitan itu **belum terekam**. Kalau nanti perlu, tambahkan `orangId`
+  nullable; sengaja tidak dilakukan sekarang agar tidak menebak lingkupnya.
+- **Batas divisi 28 pengurus asrama (no 4–31) SENGAJA tidak ditebak.** Di
+  ekstraksi PDF, label "Div. Pendidikan" muncul *setelah* nama ke-4 sehingga
+  tidak jelas apakah label mengawali atau mengakhiri kelompoknya. Semua
+  disimpan `jabatan='Pengurus'`, `divisi=NULL`. **Perlu konfirmasi client.**
+  Yang pasti: no 1–3 (Lurah, Sekretaris, Keuangan) memang tidak berdivisi.
+- **Satu orang boleh menjabat lebih dari satu kali** — kunci uniknya
+  `[skNomor, urutan]`, bukan per orang. Isma Izha Utama memegang 3 baris
+  (Waka Sarpras + Kepala Laboratorium di MA, dan no. 26 di asrama).
+- "Muhammad Bismar As Sidiq" di SK asrama **tidak** dipautkan ke
+  "Muhammmad Bismar As Sidiq, S.H" (guru MA) walau ejaannya mirip —
+  konteksnya beda (pengurus pondok vs guru), jadi tidak dipastikan.
+- Idempoten lewat upsert `[skNomor, urutan]`; dibuktikan dua kali jalan,
+  tetap 40 baris.
+
+## 2026-08-26 — Fase 6: modul Kepegawaian (piket, jurnal, presensi, SK)
+
+Lima model baru (`JadwalPiket`, `JurnalMengajar`, `PresensiPegawai`,
+`BebanJam`, `ArsipSk`) lewat migrasi aditif — nol `DROP`/`TRUNCATE`, data
+lama utuh (87 santri, 29 pegawai). Menu `kepegawaian` + 5 tab, berkas SK
+disajikan lewat route bergerbang `berkas/[nama]/route.ts`, **bukan**
+`public/`.
+
+**Jadwal piket terisi 5 dari 17 baris.** Sumbernya foto tabel MPLS, yang
+client konfirmasi dipakai sebagai piket reguler. Yang perlu diketahui
+operator:
+
+- **12 baris dilewati, tidak membatalkan seluruh impor** (kebijakan sama
+  dengan `import-siswa-smp.ts`). Keduabelas nama itu tidak ada di tabel
+  `Pegawai` sama sekali — seluruhnya diduga **guru SMP, yang datanya memang
+  belum pernah diserahkan client**. Menahan 5 baris yang sudah pasti benar
+  berarti reminder piket Fase 7.2 tak bisa diuji sampai data itu tiba.
+- **Tiga ejaan diperbaiki lewat pemetaan eksplisit** (`EJAAN_FOTO` di
+  `import-piket.ts`), masing-masing hanya punya satu kandidat: "M. Bismar
+  As-Shidiq" → `Muhammmad Bismar As Sidiq` (tiga m), "Muchammad Said" →
+  `Fitri Muchammad Sa’id` (apostrof U+2019), "Warda Haizatil" →
+  `Wardatul Haizatil Husna`. Pencocokan itu sendiri **tidak dilonggarkan**.
+- **Jum'at hanya 2 shift**, bukan 3 seperti hari lain → total 17 baris, bukan
+  18. Shift kedua Jum'at (09.00-11.05) juga tidak nyambung dari shift pertama
+  (07.00-09.35) — kemungkinan salah cetak di sumber, **diimpor apa adanya**.
+- `JadwalPiket` diberi `@@unique([hari, waktuMulai])` supaya importir
+  idempoten; dibuktikan dengan jalan dua kali, tetap 5 baris.
+- `BebanJam` dan `ArsipSk` sengaja masih kosong (belum ada sumber datanya).
+
+**Bug seed yang ikut ketemu & dibereskan**: `seed.ts` mengasumsikan satu wali
+utama per santri, padahal importir data client menandai **ayah dan ibu**
+sebagai kontak utama (itu benar — keduanya dihubungi). Akibatnya seed jatuh
+dengan P2002 di `user_username_key` karena mencoba membuat dua akun
+`wali.<nis>`. Kini pemegang akun dipilih deterministik (`waliId` terkecil);
+wali lain tetap ada sebagai relasi, hanya tanpa akun login.
+
+## 2026-08-26 — `43d6745b` — Fase 3: importir XLSX data client nyata
+
+Data client sungguhan masuk ke DB, menggantikan sebagian data fiktif
+`proto-data.json`. Semua importir idempoten — dibuktikan dengan menjalankan
+dua kali dan menghitung baris, bukan dari status perintah.
+
+| Perintah | Hasil |
+|---|---|
+| `npm run import:guru-ma` | 17 Pegawai unit MA |
+| `npm run import:siswa-ma` | 19 Santri (11 kelas XI TA 2025/2026, 8 kelas X 2026/2027) |
+| `npm run import:siswa-smp` | 52 Santri (2 baris cacat dilewati) |
+| `npm run import:jadwal-ma` | 50 JadwalPelajaran, `pegawaiId` terisi 48/50 |
+
+**Yang perlu diketahui operator:**
+
+- **Importir SMP melewati baris cacat, tidak membatalkan seluruh berkas.**
+  Form pendataan diisi manual oleh banyak orang sehingga selalu ada sel salah
+  (ditemukan: NIK 17 digit di KELAS 8 baris 9, NISN kosong di baris 21). Baris
+  yang dilewati dicetak lengkap; perbaiki di berkas sumber lalu jalankan ulang.
+- **`import:presensi-ma` sengaja tidak menulis apa pun.** CSV client adalah
+  rekap agregat per siswa (`Total Hadir/Terlambat/Pulang`) tanpa kolom tanggal,
+  sedangkan `Presensi` berkunci `[santriId, tgl, sesi]`. Angka sumbernya juga
+  tidak konsisten: `Hari Tercatat` bernilai 1 di semua baris padahal
+  Hadir+Terlambat+Pulang mencapai 30. **Perlu ekspor presensi per-tanggal dari
+  client.**
+- **`alias-guru.ts` jadi 16 entri.** "B. Ifa" dipetakan ke Kholifatun Khasanah
+  — satu-satunya guru MA dengan mapel "Fisika, Kimia", dan "B. Ifa" hanya
+  muncul mengampu KIM/FIS. **Masih perlu konfirmasi client.**
+- **"TKA" dan "EKSTRA" bukan nama guru** → masuk `KODE_BUKAN_GURU`,
+  `pegawaiId` dibiarkan NULL. Konsekuensinya dua slot itu tidak akan menerima
+  reminder ngajar Fase 7.
+- **"P. Bismar" dipetakan ke ejaan `DATA GURU.xlsx`** (`Muhammmad`, tiga m)
+  karena berkas itulah sumber baris Pegawai — bukan ejaan SK (`Muh.`).
+- Pencocokan nama guru memakai bentuk yang diratakan (gelar dibuang, apostrof
+  lengkung U+2019 diseragamkan, huruf berulang dirapatkan) dan **hanya menerima
+  kecocokan tunggal**; nol atau ambigu ditolak dan diselesaikan dengan menambah
+  entri eksplisit di kamus, bukan dengan melonggarkan pencocokan.
+- SMP ternyata 52 siswa, bukan 38 seperti dugaan rencana — sheet
+  "KELAS 9 A&B" berisi dua rombel sekaligus. Rekap client menyebut 70;
+  selisihnya masih terbuka.
+
+## 2026-08-26 — `72e4967a` — Fase 1, 2 & 5: skema data client + importir keuangan
+
+Skema disiapkan agar data client bisa masuk apa adanya, plus importir CSV
+keuangan.
+
+- Model baru `TahunAjaran`; `Kelas` di-scope ke tahun ajaran
+  (`@@unique([unitId, nama, tahunAjaranId])`) karena "X" 2025/2026 dan "X"
+  2026/2027 berisi orang berbeda.
+- `StatusHadir` ditambah `Terlambat` dan `PulangCepat` — dua metrik utama di
+  presensi MA yang sebelumnya hilang saat impor.
+- `Santri.nis` jadi opsional: seluruh data client hanya punya NISN.
+- FK `Kelas.waliKelasId` dan `JadwalPelajaran.pegawaiId` menggantikan
+  pencocokan by-nama. Kolom string lama ditandai deprecated, tidak dihapus.
+- `Pegawai`, `Orang` (alamat terstruktur), `RelasiWali` diperluas; model baru
+  `ProfilKesehatan` dan `JadwalDiniyah` (Madin berbasis kitab, bukan kelas).
+- Periode aktif `2026/2027 Gasal` tidak lagi hardcode — kini baris
+  `TahunAjaran` yang di-seed.
+- Fase 5: importir CSV keuangan di `prisma/import/`. **Validasi seluruh berkas
+  lebih dulu; satu galat berarti batal tanpa menulis apa pun ke DB** — bukan
+  gagal separuh jalan. `Tagihan.dibayar` dihitung ulang dari `SUM(Pembayaran)`,
+  nilai di CSV hanya dipakai sebagai kondisi awal.
+
+**Jebakan migrasi yang sudah dibereskan** (catat untuk migrasi berikutnya):
+migrasi awal men-drop index unik `kelas(unit_id, nama)` sebelum penggantinya
+ada, padahal FK `kelas.unit_id` bersandar pada index itu → MySQL galat 1553.
+Urutannya dibalik dan ditambah index penopang `kelas_unit_id_idx`. Selain itu
+image `nuha-migrate` **harus di-build ulang** sebelum dijalankan (`docker
+compose build nuha-migrate`), dan setiap migrasi yang gagal separuh jalan
+meninggalkan DDL parsial yang harus diperiksa serta dibersihkan sebelum
+mencoba lagi.
+
+**Dampak operasional**: `vitest.config.mts` diperluas agar `include` mencakup
+`prisma/**/*.test.ts` — tanpa itu test importir tidak pernah dijalankan
+`npm test`.
+
 ## 2026-08-26 — `4ee19a5d` — Fase 7: notifikasi WA reminder piket & ngajar
 
 - **Temuan operasional penting**: dari 38 template WA di

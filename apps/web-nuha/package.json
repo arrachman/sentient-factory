@@ -13,11 +13,21 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:seed": "tsx prisma/seed-dasar.ts",
+    "db:seed:demo": "tsx prisma/seed.ts",
+    "db:purge-dummy": "tsx scripts/purge-dummy.ts",
+    "db:studio": "prisma studio",
+    "import:keuangan": "tsx prisma/import/keuangan.ts",
+    "import:guru-ma": "tsx prisma/import/import-guru-ma.ts",
+    "import:siswa-ma": "tsx prisma/import/import-siswa-ma.ts",
+    "import:siswa-smp": "tsx prisma/import/import-siswa-smp.ts",
+    "import:jadwal-ma": "tsx prisma/import/import-jadwal-ma.ts",
+    "import:presensi-ma": "tsx prisma/import/import-presensi-ma.ts",
+    "cron:tick": "tsx scripts/cron.ts",
+    "cron:loop": "tsx scripts/cron.ts --loop"
   },
   "prisma": {
-    "seed": "tsx prisma/seed.ts"
+    "seed": "tsx prisma/seed-dasar.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.2.1",

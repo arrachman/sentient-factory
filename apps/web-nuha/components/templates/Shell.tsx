@@ -22,17 +22,29 @@ const HREF_BY_KEY: Record<string, string> = {
   ppdb: '/ppdb-panitia',
   laporan: '/laporan',
   pengaturan: '/pengaturan',
+  kepegawaian: '/kepegawaian',
   'portal-santri': '/portal/santri',
   'portal-wali': '/portal/wali',
   data: '/data',
 };
+
+/**
+ * Menu yang untuk sementara disembunyikan dari sidebar atas permintaan client
+ * (modulnya belum siap dipakai operator). Halaman & `requirePage` sengaja tidak
+ * disentuh — ini semata penyembunyian navigasi, bukan pencabutan hak akses.
+ * Hapus kuncinya dari sini untuk memunculkan kembali.
+ */
+const MENU_DISEMBUNYIKAN = new Set([
+  'kurikulum', 'poskestren', 'keuangan', 'lms', 'gaji', 'ujian',
+  'kunjungan', 'ppdb', 'laporan',
+]);
 
 // Warna stroke ikon per menu — menCol di prototype.
 const WARNA_IKON: Record<string, string> = {
   dashboard: '#F2B770', induk: '#93C5FD', akademik: '#86EFAC', kurikulum: '#FDBA74', ujian: '#FCD34D',
   pesantren: '#C4B5FD', poskestren: '#FCA5A5', keuangan: '#6EE7B7', gaji: '#FDE047',
   lms: '#7DD3FC', wa: '#4ADE80', kunjungan: '#F9A8D4', ppdb: '#A5B4FC',
-  laporan: '#67E8F9', pengaturan: '#D6D3D1', data: '#D6D3D1',
+  laporan: '#67E8F9', pengaturan: '#D6D3D1', data: '#D6D3D1', kepegawaian: '#93C5FD',
   'portal-santri': '#7DD3FC', 'portal-wali': '#F9A8D4',
 };
 
@@ -46,7 +58,7 @@ export async function Shell({ session, active, title, children }: { session: Ses
     }),
     prisma.agenda.findMany({ orderBy: { tgl: 'asc' }, take: 6 }),
   ]);
-  const visible = menus.filter((menu) => HREF_BY_KEY[menu.key]);
+  const visible = menus.filter((menu) => HREF_BY_KEY[menu.key] && !MENU_DISEMBUNYIKAN.has(menu.key));
   const peranUtama = session.peran[0] ?? 'pengguna';
   const menyamar = Boolean(session.peranAsli);
 

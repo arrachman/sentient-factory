@@ -70,6 +70,22 @@ export const BAGIAN: Bagian[] = [
       'Server menolak permintaan ganti peran dari siapa pun yang peran aslinya bukan super admin — dropdown yang tersembunyi bukan pengaman. Setiap pergantian tercatat di audit sebagai GANTI_PERAN.',
   },
   {
+    id: 'akademik',
+    judul: 'Menjelajah data akademik',
+    ringkas:
+      'Modul Akademik menyatukan 87 santri dua lembaga di balik satu penjelajah bertingkat: Semua pesantren → SMP/MA/Pondok → tingkat → kelas. Penyaring yang dipilih berlaku untuk keempat tab sekaligus dan tersimpan di URL, jadi satu tautan cukup untuk membagikan tampilan yang persis sama.',
+    langkah: [
+      { judul: 'Pilih lembaga', detail: 'Chip Lembaga menampilkan SMP, MA, dan Pondok beserta cacah santrinya. Cacah itu sudah menghormati penyaring lain yang sedang aktif — angka di chip = jumlah yang benar-benar didapat kalau chip itu diklik.' },
+      { judul: 'Turun ke tingkat lalu kelas', detail: 'Baris Tingkat muncul setelah lembaga dipilih, baris Kelas setelah tingkat dipilih. Tiap langkah hanya memperlihatkan pilihan yang relevan, bukan seluruh rombel sekaligus.' },
+      { judul: 'Mundur lewat remah roti', detail: 'Jalur "Semua pesantren › SMP › Tingkat 7 › Kelas 7A" di atas chip bisa diklik untuk naik satu tingkat tanpa kehilangan penyaring lain.' },
+      { judul: 'Penyaring lanjutan', detail: 'Pencarian nama/NIS/NISN, status, jenis kelamin, program, angkatan, asrama, dan urutan. Pilihan program, angkatan, dan asrama diambil dari data yang benar-benar ada, jadi tidak ada pilihan yang hasilnya nol.' },
+      { judul: 'Copot penyaring satu per satu', detail: 'Tiap penyaring aktif tampil sebagai chip bertanda ×; ada pula "Bersihkan semua" beserta jumlah penyaring yang sedang menyala.' },
+      { judul: 'Berlaku lintas tab', detail: 'Penjelajah yang sama dipakai tab Siswa, Presensi, Nilai, dan Rapor. Dropdown rombel di tab Nilai dan Rapor ikut menyempit mengikuti lembaga dan tingkat yang sedang dipilih.' },
+    ],
+    catatan:
+      'Rombel bernama sama di tahun ajaran berbeda — data warisan punya dua "7A" — diberi keterangan tahun ajarannya agar dua chip tidak tampak kembar. Sembilan menu (Kurikulum, Poskestren, Keuangan, LMS, Penggajian, Ujian, Kunjungan Wali, PPDB, Laporan) untuk sementara disembunyikan dari sidebar atas permintaan client; hak aksesnya tidak dicabut, jadi peran yang berhak masih bisa membuka URL-nya langsung.',
+  },
+  {
     id: 'guru',
     judul: 'Alur guru',
     ringkas:

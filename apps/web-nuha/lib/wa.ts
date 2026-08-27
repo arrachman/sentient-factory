@@ -9,6 +9,26 @@ export function normalizeTarget(value: string): string {
   return digits.startsWith('0') ? `62${digits.slice(1)}` : digits;
 }
 
+/**
+ * Pengalihan nomor tujuan saat debugging. Selama `WA_DEBUG_REDIRECT` terisi,
+ * SELURUH pesan dialihkan ke nomor itu — tidak ada wali santri yang menerima
+ * apa pun. Ini disengaja: data client sudah nyata, jadi salah kirim berarti
+ * pesan sungguhan masuk ke nomor orang tua sungguhan.
+ *
+ * Berlaku terlepas dari `WA_DRY_RUN` supaya pengiriman sungguhan tetap bisa
+ * diuji dengan aman. Nomor tujuan asli tetap dikembalikan agar log tetap
+ * berguna — yang dialihkan hanya nomor yang benar-benar dikirimi.
+ *
+ * **Wajib dikosongkan sebelum produksi.**
+ */
+export function alihkanNomorDebug(nomorAsli: string): { nomorKirim: string; dialihkanDari?: string } {
+  const redirect = process.env.WA_DEBUG_REDIRECT?.trim();
+  if (!redirect) return { nomorKirim: nomorAsli };
+  const tujuanDebug = normalizeTarget(redirect);
+  if (tujuanDebug === nomorAsli) return { nomorKirim: nomorAsli };
+  return { nomorKirim: tujuanDebug, dialihkanDari: nomorAsli };
+}
+
 export function renderTemplate(template: string, values: Record<string, string | number>): string {
   return template.replace(/{{\s*([\w.]+)\s*}}/g, (_, key: string) => String(values[key] ?? ''));
 }
@@ -26,6 +46,7 @@ type GatewayResponse = { status?: boolean; id?: string; reason?: string };
 
 export async function kirimWa(params: SendWaParams) {
   const nomor = normalizeTarget(params.nomor);
+  const { nomorKirim, dialihkanDari } = alihkanNomorDebug(nomor);
   const dryRun = (process.env.WA_DRY_RUN ?? 'true').toLowerCase() === 'true';
   let status = dryRun ? 'Dry-run' : 'Gagal';
   let messageId: string | undefined;
@@ -40,7 +61,10 @@ export async function kirimWa(params: SendWaParams) {
     else if (!token) error = 'Belum ada perangkat WhatsApp yang terhubung. Pindai QR di Notifikasi → Perangkat.';
     else {
       try {
-        const form = new URLSearchParams({ target: nomor, message: params.isi });
+        const isiKirim = dialihkanDari
+          ? `[UJI COBA — pesan ini seharusnya untuk ${dialihkanDari}]\n\n${params.isi}`
+          : params.isi;
+        const form = new URLSearchParams({ target: nomorKirim, message: isiKirim });
         const response = await fetch(`${url.replace(/\/$/, '')}/send`, {
           method: 'POST',
           headers: { Authorization: token, 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -65,8 +89,10 @@ export async function kirimWa(params: SendWaParams) {
     aksi: 'KIRIM_WA',
     entitas: 'log_wa',
     entitasId: String(entry.id),
-    ringkasan: `${status}: WA ke ${nomor} untuk ${params.tujuan}`,
-    perubahan: { status, messageId, error },
+    ringkasan: dialihkanDari
+      ? `${status}: WA untuk ${params.tujuan} DIALIHKAN dari ${dialihkanDari} ke ${nomorKirim} (WA_DEBUG_REDIRECT aktif)`
+      : `${status}: WA ke ${nomor} untuk ${params.tujuan}`,
+    perubahan: { status, messageId, error, nomorKirim, dialihkanDari },
     aktor: params.actor,
     ip: params.ip,
   });
