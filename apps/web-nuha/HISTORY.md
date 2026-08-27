@@ -4,7 +4,7 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
-## 2026-08-27 — Kelas: wali kelas & tahun pelajaran jadi lookup nama (`PENDING`)
+## 2026-08-27 — Kelas: wali kelas & tahun pelajaran jadi lookup nama (`71b07f76`)
 
 Entitas `kelas` di /data/kelas sebelumnya menampilkan dan meminta ID mentah
 untuk wali kelas dan tahun pelajaran. Keduanya kini field `ref`: wali kelas
