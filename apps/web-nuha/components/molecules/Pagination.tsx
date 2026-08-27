@@ -21,6 +21,16 @@ const GAYA_TOMBOL = {
   fontWeight: 600,
 };
 
+/** Banyak tombol nomor halaman yang ditampilkan di antara prev dan next. */
+const JENDELA_NOMOR = 4;
+
+/** Jendela maks 4 nomor halaman, digeser agar halaman aktif selalu ikut terlihat. */
+function nomorHalaman(halaman: number, totalHalaman: number): number[] {
+  const banyak = Math.min(JENDELA_NOMOR, totalHalaman);
+  const mulai = Math.min(Math.max(1, halaman - Math.floor((banyak - 1) / 2)), totalHalaman - banyak + 1);
+  return Array.from({ length: banyak }, (_, i) => mulai + i);
+}
+
 type TombolProps = { label: string; judul: string; tujuan: number; aktif: boolean; buatHref: (halaman: number) => string };
 
 /** Satu tombol navigasi; jadi <span> non-klik saat sudah di ujung. */
@@ -56,9 +66,18 @@ export function Pagination({ halaman, totalHalaman, total, jumlahBaris, ukuranHa
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <TombolNav label="«" judul="Halaman pertama" tujuan={1} aktif={adaSebelum} buatHref={buatHref} />
             <TombolNav label="‹" judul="Halaman sebelumnya" tujuan={halaman - 1} aktif={adaSebelum} buatHref={buatHref} />
-            <span className="muted" style={{ padding: '0 4px', fontSize: 12.5, fontWeight: 600 }}>
-              Halaman {halaman} dari {totalHalaman}
-            </span>
+            {nomorHalaman(halaman, totalHalaman).map((p) => (
+              <a
+                key={p}
+                href={buatHref(p)}
+                aria-current={p === halaman ? 'page' : undefined}
+                aria-label={`Halaman ${p}`}
+                className={`btn-sekunder ${p === halaman ? 'active' : ''}`}
+                style={GAYA_TOMBOL}
+              >
+                {p}
+              </a>
+            ))}
             <TombolNav label="›" judul="Halaman berikutnya" tujuan={halaman + 1} aktif={adaSesudah} buatHref={buatHref} />
             <TombolNav label="»" judul="Halaman terakhir" tujuan={totalHalaman} aktif={adaSesudah} buatHref={buatHref} />
           </div>
