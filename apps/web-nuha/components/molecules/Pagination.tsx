@@ -22,7 +22,7 @@ const GAYA_TOMBOL = {
 };
 
 /** Banyak tombol nomor halaman yang ditampilkan di antara prev dan next. */
-const JENDELA_NOMOR = 4;
+const JENDELA_NOMOR = 5;
 
 /** Jendela maks 4 nomor halaman, digeser agar halaman aktif selalu ikut terlihat. */
 function nomorHalaman(halaman: number, totalHalaman: number): number[] {
