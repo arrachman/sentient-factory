@@ -2,7 +2,7 @@
  * One description of an entity drives its API validation, its table, and its
  * form. Adding a module means adding a registry entry, not another CRUD route.
  */
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'datetime' | 'select' | 'boolean';
+export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'datetime' | 'select' | 'boolean' | 'orang-banyak';
 
 /** Options pulled from another table; `label` may walk relations, e.g. `orang.nama`. */
 export type FieldRef = {
@@ -39,6 +39,12 @@ export type Field = {
   hanyaBaru?: boolean;
   /** Tampil hanya bila field lain bernilai salah satu dari `sama`. */
   tampilBila?: { field: string; sama: string[] };
+  /** Ikon per opsi segmented, mis. { L: 'lelaki' } — lihat atoms/IkonOpsi. */
+  optionIcons?: Record<string, string>;
+  /** Untuk `orang-banyak`: pilihan hubungan per baris. */
+  hubungan?: readonly string[];
+  /** Untuk `orang-banyak`: batasi pencarian ke orang yang sudah jadi santri. */
+  hanyaSantri?: boolean;
 };
 
 /** Tautan ke modul lain yang memakai baris ini (mis. Orang → Santri/Pegawai/Akun). */

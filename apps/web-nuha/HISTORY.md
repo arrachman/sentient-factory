@@ -4,6 +4,27 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — UX: form identitas orang & pemilih wali banyak-ke-banyak
+
+Lanjutan dari entri di bawah, hasil masukan tampilan:
+
+- Jenis kelamin memakai ikon Mars/Venus di samping labelnya.
+- Nama lengkap kini selebar 2 kolom (sebelumnya sesempit NIK).
+- Alamat jalan/dusun jadi `textarea` selebar penuh, bukan input satu baris.
+- Peran **Santri** bisa langsung menunjuk walinya — **boleh beberapa**
+  (ayah, ibu, wali lain), masing-masing dengan hubungannya.
+- Peran **Wali murid** bisa sekaligus mewakili **beberapa santri**; kandidatnya
+  dibatasi ke orang yang benar-benar sudah terdaftar sebagai santri
+  (`/api/orang/cari?santri=1`).
+
+Wali pertama pada santri yang belum punya wali utama otomatis jadi utama; wali
+utama yang sudah ada tidak diturunkan diam-diam.
+
+Teknis: field type baru `orang-banyak` (komponen
+`components/molecules/PemilihBanyakOrang.tsx`, nilainya JSON `{id, hubungan}[]`
+yang divalidasi ulang di server), atribut field `optionIcons`, `hubungan`,
+`hanyaSantri`, dan atom `components/atoms/IkonOpsi.tsx`.
+
 ## 2026-08-27 — Fitur: penentuan peran saat menambah identitas orang
 
 Form "Tambah identitas orang" (`/data/orang`) dapat bagian **Peran**: satu

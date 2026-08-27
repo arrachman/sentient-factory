@@ -1,6 +1,8 @@
 'use client';
 
 import type { ClientField, Row } from '@/lib/crud/types';
+import { IkonOpsi } from '@/components/atoms/IkonOpsi';
+import { PemilihBanyakOrang } from '@/components/molecules/PemilihBanyakOrang';
 
 const nilaiAwal = (field: ClientField, row?: Row) => {
   const raw = row?.[field.name];
@@ -19,6 +21,18 @@ type Props = { field: ClientField; id: string; row?: Row; onPilih?: (nilai: stri
 export function InputField({ field, id, row, onPilih }: Props) {
   const nilai = nilaiAwal(field, row);
   const lapor = onPilih ? (event: { target: { value: string } }) => onPilih(event.target.value) : undefined;
+
+  if (field.type === 'orang-banyak') {
+    return <PemilihBanyakOrang
+      name={field.name}
+      label={field.label}
+      id={id}
+      hint={field.hint}
+      hubungan={field.hubungan ?? ['Wali']}
+      placeholder={field.placeholder}
+      hanyaSantri={field.hanyaSantri}
+    />;
+  }
 
   if (field.type === 'boolean') {
     const aktif = row ? Boolean(row[field.name]) : true;
@@ -42,7 +56,10 @@ export function InputField({ field, id, row, onPilih }: Props) {
       return <div className="segmen" role="radiogroup" aria-labelledby={`${id}-label`}>
         {field.options.map((option) => <label className="segmen-opsi" key={option}>
           <input type="radio" name={field.name} value={option} required={field.required} defaultChecked={nilai === option} onChange={lapor} />
-          <span>{field.optionLabels?.[option] ?? option}</span>
+          <span>
+            {field.optionIcons?.[option] && <IkonOpsi nama={field.optionIcons[option]} />}
+            {field.optionLabels?.[option] ?? option}
+          </span>
         </label>)}
       </div>;
     }

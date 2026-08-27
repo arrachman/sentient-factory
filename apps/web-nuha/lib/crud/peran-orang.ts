@@ -82,25 +82,31 @@ export const FIELD_PERAN: Field[] = [
     placeholder: 'Guru Mapel / Tata Usaha',
   },
   {
-    name: 'peranAnakId',
-    label: 'Anak (santri) yang diwalikan',
-    type: 'number',
+    name: 'peranWali',
+    label: 'Wali santri ini',
+    type: 'orang-banyak',
     virtual: true,
     hanyaBaru: true,
+    span: 3,
     group: 'Peran',
-    ref: { model: 'orang', label: 'nama', orderBy: { nama: 'asc' }, idType: 'bigint' },
-    tampilBila: tampilBila(['wali']),
-    hint: 'Pilih santrinya; relasi tambahan bisa dikelola di panel Wali santri.',
+    hubungan: HUBUNGAN_WALI,
+    tampilBila: tampilBila(['santri']),
+    placeholder: 'Cari nama wali (ayah/ibu/wali)…',
+    hint: 'Boleh lebih dari satu — cari identitas walinya lalu tentukan hubungannya. Wali pertama jadi wali utama (penerima notifikasi WhatsApp). Bisa juga dilengkapi nanti di panel Wali santri.',
   },
   {
-    name: 'peranHubungan',
-    label: 'Hubungan',
-    type: 'select',
+    name: 'peranAnak',
+    label: 'Santri yang diwalikan',
+    type: 'orang-banyak',
     virtual: true,
     hanyaBaru: true,
+    span: 3,
     group: 'Peran',
-    options: HUBUNGAN_WALI,
+    hubungan: HUBUNGAN_WALI,
+    hanyaSantri: true,
     tampilBila: tampilBila(['wali']),
+    placeholder: 'Cari nama santri…',
+    hint: 'Satu wali boleh mewakili beberapa santri — tambahkan semuanya di sini. Hanya orang yang sudah terdaftar sebagai santri yang muncul.',
   },
 ];
 
@@ -113,6 +119,53 @@ async function catat(orangId: string, ringkasan: string, perubahan: Record<strin
   await recordAudit({ aksi: 'CRUD_CREATE', entitas: 'orang_peran', entitasId: orangId, ringkasan, perubahan, aktor });
 }
 
+type Relasi = { id: string; hubungan: string };
+
+/** Pemilih banyak orang mengirim JSON; tolak apa pun yang bukan daftar id sah. */
+function bacaRelasi(input: Record<string, unknown>, key: string): Relasi[] {
+  const mentah = teks(input, key);
+  if (!mentah) return [];
+  let terurai: unknown;
+  try {
+    terurai = JSON.parse(mentah);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(terurai)) return [];
+  const hasil: Relasi[] = [];
+  const sudah = new Set<string>();
+  for (const item of terurai) {
+    if (!item || typeof item !== 'object') continue;
+    const { id, hubungan } = item as Record<string, unknown>;
+    const idTeks = String(id ?? '').trim();
+    if (!/^\d+$/.test(idTeks) || sudah.has(idTeks)) continue;
+    sudah.add(idTeks);
+    hasil.push({ id: idTeks, hubungan: HUBUNGAN_WALI.includes(String(hubungan)) ? String(hubungan) : 'Wali' });
+  }
+  return hasil;
+}
+
+/**
+ * Sambungkan pasangan wali↔anak. Relasi ini banyak-ke-banyak dan unik per
+ * (wali, anak), jadi pasangan yang sudah ada di-update alih-alih ditolak.
+ * Wali utama hanya satu per anak — yang sudah ada tidak diturunkan diam-diam.
+ */
+async function sambungkanWali(waliId: bigint, anakId: bigint, hubungan: string): Promise<boolean> {
+  if (waliId === anakId) return false;
+  const [adaWali, adaAnak] = await Promise.all([
+    prisma.orang.count({ where: { id: waliId } }),
+    prisma.orang.count({ where: { id: anakId } }),
+  ]);
+  if (!adaWali || !adaAnak) return false;
+  const sudahAdaUtama = await prisma.relasiWali.count({ where: { anakId, utama: true } });
+  await prisma.relasiWali.upsert({
+    where: { waliId_anakId: { waliId, anakId } },
+    create: { waliId, anakId, hubungan, peran: hubungan, utama: sudahAdaUtama === 0 },
+    update: { hubungan, peran: hubungan },
+  });
+  return true;
+}
+
 /**
  * Buat baris peran untuk orang yang baru disimpan. Idempoten: bila orang itu
  * sudah punya baris santri/pegawai, biarkan yang lama (relasi 1-1 `orangId`).
@@ -123,11 +176,18 @@ export async function daftarkanPeran(orangId: string, input: Record<string, unkn
   const id = BigInt(orangId);
 
   if (peran === 'santri') {
-    if (await prisma.santri.count({ where: { orangId: id } })) return;
-    const nis = teks(input, 'peranNis') || null;
-    const status = teks(input, 'peranStatusSantri') === 'Kalong' ? 'Kalong' : 'Mukim';
-    await prisma.santri.create({ data: { orangId: id, nis, status } });
-    await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran, nis, status }, aktor);
+    if (!(await prisma.santri.count({ where: { orangId: id } }))) {
+      const nis = teks(input, 'peranNis') || null;
+      const status = teks(input, 'peranStatusSantri') === 'Kalong' ? 'Kalong' : 'Mukim';
+      await prisma.santri.create({ data: { orangId: id, nis, status } });
+      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran, nis, status }, aktor);
+    }
+    // Santri boleh punya beberapa wali (ayah, ibu, wali lain).
+    for (const wali of bacaRelasi(input, 'peranWali')) {
+      if (await sambungkanWali(BigInt(wali.id), id, wali.hubungan)) {
+        await catat(orangId, `Menetapkan orang #${wali.id} sebagai ${wali.hubungan}`, { waliId: wali.id, hubungan: wali.hubungan }, aktor);
+      }
+    }
     return;
   }
 
@@ -140,18 +200,12 @@ export async function daftarkanPeran(orangId: string, input: Record<string, unkn
     return;
   }
 
-  // Wali tanpa anak yang dipilih tetap sah — identitasnya sudah tersimpan dan
-  // relasinya bisa dibuat nanti di panel Wali santri.
-  const anak = teks(input, 'peranAnakId');
-  if (!anak || anak === orangId) return;
-  const anakId = BigInt(anak);
-  if (!(await prisma.orang.count({ where: { id: anakId } }))) return;
-  const hubungan = HUBUNGAN_WALI.includes(teks(input, 'peranHubungan')) ? teks(input, 'peranHubungan') : 'Wali';
-  const sudahAdaUtama = await prisma.relasiWali.count({ where: { anakId, utama: true } });
-  await prisma.relasiWali.upsert({
-    where: { waliId_anakId: { waliId: id, anakId } },
-    create: { waliId: id, anakId, hubungan, peran: hubungan, utama: sudahAdaUtama === 0 },
-    update: { hubungan, peran: hubungan },
-  });
-  await catat(orangId, `Mendaftarkan sebagai ${hubungan} dari orang #${anak}`, { peran, anakId: anak, hubungan }, aktor);
+  // Wali tanpa santri yang dipilih tetap sah — identitasnya sudah tersimpan
+  // dan relasinya bisa dibuat nanti di panel Wali santri. Satu wali boleh
+  // mewakili beberapa santri sekaligus.
+  for (const anak of bacaRelasi(input, 'peranAnak')) {
+    if (await sambungkanWali(id, BigInt(anak.id), anak.hubungan)) {
+      await catat(orangId, `Mendaftarkan sebagai ${anak.hubungan} dari orang #${anak.id}`, { peran, anakId: anak.id, hubungan: anak.hubungan }, aktor);
+    }
+  }
 }

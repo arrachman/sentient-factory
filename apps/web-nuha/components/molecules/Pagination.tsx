@@ -66,18 +66,17 @@ export function Pagination({ halaman, totalHalaman, total, jumlahBaris, ukuranHa
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
             <TombolNav label="«" judul="Halaman pertama" tujuan={1} aktif={adaSebelum} buatHref={buatHref} />
             <TombolNav label="‹" judul="Halaman sebelumnya" tujuan={halaman - 1} aktif={adaSebelum} buatHref={buatHref} />
-            {nomorHalaman(halaman, totalHalaman).map((p) => (
-              <a
-                key={p}
-                href={buatHref(p)}
-                aria-current={p === halaman ? 'page' : undefined}
-                aria-label={`Halaman ${p}`}
-                className={`btn-sekunder ${p === halaman ? 'active' : ''}`}
-                style={GAYA_TOMBOL}
-              >
-                {p}
-              </a>
-            ))}
+            {nomorHalaman(halaman, totalHalaman).map((p) => (p === halaman
+              ? (
+                <span key={p} aria-current="page" aria-label={`Halaman ${p}, halaman ini`} className="btn-sekunder active" style={GAYA_TOMBOL}>
+                  {p}
+                </span>
+              )
+              : (
+                <a key={p} href={buatHref(p)} aria-label={`Halaman ${p}`} className="btn-sekunder" style={GAYA_TOMBOL}>
+                  {p}
+                </a>
+              )))}
             <TombolNav label="›" judul="Halaman berikutnya" tujuan={halaman + 1} aktif={adaSesudah} buatHref={buatHref} />
             <TombolNav label="»" judul="Halaman terakhir" tujuan={totalHalaman} aktif={adaSesudah} buatHref={buatHref} />
           </div>

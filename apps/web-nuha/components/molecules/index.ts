@@ -7,3 +7,4 @@ export * from './Pagination';
 export * from './StatCard';
 export * from './Tabel';
 export * from './Tabs';
+export * from './PemilihBanyakOrang';
