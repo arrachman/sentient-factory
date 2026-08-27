@@ -4,6 +4,18 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Semua santri berstatus mukim (`PENDING`)
+
+Status `Kalong` dihapus dari model dan seluruh UI: semua data santri/siswa
+pasti mukim, bukan kalong.
+
+- Enum `StatusSantri` kini `Mukim | Alumni | Keluar`; migrasi
+  `20260827120000_santri_selalu_mukim` mengonversi 51 baris `Kalong` → `Mukim`.
+- Form Identitas Orang: pilihan "Status santri" dihapus (selalu Mukim).
+- Dasbor: donut & StatCard tak lagi memecah mukim/kalong; kartu peringatan
+  "santri kalong" di tab Biodata dan label kalong di header induk dihapus.
+- Importir siswa SMP tidak lagi menandai siswa aktif sebagai Kalong.
+
 ## 2026-08-27 — Tahun pelajaran sampai 2030/2031 (`87153933`)
 
 `prisma/tahun-ajaran.ts` kini men-generate tahun pelajaran 2024/2025 s.d.
