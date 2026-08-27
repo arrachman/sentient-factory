@@ -4,6 +4,20 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Kelola Data: tabel compact, form jadi modal, vlookup unit/kelas/kamar (dcdb90ad)
+
+Halaman `/data` (Kelola Data): tabel CRUD kini padat (`table-compact`,
+padding sel diperkecil) supaya lebih banyak baris terlihat sekaligus.
+Form tambah/ubah tidak lagi memanjang di bawah tabel, melainkan modal
+overlay (`.modal-overlay`/`.modal` baru di `globals.css`). Field
+`unitId`/`kelasId`/`kamarId` (entitas santri, kelas, pegawai) yang
+sebelumnya input ID angka manual sekarang dropdown yang menarik nama
+dari master data (Unit/Kelas/Kamar) — pakai `Field.ref` di
+`lib/crud/registry.ts` yang sudah ada di tipe tapi belum pernah
+dipakai; `engine.toClientEntity` kini async dan resolve opsi lewat
+Prisma. Tabel juga menampilkan nama, bukan ID mentah, untuk kolom yang
+punya `ref`. Tidak ada perubahan skema.
+
 ## 2026-08-27 — Tambah siswa dipindah dari Data Induk ke Kelola Data (61eb21d7)
 
 Halaman `/induk` (Data Induk) tidak lagi merender `CrudPanel` santri di
