@@ -119,23 +119,24 @@ export const FIELD_PERAN: Field[] = [
 ];
 
 /**
- * Kategori orang tidak disimpan sebagai kolom — ia disimpulkan dari relasi
+ * Peran orang tidak disimpan sebagai kolom — ia disimpulkan dari relasi
  * (baris `santri`, `pegawai`, atau relasi wali). Jadi filternya berupa field
- * virtual dengan peta nilai → klausa `where` Prisma. Guru vs staf dipisah
- * dari jabatan karena keduanya sama-sama baris `pegawai`.
+ * virtual dengan peta nilai → klausa `where` Prisma. "Guru" adalah himpunan
+ * bagian dari "Pegawai" (dibedakan lewat kata "Guru" di `jabatan`), sesuai
+ * badge peran di tabel yang menyebut semua baris `pegawai` sebagai Pegawai.
  */
 export const FILTER_KATEGORI_ORANG: Field = {
   name: 'kategoriOrang',
-  label: 'Kategori',
+  label: 'Peran',
   type: 'select',
   virtual: true,
   hanyaFilter: true,
-  options: ['santri', 'guru', 'staf', 'wali', 'belum'],
-  optionLabels: { santri: 'Santri', guru: 'Guru', staf: 'Staf', wali: 'Wali', belum: 'Tanpa kategori' },
+  options: ['santri', 'guru', 'pegawai', 'wali', 'belum'],
+  optionLabels: { santri: 'Santri', guru: 'Guru', pegawai: 'Pegawai', wali: 'Wali', belum: 'Tanpa peran' },
   filterWhere: {
     santri: { santri: { isNot: null } },
     guru: { pegawai: { is: { jabatan: { contains: 'Guru' } } } },
-    staf: { pegawai: { is: { NOT: { jabatan: { contains: 'Guru' } } } } },
+    pegawai: { pegawai: { isNot: null } },
     wali: { waliDari: { some: {} } },
     // Orang yang belum terhubung ke modul mana pun — biasanya sisa impor
     // identitas yang perannya belum ditetapkan.
