@@ -3,6 +3,9 @@ import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/templates/Shell';
 import { JudulHalaman, Kosong, type TabDef } from '@/components';
+import { CrudPanel } from '@/components/CrudPanel';
+import { getEntity } from '@/lib/crud/registry';
+import { listRows, toClientEntity } from '@/lib/crud/engine';
 import { BarisFilter } from './BarisFilter';
 import { DaftarSantri } from './DaftarSantri';
 import { PohonLembaga } from './PohonLembaga';
@@ -40,7 +43,8 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
 
   const where = whereFilter(f);
 
-  const [daftar, pohon, angkatan] = await Promise.all([
+  const entitasSantri = getEntity('santri')!;
+  const [daftar, pohon, angkatan, barisCrud] = await Promise.all([
     prisma.santri.findMany({
       where,
       select: {
@@ -53,6 +57,7 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
     }),
     ambilPohon(f),
     ambilAngkatan(),
+    listRows(entitasSantri),
   ]);
 
   const selRaw = ambil('sel');
@@ -71,7 +76,9 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
 
       <BarisFilter f={f} angkatan={angkatan} hasil={daftar.length} />
 
-      <div className="grid" style={{ gridTemplateColumns: '250px 300px 1fr', alignItems: 'start' }}>
+      <CrudPanel entity={toClientEntity(entitasSantri)} rows={barisCrud} />
+
+      <div className="grid" style={{ gridTemplateColumns: '250px 300px 1fr', alignItems: 'start', marginTop: 14 }}>
         <div className="card" style={{ padding: 12 }}>
           <div className="label" style={{ marginBottom: 8, paddingLeft: 4 }}>Lembaga & kelas</div>
           <PohonLembaga pohon={pohon} f={f} />
