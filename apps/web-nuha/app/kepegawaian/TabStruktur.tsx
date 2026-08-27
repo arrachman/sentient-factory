@@ -1,10 +1,15 @@
 import { prisma } from '@/lib/prisma';
 import { Card, Tabel, Kosong } from '@/components';
+import { TANPA_LEMBAGA, type FilterPegawai } from './filter';
 
 // Jabatan struktural BUKAN peran RBAC (lihat prisma/import/import-struktur.ts)
 // — tab ini murni tampilan data organisasi dari SK, tanpa mutasi.
-export async function TabStruktur() {
+export async function TabStruktur({ f }: { f: FilterPegawai }) {
+  // Struktur disaring lewat kolom `lingkup` SK ("MA", "Pondok"), bukan relasi
+  // pegawai — banyak baris SK belum terhubung ke data Pegawai.
+  const lingkup = f.unit && f.unit !== TANPA_LEMBAGA ? f.unit : undefined;
   const baris = await prisma.jabatanStruktural.findMany({
+    where: lingkup ? { lingkup } : {},
     include: { pegawai: { include: { orang: true } } },
     orderBy: [{ lingkup: 'asc' }, { skNomor: 'asc' }, { urutan: 'asc' }],
   });

@@ -1,8 +1,11 @@
 import { prisma } from '@/lib/prisma';
 import { Card, Tabel, Kosong } from '@/components';
+import { whereUnit, type FilterPegawai } from './filter';
 
-export async function TabArsipSk() {
+export async function TabArsipSk({ f }: { f: FilterPegawai }) {
+  const pegawai = whereUnit(f.unit);
   const arsip = await prisma.arsipSk.findMany({
+    where: pegawai ? { pegawai } : {},
     include: { pegawai: { include: { orang: true } } },
     orderBy: [{ tgl: 'desc' }],
   });

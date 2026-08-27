@@ -1,8 +1,11 @@
 import { prisma } from '@/lib/prisma';
 import { Card, Tabel, Kosong, Badge, UKURAN_HALAMAN } from '@/components';
+import { whereUnit, type FilterPegawai } from './filter';
 
-export async function TabPresensi() {
+export async function TabPresensi({ f }: { f: FilterPegawai }) {
+  const pegawai = whereUnit(f.unit);
   const presensi = await prisma.presensiPegawai.findMany({
+    where: pegawai ? { pegawai } : {},
     include: { pegawai: { include: { orang: true } } },
     orderBy: [{ tgl: 'desc' }],
     take: UKURAN_HALAMAN,
