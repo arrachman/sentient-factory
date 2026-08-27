@@ -4,7 +4,7 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
-## 2026-08-27 — 17 alumni SMP naik ke MA angkatan 2026/2027 beserta wali (`PENDING`)
+## 2026-08-27 — 17 alumni SMP naik ke MA angkatan 2026/2027 beserta wali (`e5ae2819`)
 
 Impor gelombang 2 dari tabel operator format Dinkes (24 baris, identitas siswa +
 satu kolom "NAMA IBU/AYAH/WALI"), lewat skrip baru
