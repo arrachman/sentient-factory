@@ -33,7 +33,6 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
           {f.unitId && <input type="hidden" name="unit" value={f.unitId} />}
           {f.kelasId && <input type="hidden" name="kelas" value={f.kelasId} />}
           {f.status && <input type="hidden" name="status" value={f.status} />}
-          {f.jk && <input type="hidden" name="jk" value={f.jk} />}
           {f.angkatan && <input type="hidden" name="angkatan" value={f.angkatan} />}
           <input
             type="search"
@@ -64,14 +63,8 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', borderTop: '1px solid var(--garis)', paddingTop: 10 }}>
         <Kelompok
           judul="Status"
-          anak={STATUS_SANTRI.map((s) => (
+          anak={STATUS_SANTRI.filter((s) => s !== 'Mukim' && s !== 'Kalong').map((s) => (
             <Opsi key={s} f={f} ubah={{ status: s }} aktif={f.status === s} anak={s} />
-          ))}
-        />
-        <Kelompok
-          judul="Jenis kelamin"
-          anak={(['L', 'P'] as const).map((j) => (
-            <Opsi key={j} f={f} ubah={{ jk: j }} aktif={f.jk === j} anak={j === 'L' ? 'Putra' : 'Putri'} />
           ))}
         />
         {angkatan.length > 0 && (
