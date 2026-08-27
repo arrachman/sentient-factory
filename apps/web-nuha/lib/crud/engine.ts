@@ -1,6 +1,25 @@
 import { prisma } from '@/lib/prisma';
 import type { ClientEntity, Entity, Field, Row } from './types';
 
+export type Filters = Record<string, string>;
+
+/** OR-contains across text fields for `q`, exact match for select/ref fields. */
+function buildWhere(entity: Entity, filters: Filters): Record<string, unknown> | undefined {
+  const and: Record<string, unknown>[] = [];
+  const q = filters.q?.trim();
+  if (q) {
+    const stringFields = entity.fields.filter((field) => !field.ref && (field.type === 'text' || field.type === 'textarea')).map((field) => field.name);
+    if (stringFields.length) and.push({ OR: stringFields.map((name) => ({ [name]: { contains: q } })) });
+  }
+  for (const field of entity.fields) {
+    const value = filters[field.name];
+    if (!value) continue;
+    if (field.ref) and.push({ [field.name]: field.ref.idType === 'bigint' ? BigInt(value) : Number(value) });
+    else if (field.type === 'select') and.push({ [field.name]: value });
+  }
+  return and.length ? { AND: and } : undefined;
+}
+
 type Delegate = {
   findMany: (args: unknown) => Promise<Array<Record<string, unknown>>>;
   count: (args?: unknown) => Promise<number>;
@@ -79,12 +98,13 @@ function convert(field: Field, raw: unknown, errors: string[]): unknown {
   }
 }
 
-export async function countRows(entity: Entity): Promise<number> {
-  return delegateFor(entity).count();
+export async function countRows(entity: Entity, filters: Filters = {}): Promise<number> {
+  return delegateFor(entity).count({ where: buildWhere(entity, filters) });
 }
 
-export async function listRows(entity: Entity, halaman = 1, ukuranHalaman = 10): Promise<Row[]> {
+export async function listRows(entity: Entity, halaman = 1, ukuranHalaman = 10, filters: Filters = {}): Promise<Row[]> {
   const rows = await delegateFor(entity).findMany({
+    where: buildWhere(entity, filters),
     include: entity.include,
     orderBy: entity.orderBy,
     skip: (Math.max(1, halaman) - 1) * ukuranHalaman,

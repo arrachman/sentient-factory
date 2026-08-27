@@ -17,3 +17,8 @@ export function bacaLimit(sp: SearchParams, def = 10) {
   const nilai = Number(satu(sp.limit));
   return OPSI_LIMIT.includes(nilai) ? nilai : def;
 }
+
+/** Serialisasi filter aktif jadi potongan query string (mis. "&status=Aktif&q=budi"). */
+export function filterQuery(filters: Record<string, string>) {
+  return Object.entries(filters).map(([key, value]) => `&${key}=${encodeURIComponent(value)}`).join('');
+}
