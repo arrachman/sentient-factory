@@ -2,18 +2,18 @@ import { prisma } from '@/lib/prisma';
 import type { Entity, Keterkaitan, Row } from './types';
 
 /**
- * Satu baris `orang` bisa dipakai ulang sebagai santri, pegawai, wali, dan
- * pemilik akun. Operator perlu tahu itu sebelum mengubah atau menghapus —
- * jadi kumpulkan perannya dalam satu query per relasi, bukan per baris.
+ * Satu baris `orang` bisa dipakai ulang sebagai santri, pegawai, dan wali.
+ * Operator perlu tahu itu sebelum mengubah atau menghapus — jadi kumpulkan
+ * perannya dalam satu query per relasi, bukan per baris. Akun login sengaja
+ * tidak ditampilkan: semua orang di sini pasti punya akun.
  */
 async function kaitOrang(rows: Row[]): Promise<Map<string, Keterkaitan[]>> {
   const ids = rows.map((row) => BigInt(row.id));
   if (!ids.length) return new Map();
 
-  const [santri, pegawai, akun, wali] = await Promise.all([
+  const [santri, pegawai, wali] = await Promise.all([
     prisma.santri.findMany({ where: { orangId: { in: ids } }, select: { orangId: true, nis: true, status: true, kelas: { select: { nama: true } } } }),
     prisma.pegawai.findMany({ where: { orangId: { in: ids } }, select: { orangId: true, nip: true, jabatan: true } }),
-    prisma.user.findMany({ where: { orangId: { in: ids } }, select: { orangId: true, username: true, email: true, aktif: true, peran: { select: { peran: { select: { nama: true } } } } } }),
     prisma.relasiWali.findMany({ where: { waliId: { in: ids } }, select: { waliId: true, hubungan: true, anak: { select: { nama: true } } } }),
   ]);
 
@@ -31,10 +31,6 @@ async function kaitOrang(rows: Row[]): Promise<Map<string, Keterkaitan[]>> {
   }
   for (const w of wali) {
     tambah(w.waliId, { label: 'Wali', nada: 'kuning', href: '/data/orang#wali', detail: `${w.hubungan} dari ${w.anak.nama}` });
-  }
-  for (const a of akun) {
-    const peran = a.peran.map((item) => item.peran.nama).join(', ');
-    tambah(a.orangId, { label: 'Akun login', nada: a.aktif ? 'netral' : 'kuning', detail: [a.username ?? a.email, peran || 'tanpa peran', a.aktif ? null : 'nonaktif'].filter(Boolean).join(' · ') });
   }
   return hasil;
 }

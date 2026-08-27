@@ -130,10 +130,12 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
         <form onSubmit={submit} data-testid={`form-${entity.key}`}>
           {kelompokkan(entity.fields.filter(terlihat)).map((grup) => <fieldset className="grup-form" key={grup.judul}>
           <legend>{grup.judul}</legend>
-          <div className="grid g3">
+          <div className="grid g2 grid-form">
             {grup.fields.map((field) => {
               const pasangan = field.pasangan ? entity.fields.find((item) => item.name === field.pasangan) : undefined;
-              return <div className="field" key={field.name} style={field.span ? { gridColumn: `span ${field.span}` } : undefined}>
+              // Form dua kolom: span > 1 selalu berarti "selebar baris".
+              const lebar = field.span && field.span > 1 ? { gridColumn: '1 / -1' } : undefined;
+              return <div className="field" key={field.name} style={lebar}>
                 <label id={`${entity.key}-${field.name}-label`} htmlFor={`${entity.key}-${field.name}`}>
                   {field.label}
                   {field.required && <span className="wajib" title="Wajib diisi"> *</span>}
@@ -158,7 +160,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
           {/* Keterkaitan adalah konteks, bukan isian — taruh setelah field
               supaya mata operator langsung jatuh ke form. */}
           {editing?._kait && <PanelKeterkaitan kait={editing._kait} />}
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div className="modal-aksi">
             <span className="muted" style={{ fontSize: 12, marginRight: 'auto' }}><span className="wajib">*</span> wajib diisi</span>
             <button className="btn" disabled={busy} type="submit">{busy ? 'Menyimpan…' : editing ? 'Simpan perubahan' : 'Simpan'}</button>
             <button className="btn btn-sekunder" type="button" onClick={() => { setEditing(null); setOpen(false); }}>Batal</button>
