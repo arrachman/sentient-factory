@@ -187,7 +187,7 @@ export const BAGIAN: Bagian[] = [
       { file: 'portal-santri.png', caption: 'Portal santri dengan dock navigasi di bawah.' },
     ],
     catatan:
-      'Ke-16 santri sudah punya akun wali, tetapi baru 12 di antaranya memiliki baris relasi wali utama — empat portal wali sisanya masih menampilkan data wali kosong sampai relasinya dilengkapi lewat Kelola Data.',
+      'Ke-76 santri kini punya baris relasi wali utama, sehingga tab Wali & Keluarga dan pemicu notifikasi selalu menemukan kontak. Tiga santri belum memiliki akun portal wali (73 dari 76) karena kontak walinya belum lengkap — dilengkapi lewat Kelola Data.',
   },
   {
     id: 'publik',

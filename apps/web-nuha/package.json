@@ -21,6 +21,7 @@
     "import:guru-ma": "tsx prisma/import/import-guru-ma.ts",
     "import:siswa-ma": "tsx prisma/import/import-siswa-ma.ts",
     "import:siswa-smp": "tsx prisma/import/import-siswa-smp.ts",
+    "fix:wali-utama": "tsx prisma/import/perbaiki-wali-utama.ts",
     "import:jadwal-ma": "tsx prisma/import/import-jadwal-ma.ts",
     "import:presensi-ma": "tsx prisma/import/import-presensi-ma.ts",
     "cron:tick": "tsx scripts/cron.ts",

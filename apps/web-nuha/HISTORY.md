@@ -4,6 +4,37 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Fix: kontak wali utama hilang di seluruh data santri
+
+`relasi_wali.utama` bernilai `false` untuk **seluruh 76 relasi**, sehingga tab
+"Wali & Keluarga" di `/induk` selalu menampilkan "Belum ada data wali yang
+tercatat" dan pemicu notifikasi tidak menemukan kontak wali siapa pun.
+
+Penyebab: `prisma/import/lib/tulis-wali.ts` menyetel `utama = peran !== 'Wali'`
+tanpa syarat, padahal form pendataan SMP hanya punya satu kolom
+"NAMA IBU/AYAH/WALI" — semua relasi masuk sebagai `peran='Wali'` sehingga tak
+ada satu pun kontak utama.
+
+Perbaikan tiga lapis:
+- Importir: helper `apakahUtama()` — Ayah/Ibu selalu utama; Wali pihak ketiga
+  jadi utama hanya bila anak tidak punya relasi Ayah/Ibu.
+- Pembaca (`app/induk/TabWali.tsx`, `app/notifikasi/TabPemicu.tsx`): query tanpa
+  filter `utama: true`, diurutkan `utama desc, id asc` — relasi yang ada tidak
+  lagi tersembunyi hanya karena tak bertanda.
+- Data: skrip backfill idempoten `npm run fix:wali-utama`
+  (`prisma/import/perbaiki-wali-utama.ts`), sudah dijalankan — 76/76 relasi
+  diperbarui, jalan kedua 0 perubahan.
+
+**Dampak operasional**: setelah impor data wali baru, jalankan
+`npm run fix:wali-utama` bila ragu; skrip aman diulang dan tidak menghapus
+relasi. Status kini: 76/76 santri punya wali utama, 0 santri tanpa kontak,
+0 santri dengan >1 utama. Akun portal wali tetap 73/76 (tiga kontak belum
+lengkap).
+
+Verifikasi: Playwright ke `http://202.59.200.26:3226` sebagai `superadmin`,
+8 santri sampel (termasuk Ahmad Fauzi → Windu Winarti) semua merender kontak
+wali tanpa `pageerror`. `npx tsc --noEmit` bersih.
+
 ## 2026-08-27 — Kelola Data: filter server-side di /data/[entity] (174d1cd5)
 
 `FilterBar` baru (form GET, tanpa JS) di atas tiap tabel `/data/[entity]`:
