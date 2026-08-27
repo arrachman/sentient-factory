@@ -54,7 +54,7 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
               </span>
             </summary>
 
-            {u.tingkat.map((t) => {
+            {u.tingkat.map((t, i) => {
               if (t.kelas.length === 1) {
                 const k = t.kelas[0];
                 const aktif = f.kelasId === k.id;
@@ -70,7 +70,7 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
                   <summary style={{ listStyle: 'none', cursor: 'pointer' }}>
                     <span style={baris(false, 1)}>
                       <span className="muted" style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 0.3 }}>
-                        Tingkat {t.tingkat}
+                        Kelas {i + 1}
                       </span>
                       <Cacah n={t.jumlah} aktif={false} />
                     </span>
