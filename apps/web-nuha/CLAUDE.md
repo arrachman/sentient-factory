@@ -17,6 +17,12 @@ dan audit log. Diport dari prototype statis di
 - **URL uji**: `http://202.59.200.26:3226` — **selalu verifikasi lewat IP publik
   ini, jangan 127.0.0.1** (bug kuki pernah lolos di localhost).
 - Port: app `3226`, MySQL host `3308`. Gateway `3204` tidak dipetakan ke host.
+- **Port 3226 WAJIB `npm run dev`, bukan Docker/production.** Jangan jalankan
+  `docker compose up nuha-app` (container standalone) di port ini — agent lain
+  atau user bisa mematikannya kapan saja untuk pakai `npm run dev` langsung.
+  Kalau container `nuha-app` sedang berjalan dan menahan port 3226, matikan
+  (`docker compose stop nuha-app`) sebelum start `npm run dev`. Rebuild Docker
+  hanya kalau user eksplisit minta deploy ke mode production.
 
 ## Menjalankan
 

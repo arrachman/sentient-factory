@@ -207,6 +207,18 @@ export const BAGIAN: Bagian[] = [
     ],
   },
   {
+    id: 'kelola-data',
+    judul: 'Kelola Data & relasi wali',
+    ringkas:
+      'CRUD data operasional per modul, dengan hak akses menu yang sama. Relasi wali↔santri tidak lagi berhalaman sendiri: panelnya menempel di bawah tabel Identitas orang.',
+    langkah: [
+      { judul: 'Identitas orang lebih dahulu', detail: 'Satu baris orang dipakai ulang oleh Santri, Kepegawaian, Wali, dan akun login — jangan digandakan per peran. Panel keterkaitan menunjukkan peran apa saja yang sudah melekat.' },
+      { judul: 'Hubungkan wali ke santri', detail: 'Di halaman /data/orang bagian bawah (tautan #wali). Wali dicari dari identitas yang sudah ada; santri dipilih dari yang benar-benar terdaftar. Satu santri boleh punya beberapa wali, hanya satu berstatus utama.' },
+      { judul: 'Wali utama', detail: 'Penerima notifikasi WhatsApp dan pemegang akses portal wali. Menjadikan satu wali utama otomatis menurunkan yang sebelumnya.' },
+      { judul: 'Pencarian terpisah', detail: 'Filter panel wali memakai parameter sendiri (wq, whalaman, wlimit) supaya tidak mengganggu filter tabel Identitas orang di halaman yang sama.' },
+    ],
+  },
+  {
     id: 'audit',
     judul: 'Jejak audit',
     ringkas:

@@ -30,7 +30,7 @@ async function kaitOrang(rows: Row[]): Promise<Map<string, Keterkaitan[]>> {
     tambah(p.orangId, { label: 'Pegawai', nada: 'biru', href: '/kepegawaian', detail: `NIP ${p.nip} · ${p.jabatan}` });
   }
   for (const w of wali) {
-    tambah(w.waliId, { label: 'Wali', nada: 'kuning', href: '/data/wali', detail: `${w.hubungan} dari ${w.anak.nama}` });
+    tambah(w.waliId, { label: 'Wali', nada: 'kuning', href: '/data/orang#wali', detail: `${w.hubungan} dari ${w.anak.nama}` });
   }
   for (const a of akun) {
     const peran = a.peran.map((item) => item.peran.nama).join(', ');

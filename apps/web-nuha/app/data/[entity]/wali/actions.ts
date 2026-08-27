@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { requirePage } from '@/lib/access';
 import { recordAudit } from '@/lib/audit';
 
-const JALUR = '/data/wali';
+const JALUR = '/data/orang';
 
 const teks = (form: FormData, key: string) => String(form.get(key) ?? '').trim();
 

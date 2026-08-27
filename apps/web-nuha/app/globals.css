@@ -156,8 +156,16 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
 }
 .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
 .modal-head h3 { margin: 0; }
-.btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; line-height: 0; }
+.btn-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; padding: 0; line-height: 0; border-radius: 8px;
+  color: var(--teks-lembut); transition: background .15s, color .15s, border-color .15s;
+}
 .btn-icon svg { display: block; flex-shrink: 0; }
+.btn-icon:hover { background: var(--krem); color: var(--hijau-gelap); border-color: var(--hijau); }
+.btn-icon:focus-visible { outline: 2px solid var(--hijau); outline-offset: 1px; }
+.btn-icon:disabled { opacity: .45; cursor: not-allowed; }
+.btn-icon-bahaya:hover { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
 
 /* Badge — pasangan warna semantik prototype */
 .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }

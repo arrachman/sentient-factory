@@ -6,8 +6,8 @@ import type { ClientEntity, ClientField, Keterkaitan, Row } from '@/lib/crud/typ
 import { InputField } from '@/components/molecules/InputField';
 
 const IkonTambah = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>;
-const IkonUbah = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>;
-const IkonHapus = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" /><path d="M10 11v6M14 11v6" /></svg>;
+const IkonUbah = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M4 20h4L19.5 8.5a2.12 2.12 0 0 0-3-3L5 17v3Z" /><path d="M14.5 6.5l3 3" /></svg>;
+const IkonHapus = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M4 7h16" /><path d="M10 4h4" /><path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" /><path d="M10 11v6M14 11v6" /></svg>;
 const IkonTutup = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M18 6 6 18M6 6l12 12" /></svg>;
 
 const display = (value: unknown, refOptions?: ClientField['refOptions']) => {
@@ -137,9 +137,9 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
                 ? <span className="muted">—</span>
                 : row._kait!.map((item, i) => <span key={`${item.label}-${i}`} className={`badge badge-${item.nada ?? 'netral'}`} title={item.detail}>{item.label}</span>)}
             </span></td>}
-            <td style={{ width: 1, whiteSpace: 'nowrap' }}><div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+            <td style={{ width: 1, whiteSpace: 'nowrap' }}><div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
               <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Ubah" aria-label="Ubah" onClick={() => { setEditing(row); setOpen(true); setMessage(''); }}><IkonUbah /></button>
-              <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Hapus" aria-label="Hapus" onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}><IkonHapus /></button>
+              <button className="btn btn-sekunder btn-icon btn-icon-bahaya" type="button" disabled={busy} title="Hapus" aria-label="Hapus" onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}><IkonHapus /></button>
             </div></td>
           </tr>)}
         </tbody>

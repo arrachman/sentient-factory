@@ -4,6 +4,26 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Refactor: relasi wali digabung ke halaman Identitas orang
+
+Halaman terpisah `/data/wali` dihapus. Fitur "Hubungkan wali ke santri",
+tabel relasi, filter, dan paginasinya kini menempel sebagai panel di bawah
+tabel `/data/orang` (anchor `#wali`), karena relasi wali↔anak adalah pasangan
+antar-baris `orang` — bukan entitas CRUD tersendiri.
+
+- Berkas `app/data/wali/*` dipindah ke `app/data/[entity]/wali/`; komponen
+  server baru `PanelWali.tsx` merangkai form + tabel + paginasi.
+- Panel memakai parameter query sendiri (`wq`, `whalaman`, `wlimit`) supaya
+  tidak bentrok dengan filter tabel Identitas orang di halaman yang sama.
+- `LimitPicker` menerima prop `param` dan `hash` agar bisa dipakai dua panel
+  dalam satu halaman.
+- `revalidatePath` pada server action wali diarahkan ke `/data/orang`; badge
+  keterkaitan "Wali" dan kartu di `/data` menunjuk `/data/orang#wali`.
+- Dokumentasi `/docs` menambah bagian "Kelola Data & relasi wali".
+
+**Dampak operator**: pranala lama `/data/wali` sekarang 404 — pakai
+`/data/orang#wali`.
+
 ## 2026-08-27 — Fix: kontak wali utama hilang di seluruh data santri
 
 `relasi_wali.utama` bernilai `false` untuk **seluruh 76 relasi**, sehingga tab

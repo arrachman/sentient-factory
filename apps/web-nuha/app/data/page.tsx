@@ -33,8 +33,8 @@ export default async function DataPage() {
           <IkonMenu menuKey={menuKey} path={menuInfo.get(menuKey)?.icon} size={16} />
           <strong>{entity.label}</strong>
         </Link>)}
-        {/* Relasi wali bukan tabel CRUD biasa (pasangan wali↔anak), jadi punya halaman sendiri. */}
-        {menuKey === 'induk' && <Link className="card" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }} href="/data/wali">
+        {/* Relasi wali bukan tabel CRUD biasa (pasangan wali↔anak); panelnya menempel di Identitas orang. */}
+        {menuKey === 'induk' && <Link className="card" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }} href="/data/orang#wali">
           <IkonMenu menuKey={menuKey} path={menuInfo.get(menuKey)?.icon} size={16} />
           <strong>Wali santri</strong>
         </Link>}
