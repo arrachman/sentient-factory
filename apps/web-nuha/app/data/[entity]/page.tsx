@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Shell } from '@/components/templates/Shell';
 import { requirePage } from '@/lib/access';
@@ -20,7 +21,8 @@ export default async function EntityPage({ params, searchParams }: { params: Pro
   const halaman = bacaHalaman(sp);
   const [rows, total] = await Promise.all([listRows(entity, halaman), countRows(entity)]);
   const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN_CRUD));
-  return <Shell session={session} active={entity.menu} title={entity.label}>
+  return <Shell session={session} active="data" title={entity.label}>
+    <Link href="/data" className="muted" style={{ display: 'inline-block', marginBottom: 12 }}>&larr; Kembali ke Kelola Data</Link>
     <CrudPanel entity={toClientEntity(entity)} rows={rows} />
     <Pagination
       halaman={halaman}
