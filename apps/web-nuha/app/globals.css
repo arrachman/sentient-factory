@@ -255,6 +255,26 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
 .bilah-filter-aksi { display: flex; gap: 8px; margin-left: auto; }
 .bilah-filter-aksi .btn { height: 38px; padding: 0 18px; display: inline-flex; align-items: center; text-decoration: none; }
 
+/* Form CRUD: kelompok field, petunjuk, dan penanda wajib */
+.grup-form { border: 0; border-top: 1px solid var(--garis); padding: 14px 0 0; margin: 0 0 6px; }
+.grup-form:first-of-type { border-top: 0; padding-top: 4px; }
+.grup-form legend { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--teks-lembut); padding: 0; margin-bottom: 10px; }
+.petunjuk { font-size: 11.5px; color: var(--teks-lembut); margin: 5px 0 0; line-height: 1.45; }
+.wajib { color: #b3261e; font-weight: 700; }
+.saklar { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+.saklar input { width: auto; }
+
+/* Panel keterkaitan lintas modul di form ubah */
+.kait-deskripsi { font-size: 12.5px; color: var(--teks-lembut); line-height: 1.5; margin: 10px 0 0; }
+.kait-panel { margin: 14px 0 4px; padding: 12px 14px; border: 1px solid var(--garis); border-radius: 12px; background: var(--krem-2); }
+.kait-judul { font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--teks-lembut); margin: 0 0 9px; }
+.kait-daftar { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.kait-daftar li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.kait-detail { font-size: 12.5px; color: var(--teks); }
+.kait-tautan { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--hijau-gelap); text-decoration: none; white-space: nowrap; }
+.kait-tautan:hover { text-decoration: underline; }
+.kait-sel { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+
 /* Footer tabel: jumlah baris, pemilih limit, dan pager dalam satu baris */
 .bilah-footer { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
 .bilah-footer-kanan { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }

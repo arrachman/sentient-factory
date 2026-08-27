@@ -6,9 +6,13 @@ export async function TabWali({ santriId }: { santriId: bigint }) {
   const santri = await prisma.santri.findUnique({ where: { id: santriId }, include: { orang: true } });
   if (!santri) return null;
 
+  // Utamakan kontak bertanda `utama`, tapi jangan menampilkan "belum ada data"
+  // saat relasinya sebenarnya ada dan hanya tidak bertanda — data impor SMP
+  // pernah masuk seluruhnya dengan `utama: false`.
   const relasi = await prisma.relasiWali.findFirst({
-    where: { anakId: santri.orangId, utama: true },
+    where: { anakId: santri.orangId },
     include: { wali: true },
+    orderBy: [{ utama: 'desc' }, { id: 'asc' }],
   });
 
   return (

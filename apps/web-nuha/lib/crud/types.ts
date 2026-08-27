@@ -21,7 +21,16 @@ export type Field = {
   options?: string[];
   ref?: FieldRef;
   step?: number;
+  /** Judul kelompok di form; field tanpa grup masuk ke kelompok pertama. */
+  group?: string;
+  /** Keterangan pendek di bawah input — jelaskan format atau akibatnya. */
+  hint?: string;
+  /** Contoh isian, ditaruh sebagai placeholder. */
+  placeholder?: string;
 };
+
+/** Tautan ke modul lain yang memakai baris ini (mis. Orang → Santri/Pegawai/Akun). */
+export type Keterkaitan = { label: string; detail: string; href?: string; nada?: 'hijau' | 'biru' | 'kuning' | 'netral' };
 
 export type Column = { name: string; label: string };
 
@@ -30,6 +39,8 @@ export type Entity = {
   menu: string;
   model: string;
   label: string;
+  /** Satu kalimat di kepala form: apa entitas ini dan kenapa diisi. */
+  deskripsi?: string;
   idType: 'int' | 'bigint';
   fields: Field[];
   columns: Column[];
@@ -44,8 +55,10 @@ export type ClientField = Omit<Field, 'ref'> & { options?: string[]; refOptions?
 export type ClientEntity = {
   key: string;
   label: string;
+  deskripsi?: string;
   fields: ClientField[];
   columns: Column[];
 };
 
-export type Row = Record<string, unknown> & { id: string };
+/** Baris tabel; `_kait` diisi engine untuk entitas yang punya relasi lintas modul. */
+export type Row = Record<string, unknown> & { id: string; _kait?: Keterkaitan[] };

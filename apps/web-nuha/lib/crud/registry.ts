@@ -6,7 +6,27 @@ const date = (name: string, label: string, required = true) => ({ name, label, t
 const columns = (...items: Array<[string, string]>) => items.map(([name, label]) => ({ name, label }));
 
 export const ENTITIES: Entity[] = [
-  { key: 'orang', menu: 'induk', model: 'orang', label: 'Identitas orang', idType: 'bigint', fields: [text('nama', 'Nama'), { name: 'jk', label: 'Jenis kelamin', type: 'select', options: ['L', 'P'], required: true }, text('nik', 'NIK', false), text('hp', 'No. HP', false), text('email', 'Email', false), text('alamat', 'Alamat', false), { name: 'aktif', label: 'Aktif', type: 'boolean' }], columns: columns(['nama', 'Nama'], ['jk', 'JK'], ['hp', 'HP'], ['email', 'Email'], ['aktif', 'Aktif']), orderBy: { nama: 'asc' } },
+  {
+    key: 'orang',
+    menu: 'induk',
+    model: 'orang',
+    label: 'Identitas orang',
+    // Satu identitas dipakai ulang oleh modul lain; jelaskan agar operator tidak
+    // membuat baris ganda untuk orang yang sama.
+    deskripsi: 'Data dasar satu orang, dipakai ulang oleh modul Santri, Kepegawaian, Wali, dan akun login. Buat satu baris per orang — jangan digandakan per peran.',
+    idType: 'bigint',
+    fields: [
+      { ...text('nama', 'Nama lengkap'), group: 'Identitas', hint: 'Sesuai dokumen resmi, tanpa gelar.', placeholder: 'Windu Winarti' },
+      { name: 'jk', label: 'Jenis kelamin', type: 'select', options: ['L', 'P'], required: true, group: 'Identitas', hint: 'L = laki-laki, P = perempuan.' },
+      { ...text('nik', 'NIK', false), group: 'Identitas', hint: '16 digit KTP/KK. Harus unik — kosongkan bila belum punya.', placeholder: '3573xxxxxxxxxxxx' },
+      { ...text('hp', 'No. HP', false), group: 'Kontak', hint: 'Nomor WhatsApp aktif; dipakai modul notifikasi.', placeholder: '081234567890' },
+      { ...text('email', 'Email', false), group: 'Kontak', hint: 'Harus unik. Dipakai sebagai identitas login bila orang ini diberi akun.', placeholder: 'nama@contoh.com' },
+      { ...text('alamat', 'Alamat', false), group: 'Kontak', hint: 'Nama jalan dan nomor rumah.' },
+      { name: 'aktif', label: 'Aktif', type: 'boolean', group: 'Status', hint: 'Nonaktifkan alih-alih menghapus bila orang ini sudah tidak berkegiatan — riwayat di modul lain tetap utuh.' },
+    ],
+    columns: columns(['nama', 'Nama'], ['jk', 'JK'], ['hp', 'HP'], ['email', 'Email'], ['aktif', 'Aktif']),
+    orderBy: { nama: 'asc' },
+  },
   { key: 'santri', menu: 'induk', model: 'santri', label: 'Santri', idType: 'bigint', fields: [number('orangId', 'ID Orang (buat dulu di menu Identitas Orang)', true), text('nis', 'NIS', false), text('nisn', 'NISN', false), { ...number('unitId', 'Unit'), ref: { model: 'unit', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kelasId', 'Kelas'), ref: { model: 'kelas', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kamarId', 'Kamar'), ref: { model: 'kamar', label: 'kode', orderBy: { kode: 'asc' } } }, { name: 'status', label: 'Status', type: 'select', options: ['Mukim', 'Kalong', 'Alumni', 'Keluar'], required: true }, text('program', 'Program', false), text('tahunMasuk', 'Tahun masuk', false)], columns: columns(['orangId', 'ID Orang'], ['nis', 'NIS'], ['nisn', 'NISN'], ['status', 'Status'], ['tahunMasuk', 'Tahun masuk']), orderBy: { createdAt: 'desc' } },
   { key: 'unit', menu: 'pengaturan', model: 'unit', label: 'Unit pendidikan', idType: 'int', fields: [text('key', 'Kode'), text('nama', 'Nama'), text('deskripsi', 'Deskripsi', false), { name: 'aktif', label: 'Aktif', type: 'boolean' }], columns: columns(['key', 'Kode'], ['nama', 'Nama'], ['deskripsi', 'Deskripsi'], ['aktif', 'Aktif']), orderBy: { nama: 'asc' } },
   { key: 'asrama', menu: 'pesantren', model: 'asrama', label: 'Asrama', idType: 'int', fields: [text('nama', 'Nama'), { name: 'jk', label: 'Jenis kelamin', type: 'select', options: ['L', 'P'], required: true }, number('kapasitas', 'Kapasitas'), text('musyrif', 'Musyrif', false)], columns: columns(['nama', 'Nama'], ['jk', 'JK'], ['kapasitas', 'Kapasitas'], ['musyrif', 'Musyrif']), orderBy: { nama: 'asc' } },

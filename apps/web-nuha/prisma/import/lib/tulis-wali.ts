@@ -18,8 +18,22 @@ export type DataWali = {
   hp?: string | null;
 };
 
-/** Peran wali: menentukan `hubungan`/`peran` di RelasiWali dan `utama` (Ayah & Ibu = kontak utama). */
+/** Peran wali: menentukan `hubungan`/`peran` di RelasiWali dan `utama` (lihat `apakahUtama`). */
 export type PeranWali = 'Ayah' | 'Ibu' | 'Wali';
+
+/**
+ * Ayah & Ibu selalu kontak utama. Wali pihak ketiga hanya jadi kontak utama
+ * bila anak itu memang tidak punya relasi Ayah/Ibu — kasus form SMP yang cuma
+ * menyediakan satu kolom "NAMA IBU/AYAH/WALI", sehingga satu-satunya kontak
+ * yang tercatat harus tetap tampil di tab Wali & pemicu notifikasi.
+ */
+async function apakahUtama(anakOrangId: bigint, peran: PeranWali): Promise<boolean> {
+  if (peran !== 'Wali') return true;
+  const ortu = await prisma.relasiWali.count({
+    where: { anakId: anakOrangId, peran: { in: ['Ayah', 'Ibu'] } },
+  });
+  return ortu === 0;
+}
 
 /**
  * Upsert Orang (wali) + RelasiWali untuk satu anak. Dilewati (return null)
@@ -50,6 +64,8 @@ export async function tulisRelasiWali(
         update: { nama, hp: data.hp?.trim() || null },
       });
 
+  const utama = await apakahUtama(anakOrangId, peran);
+
   await prisma.relasiWali.upsert({
     where: { waliId_anakId: { waliId: waliOrang.id, anakId: anakOrangId } },
     create: {
@@ -62,7 +78,7 @@ export async function tulisRelasiWali(
       pendapatan: data.pendapatan?.trim() || null,
       nik,
       ttl: data.ttl?.trim() || null,
-      utama: peran !== 'Wali',
+      utama,
     },
     update: {
       hubungan: peran,
@@ -72,7 +88,7 @@ export async function tulisRelasiWali(
       pendapatan: data.pendapatan?.trim() || null,
       nik,
       ttl: data.ttl?.trim() || null,
-      utama: peran !== 'Wali',
+      utama,
     },
   });
 }

@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ClientEntity, ClientField, Row } from '@/lib/crud/types';
+import type { ClientEntity, ClientField, Keterkaitan, Row } from '@/lib/crud/types';
 
 const inputValue = (field: ClientField, row?: Row) => {
   const raw = row?.[field.name];
@@ -14,6 +14,7 @@ const inputValue = (field: ClientField, row?: Row) => {
 const IkonTambah = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>;
 const IkonUbah = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>;
 const IkonHapus = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" /><path d="M10 11v6M14 11v6" /></svg>;
+const IkonTutup = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M18 6 6 18M6 6l12 12" /></svg>;
 
 const display = (value: unknown, refOptions?: ClientField['refOptions']) => {
   if (value === null || value === undefined || value === '') return '—';
@@ -26,6 +27,34 @@ const display = (value: unknown, refOptions?: ClientField['refOptions']) => {
   return /^\d{4}-\d{2}-\d{2}T/.test(text) ? new Date(text).toLocaleDateString('id-ID') : text;
 };
 
+/** Kelompokkan field sesuai `group`; yang tanpa grup jatuh ke "Data utama". */
+function kelompokkan(fields: ClientField[]): { judul: string; fields: ClientField[] }[] {
+  const urutan: string[] = [];
+  const peta = new Map<string, ClientField[]>();
+  for (const field of fields) {
+    const judul = field.group ?? 'Data utama';
+    if (!peta.has(judul)) { peta.set(judul, []); urutan.push(judul); }
+    peta.get(judul)!.push(field);
+  }
+  return urutan.map((judul) => ({ judul, fields: peta.get(judul)! }));
+}
+
+/** Peran lintas modul milik satu baris: badge + tautan ke modul asalnya. */
+function PanelKeterkaitan({ kait }: { kait: Keterkaitan[] }) {
+  return <div className="kait-panel">
+    <p className="kait-judul">Terhubung ke modul lain</p>
+    {kait.length === 0
+      ? <p className="muted" style={{ fontSize: 12.5, margin: 0 }}>Belum dipakai modul mana pun — identitas ini berdiri sendiri. Daftarkan lewat modul Santri atau Kepegawaian bila perlu.</p>
+      : <ul className="kait-daftar">
+          {kait.map((item, i) => <li key={`${item.label}-${i}`}>
+            <span className={`badge badge-${item.nada ?? 'netral'}`}>{item.label}</span>
+            <span className="kait-detail">{item.detail}</span>
+            {item.href && <a className="kait-tautan" href={item.href}>Buka modul →</a>}
+          </li>)}
+        </ul>}
+  </div>;
+}
+
 export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] }) {
   const router = useRouter();
   const [editing, setEditing] = useState<Row | null>(null);
@@ -33,6 +62,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const refByField = new Map(entity.fields.filter((field) => field.refOptions).map((field) => [field.name, field.refOptions]));
+  const adaKait = rows.some((row) => row._kait);
 
   async function send(method: 'POST' | 'PATCH' | 'DELETE', payload: Record<string, unknown>) {
     setBusy(true);
@@ -66,13 +96,23 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
     {(open || editing) && <div className="modal-overlay" onClick={() => { setEditing(null); setOpen(false); }}>
       <div className="modal" onClick={(event) => event.stopPropagation()}>
         <div className="modal-head">
-          <h3>{editing ? `Ubah ${entity.label.toLowerCase()}` : `Tambah ${entity.label.toLowerCase()}`}</h3>
-          <button className="btn btn-sekunder" type="button" onClick={() => { setEditing(null); setOpen(false); }}>Tutup</button>
+          <div>
+            <h3 style={{ margin: 0 }}>{editing ? `Ubah ${entity.label.toLowerCase()}` : `Tambah ${entity.label.toLowerCase()}`}</h3>
+            {editing && <p className="muted" style={{ fontSize: 12.5, margin: '4px 0 0' }}>{String(editing.nama ?? editing.label ?? `ID ${editing.id}`)}</p>}
+          </div>
+          <button className="btn btn-sekunder btn-icon" type="button" onClick={() => { setEditing(null); setOpen(false); }} title="Tutup" aria-label="Tutup"><IkonTutup /></button>
         </div>
+        {entity.deskripsi && <p className="kait-deskripsi">{entity.deskripsi}</p>}
+        {editing?._kait && <PanelKeterkaitan kait={editing._kait} />}
         <form onSubmit={submit} data-testid={`form-${entity.key}`}>
+          {kelompokkan(entity.fields).map((grup) => <fieldset className="grup-form" key={grup.judul}>
+          <legend>{grup.judul}</legend>
           <div className="grid g3">
-            {entity.fields.map((field) => <div className="field" key={field.name}>
-              <label htmlFor={`${entity.key}-${field.name}`}>{field.label}</label>
+            {grup.fields.map((field) => <div className="field" key={field.name}>
+              <label htmlFor={`${entity.key}-${field.name}`}>
+                {field.label}
+                {field.required && <span className="wajib" title="Wajib diisi"> *</span>}
+              </label>
               {field.refOptions
                 ? <select id={`${entity.key}-${field.name}`} name={field.name} required={field.required} defaultValue={inputValue(field, editing ?? undefined)}>
                     <option value="">Pilih…</option>
@@ -86,11 +126,14 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
                         {field.options?.map((option) => <option key={option} value={option}>{option}</option>)}
                       </select>
                     : field.type === 'boolean'
-                      ? <input id={`${entity.key}-${field.name}`} name={field.name} type="checkbox" defaultChecked={editing ? Boolean(editing[field.name]) : true} />
-                      : <input id={`${entity.key}-${field.name}`} name={field.name} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'} step={field.step} required={field.required} defaultValue={inputValue(field, editing ?? undefined)} />}
+                      ? <label className="saklar"><input id={`${entity.key}-${field.name}`} name={field.name} type="checkbox" defaultChecked={editing ? Boolean(editing[field.name]) : true} /> <span>Ya</span></label>
+                      : <input id={`${entity.key}-${field.name}`} name={field.name} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'} step={field.step} required={field.required} placeholder={field.placeholder} defaultValue={inputValue(field, editing ?? undefined)} />}
+              {field.hint && <p className="petunjuk">{field.hint}</p>}
             </div>)}
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          </fieldset>)}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <span className="muted" style={{ fontSize: 12, marginRight: 'auto' }}><span className="wajib">*</span> wajib diisi</span>
             <button className="btn" disabled={busy} type="submit">{busy ? 'Menyimpan…' : editing ? 'Simpan perubahan' : 'Simpan'}</button>
             <button className="btn btn-sekunder" type="button" onClick={() => { setEditing(null); setOpen(false); }}>Batal</button>
           </div>
@@ -100,11 +143,20 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
 
     <div className="tabel-wrap">
       <table className="table-compact" style={{ marginTop: 12 }}>
-        <thead><tr>{entity.columns.map((column) => <th key={column.name}>{column.label}</th>)}<th style={{ textAlign: 'center', width: 1, whiteSpace: 'nowrap' }}>Aksi</th></tr></thead>
+        <thead><tr>
+          {entity.columns.map((column) => <th key={column.name}>{column.label}</th>)}
+          {adaKait && <th>Peran</th>}
+          <th style={{ textAlign: 'center', width: 1, whiteSpace: 'nowrap' }}>Aksi</th>
+        </tr></thead>
         <tbody>
-          {rows.length === 0 && <tr><td colSpan={entity.columns.length + 1} className="empty">Tidak ada data yang cocok.</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={entity.columns.length + (adaKait ? 2 : 1)} className="empty">Tidak ada data yang cocok.</td></tr>}
           {rows.map((row) => <tr key={row.id} data-testid={`row-${entity.key}`}>
             {entity.columns.map((column) => <td key={column.name}>{display(row[column.name], refByField.get(column.name))}</td>)}
+            {adaKait && <td><span className="kait-sel">
+              {(row._kait ?? []).length === 0
+                ? <span className="muted">—</span>
+                : row._kait!.map((item, i) => <span key={`${item.label}-${i}`} className={`badge badge-${item.nada ?? 'netral'}`} title={item.detail}>{item.label}</span>)}
+            </span></td>}
             <td style={{ width: 1, whiteSpace: 'nowrap' }}><div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
               <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Ubah" aria-label="Ubah" onClick={() => { setEditing(row); setOpen(true); setMessage(''); }}><IkonUbah /></button>
               <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Hapus" aria-label="Hapus" onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}><IkonHapus /></button>

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import type { ClientEntity, Entity, Field, Row } from './types';
+import { lampirkanKeterkaitan } from './keterkaitan';
 
 export type Filters = Record<string, string>;
 
@@ -110,7 +111,8 @@ export async function listRows(entity: Entity, halaman = 1, ukuranHalaman = 10, 
     skip: (Math.max(1, halaman) - 1) * ukuranHalaman,
     take: ukuranHalaman,
   });
-  return rows.map((row) => ({ ...(serialize(row) as Record<string, unknown>), id: String(row.id) }));
+  const dasar = rows.map((row) => ({ ...(serialize(row) as Record<string, unknown>), id: String(row.id) }));
+  return lampirkanKeterkaitan(entity, dasar);
 }
 
 const readPath = (row: Record<string, unknown>, path: string): unknown =>
@@ -128,6 +130,7 @@ async function loadRefOptions(ref: NonNullable<Field['ref']>): Promise<{ id: str
 export const toClientEntity = async (entity: Entity): Promise<ClientEntity> => ({
   key: entity.key,
   label: entity.label,
+  deskripsi: entity.deskripsi,
   fields: await Promise.all(entity.fields.map(async ({ ref, ...field }) => (
     ref ? { ...field, refOptions: await loadRefOptions(ref) } : field
   ))),
