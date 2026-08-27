@@ -30,12 +30,12 @@ type Galat = { posisi: string; pesan: string };
 const AKTOR_SKRIP = { nama: 'Importir jadwal MA (skrip)' };
 
 const KOLOM_HARI_KELAS: { kolom: string; hari: string; kelas: string }[] = [
-  { kolom: 'D', hari: 'Senin', kelas: 'X' }, { kolom: 'E', hari: 'Senin', kelas: 'XI' },
-  { kolom: 'F', hari: 'Selasa', kelas: 'X' }, { kolom: 'G', hari: 'Selasa', kelas: 'XI' },
-  { kolom: 'H', hari: 'Rabu', kelas: 'X' }, { kolom: 'I', hari: 'Rabu', kelas: 'XI' },
-  { kolom: 'J', hari: 'Kamis', kelas: 'X' }, { kolom: 'K', hari: 'Kamis', kelas: 'XI' },
-  { kolom: 'L', hari: 'Jumat', kelas: 'X' }, { kolom: 'M', hari: 'Jumat', kelas: 'XI' },
-  { kolom: 'N', hari: 'Sabtu', kelas: 'X' }, { kolom: 'O', hari: 'Sabtu', kelas: 'XI' },
+  { kolom: 'D', hari: 'Senin', kelas: '10' }, { kolom: 'E', hari: 'Senin', kelas: '11' },
+  { kolom: 'F', hari: 'Selasa', kelas: '10' }, { kolom: 'G', hari: 'Selasa', kelas: '11' },
+  { kolom: 'H', hari: 'Rabu', kelas: '10' }, { kolom: 'I', hari: 'Rabu', kelas: '11' },
+  { kolom: 'J', hari: 'Kamis', kelas: '10' }, { kolom: 'K', hari: 'Kamis', kelas: '11' },
+  { kolom: 'L', hari: 'Jumat', kelas: '10' }, { kolom: 'M', hari: 'Jumat', kelas: '11' },
+  { kolom: 'N', hari: 'Sabtu', kelas: '10' }, { kolom: 'O', hari: 'Sabtu', kelas: '11' },
 ];
 
 type SiapJadwal = { hari: string; jamKe: number; waktu: string; kelas: string; mapel: string; guruAlias: string | null };

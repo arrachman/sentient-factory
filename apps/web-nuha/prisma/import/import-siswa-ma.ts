@@ -1,7 +1,7 @@
 /**
  * Impor siswa MA dari dua berkas angkatan:
- * - `DATA SISWA TA 2025_2026.xlsx` (angkatan 1, 11 siswa) → kelas **XI**
- * - `DATA SISWA TA 2026_2027.xlsx` (angkatan 2, 8 siswa) → kelas **X**
+ * - `DATA SISWA TA 2025_2026.xlsx` (angkatan 1, 11 siswa) → kelas **11**
+ * - `DATA SISWA TA 2026_2027.xlsx` (angkatan 2, 8 siswa) → kelas **10**
  * keduanya diposisikan pada TahunAjaran aktif (2026/2027 Gasal) — lihat
  * RENCANA-IMPORT.md §0 tabel posisi kelas.
  *
@@ -172,16 +172,16 @@ async function jalankan(): Promise<void> {
   const unit = await prisma.unit.findUniqueOrThrow({ where: { key: KODE_UNIT } });
   const tahunAjaran = await prisma.tahunAjaran.findFirstOrThrow({ where: { aktif: true } });
 
-  console.log(`Validasi lolos: ${siapXi.length} siswa (kelas XI, ${pathXi}) + ${siapX.length} siswa (kelas X, ${pathX}). Menulis ke database...`);
+  console.log(`Validasi lolos: ${siapXi.length} siswa (kelas 11, ${pathXi}) + ${siapX.length} siswa (kelas 10, ${pathX}). Menulis ke database...`);
 
   const kelasXi = await prisma.kelas.upsert({
-    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: 'XI', tahunAjaranId: tahunAjaran.id } },
-    create: { unitId: unit.id, nama: 'XI', tingkat: 'XI', tahunAjaranId: tahunAjaran.id },
+    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: '11', tahunAjaranId: tahunAjaran.id } },
+    create: { unitId: unit.id, nama: '11', tingkat: '11', tahunAjaranId: tahunAjaran.id },
     update: {},
   });
   const kelasX = await prisma.kelas.upsert({
-    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: 'X', tahunAjaranId: tahunAjaran.id } },
-    create: { unitId: unit.id, nama: 'X', tingkat: 'X', tahunAjaranId: tahunAjaran.id },
+    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: '10', tahunAjaranId: tahunAjaran.id } },
+    create: { unitId: unit.id, nama: '10', tingkat: '10', tahunAjaranId: tahunAjaran.id },
     update: {},
   });
 
@@ -244,7 +244,7 @@ async function jalankan(): Promise<void> {
     aksi: 'import',
     entitas: 'Santri',
     entitasId: 'batch',
-    ringkasan: `Impor XLSX siswa MA: ${siapXi.length} kelas XI + ${siapX.length} kelas X (${pathXi}, ${pathX}).`,
+    ringkasan: `Impor XLSX siswa MA: ${siapXi.length} kelas 11 + ${siapX.length} kelas 10 (${pathXi}, ${pathX}).`,
     aktor: AKTOR_SKRIP,
   });
 
