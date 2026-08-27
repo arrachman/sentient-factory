@@ -4,6 +4,34 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Profil unit & yayasan bisa diedit lewat /data
+
+Kolom profil yang ditambahkan sebelumnya belum punya pintu edit: entitas CRUD
+`unit` masih 4 field lama (kode, nama, deskripsi, aktif), dan `profil_lembaga`
+belum terdaftar sama sekali — jadi koreksi data hanya lewat seed atau MySQL.
+
+Entitas `unit` di `lib/crud/registry.ts` kini memuat seluruh field profil
+(nama resmi, jenjang, NPSN/NSM, akreditasi, tahun berdiri, logo, kontak, visi
+& misi), dikelompokkan lewat `group`: Pimpinan, Kontak, Visi & misi. Kepala
+unit bisa diisi dua cara — teks `kepalaNama` untuk yang belum jadi pegawai,
+atau lookup `kepalaPegawaiId` ke `pegawai` (label `orang.nama`) yang menang
+bila terisi. Kolom tabel diganti ke Kode / Nama resmi / Kepala unit / NPSN /
+Aktif. Entitas baru `profil-lembaga` (menu `pengaturan`) untuk yayasan induk.
+
+Yang perlu diketahui operator:
+- **Edit ada di `/data/unit` dan `/data/profil-lembaga`** (menu Kelola data →
+  grup Pengaturan), bukan di Pengaturan → Unit yang tetap read-only.
+- **Logo diisi sebagai path**, mis. `/assets/logo-nuha.webp` — berkasnya harus
+  sudah ada di `public/assets/`. Belum ada mekanisme unggah.
+- Profil yayasan cukup satu baris berkode `yayasan`; kode lain tidak dibaca
+  Pengaturan → Unit.
+
+Verifikasi (Playwright ke `http://202.59.200.26:3226`, login `superadmin`):
+tabel `/data/unit` merender 4 unit dengan kolom baru; form ubah memuat 20
+field profil; mengubah NPSN Poskestren tersimpan ke tabel, muncul di daftar,
+dan tercatat di `audit_log` (`unit` / `CRUD_UPDATE`) — data uji dikembalikan
+ke `null` setelahnya. Tanpa `pageerror`. `npx tsc --noEmit` bersih.
+
 ## 2026-08-27 — CRUD khusus per persona: Santri, Guru, Staf, Wali santri
 
 Hash: `71b07f76` (entitas persona, ikut commit lookup kelas) + `71f9fbf4`
