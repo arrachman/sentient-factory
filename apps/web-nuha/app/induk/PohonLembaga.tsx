@@ -54,27 +54,39 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
               </span>
             </summary>
 
-            {u.tingkat.map((t) => (
-              <details key={t.tingkat} open={t.kelas.some((k) => k.id === f.kelasId)}>
-                <summary style={{ listStyle: 'none', cursor: 'pointer' }}>
-                  <span style={baris(false, 1)}>
-                    <span className="muted" style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 0.3 }}>
-                      Tingkat {t.tingkat}
+            {u.tingkat.map((t) => {
+              if (t.kelas.length === 1) {
+                const k = t.kelas[0];
+                const aktif = f.kelasId === k.id;
+                return (
+                  <Link key={t.tingkat} href={hrefInduk(f, { unitId: u.id, kelasId: k.id })} style={baris(aktif, 1)}>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k.nama}</span>
+                    <Cacah n={k.jumlah} aktif={aktif} />
+                  </Link>
+                );
+              }
+              return (
+                <details key={t.tingkat} open={t.kelas.some((k) => k.id === f.kelasId)}>
+                  <summary style={{ listStyle: 'none', cursor: 'pointer' }}>
+                    <span style={baris(false, 1)}>
+                      <span className="muted" style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 0.3 }}>
+                        Tingkat {t.tingkat}
+                      </span>
+                      <Cacah n={t.jumlah} aktif={false} />
                     </span>
-                    <Cacah n={t.jumlah} aktif={false} />
-                  </span>
-                </summary>
-                {t.kelas.map((k) => {
-                  const aktif = f.kelasId === k.id;
-                  return (
-                    <Link key={k.id} href={hrefInduk(f, { unitId: u.id, kelasId: k.id })} style={baris(aktif, 2)}>
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k.nama}</span>
-                      <Cacah n={k.jumlah} aktif={aktif} />
-                    </Link>
-                  );
-                })}
-              </details>
-            ))}
+                  </summary>
+                  {t.kelas.map((k) => {
+                    const aktif = f.kelasId === k.id;
+                    return (
+                      <Link key={k.id} href={hrefInduk(f, { unitId: u.id, kelasId: k.id })} style={baris(aktif, 2)}>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k.nama}</span>
+                        <Cacah n={k.jumlah} aktif={aktif} />
+                      </Link>
+                    );
+                  })}
+                </details>
+              );
+            })}
           </details>
         );
       })}
