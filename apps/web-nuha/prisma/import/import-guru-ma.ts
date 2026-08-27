@@ -18,6 +18,36 @@ import { bacaXlsx } from './lib/xlsx';
 import { parseTtl } from './lib/tanggal-id';
 
 type Galat = { baris: number; pesan: string };
+
+/**
+ * `DATA GURU.xlsx` tidak punya kolom jenis kelamin. Nilainya disimpulkan dari
+ * sapaan di kamus alias jadwal — "B." (Bu) perempuan, "P." (Pak) laki-laki,
+ * "Miss" perempuan — lalu dituliskan eksplisit di sini supaya sumbernya bisa
+ * ditelusuri dan tidak berubah diam-diam kalau kamus alias diedit. Nama yang
+ * tidak ada di peta ini MENGGAGALKAN impor, bukan didiamkan jadi `L`
+ * (dulu seluruh 17 baris ditulis laki-laki karena nilainya di-hardcode).
+ */
+const JK_GURU_MA: Readonly<Record<string, JenisKelamin>> = Object.freeze({
+  "Khalimatus Sa'diyah, S.Si": JenisKelamin.P, // B. Khal
+  'Ilmi Nurhasni Addin': JenisKelamin.P, // B. Hasni
+  'Kholifatun Khasanah, S.Si': JenisKelamin.P, // B. Ifa
+  'Isma Izha Utama': JenisKelamin.L, // P. Izha
+  'Alfan Jamil, M.Si, Gr': JenisKelamin.L, // P. Alfan
+  "Aulan Nisa' Ulil Kamaliah, S.Pd": JenisKelamin.P, // B. Ulil
+  'Fitri Muchammad Sa’id, S.Pd, Gr': JenisKelamin.L, // P. Said
+  'Muhammmad Bismar As Sidiq, S.H': JenisKelamin.L, // P. Bismar
+  'Murida Azkia, S.Pd': JenisKelamin.P, // B. Murida
+  'Nisrina Nada Aulia, S.Hum': JenisKelamin.P, // B. Nina
+  'Putri Laksmi Marwa Kamila': JenisKelamin.P, // B. Putri
+  'Rona Nadhiroh': JenisKelamin.P, // B. Rona
+  'Wardatul Haizatil Husna, S.Sos., Gr': JenisKelamin.P, // B. Ais
+  'Eka Meilina Wulandari, S.Or': JenisKelamin.P, // B. Eka
+  'Rofiatul Mukarromah, S.Pd., Gr': JenisKelamin.P, // Miss Via
+  'Umi Mufidatul Musyarofah, S.Pd': JenisKelamin.P, // B. Fida
+  // Tidak mengampu mapel (Bendahara/TU), jadi tidak muncul di kamus alias
+  // jadwal. Diisi dari konfirmasi daftar guru MA.
+  'Wildana Izza Afkarina': JenisKelamin.P,
+});
 const AKTOR_SKRIP = { nama: 'Importir guru MA (skrip)' };
 
 type SiapGuru = {
@@ -29,7 +59,20 @@ type SiapGuru = {
   pendidikanTerakhir: string;
   mapelDiampu: string;
   jabatan: string;
+  tugasTambahan: string;
+  jk: JenisKelamin;
 };
+
+/** Samakan ejaan sebelum mencari di `JK_GURU_MA`: apostrof keriting/lurus,
+ *  gelar, dan spasi ganda berbeda-beda antar salinan berkas. */
+const kunciNama = (nama: string) =>
+  nama
+    .replace(/[’‘`]/g, "'")
+    .toLowerCase()
+    .replace(/[^a-z']+/g, ' ')
+    .trim();
+
+const JK_PER_KUNCI = new Map(Object.entries(JK_GURU_MA).map(([nama, jk]) => [kunciNama(nama), jk]));
 
 const bacaArgumen = (argv: string[]): Record<string, string> => {
   const hasil: Record<string, string> = {};
@@ -84,7 +127,27 @@ function siapkanGuru(path: string): { siap: SiapGuru[]; galat: Galat[] } {
 
       const nip = `GTT-MA-${String(urut).padStart(3, '0')}`;
 
-      siap.push({ urut, nip, nama, tmpLahir: tempat, tglLahir: tanggal, pendidikanTerakhir, mapelDiampu, jabatan: jabatan || mapelDiampu });
+      const jk = JK_PER_KUNCI.get(kunciNama(nama));
+      if (!jk) {
+        throw new Error(
+          `jenis kelamin "${nama}" tidak ada di peta JK_GURU_MA (import-guru-ma.ts) — ` +
+            'tambahkan setelah konfirmasi ke client, jangan biarkan tertulis L secara diam-diam',
+        );
+      }
+
+      // `jabatan` menentukan kategori orang: filter Kategori di /data/orang
+      // memisah guru dari staf lewat kata "Guru" (lihat FILTER_KATEGORI_ORANG
+      // di lib/crud/peran-orang.ts). Jadi siapa pun yang mengampu mapel
+      // jabatannya "Guru Mapel", dan jabatan struktural dari kolom G
+      // ("Waka Kurikulum", "Plt. Kepala Madrasah") masuk ke `tugasTambahan` —
+      // kolom yang memang disediakan skema untuk itu. Menaruh jabatan
+      // struktural di `jabatan` akan membuat 8 dari 17 guru terbaca staf.
+      const jabatanFinal = mapelDiampu ? 'Guru Mapel' : jabatan;
+      if (!jabatanFinal) throw new Error('tidak bisa menentukan jabatan: kolom Jabatan dan Mata Pelajaran kosong');
+      // Yang tidak mengampu mapel sudah memakai kolom G sebagai jabatannya.
+      const tugasTambahan = mapelDiampu ? jabatan : '';
+
+      siap.push({ urut, nip, nama, tmpLahir: tempat, tglLahir: tanggal, pendidikanTerakhir, mapelDiampu, jabatan: jabatanFinal, tugasTambahan, jk });
     } catch (error) {
       galat.push({ baris: noBaris, pesan: error instanceof Error ? error.message : String(error) });
     }
@@ -128,8 +191,8 @@ async function jalankan(): Promise<void> {
     const email = `pegawai.${g.nip.toLowerCase()}@nuha.local`;
     const orang = await prisma.orang.upsert({
       where: { email },
-      create: { nama: g.nama, jk: JenisKelamin.L, tglLahir: g.tglLahir, tmpLahir: g.tmpLahir, email },
-      update: { nama: g.nama, tglLahir: g.tglLahir, tmpLahir: g.tmpLahir },
+      create: { nama: g.nama, jk: g.jk, tglLahir: g.tglLahir, tmpLahir: g.tmpLahir, email },
+      update: { nama: g.nama, jk: g.jk, tglLahir: g.tglLahir, tmpLahir: g.tmpLahir },
     });
 
     await prisma.pegawai.upsert({
@@ -142,6 +205,7 @@ async function jalankan(): Promise<void> {
         status: 'Aktif',
         pendidikanTerakhir: g.pendidikanTerakhir,
         mapelDiampu: g.mapelDiampu || null,
+        tugasTambahan: g.tugasTambahan || null,
         tmpTglLahir: `${g.tmpLahir}, ${g.tglLahir.toISOString().slice(0, 10)}`,
       },
       update: {
@@ -150,6 +214,7 @@ async function jalankan(): Promise<void> {
         jabatan: g.jabatan,
         pendidikanTerakhir: g.pendidikanTerakhir,
         mapelDiampu: g.mapelDiampu || null,
+        tugasTambahan: g.tugasTambahan || null,
         tmpTglLahir: `${g.tmpLahir}, ${g.tglLahir.toISOString().slice(0, 10)}`,
       },
     });

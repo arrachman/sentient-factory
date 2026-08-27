@@ -17,6 +17,33 @@ diganti (mis. santri → guru), karena nilai/presensi/gaji masih merujuknya —
 pencabutan dilakukan sengaja lewat modul asalnya. Endpoint
 `/api/orang/cari` menerima `?ids=` untuk memuat nama relasi tersimpan.
 
+## 2026-08-27 — Impor 17 guru MA + pisah jabatan dari tugas tambahan
+
+17 baris `DATA GURU.xlsx` masuk ke `orang` + `pegawai` unit MA
+(`GTT-MA-001`..`017`). Importir `prisma/import/import-guru-ma.ts` sudah ada
+sejak sebelumnya tetapi ternyata **belum pernah dijalankan** — tabel `pegawai`
+masih kosong. Dua cacatnya diperbaiki dulu sebelum dijalankan:
+
+1. **Jenis kelamin di-hardcode `L`** untuk semua baris — 14 dari 17 guru MA
+   perempuan, jadi seluruh data akan salah. Sekarang ada peta eksplisit
+   `JK_GURU_MA` (disimpulkan dari sapaan "B."/"P."/"Miss" di kamus alias
+   jadwal, dituliskan per nama supaya bisa ditelusuri). Nama di luar peta
+   **menggagalkan impor**, tidak diam-diam jadi `L`.
+2. **Jabatan diisi nama mapel** saat kolom Jabatan kosong. Kategori orang
+   disimpulkan dari kata "Guru" di `jabatan` (`FILTER_KATEGORI_ORANG`), jadi
+   itu akan membuat guru terbaca sebagai staf. Sekarang siapa pun yang
+   mengampu mapel jabatannya `Guru Mapel`, dan jabatan struktural dari kolom
+   Jabatan ("Waka Kurikulum", "Wali Kelas 10", "Plt. Kepala Madrasah") pindah
+   ke `pegawai.tugas_tambahan` — kolom yang memang disediakan skema.
+
+Form `/data/orang` dapat isian baru **Tugas tambahan / jabatan struktural**
+untuk peran Guru/Staf, terpisah dari Jabatan dengan alasan yang sama; nilainya
+ikut termuat saat mengubah dan tampil pada badge keterkaitan Pegawai.
+
+Dampak operasional: hasil impor 16 guru + 1 staf (Bendahara/TU, tidak mengampu
+mapel). Tanpa migrasi — `tugas_tambahan` sudah ada di skema. Importir idempoten
+(upsert by NIP/email), aman dijalankan ulang.
+
 ## 2026-08-27 — Field data pribadi di Identitas Orang (babfded3)
 
 Form `/data/orang` kini punya grup **Data pribadi**: anak ke-, jumlah saudara
