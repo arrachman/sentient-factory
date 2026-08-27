@@ -1,5 +1,5 @@
 import type { Entity } from './types';
-import { FIELD_PERAN, FILTER_KATEGORI_ORANG, daftarkanPeran } from './peran-orang';
+import { FIELD_PERAN, FILTER_KATEGORI_ORANG, daftarkanPeran, selaraskanPeran } from './peran-orang';
 
 const text = (name: string, label: string, required = true) => ({ name, label, type: 'text' as const, required });
 const number = (name: string, label: string, required = false) => ({ name, label, type: 'number' as const, required, step: 1 });
@@ -28,6 +28,11 @@ export const ENTITIES: Entity[] = [
       { ...text('kelurahan', 'Kelurahan / desa', false), group: 'Alamat', placeholder: 'Mergosono' },
       { ...text('kecamatan', 'Kecamatan', false), group: 'Alamat', placeholder: 'Kedungkandang' },
       { ...text('kabupaten', 'Kota / kabupaten', false), group: 'Alamat', span: 2, placeholder: 'Kota Malang' },
+      { ...number('anakKe', 'Anak ke-'), group: 'Data pribadi', placeholder: '2' },
+      { ...number('jumlahSaudara', 'Jumlah saudara kandung'), group: 'Data pribadi', placeholder: '3' },
+      { ...text('asalSekolah', 'Asal sekolah', false), group: 'Data pribadi', placeholder: 'SDN Mergosono 2' },
+      { ...text('hobi', 'Hobi', false), group: 'Data pribadi', span: 2, placeholder: 'Sepak bola, kaligrafi' },
+      { ...text('citaCita', 'Cita-cita', false), group: 'Data pribadi', placeholder: 'Guru' },
       { name: 'aktif', label: 'Status keaktifan', type: 'boolean', labelYa: 'Aktif', group: 'Status', span: 3, hint: 'Nonaktifkan alih-alih menghapus — riwayat modul lain tetap utuh.' },
       ...FIELD_PERAN,
       FILTER_KATEGORI_ORANG,
@@ -35,6 +40,7 @@ export const ENTITIES: Entity[] = [
     columns: columns(['nama', 'Nama'], ['jk', 'JK'], ['hp', 'HP'], ['email', 'Email'], ['aktif', 'Aktif']),
     orderBy: { nama: 'asc' },
     sesudahBuat: daftarkanPeran,
+    sesudahUbah: selaraskanPeran,
   },
   { key: 'santri', menu: 'induk', model: 'santri', label: 'Santri', idType: 'bigint', fields: [number('orangId', 'ID Orang (buat dulu di menu Identitas Orang)', true), text('nis', 'NIS', false), text('nisn', 'NISN', false), { ...number('unitId', 'Unit'), ref: { model: 'unit', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kelasId', 'Kelas'), ref: { model: 'kelas', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kamarId', 'Kamar'), ref: { model: 'kamar', label: 'kode', orderBy: { kode: 'asc' } } }, { name: 'status', label: 'Status', type: 'select', options: ['Mukim', 'Kalong', 'Alumni', 'Keluar'], required: true }, text('program', 'Program', false), text('tahunMasuk', 'Tahun masuk', false)], columns: columns(['orangId', 'ID Orang'], ['nis', 'NIS'], ['nisn', 'NISN'], ['status', 'Status'], ['tahunMasuk', 'Tahun masuk']), orderBy: { createdAt: 'desc' } },
   { key: 'unit', menu: 'pengaturan', model: 'unit', label: 'Unit pendidikan', idType: 'int', fields: [text('key', 'Kode'), text('nama', 'Nama'), text('deskripsi', 'Deskripsi', false), { name: 'aktif', label: 'Aktif', type: 'boolean' }], columns: columns(['key', 'Kode'], ['nama', 'Nama'], ['deskripsi', 'Deskripsi'], ['aktif', 'Aktif']), orderBy: { nama: 'asc' } },
