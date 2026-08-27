@@ -4,6 +4,14 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Rapikan tampilan chip kotak centang peran (`c75d165f`)
+
+Chip "Daftarkan sebagai" memakai kotak centang bawaan browser sehingga ukuran
+dan gayanya tidak seragam lintas platform, chip-nya terlalu tinggi, dan opsi
+yang belum dicentang nyaris tak terbaca. Indikator centang kini digambar
+sendiri (kotak + tanda centang SVG), chip dibulatkan penuh, padding dan
+kontras hover/fokus diperbaiki. Murni CSS — perilaku form tidak berubah.
+
 ## 2026-08-27 — Satu orang boleh memegang beberapa peran sekaligus (`792fbe22`)
 
 Sebelumnya "Daftarkan sebagai" di `/data/orang` adalah pilihan tunggal, sehingga
