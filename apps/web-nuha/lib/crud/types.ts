@@ -2,7 +2,7 @@
  * One description of an entity drives its API validation, its table, and its
  * form. Adding a module means adding a registry entry, not another CRUD route.
  */
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'datetime' | 'select' | 'boolean' | 'orang-banyak';
+export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'datetime' | 'select' | 'pilihan-banyak' | 'boolean' | 'orang-banyak';
 
 /** Options pulled from another table; `label` may walk relations, e.g. `orang.nama`. */
 export type FieldRef = {
@@ -37,7 +37,10 @@ export type Field = {
   virtual?: boolean;
   /** Hanya tampil saat menambah baris baru, bukan saat mengubah. */
   hanyaBaru?: boolean;
-  /** Tampil hanya bila field lain bernilai salah satu dari `sama`. */
+  /**
+   * Tampil hanya bila field lain bernilai salah satu dari `sama`. Untuk field
+   * `pilihan-banyak`, cukup salah satu nilai terpilih yang cocok.
+   */
   tampilBila?: { field: string; sama: string[] };
   /** Ikon per opsi segmented, mis. { L: 'lelaki' } — lihat atoms/IkonOpsi. */
   optionIcons?: Record<string, string>;
@@ -73,6 +76,8 @@ export type Entity = {
   label: string;
   /** Satu kalimat di kepala form: apa entitas ini dan kenapa diisi. */
   deskripsi?: string;
+  /** Form lebar 3 kolom (modal melebar) — untuk entitas berfield banyak. */
+  formLebar?: boolean;
   idType: 'int' | 'bigint';
   fields: Field[];
   columns: Column[];
@@ -98,6 +103,7 @@ export type ClientEntity = {
   key: string;
   label: string;
   deskripsi?: string;
+  formLebar?: boolean;
   fields: ClientField[];
   columns: Column[];
 };

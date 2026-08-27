@@ -7,7 +7,7 @@ import type { Entity, Keterkaitan, Row } from './types';
  * perannya dalam satu query per relasi, bukan per baris. Akun login sengaja
  * tidak ditampilkan: semua orang di sini pasti punya akun.
  */
-type PeranTersimpan = { kait: Keterkaitan[]; nilai: Record<string, string> };
+type PeranTersimpan = { kait: Keterkaitan[]; nilai: Record<string, string>; peran: Set<string> };
 
 async function kaitOrang(rows: Row[]): Promise<Map<string, PeranTersimpan>> {
   const ids = rows.map((row) => BigInt(row.id));
@@ -24,25 +24,25 @@ async function kaitOrang(rows: Row[]): Promise<Map<string, PeranTersimpan>> {
   const hasil = new Map<string, PeranTersimpan>();
   const entri = (orangId: bigint): PeranTersimpan => {
     const key = String(orangId);
-    const ada = hasil.get(key) ?? { kait: [], nilai: {} };
+    const ada = hasil.get(key) ?? { kait: [], nilai: {}, peran: new Set<string>() };
     hasil.set(key, ada);
     return ada;
   };
   const tambah = (orangId: bigint, kait: Keterkaitan) => { entri(orangId).kait.push(kait); };
   const setel = (orangId: bigint, nilai: Record<string, string>) => { Object.assign(entri(orangId).nilai, nilai); };
+  // Peran bersifat kumulatif: satu orang bisa santri sekaligus guru dan wali.
+  const tandai = (orangId: bigint, peran: string) => { entri(orangId).peran.add(peran); };
 
   for (const s of santri) {
     tambah(s.orangId, { label: 'Santri', nada: 'hijau', href: '/induk', detail: [s.nis ? `NIS ${s.nis}` : null, s.kelas?.nama, s.status].filter(Boolean).join(' · ') || 'Terdaftar' });
-    setel(s.orangId, { peranOrang: 'santri', peranNis: s.nis ?? '', peranStatusSantri: s.status });
+    setel(s.orangId, { peranNis: s.nis ?? '', peranStatusSantri: s.status });
+    tandai(s.orangId, 'santri');
   }
   for (const p of pegawai) {
     const detail = [`NIP ${p.nip}`, p.jabatan, p.tugasTambahan].filter(Boolean).join(' · ');
     tambah(p.orangId, { label: 'Pegawai', nada: 'biru', href: '/kepegawaian', detail });
-    const peran = p.jabatan.includes('Guru') ? 'guru' : 'staf';
-    // Santri menang sebagai peran utama bila (jarang) keduanya ada.
-    const nilai: Record<string, string> = { peranNip: p.nip, peranJabatan: p.jabatan, peranTugasTambahan: p.tugasTambahan ?? '' };
-    if (!hasil.get(String(p.orangId))?.nilai.peranOrang) nilai.peranOrang = peran;
-    setel(p.orangId, nilai);
+    setel(p.orangId, { peranNip: p.nip, peranJabatan: p.jabatan, peranTugasTambahan: p.tugasTambahan ?? '' });
+    tandai(p.orangId, p.jabatan.includes('Guru') ? 'guru' : 'staf');
   }
   const relasiTeks = (items: { id: bigint; hubungan: string }[]) =>
     JSON.stringify(items.map((item) => ({ id: String(item.id), hubungan: item.hubungan })));
@@ -55,9 +55,8 @@ async function kaitOrang(rows: Row[]): Promise<Map<string, PeranTersimpan>> {
   }
   for (const [key, anak] of perWali) {
     const orangId = BigInt(key);
-    const nilai: Record<string, string> = { peranAnak: relasiTeks(anak) };
-    if (!hasil.get(key)?.nilai.peranOrang) nilai.peranOrang = 'wali';
-    setel(orangId, nilai);
+    setel(orangId, { peranAnak: relasiTeks(anak) });
+    tandai(orangId, 'wali');
   }
 
   const perAnak = new Map<string, { id: bigint; hubungan: string }[]>();
@@ -79,6 +78,7 @@ export async function lampirkanKeterkaitan(entity: Entity, rows: Row[]): Promise
   const peta = await kaitOrang(rows);
   return rows.map((row) => {
     const info = peta.get(row.id);
-    return { ...row, ...(info?.nilai ?? {}), peranOrang: info?.nilai.peranOrang ?? 'belum', _kait: info?.kait ?? [] };
+    // Daftar dipisah koma — bentuk yang dibaca kontrol `pilihan-banyak`.
+    return { ...row, ...(info?.nilai ?? {}), peranOrang: [...(info?.peran ?? [])].join(','), _kait: info?.kait ?? [] };
   });
 }

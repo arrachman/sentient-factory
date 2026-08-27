@@ -104,6 +104,12 @@ function convert(field: Field, raw: unknown, errors: string[]): unknown {
       if (field.options && !field.options.includes(value)) errors.push(`${field.label} tidak valid.`);
       return value;
     }
+    case 'pilihan-banyak': {
+      // Daftar dipisah koma; tiap bagian harus salah satu opsi yang sah.
+      const bagian = String(raw).split(',').map((item) => item.trim()).filter(Boolean);
+      if (field.options && bagian.some((item) => !field.options!.includes(item))) errors.push(`${field.label} tidak valid.`);
+      return bagian.join(',');
+    }
     default:
       return String(raw);
   }

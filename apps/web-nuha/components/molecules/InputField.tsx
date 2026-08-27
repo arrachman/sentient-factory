@@ -35,6 +35,35 @@ export function InputField({ field, id, row, onPilih }: Props) {
     />;
   }
 
+  if (field.type === 'pilihan-banyak' && field.options) {
+    // Satu orang bisa memegang lebih dari satu peran (mis. guru yang juga wali
+    // santri), jadi kontrolnya kotak centang, bukan radio.
+    const terpilih = new Set(nilai.split(',').filter(Boolean));
+    // Tampilannya kotak centang eksplisit, bukan segmented pill: pil bersebelahan
+    // terbaca sebagai pilihan tunggal sehingga operator mengira klik = ganti,
+    // padahal artinya centang/lepas.
+    return <div className="centang-chip" role="group" aria-labelledby={`${id}-label`}>
+      {field.options.map((option) => <label className="centang-chip-opsi" key={option} data-opsi={option}>
+        <input
+          type="checkbox"
+          name={field.name}
+          value={option}
+          defaultChecked={terpilih.has(option)}
+          onChange={(event) => {
+            // Kotak centang ini tak terkendali (`defaultChecked`), jadi keadaan
+            // terkini dibaca dari form — bukan dari Set yang ikut ter-render
+            // ulang dan akan kehilangan pilihan sebelumnya.
+            const form = event.target.form;
+            const semua = form ? [...form.elements].filter((el): el is HTMLInputElement =>
+              el instanceof HTMLInputElement && el.name === field.name && el.checked) : [];
+            lapor?.({ target: { value: semua.map((el) => el.value).join(',') } });
+          }}
+        />
+        <span>{field.optionLabels?.[option] ?? option}</span>
+      </label>)}
+    </div>;
+  }
+
   if (field.type === 'boolean') {
     const aktif = row ? Boolean(row[field.name]) : true;
     return <label className="toggle">

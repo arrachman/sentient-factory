@@ -100,8 +100,9 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
     if (field.tersembunyi || field.hanyaFilter) return false;
     if (field.hanyaBaru && editing) return false;
     if (!field.tampilBila) return true;
-    const nilai = pemicu[field.tampilBila.field] ?? '';
-    return field.tampilBila.sama.includes(nilai);
+    // Pemicu bisa berisi beberapa nilai (peran ganda) — dipisah koma.
+    const nilai = (pemicu[field.tampilBila.field] ?? '').split(',').filter(Boolean);
+    return nilai.some((item) => field.tampilBila!.sama.includes(item));
   };
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -112,7 +113,10 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
     for (const field of entity.fields) {
       // `tersembunyi` tetap dikirim: inputnya dirender ikut field pasangannya.
       if (!field.tersembunyi && !terlihat(field)) continue;
-      payload[field.name] = field.type === 'boolean' ? form.get(field.name) === 'on' : form.get(field.name);
+      if (field.type === 'boolean') payload[field.name] = form.get(field.name) === 'on';
+      // Kotak centang mengirim satu entri per pilihan; gabungkan jadi daftar koma.
+      else if (field.type === 'pilihan-banyak') payload[field.name] = form.getAll(field.name).join(',');
+      else payload[field.name] = form.get(field.name);
     }
     if (editing) payload.id = editing.id;
     await send(editing ? 'PATCH' : 'POST', payload);
@@ -126,7 +130,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
     {message && <p className="muted" role="status" style={{ marginTop: 8 }}>{message}</p>}
 
     {(open || editing) && <div className="modal-overlay" onClick={() => { setEditing(null); setOpen(false); }}>
-      <div className="modal" onClick={(event) => event.stopPropagation()}>
+      <div className={entity.formLebar ? 'modal modal-lebar' : 'modal'} onClick={(event) => event.stopPropagation()}>
         <div className="modal-head">
           <div>
             <h3 style={{ margin: 0 }}>{editing ? `Ubah ${entity.label.toLowerCase()}` : `Tambah ${entity.label.toLowerCase()}`}</h3>
@@ -151,11 +155,15 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
           </legend>
           {/* Dilipat pakai `display: none`, bukan unmount — nilai isian tetap
               terkirim walau grupnya sedang tertutup. */}
-          <div className="grid g2 grid-form" style={terbuka ? undefined : { display: 'none' }}>
+          <div className={`grid ${entity.formLebar ? 'g3' : 'g2'} grid-form`} style={terbuka ? undefined : { display: 'none' }}>
             {grup.fields.map((field) => {
               const pasangan = field.pasangan ? entity.fields.find((item) => item.name === field.pasangan) : undefined;
-              // Form dua kolom: span > 1 selalu berarti "selebar baris".
-              const lebar = field.span && field.span > 1 ? { gridColumn: '1 / -1' } : undefined;
+              // Form 2 kolom: span > 1 = selebar baris. Form 3 kolom: span 2
+              // memakai dua kolom, span 3 selebar baris.
+              const kolom = entity.formLebar ? 3 : 2;
+              const lebar = field.span && field.span > 1
+                ? { gridColumn: field.span >= kolom ? '1 / -1' : `span ${field.span}` }
+                : undefined;
               return <div className="field" key={field.name} style={lebar}>
                 <label id={`${entity.key}-${field.name}-label`} htmlFor={`${entity.key}-${field.name}`}>
                   {field.label}

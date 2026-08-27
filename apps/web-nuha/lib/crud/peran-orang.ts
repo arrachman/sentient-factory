@@ -29,14 +29,14 @@ export const FIELD_PERAN: Field[] = [
   {
     name: 'peranOrang',
     label: 'Daftarkan sebagai',
-    type: 'select',
-    required: true,
+    type: 'pilihan-banyak',
     virtual: true,
     span: 3,
     group: 'Peran',
-    options: [...PERAN_ORANG],
+    // "belum" bukan pilihan lagi: tanpa centang apa pun artinya belum berperan.
+    options: PERAN_ORANG.filter((peran) => peran !== 'belum'),
     optionLabels: LABEL_PERAN,
-    hint: 'Menentukan modul tempat orang ini ikut terdaftar.',
+    hint: 'Boleh lebih dari satu — mis. guru yang juga wali santri.',
   },
   {
     name: 'peranNis',
@@ -137,6 +137,29 @@ export const FILTER_KATEGORI_ORANG: Field = {
 
 const teks = (input: Record<string, unknown>, key: string) => String(input[key] ?? '').trim();
 
+/**
+ * Peran dikirim sebagai daftar dipisah koma. Nilai asing dibuang, dan `belum`
+ * diperlakukan sebagai "tidak ada peran" supaya data lama tetap terbaca.
+ */
+function bacaPeran(input: Record<string, unknown>): Set<PeranOrang> {
+  const dipilih = new Set<PeranOrang>();
+  for (const bagian of teks(input, 'peranOrang').split(',')) {
+    const nilai = bagian.trim() as PeranOrang;
+    if (nilai && nilai !== 'belum' && PERAN_ORANG.includes(nilai)) dipilih.add(nilai);
+  }
+  return dipilih;
+}
+
+/**
+ * Guru dan staf berbagi satu baris `pegawai` (relasi 1-1 ke orang), jadi bila
+ * keduanya dicentang, guru yang menang — jabatannya yang menentukan kategori.
+ */
+const peranPegawaiDari = (dipilih: Set<PeranOrang>): 'guru' | 'staf' | null =>
+  (dipilih.has('guru') ? 'guru' : dipilih.has('staf') ? 'staf' : null);
+
+const jabatanDari = (input: Record<string, unknown>, peran: 'guru' | 'staf') =>
+  teks(input, 'peranJabatan') || (peran === 'guru' ? 'Guru Mapel' : 'Staf');
+
 /** NIP wajib & unik di skema, jadi sediakan cadangan yang deterministik. */
 const nipCadangan = (orangId: string) => `NIP-${orangId.padStart(6, '0')}`;
 
@@ -196,15 +219,14 @@ async function sambungkanWali(waliId: bigint, anakId: bigint, hubungan: string):
  * sudah punya baris santri/pegawai, biarkan yang lama (relasi 1-1 `orangId`).
  */
 export async function daftarkanPeran(orangId: string, input: Record<string, unknown>, aktor: { id: string; nama: string }): Promise<void> {
-  const peran = teks(input, 'peranOrang') as PeranOrang;
-  if (!peran || peran === 'belum' || !PERAN_ORANG.includes(peran)) return;
+  const dipilih = bacaPeran(input);
   const id = BigInt(orangId);
 
-  if (peran === 'santri') {
+  if (dipilih.has('santri')) {
     if (!(await prisma.santri.count({ where: { orangId: id } }))) {
       const nis = teks(input, 'peranNis') || null;
       await prisma.santri.create({ data: { orangId: id, nis, status: 'Mukim' } });
-      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran, nis }, aktor);
+      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran: 'santri', nis }, aktor);
     }
     // Santri boleh punya beberapa wali (ayah, ibu, wali lain).
     for (const wali of bacaRelasi(input, 'peranWali')) {
@@ -212,25 +234,25 @@ export async function daftarkanPeran(orangId: string, input: Record<string, unkn
         await catat(orangId, `Menetapkan orang #${wali.id} sebagai ${wali.hubungan}`, { waliId: wali.id, hubungan: wali.hubungan }, aktor);
       }
     }
-    return;
   }
 
-  if (peran === 'guru' || peran === 'staf') {
-    if (await prisma.pegawai.count({ where: { orangId: id } })) return;
+  const peranPegawai = peranPegawaiDari(dipilih);
+  if (peranPegawai && !(await prisma.pegawai.count({ where: { orangId: id } }))) {
     const nip = teks(input, 'peranNip') || nipCadangan(orangId);
-    const jabatan = teks(input, 'peranJabatan') || (peran === 'guru' ? 'Guru Mapel' : 'Staf');
+    const jabatan = jabatanDari(input, peranPegawai);
     const tugasTambahan = teks(input, 'peranTugasTambahan') || null;
     await prisma.pegawai.create({ data: { orangId: id, nip, jabatan, tugasTambahan, status: 'Aktif' } });
-    await catat(orangId, `Mendaftarkan sebagai ${LABEL_PERAN[peran].toLowerCase()} (NIP ${nip})`, { peran, nip, jabatan, tugasTambahan }, aktor);
-    return;
+    await catat(orangId, `Mendaftarkan sebagai ${LABEL_PERAN[peranPegawai].toLowerCase()} (NIP ${nip})`, { peran: peranPegawai, nip, jabatan, tugasTambahan }, aktor);
   }
 
   // Wali tanpa santri yang dipilih tetap sah — identitasnya sudah tersimpan
   // dan relasinya bisa dibuat nanti di panel Wali santri. Satu wali boleh
   // mewakili beberapa santri sekaligus.
-  for (const anak of bacaRelasi(input, 'peranAnak')) {
-    if (await sambungkanWali(id, BigInt(anak.id), anak.hubungan)) {
-      await catat(orangId, `Mendaftarkan sebagai ${anak.hubungan} dari orang #${anak.id}`, { peran, anakId: anak.id, hubungan: anak.hubungan }, aktor);
+  if (dipilih.has('wali')) {
+    for (const anak of bacaRelasi(input, 'peranAnak')) {
+      if (await sambungkanWali(id, BigInt(anak.id), anak.hubungan)) {
+        await catat(orangId, `Mendaftarkan sebagai ${anak.hubungan} dari orang #${anak.id}`, { peran: 'wali', anakId: anak.id, hubungan: anak.hubungan }, aktor);
+      }
     }
   }
 }
@@ -268,11 +290,11 @@ async function selaraskanRelasi(
  * dirujuk modul lain, memang ikut dicabut sesuai isi daftar.
  */
 export async function selaraskanPeran(orangId: string, input: Record<string, unknown>, aktor: { id: string; nama: string }): Promise<void> {
-  const peran = teks(input, 'peranOrang') as PeranOrang;
-  if (!peran || !PERAN_ORANG.includes(peran)) return;
+  if (!('peranOrang' in input)) return;
+  const dipilih = bacaPeran(input);
   const id = BigInt(orangId);
 
-  if (peran === 'santri') {
+  if (dipilih.has('santri')) {
     const nis = teks(input, 'peranNis') || null;
     const ada = await prisma.santri.count({ where: { orangId: id } });
     if (ada) {
@@ -280,14 +302,14 @@ export async function selaraskanPeran(orangId: string, input: Record<string, unk
       await catat(orangId, `Memperbarui data santri${nis ? ` (NIS ${nis})` : ''}`, { nis }, aktor, 'CRUD_UPDATE');
     } else {
       await prisma.santri.create({ data: { orangId: id, nis, status: 'Mukim' } });
-      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran, nis }, aktor);
+      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran: 'santri', nis }, aktor);
     }
     if ('peranWali' in input) await selaraskanRelasi(orangId, 'wali', bacaRelasi(input, 'peranWali'), id, aktor);
-    return;
   }
 
-  if (peran === 'guru' || peran === 'staf') {
-    const jabatan = teks(input, 'peranJabatan') || (peran === 'guru' ? 'Guru Mapel' : 'Staf');
+  const peranPegawai = peranPegawaiDari(dipilih);
+  if (peranPegawai) {
+    const jabatan = jabatanDari(input, peranPegawai);
     const ada = await prisma.pegawai.findUnique({ where: { orangId: id }, select: { nip: true } });
     const nip = teks(input, 'peranNip') || ada?.nip || nipCadangan(orangId);
     const tugasTambahan = teks(input, 'peranTugasTambahan') || null;
@@ -296,13 +318,12 @@ export async function selaraskanPeran(orangId: string, input: Record<string, unk
       await catat(orangId, `Memperbarui data pegawai (NIP ${nip})`, { nip, jabatan, tugasTambahan }, aktor, 'CRUD_UPDATE');
     } else {
       await prisma.pegawai.create({ data: { orangId: id, nip, jabatan, tugasTambahan, status: 'Aktif' } });
-      await catat(orangId, `Mendaftarkan sebagai ${LABEL_PERAN[peran].toLowerCase()} (NIP ${nip})`, { peran, nip, jabatan, tugasTambahan }, aktor);
+      await catat(orangId, `Mendaftarkan sebagai ${LABEL_PERAN[peranPegawai].toLowerCase()} (NIP ${nip})`, { peran: peranPegawai, nip, jabatan, tugasTambahan }, aktor);
     }
-    return;
   }
 
-  if (peran === 'wali' && 'peranAnak' in input) {
+  if (dipilih.has('wali') && 'peranAnak' in input) {
     await selaraskanRelasi(orangId, 'anak', bacaRelasi(input, 'peranAnak'), id, aktor);
   }
-  // `belum`: tidak ada yang dibuat maupun dihapus.
+  // Peran yang tidak lagi dicentang tidak dihapus di sini — lihat catatan atas.
 }
