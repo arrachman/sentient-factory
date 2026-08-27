@@ -319,6 +319,20 @@ label.toggle, .field label.toggle {
 .segmen-opsi span { display: flex; align-items: center; justify-content: center; gap: 6px; }
 .segmen-opsi svg { flex: none; }
 
+/* Segmented ikon-saja (jenis kelamin): warna berbeda per opsi agar sekali
+   lihat terbaca, bukan hanya bentuk ikonnya. */
+.segmen-ikon .segmen-opsi span { padding: 7px 16px; }
+.segmen-ikon .segmen-opsi svg { width: 17px; height: 17px; }
+.segmen-ikon .segmen-opsi[data-opsi="L"] input:checked + span { background: #1d5fa8; color: #fff; }
+.segmen-ikon .segmen-opsi[data-opsi="P"] input:checked + span { background: #b8407e; color: #fff; }
+.segmen-ikon .segmen-opsi[data-opsi="L"] span { color: #1d5fa8; }
+.segmen-ikon .segmen-opsi[data-opsi="P"] span { color: #b8407e; }
+
+/* Dua input pendek dalam satu baris (RT / RW). */
+.field-pasangan { display: flex; align-items: center; gap: 8px; }
+.field-pasangan input { min-width: 0; }
+.field-pasangan span { color: var(--teks-lembut); font-size: 13px; }
+
 /* Pemilih banyak orang: relasi wali↔santri boleh berisi beberapa baris. */
 .pilihan-banyak { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
 .pilihan-banyak li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--garis-input); border-radius: 10px; background: var(--krem-2); }

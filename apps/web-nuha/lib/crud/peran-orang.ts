@@ -37,7 +37,7 @@ export const FIELD_PERAN: Field[] = [
     group: 'Peran',
     options: [...PERAN_ORANG],
     optionLabels: LABEL_PERAN,
-    hint: 'Menentukan modul tempat orang ini ikut terdaftar. Pilih "Belum ditentukan" bila hanya ingin menyimpan identitasnya.',
+    hint: 'Menentukan modul tempat orang ini ikut terdaftar.',
   },
   {
     name: 'peranNis',
@@ -47,7 +47,7 @@ export const FIELD_PERAN: Field[] = [
     hanyaBaru: true,
     group: 'Peran',
     tampilBila: tampilBila(['santri']),
-    hint: 'Kosongkan bila belum ada — bisa dilengkapi di modul Santri.',
+    hint: 'Kosongkan bila belum ada.',
     placeholder: '2026001',
   },
   {
@@ -68,7 +68,7 @@ export const FIELD_PERAN: Field[] = [
     hanyaBaru: true,
     group: 'Peran',
     tampilBila: tampilBila(['guru', 'staf']),
-    hint: 'Wajib untuk guru/staf dan harus unik. Kosongkan untuk dibuatkan otomatis.',
+    hint: 'Kosongkan untuk dibuatkan otomatis.',
     placeholder: '198701012010011001',
   },
   {
@@ -91,8 +91,8 @@ export const FIELD_PERAN: Field[] = [
     group: 'Peran',
     hubungan: HUBUNGAN_WALI,
     tampilBila: tampilBila(['santri']),
-    placeholder: 'Cari nama wali (ayah/ibu/wali)…',
-    hint: 'Boleh lebih dari satu — cari identitas walinya lalu tentukan hubungannya. Wali pertama jadi wali utama (penerima notifikasi WhatsApp). Bisa juga dilengkapi nanti di panel Wali santri.',
+    placeholder: 'Klik untuk melihat daftar, atau ketik nama…',
+    hint: 'Boleh lebih dari satu; yang pertama jadi wali utama.',
   },
   {
     name: 'peranAnak',
@@ -105,10 +105,32 @@ export const FIELD_PERAN: Field[] = [
     hubungan: HUBUNGAN_WALI,
     hanyaSantri: true,
     tampilBila: tampilBila(['wali']),
-    placeholder: 'Cari nama santri…',
-    hint: 'Satu wali boleh mewakili beberapa santri — tambahkan semuanya di sini. Hanya orang yang sudah terdaftar sebagai santri yang muncul.',
+    placeholder: 'Klik untuk melihat daftar santri…',
+    hint: 'Boleh lebih dari satu santri.',
   },
 ];
+
+/**
+ * Kategori orang tidak disimpan sebagai kolom — ia disimpulkan dari relasi
+ * (baris `santri`, `pegawai`, atau relasi wali). Jadi filternya berupa field
+ * virtual dengan peta nilai → klausa `where` Prisma. Guru vs staf dipisah
+ * dari jabatan karena keduanya sama-sama baris `pegawai`.
+ */
+export const FILTER_KATEGORI_ORANG: Field = {
+  name: 'kategoriOrang',
+  label: 'Kategori',
+  type: 'select',
+  virtual: true,
+  hanyaFilter: true,
+  options: ['santri', 'guru', 'staf', 'wali'],
+  optionLabels: { santri: 'Santri', guru: 'Guru', staf: 'Staf', wali: 'Wali' },
+  filterWhere: {
+    santri: { santri: { isNot: null } },
+    guru: { pegawai: { is: { jabatan: { contains: 'Guru' } } } },
+    staf: { pegawai: { is: { NOT: { jabatan: { contains: 'Guru' } } } } },
+    wali: { waliDari: { some: {} } },
+  },
+};
 
 const teks = (input: Record<string, unknown>, key: string) => String(input[key] ?? '').trim();
 

@@ -7,7 +7,7 @@ import { CrudPanel } from '@/components/CrudPanel';
 import { Pagination, LimitPicker, FilterBar, bacaHalaman, bacaLimit, satu, filterQuery } from '@/components';
 import { getEntity } from '@/lib/crud/registry';
 import { listRows, countRows, toClientEntity } from '@/lib/crud/engine';
-import { PanelWali, bacaParamWali } from './wali/PanelWali';
+import { PanelWali } from './wali/PanelWali';
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -52,6 +52,6 @@ export default async function EntityPage({ params, searchParams }: { params: Pro
     />
     {/* Relasi wali↔santri adalah pasangan antar-baris `orang`, bukan entitas CRUD
         sendiri — jadi dikelola langsung di halaman Identitas orang. */}
-    {key === 'orang' && <PanelWali param={bacaParamWali(sp)} />}
+    {key === 'orang' && <PanelWali />}
   </Shell>;
 }

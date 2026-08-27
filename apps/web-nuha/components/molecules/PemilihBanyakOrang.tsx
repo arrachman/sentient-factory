@@ -7,7 +7,6 @@ export type OpsiOrang = { id: string; nama: string; keterangan: string };
 export type PilihanRelasi = { orang: OpsiOrang; hubungan: string };
 
 const JEDA_KETIK = 250;
-const MIN_HURUF = 2;
 
 type Props = {
   /** Nama hidden input; nilainya JSON array `{ id, hubungan }`. */
@@ -34,9 +33,12 @@ export function PemilihBanyakOrang({ name, label, id, hint, hubungan, placeholde
   const [hasil, setHasil] = useState<OpsiOrang[]>([]);
   const [dipilih, setDipilih] = useState<PilihanRelasi[]>([]);
   const [memuat, setMemuat] = useState(false);
+  const [terbuka, setTerbuka] = useState(false);
 
   useEffect(() => {
-    if (ketik.trim().length < MIN_HURUF) { setHasil([]); return; }
+    // Tanpa fokus tidak perlu memanggil server; dengan fokus, ketikan kosong
+    // pun dijawab — operator melihat kandidat awal begitu field diklik.
+    if (!terbuka) return;
     const batal = new AbortController();
     const timer = setTimeout(async () => {
       setMemuat(true);
@@ -52,12 +54,11 @@ export function PemilihBanyakOrang({ name, label, id, hint, hubungan, placeholde
       }
     }, JEDA_KETIK);
     return () => { clearTimeout(timer); batal.abort(); };
-  }, [ketik, hanyaSantri]);
+  }, [ketik, hanyaSantri, terbuka]);
 
   const tambah = (orang: OpsiOrang) => {
     setDipilih((prev) => (prev.some((item) => item.orang.id === orang.id) ? prev : [...prev, { orang, hubungan: hubungan[0] }]));
     setKetik('');
-    setHasil([]);
   };
   const buang = (id: string) => setDipilih((prev) => prev.filter((item) => item.orang.id !== id));
   const ubahHubungan = (id: string, nilai: string) =>
@@ -73,11 +74,14 @@ export function PemilihBanyakOrang({ name, label, id, hint, hubungan, placeholde
       autoComplete="off"
       value={ketik}
       onChange={(event) => setKetik(event.target.value)}
-      placeholder={placeholder ?? 'Ketik minimal 2 huruf nama…'}
+      onFocus={() => setTerbuka(true)}
+      // Klik pada saran mendahului blur; beri jeda agar pilihan tidak hilang.
+      onBlur={() => setTimeout(() => setTerbuka(false), 150)}
+      placeholder={placeholder ?? 'Klik untuk melihat daftar, atau ketik nama…'}
     />
     {hint && <p className="petunjuk">{hint}</p>}
 
-    {ketik.trim().length >= MIN_HURUF && <ul className="saran">
+    {terbuka && <ul className="saran">
       {memuat && <li className="saran-kosong">Mencari…</li>}
       {!memuat && hasil.length === 0 && <li className="saran-kosong">Tidak ada yang cocok.</li>}
       {hasil.map((item) => <li key={item.id}>

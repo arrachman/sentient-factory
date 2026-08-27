@@ -14,7 +14,15 @@ function buildWhere(entity: Entity, filters: Filters): Record<string, unknown> |
   }
   for (const field of entity.fields) {
     const value = filters[field.name];
-    if (!value || field.virtual) continue;
+    if (!value) continue;
+    // Filter turunan relasi (mis. kategori orang) membawa klausa `where`-nya
+    // sendiri karena tidak punya kolom di tabel.
+    if (field.filterWhere) {
+      const klausa = field.filterWhere[value];
+      if (klausa) and.push(klausa);
+      continue;
+    }
+    if (field.virtual) continue;
     if (field.ref) and.push({ [field.name]: field.ref.idType === 'bigint' ? BigInt(value) : Number(value) });
     else if (field.type === 'select') and.push({ [field.name]: value });
   }

@@ -45,6 +45,20 @@ export type Field = {
   hubungan?: readonly string[];
   /** Untuk `orang-banyak`: batasi pencarian ke orang yang sudah jadi santri. */
   hanyaSantri?: boolean;
+  /** Segmented tanpa teks — ikon saja, dengan label di `title`/aria. */
+  ikonSaja?: boolean;
+  /** Gabungkan field lain ke satu baris kontrol (mis. RT + RW). */
+  pasangan?: string;
+  /** Tidak dirender sendiri karena sudah ikut field lain via `pasangan`. */
+  tersembunyi?: boolean;
+  /**
+   * Jadikan field virtual ini dropdown di bilah filter: peta nilai opsi →
+   * klausa `where` Prisma. Bentuknya JSON murni supaya ikut ke klien lewat
+   * ClientEntity tanpa kebocoran tipe Prisma.
+   */
+  filterWhere?: Record<string, Record<string, unknown>>;
+  /** Hanya muncul di bilah filter, tidak pernah dirender di form. */
+  hanyaFilter?: boolean;
 };
 
 /** Tautan ke modul lain yang memakai baris ini (mis. Orang → Santri/Pegawai/Akun). */

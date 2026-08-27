@@ -53,14 +53,21 @@ export function InputField({ field, id, row, onPilih }: Props) {
   if (field.type === 'select' && field.options) {
     // Radio bergaya segmented: seluruh opsi terlihat sekaligus, satu klik untuk ganti.
     if (field.options.length <= AMBANG_SEGMEN) {
-      return <div className="segmen" role="radiogroup" aria-labelledby={`${id}-label`}>
-        {field.options.map((option) => <label className="segmen-opsi" key={option}>
-          <input type="radio" name={field.name} value={option} required={field.required} defaultChecked={nilai === option} onChange={lapor} />
-          <span>
-            {field.optionIcons?.[option] && <IkonOpsi nama={field.optionIcons[option]} />}
-            {field.optionLabels?.[option] ?? option}
-          </span>
-        </label>)}
+      // `ikonSaja` menyembunyikan teks; namanya tetap ada di title & aria-label
+      // supaya tetap terbaca pembaca layar dan muncul saat hover.
+      const ikonSaja = field.ikonSaja && field.optionIcons;
+      return <div className={`segmen${ikonSaja ? ' segmen-ikon' : ''}`} role="radiogroup" aria-labelledby={`${id}-label`}>
+        {field.options.map((option) => {
+          const teks = field.optionLabels?.[option] ?? option;
+          const ikon = field.optionIcons?.[option];
+          return <label className="segmen-opsi" key={option} title={ikonSaja ? teks : undefined} data-opsi={option}>
+            <input type="radio" name={field.name} value={option} required={field.required} defaultChecked={nilai === option} onChange={lapor} aria-label={ikonSaja ? teks : undefined} />
+            <span>
+              {ikon && <IkonOpsi nama={ikon} />}
+              {!ikonSaja && teks}
+            </span>
+          </label>;
+        })}
       </div>;
     }
     return <select id={id} name={field.name} required={field.required} defaultValue={nilai} onChange={lapor}>

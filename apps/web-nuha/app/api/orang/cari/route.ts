@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { readSession } from '@/lib/auth';
 
-const BATAS = 15;
+/** Saran dibatasi pendek: daftar panjang justru bikin operator menyisir. */
+const BATAS = 5;
 
 /**
  * Pencarian identitas untuk pemilih wali. Daftar `orang` bisa ribuan baris,
@@ -14,7 +15,6 @@ export async function GET(request: Request) {
 
   const params = new URL(request.url).searchParams;
   const q = params.get('q')?.trim() ?? '';
-  if (q.length < 2) return NextResponse.json({ success: true, data: [] });
   // `santri=1` dipakai pemilih wali: hanya orang yang benar-benar terdaftar
   // sebagai santri yang boleh jadi pihak "anak" dalam relasi wali.
   const hanyaSantri = params.get('santri') === '1';
@@ -22,7 +22,8 @@ export async function GET(request: Request) {
   const rows = await prisma.orang.findMany({
     where: {
       AND: [
-        { OR: [{ nama: { contains: q } }, { nik: { contains: q } }, { hp: { contains: q } }] },
+        // `q` kosong sah: pemilih menampilkan saran awal begitu diklik.
+        ...(q ? [{ OR: [{ nama: { contains: q } }, { nik: { contains: q } }, { hp: { contains: q } }] }] : []),
         ...(hanyaSantri ? [{ santri: { isNot: null } }] : []),
       ],
     },

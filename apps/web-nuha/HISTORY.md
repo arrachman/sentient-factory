@@ -4,6 +4,25 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — UX: form identitas orang diringkas
+
+Putaran ketiga masukan tampilan pada modal Tambah/Ubah identitas orang:
+
+- Jenis kelamin kini **ikon saja**, dibedakan warna: biru (`#1d5fa8`) untuk
+  laki-laki, magenta (`#b8407e`) untuk perempuan. Labelnya tetap tersedia
+  lewat `title` + `aria-label` agar tidak hilang bagi pembaca layar.
+- RT dan RW digabung ke satu baris `RT / RW` lewat `pasangan`/`tersembunyi`
+  di registry — field `tersembunyi` tetap ikut dikirim saat submit.
+- Panel **"Terhubung ke modul lain"** dipindah ke bawah field, bukan di atas
+  form.
+- Pemilih wali/santri: klik pada kolomnya langsung memunculkan maksimal
+  **lima** kandidat tanpa perlu mengetik (`/api/orang/cari` menerima `q`
+  kosong, batas 15 → 5); barisnya diklik biasa, bukan checkbox; penyaringan
+  saat mengetik tetap jalan.
+- Petunjuk per input dikurangi dari 25 → 15 supaya form tidak ramai.
+
+Dampak operator: tidak ada perubahan data atau skema; hanya tampilan form.
+
 ## 2026-08-27 — UX: form identitas orang & pemilih wali banyak-ke-banyak
 
 Lanjutan dari entri di bawah, hasil masukan tampilan:

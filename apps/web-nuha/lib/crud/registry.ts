@@ -1,5 +1,5 @@
 import type { Entity } from './types';
-import { FIELD_PERAN, daftarkanPeran } from './peran-orang';
+import { FIELD_PERAN, FILTER_KATEGORI_ORANG, daftarkanPeran } from './peran-orang';
 
 const text = (name: string, label: string, required = true) => ({ name, label, type: 'text' as const, required });
 const number = (name: string, label: string, required = false) => ({ name, label, type: 'number' as const, required, step: 1 });
@@ -17,19 +17,20 @@ export const ENTITIES: Entity[] = [
     deskripsi: 'Data dasar satu orang, dipakai ulang oleh modul Santri, Kepegawaian, Wali, dan akun login. Buat satu baris per orang — jangan digandakan per peran.',
     idType: 'bigint',
     fields: [
-      { ...text('nama', 'Nama lengkap'), group: 'Identitas', span: 2, hint: 'Sesuai dokumen resmi, tanpa gelar.', placeholder: 'Windu Winarti' },
-      { name: 'jk', label: 'Jenis kelamin', type: 'select', options: ['L', 'P'], optionLabels: { L: 'Laki-laki', P: 'Perempuan' }, optionIcons: { L: 'lelaki', P: 'perempuan' }, required: true, group: 'Identitas' },
-      { ...text('nik', 'NIK', false), group: 'Identitas', hint: '16 digit KTP/KK. Harus unik — kosongkan bila belum punya.', placeholder: '3573xxxxxxxxxxxx' },
-      { ...text('hp', 'No. HP', false), group: 'Kontak', hint: 'Nomor WhatsApp aktif; dipakai modul notifikasi.', placeholder: '081234567890' },
-      { ...text('email', 'Email', false), group: 'Kontak', hint: 'Harus unik. Dipakai sebagai identitas login bila orang ini diberi akun.', placeholder: 'nama@contoh.com' },
+      { ...text('nama', 'Nama lengkap'), group: 'Identitas', span: 2, placeholder: 'Windu Winarti' },
+      { name: 'jk', label: 'Jenis kelamin', type: 'select', options: ['L', 'P'], optionLabels: { L: 'Laki-laki', P: 'Perempuan' }, optionIcons: { L: 'lelaki', P: 'perempuan' }, ikonSaja: true, required: true, group: 'Identitas' },
+      { ...text('nik', 'NIK', false), group: 'Identitas', hint: '16 digit, harus unik.', placeholder: '3573xxxxxxxxxxxx' },
+      { ...text('hp', 'No. HP', false), group: 'Kontak', hint: 'Nomor WhatsApp aktif.', placeholder: '081234567890' },
+      { ...text('email', 'Email', false), group: 'Kontak', hint: 'Harus unik; dipakai untuk login.', placeholder: 'nama@contoh.com' },
       { name: 'alamat', label: 'Jalan / dusun & no. rumah', type: 'textarea', group: 'Alamat', span: 3, placeholder: 'Jl. Mergosono Gg. 4 No. 17' },
-      { ...text('rt', 'RT', false), group: 'Alamat', placeholder: '03' },
-      { ...text('rw', 'RW', false), group: 'Alamat', placeholder: '05' },
+      { ...text('rt', 'RT / RW', false), group: 'Alamat', pasangan: 'rw', placeholder: 'RT' },
+      { ...text('rw', 'RW', false), group: 'Alamat', tersembunyi: true, placeholder: 'RW' },
       { ...text('kelurahan', 'Kelurahan / desa', false), group: 'Alamat', placeholder: 'Mergosono' },
       { ...text('kecamatan', 'Kecamatan', false), group: 'Alamat', placeholder: 'Kedungkandang' },
-      { ...text('kabupaten', 'Kota / kabupaten', false), group: 'Alamat', placeholder: 'Kota Malang' },
-      { name: 'aktif', label: 'Status keaktifan', type: 'boolean', labelYa: 'Aktif', group: 'Status', span: 3, hint: 'Nonaktifkan alih-alih menghapus bila orang ini sudah tidak berkegiatan — riwayat di modul lain tetap utuh.' },
+      { ...text('kabupaten', 'Kota / kabupaten', false), group: 'Alamat', span: 2, placeholder: 'Kota Malang' },
+      { name: 'aktif', label: 'Status keaktifan', type: 'boolean', labelYa: 'Aktif', group: 'Status', span: 3, hint: 'Nonaktifkan alih-alih menghapus — riwayat modul lain tetap utuh.' },
       ...FIELD_PERAN,
+      FILTER_KATEGORI_ORANG,
     ],
     columns: columns(['nama', 'Nama'], ['jk', 'JK'], ['hp', 'HP'], ['email', 'Email'], ['aktif', 'Aktif']),
     orderBy: { nama: 'asc' },
