@@ -3,13 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ClientEntity, ClientField, Keterkaitan, Row } from '@/lib/crud/types';
-
-const inputValue = (field: ClientField, row?: Row) => {
-  const raw = row?.[field.name];
-  if (raw === null || raw === undefined) return '';
-  if (field.type === 'date') return String(raw).slice(0, 10);
-  return String(raw);
-};
+import { InputField } from '@/components/molecules/InputField';
 
 const IkonTambah = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>;
 const IkonUbah = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /></svg>;
@@ -108,26 +102,12 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
           {kelompokkan(entity.fields).map((grup) => <fieldset className="grup-form" key={grup.judul}>
           <legend>{grup.judul}</legend>
           <div className="grid g3">
-            {grup.fields.map((field) => <div className="field" key={field.name}>
-              <label htmlFor={`${entity.key}-${field.name}`}>
+            {grup.fields.map((field) => <div className="field" key={field.name} style={field.span ? { gridColumn: `span ${field.span}` } : undefined}>
+              <label id={`${entity.key}-${field.name}-label`} htmlFor={`${entity.key}-${field.name}`}>
                 {field.label}
                 {field.required && <span className="wajib" title="Wajib diisi"> *</span>}
               </label>
-              {field.refOptions
-                ? <select id={`${entity.key}-${field.name}`} name={field.name} required={field.required} defaultValue={inputValue(field, editing ?? undefined)}>
-                    <option value="">Pilih…</option>
-                    {field.refOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
-                  </select>
-                : field.type === 'textarea'
-                  ? <textarea id={`${entity.key}-${field.name}`} name={field.name} required={field.required} defaultValue={inputValue(field, editing ?? undefined)} rows={3} />
-                  : field.type === 'select'
-                    ? <select id={`${entity.key}-${field.name}`} name={field.name} required={field.required} defaultValue={inputValue(field, editing ?? undefined)}>
-                        <option value="">Pilih…</option>
-                        {field.options?.map((option) => <option key={option} value={option}>{option}</option>)}
-                      </select>
-                    : field.type === 'boolean'
-                      ? <label className="saklar"><input id={`${entity.key}-${field.name}`} name={field.name} type="checkbox" defaultChecked={editing ? Boolean(editing[field.name]) : true} /> <span>Ya</span></label>
-                      : <input id={`${entity.key}-${field.name}`} name={field.name} type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'} step={field.step} required={field.required} placeholder={field.placeholder} defaultValue={inputValue(field, editing ?? undefined)} />}
+              <InputField field={field} id={`${entity.key}-${field.name}`} row={editing ?? undefined} />
               {field.hint && <p className="petunjuk">{field.hint}</p>}
             </div>)}
           </div>

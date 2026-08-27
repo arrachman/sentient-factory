@@ -1,0 +1,66 @@
+'use client';
+
+import type { ClientField, Row } from '@/lib/crud/types';
+
+const nilaiAwal = (field: ClientField, row?: Row) => {
+  const raw = row?.[field.name];
+  if (raw === null || raw === undefined) return '';
+  if (field.type === 'date') return String(raw).slice(0, 10);
+  return String(raw);
+};
+
+/** Pilihan sedikit (≤3) lebih cepat dibaca sebagai tombol daripada dropdown. */
+const AMBANG_SEGMEN = 3;
+
+type Props = { field: ClientField; id: string; row?: Row };
+
+/** Satu kontrol form sesuai tipe field — segmented untuk opsi sedikit, toggle untuk boolean. */
+export function InputField({ field, id, row }: Props) {
+  const nilai = nilaiAwal(field, row);
+
+  if (field.type === 'boolean') {
+    const aktif = row ? Boolean(row[field.name]) : true;
+    return <label className="toggle">
+      <input id={id} name={field.name} type="checkbox" defaultChecked={aktif} />
+      <span className="toggle-jalur" aria-hidden><span className="toggle-bulat" /></span>
+      <span className="toggle-teks">{field.labelYa ?? 'Aktif'}</span>
+    </label>;
+  }
+
+  if (field.refOptions) {
+    return <select id={id} name={field.name} required={field.required} defaultValue={nilai}>
+      <option value="">Pilih…</option>
+      {field.refOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+    </select>;
+  }
+
+  if (field.type === 'select' && field.options) {
+    // Radio bergaya segmented: seluruh opsi terlihat sekaligus, satu klik untuk ganti.
+    if (field.options.length <= AMBANG_SEGMEN) {
+      return <div className="segmen" role="radiogroup" aria-labelledby={`${id}-label`}>
+        {field.options.map((option) => <label className="segmen-opsi" key={option}>
+          <input type="radio" name={field.name} value={option} required={field.required} defaultChecked={nilai === option} />
+          <span>{field.optionLabels?.[option] ?? option}</span>
+        </label>)}
+      </div>;
+    }
+    return <select id={id} name={field.name} required={field.required} defaultValue={nilai}>
+      <option value="">Pilih…</option>
+      {field.options.map((option) => <option key={option} value={option}>{field.optionLabels?.[option] ?? option}</option>)}
+    </select>;
+  }
+
+  if (field.type === 'textarea') {
+    return <textarea id={id} name={field.name} required={field.required} placeholder={field.placeholder} defaultValue={nilai} rows={3} />;
+  }
+
+  return <input
+    id={id}
+    name={field.name}
+    type={field.type === 'number' ? 'number' : field.type === 'date' ? 'date' : 'text'}
+    step={field.step}
+    required={field.required}
+    placeholder={field.placeholder}
+    defaultValue={nilai}
+  />;
+}

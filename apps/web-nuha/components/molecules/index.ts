@@ -1,6 +1,7 @@
 export * from './Card';
 export * from './FilterBar';
 export * from './JudulHalaman';
+export * from './InputField';
 export * from './LimitPicker';
 export * from './Pagination';
 export * from './StatCard';

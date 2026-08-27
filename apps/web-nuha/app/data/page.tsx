@@ -28,10 +28,17 @@ export default async function DataPage() {
         <IkonMenu menuKey={menuKey} path={menuInfo.get(menuKey)?.icon} size={18} />
         {menuInfo.get(menuKey)?.label ?? menuKey}
       </h4>
-      <div className="grid g3">{items.map((entity) => <Link className="card" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }} href={`/data/${entity.key}`} key={entity.key}>
-        <IkonMenu menuKey={menuKey} path={menuInfo.get(menuKey)?.icon} size={16} />
-        <strong>{entity.label}</strong>
-      </Link>)}</div>
+      <div className="grid g3">
+        {items.map((entity) => <Link className="card" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }} href={`/data/${entity.key}`} key={entity.key}>
+          <IkonMenu menuKey={menuKey} path={menuInfo.get(menuKey)?.icon} size={16} />
+          <strong>{entity.label}</strong>
+        </Link>)}
+        {/* Relasi wali bukan tabel CRUD biasa (pasangan wali↔anak), jadi punya halaman sendiri. */}
+        {menuKey === 'induk' && <Link className="card" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }} href="/data/wali">
+          <IkonMenu menuKey={menuKey} path={menuInfo.get(menuKey)?.icon} size={16} />
+          <strong>Wali santri</strong>
+        </Link>}
+      </div>
     </div>)}
   </Shell>;
 }

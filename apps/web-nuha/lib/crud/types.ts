@@ -27,6 +27,12 @@ export type Field = {
   hint?: string;
   /** Contoh isian, ditaruh sebagai placeholder. */
   placeholder?: string;
+  /** Label ramah per opsi select, mis. { L: 'Laki-laki' }. */
+  optionLabels?: Record<string, string>;
+  /** Teks di sisi toggle boolean, mis. 'Aktif'. */
+  labelYa?: string;
+  /** Lebar kolom di grid form: 1 (default) sampai 3. */
+  span?: 1 | 2 | 3;
 };
 
 /** Tautan ke modul lain yang memakai baris ini (mis. Orang → Santri/Pegawai/Akun). */
