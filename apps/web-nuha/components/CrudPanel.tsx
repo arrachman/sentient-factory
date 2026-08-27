@@ -100,12 +100,12 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
 
     <div className="tabel-wrap">
       <table className="table-compact" style={{ marginTop: 12 }}>
-        <thead><tr>{entity.columns.map((column) => <th key={column.name}>{column.label}</th>)}<th>Aksi</th></tr></thead>
+        <thead><tr>{entity.columns.map((column) => <th key={column.name}>{column.label}</th>)}<th style={{ textAlign: 'center' }}>Aksi</th></tr></thead>
         <tbody>
           {rows.length === 0 && <tr><td colSpan={entity.columns.length + 1} className="muted">Belum ada data.</td></tr>}
           {rows.map((row) => <tr key={row.id} data-testid={`row-${entity.key}`}>
             {entity.columns.map((column) => <td key={column.name}>{display(row[column.name], refByField.get(column.name))}</td>)}
-            <td><div style={{ display: 'flex', gap: 6 }}>
+            <td><div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
               <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Ubah" aria-label="Ubah" onClick={() => { setEditing(row); setOpen(true); setMessage(''); }}><IkonUbah /></button>
               <button className="btn btn-sekunder btn-icon" type="button" disabled={busy} title="Hapus" aria-label="Hapus" onClick={() => { if (window.confirm(`Hapus ${entity.label.toLowerCase()} ini?`)) void send('DELETE', { id: row.id }); }}><IkonHapus /></button>
             </div></td>
