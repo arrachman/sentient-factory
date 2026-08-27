@@ -4,6 +4,14 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-27 — Field data pribadi di Identitas Orang (babfded3)
+
+Form `/data/orang` kini punya grup **Data pribadi**: anak ke-, jumlah saudara
+kandung, asal sekolah, hobi, dan cita-cita. Kolomnya sudah ada di tabel
+`orang` sejak migrasi `20260826120638_fase1_fase2_data_client` — perubahan ini
+hanya memaparkannya di registry CRUD, jadi tidak ada migrasi baru. Semua
+opsional; baris lama tetap valid tanpa diisi.
+
 ## 2026-08-27 — Rapikan form modal CRUD (151f6d01)
 
 Form di modal `/data/*` sekarang 2 kolom (dari 3) sehingga field tak lagi
