@@ -141,6 +141,7 @@ export const toClientEntity = async (entity: Entity): Promise<ClientEntity> => (
   key: entity.key,
   label: entity.label,
   deskripsi: entity.deskripsi,
+  formLebar: entity.formLebar,
   fields: await Promise.all(entity.fields.map(async ({ ref, ...field }) => (
     ref ? { ...field, refOptions: await loadRefOptions(ref) } : field
   ))),

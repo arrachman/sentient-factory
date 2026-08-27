@@ -154,6 +154,9 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
   background: #fff; border-radius: var(--radius); padding: 22px;
   width: 100%; max-width: 640px; box-shadow: 0 20px 50px rgba(10, 74, 43, 0.18);
 }
+/* Form berfield banyak (mis. Identitas orang): melebar agar tidak memanjang
+   ke bawah. Di layar sempit tetap ikut breakpoint .g3 di bawah. */
+.modal-lebar { max-width: 1020px; }
 .modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
 .modal-head h3 { margin: 0; }
 /* Aksi form modal: menempel di bawah, dipisah garis dari field terakhir. */
@@ -390,6 +393,8 @@ label.toggle, .field label.toggle {
 
 @media (max-width: 600px) {
   .g4, .g3, .g2 { grid-template-columns: 1fr; }
+  /* Satu kolom: field ber-span apa pun tetap satu baris penuh. */
+  .grid-form > .field { grid-column: 1 / -1 !important; }
   .menuitem { min-width: 64px; }
   .menulabel { font-size: 9.5px; }
 }
