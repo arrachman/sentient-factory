@@ -605,7 +605,7 @@ async function main() {
     });
     const santri = await prisma.santri.upsert({
       where: { orangId: orang.id },
-      create: { orangId: orang.id, nis: String(row.nis), nisn: String(row.nisn), unitId: unit?.id, kelasId: kelas?.id, kamarId: kamar?.id, status: String(row.status) === 'Mukim' ? StatusSantri.Mukim : StatusSantri.Kalong, program: String(row.program), tahunMasuk: String(row.masuk) },
+      create: { orangId: orang.id, nis: String(row.nis), nisn: String(row.nisn), unitId: unit?.id, kelasId: kelas?.id, kamarId: kamar?.id, status: StatusSantri.Mukim, program: String(row.program), tahunMasuk: String(row.masuk) },
       update: { unitId: unit?.id, kelasId: kelas?.id, kamarId: kamar?.id, program: String(row.program) },
     });
     santriByName.set(String(row.nama), santri);

@@ -14,7 +14,7 @@ const KELAS_STATUS: Record<string, string> = {
   Lulus: 'badge-hijau', 'Sudah kembali': 'badge-hijau', Hadir: 'badge-hijau',
   Terkirim: 'badge-biru', Seleksi: 'badge-biru', Putra: 'badge-biru',
   Sebagian: 'badge-kuning', Menunggu: 'badge-kuning', Baru: 'badge-kuning', Verifikasi: 'badge-kuning',
-  Kalong: 'badge-kuning', Draft: 'badge-kuning', 'Dry-run': 'badge-kuning', Izin: 'badge-kuning',
+  Draft: 'badge-kuning', 'Dry-run': 'badge-kuning', Izin: 'badge-kuning',
   'Menunggu verifikasi': 'badge-kuning', Revisi: 'badge-kuning', Sakit: 'badge-kuning',
   'Belum bayar': 'badge-merah', 'Tidak Lulus': 'badge-merah', 'Telat kembali': 'badge-merah',
   Gagal: 'badge-merah', Alpa: 'badge-merah',

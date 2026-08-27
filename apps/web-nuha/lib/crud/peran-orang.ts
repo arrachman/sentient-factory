@@ -49,15 +49,6 @@ export const FIELD_PERAN: Field[] = [
     placeholder: '2026001',
   },
   {
-    name: 'peranStatusSantri',
-    label: 'Status santri',
-    type: 'select',
-    virtual: true,
-    group: 'Peran',
-    options: ['Mukim', 'Kalong'],
-    tampilBila: tampilBila(['santri']),
-  },
-  {
     name: 'peranNip',
     label: 'NIP',
     type: 'text',
@@ -212,9 +203,8 @@ export async function daftarkanPeran(orangId: string, input: Record<string, unkn
   if (peran === 'santri') {
     if (!(await prisma.santri.count({ where: { orangId: id } }))) {
       const nis = teks(input, 'peranNis') || null;
-      const status = teks(input, 'peranStatusSantri') === 'Kalong' ? 'Kalong' : 'Mukim';
-      await prisma.santri.create({ data: { orangId: id, nis, status } });
-      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran, nis, status }, aktor);
+      await prisma.santri.create({ data: { orangId: id, nis, status: 'Mukim' } });
+      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran, nis }, aktor);
     }
     // Santri boleh punya beberapa wali (ayah, ibu, wali lain).
     for (const wali of bacaRelasi(input, 'peranWali')) {
@@ -284,14 +274,13 @@ export async function selaraskanPeran(orangId: string, input: Record<string, unk
 
   if (peran === 'santri') {
     const nis = teks(input, 'peranNis') || null;
-    const status = teks(input, 'peranStatusSantri') === 'Kalong' ? 'Kalong' : 'Mukim';
     const ada = await prisma.santri.count({ where: { orangId: id } });
     if (ada) {
-      await prisma.santri.update({ where: { orangId: id }, data: { nis, status } });
-      await catat(orangId, `Memperbarui data santri${nis ? ` (NIS ${nis})` : ''}`, { nis, status }, aktor, 'CRUD_UPDATE');
+      await prisma.santri.update({ where: { orangId: id }, data: { nis } });
+      await catat(orangId, `Memperbarui data santri${nis ? ` (NIS ${nis})` : ''}`, { nis }, aktor, 'CRUD_UPDATE');
     } else {
-      await prisma.santri.create({ data: { orangId: id, nis, status } });
-      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran, nis, status }, aktor);
+      await prisma.santri.create({ data: { orangId: id, nis, status: 'Mukim' } });
+      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran, nis }, aktor);
     }
     if ('peranWali' in input) await selaraskanRelasi(orangId, 'wali', bacaRelasi(input, 'peranWali'), id, aktor);
     return;

@@ -2,7 +2,7 @@ import type { Prisma } from '@prisma/client';
 
 /** Status santri yang boleh dipilih di penyaring. Sengaja dieja di sini (bukan
  * impor enum) supaya nilai tak dikenal dari URL tidak lolos ke Prisma. */
-export const STATUS_SANTRI = ['Mukim', 'Kalong', 'Alumni', 'Keluar'] as const;
+export const STATUS_SANTRI = ['Mukim', 'Alumni', 'Keluar'] as const;
 export type StatusPilihan = (typeof STATUS_SANTRI)[number];
 
 /** Urutan daftar santri. Kunci ikut ke URL, jadi dieja eksplisit. */

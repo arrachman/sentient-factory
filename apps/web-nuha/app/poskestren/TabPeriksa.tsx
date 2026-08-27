@@ -6,7 +6,7 @@ const LANJUT_OPSI = ['Istirahat di kamar', 'Rawat Poskestren', 'Rujuk Puskesmas'
 
 export async function TabPeriksa() {
   const santri = await prisma.santri.findMany({
-    where: { status: { in: ['Mukim', 'Kalong'] } },
+    where: { status: 'Mukim' },
     include: { orang: true },
     orderBy: { orang: { nama: 'asc' } },
   });

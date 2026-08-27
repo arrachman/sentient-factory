@@ -14,7 +14,6 @@ export type BarisDaftar = {
 
 const WARNA_STATUS: Record<string, string> = {
   Mukim: 'badge-hijau',
-  Kalong: 'badge-biru',
   Alumni: 'badge-netral',
   Keluar: 'badge-merah',
 };

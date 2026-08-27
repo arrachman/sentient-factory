@@ -13,7 +13,6 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
 
   const jumlahRekamMedis = await prisma.rekamMedis.count({ where: { santriId } });
   const mukim = santri.status === 'Mukim';
-  const kalong = santri.status === 'Kalong';
 
   return (
     <div className="grid g2">
@@ -40,12 +39,6 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
             <div className="muted" style={{ marginTop: 3 }}>
               Asrama {santri.kamar?.asrama.nama ?? '-'} kamar {santri.kamar?.kode ?? '-'} · program {santri.program ?? '-'}
             </div>
-          </div>
-        )}
-        {kalong && (
-          <div className="inset" style={{ background: '#FEF9F3', border: '1px solid #EED9C0' }}>
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#9A3412' }}>Santri kalong (tidak mukim)</div>
-            <div className="muted" style={{ marginTop: 3 }}>Mengikuti diniyah sore, tidak menempati asrama.</div>
           </div>
         )}
         <div className="inset" style={{ background: '#F5F8FF', border: '1px solid #CBD9F5' }}>

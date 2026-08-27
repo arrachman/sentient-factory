@@ -13,11 +13,10 @@ export default async function DashboardPage() {
   if (!(await readSession())) redirect('/beranda');
   const session = await requirePage('dashboard');
 
-  const [santri, mukim, kalong, alumni, pegawai, pendaftar, tagihan, unit, kas, agenda, pengumuman] =
+  const [santri, mukim, alumni, pegawai, pendaftar, tagihan, unit, kas, agenda, pengumuman] =
     await Promise.all([
-      prisma.santri.count({ where: { status: { in: ['Mukim', 'Kalong'] } } }),
       prisma.santri.count({ where: { status: 'Mukim' } }),
-      prisma.santri.count({ where: { status: 'Kalong' } }),
+      prisma.santri.count({ where: { status: 'Mukim' } }),
       prisma.santri.count({ where: { status: 'Alumni' } }),
       prisma.pegawai.count({ where: { status: { notIn: ['Nonaktif', 'Keluar', 'Pensiun'] } } }),
       prisma.pendaftar.count({ where: { status: { in: ['Baru', 'Verifikasi', 'Seleksi'] } } }),
@@ -39,7 +38,7 @@ export default async function DashboardPage() {
   // Tren dibangun dari tahun masuk yang tercatat — bukan angka konstan.
   const perTahun = await prisma.santri.groupBy({
     by: ['tahunMasuk'],
-    where: { tahunMasuk: { not: null }, status: { in: ['Mukim', 'Kalong', 'Alumni'] } },
+    where: { tahunMasuk: { not: null }, status: { in: ['Mukim', 'Alumni'] } },
     _count: { _all: true },
   });
   const tren = perTahun
@@ -50,7 +49,6 @@ export default async function DashboardPage() {
 
   const donut = [
     { label: 'Santri mukim', nilai: mukim, warna: '#0F6B3D' },
-    { label: 'Santri kalong', nilai: kalong, warna: '#E8973A' },
     { label: 'Pegawai & asatidz', nilai: pegawai, warna: '#1D4ED8' },
     { label: 'Alumni terdata', nilai: alumni, warna: '#9CA3AF' },
   ].filter((d) => d.nilai > 0);
@@ -65,7 +63,7 @@ export default async function DashboardPage() {
       />
 
       <section className="grid g4">
-        <StatCard label="Santri aktif" nilai={santri} sub={`${mukim} mukim · ${kalong} kalong`} />
+        <StatCard label="Santri aktif" nilai={santri} sub="Seluruh santri mukim" />
         <StatCard label="Pegawai & asatidz" nilai={pegawai} sub="Tetap, kontrak, honorer & mitra" warna="#1D4ED8" />
         <StatCard label="PPDB perlu diproses" nilai={pendaftar} sub="Baru · verifikasi · seleksi" warna="#E8973A" />
         <StatCard label="Ketertagihan" nilai={`${pctTertagih}%`} sub={`Tunggakan ${rp(tunggakan)}`} pct={pctTertagih} />

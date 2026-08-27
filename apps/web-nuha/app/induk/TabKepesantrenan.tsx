@@ -19,7 +19,7 @@ export async function TabKepesantrenan({ santriId }: { santriId: bigint }) {
         <div className="inset">
           <div className="label">Penempatan</div>
           <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--hijau-gelap)', marginTop: 6 }}>
-            {santri.kamar ? `Asrama ${santri.kamar.asrama.nama} · Kamar ${santri.kamar.kode}` : 'Tidak menempati asrama (kalong)'}
+            {santri.kamar ? `Asrama ${santri.kamar.asrama.nama} · Kamar ${santri.kamar.kode}` : 'Belum ditempatkan di asrama'}
           </div>
           <div className="muted" style={{ marginTop: 3 }}>Program {santri.program ?? '-'} · status {santri.status}</div>
         </div>

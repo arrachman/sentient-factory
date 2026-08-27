@@ -14,9 +14,7 @@ export type SantriDetail = {
 export function HeaderSantri({ sel }: { sel: SantriDetail }) {
   const peran = sel.status === 'Mukim'
     ? `Siswa ${sel.unit?.nama ?? '-'} · Santri mukim`
-    : sel.status === 'Kalong'
-      ? `Siswa ${sel.unit?.nama ?? '-'} (santri kalong)`
-      : `Siswa ${sel.unit?.nama ?? '-'}`;
+    : `Siswa ${sel.unit?.nama ?? '-'}`;
 
   return (
     <div className="card" style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>

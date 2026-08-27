@@ -254,7 +254,6 @@ async function jalankan(): Promise<void> {
       }
       kelasId = idKelas;
       tahunMasuk = String(TAHUN_AJARAN_AKTIF_UNTUK_MASUK - (Number(tingkat) - 7));
-      status = StatusSantri.Kalong;
     }
 
     const orang = await prisma.orang.upsert({

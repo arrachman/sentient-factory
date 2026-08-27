@@ -63,7 +63,7 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', borderTop: '1px solid var(--garis)', paddingTop: 10 }}>
         <Kelompok
           judul="Status"
-          anak={STATUS_SANTRI.filter((s) => s !== 'Mukim' && s !== 'Kalong').map((s) => (
+          anak={STATUS_SANTRI.filter((s) => s !== 'Mukim').map((s) => (
             <Opsi key={s} f={f} ubah={{ status: s }} aktif={f.status === s} anak={s} />
           ))}
         />
