@@ -1,7 +1,6 @@
 'use client';
 
 import { FormEvent, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import type { ClientEntity, ClientField, Column, Keterkaitan, Row } from '@/lib/crud/types';
 import { InputField } from '@/components/molecules/InputField';
 
@@ -80,8 +79,8 @@ function nilaiPemicu(fields: ClientField[], dipilih: Record<string, string>, row
   return hasil;
 }
 
-export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] }) {
-  const router = useRouter();
+export function CrudPanel({ entity, rows: initialRows }: { entity: ClientEntity; rows: Row[] }) {
+  const [rows, setRows] = useState<Row[]>(initialRows);
   const [editing, setEditing] = useState<Row | null>(null);
   const [pilihan, setPilihan] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false);
@@ -94,14 +93,24 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
 
   async function send(method: 'POST' | 'PATCH' | 'DELETE', payload: Record<string, unknown>) {
     setBusy(true);
-    const response = await fetch(`/api/crud/${entity.key}`, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
-    const result = await response.json();
-    setBusy(false);
-    if (!result.success) return setMessage(result.error?.message ?? 'Operasi gagal.');
-    setMessage(method === 'DELETE' ? 'Data dihapus.' : 'Data tersimpan.');
-    setOpen(false);
-    setEditing(null);
-    router.refresh();
+    try {
+      const response = await fetch(`/api/crud/${entity.key}`, { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
+      const result = await response.json();
+      if (!result.success) return setMessage(result.error?.message ?? 'Operasi gagal.');
+
+      const daftar = await fetch(`/api/crud/${entity.key}`);
+      const hasilDaftar = await daftar.json();
+      if (!hasilDaftar.success) return setMessage(hasilDaftar.error?.message ?? 'Gagal memuat daftar terbaru.');
+
+      setRows(hasilDaftar.data);
+      setMessage(method === 'DELETE' ? 'Data dihapus.' : 'Data tersimpan.');
+      setOpen(false);
+      setEditing(null);
+    } catch {
+      setMessage('Koneksi bermasalah. Coba lagi.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   /**
