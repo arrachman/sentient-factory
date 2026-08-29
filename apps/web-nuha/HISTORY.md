@@ -4,6 +4,16 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Filter status kembali di /induk (`56371750`)
+
+Chip **Status** (Aktif / Alumni / Keluar) di penyaring `/induk` hilang sejak
+`6cd16b95` yang membatasi halaman ke santri Mukim. Sekarang dikembalikan:
+`?status=` dibaca lagi, chip aktifnya muncul di baris "filter aktif", dan
+bawaan tanpa pilihan tetap Mukim. Memilih status membersihkan cabang "Alumni"
+per unit di pohon lembaga (keduanya menjawab pertanyaan yang sama), dan cabang
+"Belum berkelas" disembunyikan saat status non-aktif karena tidak menyaring apa
+pun. Operator: alumni kini bisa dilihat lintas unit lewat chip Alumni.
+
 ## 2026-08-29 — 7 santri masuk Madin Tingkat VI (Kelas 6) TA 2026/2027
 
 Skrip `prisma/import/import-santri-madin-6-2026.ts` (`npm run
