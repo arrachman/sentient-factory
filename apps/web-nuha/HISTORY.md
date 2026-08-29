@@ -4,7 +4,7 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
-## 2026-08-29 — Gabungkan duplikat santri Madin: Bismar & Wardatul (`PENDING`)
+## 2026-08-29 — Gabungkan duplikat santri Madin: Bismar & Wardatul (`ecf4f2d0`)
 
 Wardatul Haizatil Husna dan M. Bismar As Sidiq muncul **dua kali** sebagai
 santri Madin Kelas 6. Penyebabnya sama seperti kasus Alfan Jamil: mereka sudah
