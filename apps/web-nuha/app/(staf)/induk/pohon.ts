@@ -83,12 +83,16 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
           jumlah: kelas.reduce((a, k) => a + k.jumlah, 0),
         }))
         .sort((a, b) => a.tingkat.localeCompare(b.tingkat, 'id', { numeric: true }));
+      const alumni = alumniPerUnit.get(u.id) ?? 0;
+      // Saat menyaring status Alumni, cacah per kelas selalu 0 (alumni tidak
+      // menempati rombel), jadi angka lembaga diambil dari riwayat alumni —
+      // tanpa ini seluruh baris lembaga tampil 0 padahal hasilnya tidak kosong.
       return {
         id: u.id,
         nama: u.nama,
-        jumlah: tingkat.reduce((a, t) => a + t.jumlah, 0),
+        jumlah: f.status === 'Alumni' ? alumni : tingkat.reduce((a, t) => a + t.jumlah, 0),
         tingkat,
-        alumni: alumniPerUnit.get(u.id) ?? 0,
+        alumni,
       };
     });
 

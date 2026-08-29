@@ -48,8 +48,15 @@ export function bacaFilter(sp: Record<string, string | string[] | undefined>): F
  * Kelas menang atas unit karena kelas sudah menyiratkan unitnya. */
 export function whereFilter(f: FilterInduk): Prisma.SantriWhereInput {
   const syarat: Prisma.SantriWhereInput[] = [];
-  if (f.alumniUnitId) {
-    syarat.push({ orang: { riwayatPendidikan: { some: { unitId: f.alumniUnitId, status: 'Alumni' } } } });
+  // "Alumni" selalu dijawab dari `RiwayatPendidikan`, bukan kolom `santri.status`.
+  // Alasannya: santri yang lulus SMP lalu mukim di MA tetap beralumni SMP,
+  // padahal statusnya kini `Mukim`. Memakai kolom status akan menghilangkan
+  // mereka (17 dari 24 alumni SMP) dan membuat chip Alumni tidak cocok dengan
+  // cabang "Alumni" per unit di pohon lembaga. Karena itu syarat unit/kelas/
+  // status aktif diabaikan di cabang ini — unit disaring lewat riwayatnya.
+  const unitAlumni = f.alumniUnitId ?? (f.status === 'Alumni' ? f.unitId : undefined);
+  if (f.alumniUnitId || f.status === 'Alumni') {
+    syarat.push({ orang: { riwayatPendidikan: { some: { status: 'Alumni', ...(unitAlumni ? { unitId: unitAlumni } : {}) } } } });
   } else {
     if (f.kelasId === 'none') syarat.push({ kelasId: null });
     else if (f.kelasId) syarat.push({ kelasId: f.kelasId });
@@ -93,13 +100,19 @@ export function hrefInduk(
 ): string {
   // Simpul Alumni dan simpul unit/kelas saling meniadakan: keduanya menjawab
   // "santri mana", jadi memilih salah satu harus membersihkan yang lain.
-  // Status non-aktif (Alumni/Keluar) juga membuang unit/kelas: santri berstatus
-  // itu tidak lagi terikat kelas, jadi menahan `kelas=none` dari klik sebelumnya
-  // hanya menyisakan penyaring yang tidak menyaring apa pun.
+  // Status non-aktif (Alumni/Keluar) membuang kelas: santri berstatus itu tidak
+  // lagi terikat rombel, jadi menahan `kelas=none` dari klik sebelumnya hanya
+  // menyisakan penyaring yang tidak menyaring apa pun. Unit tetap dipertahankan
+  // untuk Alumni — di sana unit berarti "alumni lembaga mana" (lewat riwayat),
+  // sebuah pertanyaan yang masih masuk akal; untuk Keluar unit ikut dibuang.
   const bersih: Partial<FilterInduk> = 'alumniUnitId' in ubah
     ? { unitId: undefined, kelasId: undefined }
     : 'status' in ubah
-      ? { alumniUnitId: undefined, ...(ubah.status && ubah.status !== STATUS_AKTIF ? { unitId: undefined, kelasId: undefined } : {}) }
+      ? {
+          alumniUnitId: undefined,
+          ...(ubah.status && ubah.status !== STATUS_AKTIF ? { kelasId: undefined } : {}),
+          ...(ubah.status === 'Keluar' ? { unitId: undefined } : {}),
+        }
       : ('unitId' in ubah || 'kelasId' in ubah) ? { alumniUnitId: undefined } : {};
   const gabung = { ...f, ...bersih, ...ubah };
   const p = new URLSearchParams(queryFilter(gabung));
