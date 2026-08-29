@@ -3,7 +3,7 @@ import { whereFilter, type FilterInduk } from './filter';
 
 export type SimpulKelas = { id: number; nama: string; jumlah: number };
 export type SimpulTingkat = { tingkat: string; label: string; jumlah: number; kelas: SimpulKelas[] };
-export type SimpulUnit = { id: number; nama: string; jumlah: number; tingkat: SimpulTingkat[] };
+export type SimpulUnit = { id: number; nama: string; jumlah: number; tingkat: SimpulTingkat[]; alumni: number };
 
 /** Urutan tampil lembaga di pohon: SMP lebih dulu, lalu MA, lalu Madin. */
 const URUTAN_UNIT = ['SMP', 'MA', 'Madin'];
@@ -29,7 +29,7 @@ export type PohonInduk = {
  * Cacah menghormati filter selain unit/kelas (status, JK, angkatan, pencarian),
  * supaya angka di pohon = angka yang benar-benar akan muncul saat simpul diklik. */
 export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
-  const whereDasar = whereFilter({ ...f, unitId: undefined, kelasId: undefined });
+  const whereDasar = whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: undefined });
 
   const [unitRows, kelasRows, cacah, total, tanpaKelas] = await Promise.all([
     // Poskestren bukan lembaga tempat santri terdaftar (layanan kesehatan,
@@ -43,6 +43,16 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
 
   const perKelas = new Map<number, number>();
   for (const b of cacah) if (b.kelasId !== null) perKelas.set(b.kelasId, b._count._all);
+
+  // Cacah alumni per unit dihitung lewat `whereFilter` sendiri (bukan turunan
+  // `whereDasar`) karena syarat alumni bersandar pada RiwayatPendidikan, tidak
+  // memaksa status Mukim — alumni SMP yang kini mukim di MA tetap ikut terhitung.
+  const alumniPerUnit = new Map<number, number>(
+    await Promise.all(unitRows.map(async (u): Promise<[number, number]> => [
+      u.id,
+      await prisma.santri.count({ where: whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: u.id }) }),
+    ])),
+  );
 
   const unit: SimpulUnit[] = unitRows
     .slice()
@@ -68,6 +78,7 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
         nama: u.nama,
         jumlah: tingkat.reduce((a, t) => a + t.jumlah, 0),
         tingkat,
+        alumni: alumniPerUnit.get(u.id) ?? 0,
       };
     });
 

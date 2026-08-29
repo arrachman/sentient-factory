@@ -4,6 +4,24 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Cabang Alumni /induk dikembalikan, tidak lagi peduli kelas
+
+Commit `6cd16b95` sempat menghapus total cabang "Alumni" dari pohon lembaga
+`/induk` (hanya sisakan santri aktif/Mukim). Dikembalikan karena kebutuhan
+operator: melihat siapa saja alumni satu unit, terlepas dari kelas/penempatan
+aktifnya sekarang.
+
+`filter.ts` `whereFilter` kembali punya cabang `alumniUnitId`: saat dipilih,
+syarat kelas/unit/status aktif **sama sekali diabaikan** — santri disaring
+murni lewat `RiwayatPendidikan` (unit + status Alumni). Santri yang alumni SMP
+tapi kini mukim MA tetap muncul di cabang Alumni SMP. `hrefInduk` membuat
+simpul Alumni dan simpul unit/kelas saling meniadakan (pilih satu, yang lain
+kebersih). `pohon.ts` menghitung cacah alumni per unit lewat query terpisah
+(bukan turunan `whereDasar`) dengan alasan yang sama. `PohonLembaga.tsx`
+merender simpul Alumni per unit lagi.
+
+Verifikasi: `npx tsc --noEmit` bersih untuk modul `/induk`.
+
 ## 2026-08-29 — MA Kelas 1 TA 2026/2027 dikembalikan ke 8 santri resmi
 
 Skrip baru `prisma/import/perbaiki-ma-kelas1-2026.ts` (`npm run

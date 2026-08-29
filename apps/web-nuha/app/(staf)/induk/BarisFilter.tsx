@@ -30,6 +30,7 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
   // menyorot pilihannya, jadi chip-nya cuma duplikat yang bikin baris ini ramai.
   const copot: ChipFilter[] = [
     ...(f.q ? [{ label: `Cari: "${f.q}"`, href: hrefInduk(f, { q: '' }) }] : []),
+    ...(f.alumniUnitId ? [{ label: 'Alumni', href: hrefInduk(f, { alumniUnitId: undefined }) }] : []),
     ...(f.jk ? [{ label: `Jenis kelamin: ${f.jk === 'L' ? 'Putra' : 'Putri'}`, href: hrefInduk(f, { jk: undefined }) }] : []),
     ...(f.angkatan ? [{ label: `Angkatan: ${f.angkatan}`, href: hrefInduk(f, { angkatan: undefined }) }] : []),
   ];
@@ -40,6 +41,7 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
         <form action="/induk" method="get" style={{ display: 'flex', gap: 7, alignItems: 'center', flex: '1 1 260px' }}>
           {f.unitId && <input type="hidden" name="unit" value={f.unitId} />}
           {f.kelasId && <input type="hidden" name="kelas" value={f.kelasId} />}
+          {f.alumniUnitId && <input type="hidden" name="alumni" value={f.alumniUnitId} />}
           {f.angkatan && <input type="hidden" name="angkatan" value={f.angkatan} />}
           <input
             type="search"

@@ -41,7 +41,8 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
 
       {pohon.unit.map((u) => {
         const unitAktif = f.unitId === u.id && !f.kelasId;
-        const terbuka = f.unitId === u.id || kelasTerpilihUnit === u.id;
+        const alumniAktif = f.alumniUnitId === u.id;
+        const terbuka = f.unitId === u.id || kelasTerpilihUnit === u.id || alumniAktif;
         return (
           <details key={u.id} open={terbuka}>
             <summary style={{ listStyle: 'none', cursor: 'pointer' }}>
@@ -95,6 +96,12 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
               );
             })}
 
+            {(u.alumni > 0 || alumniAktif) && (
+              <Link href={hrefInduk(f, { alumniUnitId: u.id })} style={baris(alumniAktif, 1)}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Alumni</span>
+                <Cacah n={u.alumni} aktif={alumniAktif} />
+              </Link>
+            )}
           </details>
         );
       })}
