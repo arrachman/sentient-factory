@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { PenyaringOtomatis } from '@/components';
 import { hrefAkademik, jumlahFilterAktif, filterKosong, STATUS_SANTRI, URUT, type FilterAkademik } from './filter';
 
 export type OpsiFilter = {
@@ -7,15 +8,16 @@ export type OpsiFilter = {
   asrama: { id: number; nama: string }[];
 };
 
-const gaya = { minWidth: 132, marginBottom: 0 } as const;
-
 /**
  * Penyaring lanjutan + ringkasan filter aktif.
  *
- * Filter dikirim lewat GET biasa (bukan JS) supaya hasilnya jadi URL yang bisa
- * dibookmark dan dibagikan — sesuai pola tab server-side di app ini. Chip
- * "aktif" di bawah form membuat setiap penyaring bisa dicopot satu per satu
- * tanpa harus mencari-cari select mana yang tadi diubah.
+ * Aturan tunggal di seluruh app: **pilihan berlaku seketika, ketikan berlaku
+ * saat Enter**. Jadi tiap `<select>` memakai `PenyaringOtomatis` (navigasi saat
+ * diubah) sementara pencarian tetap form GET dengan tombol — mengetik tidak
+ * boleh memicu navigasi per ketukan.
+ *
+ * Hasilnya tetap URL yang bisa dibookmark dan dibagikan. Chip "aktif" di bawah
+ * membuat tiap penyaring bisa dicopot satu per satu.
  */
 export function BarisFilter({ f, opsi, tab }: { f: FilterAkademik; opsi: OpsiFilter; tab: string }) {
   const aktif = jumlahFilterAktif(f);
@@ -32,67 +34,76 @@ export function BarisFilter({ f, opsi, tab }: { f: FilterAkademik; opsi: OpsiFil
 
   return (
     <>
-      <form method="get" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-        <input type="hidden" name="tab" value={tab} />
-        {/* Penjelajah unit/tingkat/kelas dipertahankan saat form disubmit. */}
-        {f.unit && <input type="hidden" name="unit" value={f.unit} />}
-        {f.tingkat && <input type="hidden" name="tingkat" value={f.tingkat} />}
-        {f.kelasId && <input type="hidden" name="kelas" value={f.kelasId} />}
-
-        <div className="field" style={{ flex: 1, minWidth: 210, marginBottom: 0 }}>
-          <label>Pencarian</label>
-          <input type="search" name="q" placeholder="Nama, NIS, atau NISN" defaultValue={f.q} />
-        </div>
-        <div className="field" style={gaya}>
-          <label>Status</label>
-          <select name="status" defaultValue={f.status ?? ''}>
-            <option value="">Semua status</option>
-            {STATUS_SANTRI.map((o) => <option key={o} value={o}>{o}</option>)}
-          </select>
-        </div>
-        <div className="field" style={gaya}>
-          <label>Jenis kelamin</label>
-          <select name="jk" defaultValue={f.jk ?? ''}>
-            <option value="">Semua</option>
-            <option value="L">Putra</option>
-            <option value="P">Putri</option>
-          </select>
-        </div>
-        {opsi.program.length > 0 && (
-          <div className="field" style={gaya}>
-            <label>Program</label>
-            <select name="program" defaultValue={f.program ?? ''}>
-              <option value="">Semua program</option>
-              {opsi.program.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <form method="get" style={{ display: 'flex', gap: 10, flex: '1 1 210px', minWidth: 210 }}>
+          <input type="hidden" name="tab" value={tab} />
+          {/* Penjelajah unit/tingkat/kelas dipertahankan saat form disubmit. */}
+          {f.unit && <input type="hidden" name="unit" value={f.unit} />}
+          {f.tingkat && <input type="hidden" name="tingkat" value={f.tingkat} />}
+          {f.kelasId && <input type="hidden" name="kelas" value={f.kelasId} />}
+          <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+            <label>Pencarian</label>
+            <input type="search" name="q" placeholder="Nama, NIS, atau NISN" defaultValue={f.q} />
           </div>
+          <button type="submit" className="btn" style={{ alignSelf: 'end' }}>Cari</button>
+        </form>
+
+        <PenyaringOtomatis
+          label="Status"
+          nilai={f.status ?? ''}
+          opsi={[
+            { nilai: '', label: 'Semua status', href: hrefAkademik(tab, f, { status: undefined }) },
+            ...STATUS_SANTRI.map((o) => ({ nilai: o, label: o, href: hrefAkademik(tab, f, { status: o }) })),
+          ]}
+        />
+        <PenyaringOtomatis
+          label="Jenis kelamin"
+          nilai={f.jk ?? ''}
+          opsi={[
+            { nilai: '', label: 'Semua', href: hrefAkademik(tab, f, { jk: undefined }) },
+            { nilai: 'L', label: 'Putra', href: hrefAkademik(tab, f, { jk: 'L' }) },
+            { nilai: 'P', label: 'Putri', href: hrefAkademik(tab, f, { jk: 'P' }) },
+          ]}
+        />
+        {opsi.program.length > 0 && (
+          <PenyaringOtomatis
+            label="Program"
+            nilai={f.program ?? ''}
+            opsi={[
+              { nilai: '', label: 'Semua program', href: hrefAkademik(tab, f, { program: undefined }) },
+              ...opsi.program.map((o) => ({ nilai: o, label: o, href: hrefAkademik(tab, f, { program: o }) })),
+            ]}
+          />
         )}
         {opsi.angkatan.length > 0 && (
-          <div className="field" style={{ ...gaya, minWidth: 116 }}>
-            <label>Angkatan</label>
-            <select name="angkatan" defaultValue={f.angkatan ?? ''}>
-              <option value="">Semua</option>
-              {opsi.angkatan.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
+          <PenyaringOtomatis
+            label="Angkatan"
+            lebar={116}
+            nilai={f.angkatan ?? ''}
+            opsi={[
+              { nilai: '', label: 'Semua', href: hrefAkademik(tab, f, { angkatan: undefined }) },
+              ...opsi.angkatan.map((o) => ({ nilai: o, label: o, href: hrefAkademik(tab, f, { angkatan: o }) })),
+            ]}
+          />
         )}
         {opsi.asrama.length > 0 && (
-          <div className="field" style={gaya}>
-            <label>Asrama</label>
-            <select name="asrama" defaultValue={f.asramaId ? String(f.asramaId) : ''}>
-              <option value="">Semua asrama</option>
-              {opsi.asrama.map((o) => <option key={o.id} value={o.id}>{o.nama}</option>)}
-            </select>
-          </div>
+          <PenyaringOtomatis
+            label="Asrama"
+            nilai={f.asramaId ? String(f.asramaId) : ''}
+            opsi={[
+              { nilai: '', label: 'Semua asrama', href: hrefAkademik(tab, f, { asramaId: undefined }) },
+              ...opsi.asrama.map((o) => ({ nilai: String(o.id), label: o.nama, href: hrefAkademik(tab, f, { asramaId: o.id }) })),
+            ]}
+          />
         )}
-        <div className="field" style={gaya}>
-          <label>Urutkan</label>
-          <select name="urut" defaultValue={f.urut}>
-            {Object.entries(URUT).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-          </select>
-        </div>
-        <button type="submit" className="btn">Terapkan</button>
-      </form>
+        <PenyaringOtomatis
+          label="Urutkan"
+          nilai={f.urut}
+          opsi={Object.entries(URUT).map(([k, v]) => ({
+            nilai: k, label: v.label, href: hrefAkademik(tab, f, { urut: k as FilterAkademik['urut'] }),
+          }))}
+        />
+      </div>
 
       {(copot.length > 0 || aktif > 0) && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, alignItems: 'center', marginTop: 12 }}>

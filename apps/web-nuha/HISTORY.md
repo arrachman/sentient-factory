@@ -4,6 +4,45 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Penyaring select berlaku seketika, tanpa tombol Terapkan
+
+Di /akademik dan /kepegawaian dulu ada dua idiom bertumpuk di satu layar: chip
+penjelajah lembaga berlaku instan, tapi `<select>` di bawahnya baru berlaku
+setelah menekan "Terapkan" — operator kerap mengubah pilihan lalu heran hasilnya
+tidak berubah. Sekarang aturannya tunggal di seluruh app: **pilihan berlaku
+seketika, ketikan berlaku saat Enter**. Semua `<select>` penyaring memakai
+molekul baru `PenyaringOtomatis`; kotak pencarian tetap form GET dengan tombol
+"Cari" supaya mengetik tidak memicu navigasi per ketukan.
+
+Catatan teknis: tiap opsi membawa `href`-nya sendiri yang dihitung di server,
+bukan callback `buatHref` — Server Component tidak boleh mengirim fungsi ke
+Client Component, dan `tsc` tidak menangkap pelanggaran itu (hanya terlihat di
+browser sebagai komponen yang ditelan error boundary).
+
+Dampak operator: tidak ada tombol Terapkan lagi di penyaring; keadaan filter
+tetap hidup di URL sehingga tetap bisa dibookmark dan dibagikan.
+
+## 2026-08-29 — Paginasi daftar santri di /induk
+
+Daftar santri di /induk dulu memuat seluruh baris sekaligus dalam kotak
+ber-scroll. Kini 15 baris per halaman dengan pager standar (`UKURAN_HALAMAN`,
+`Pagination`) dan panel hasil menampilkan jumlah total.
+
+Dampak operator: nomor halaman ikut di URL (`?halaman=`). Santri terpilih
+(`?sel=`) tetap bertahan walau ada di halaman lain — validasinya lewat query
+tersendiri, bukan dicari di baris yang sedang tampil. Mengganti filter selalu
+kembali ke halaman 1.
+
+## 2026-08-29 — Skeleton loading & error boundary di 4 modul utama
+
+`/induk`, `/akademik`, `/kepegawaian`, dan `/data/[entity]` kini punya
+`loading.tsx` sehingga saat query Prisma berjalan layar menampilkan kerangka
+abu berdenyut, bukan halaman kosong. `app/error.tsx` menangkap kegagalan render
+dengan kartu "Terjadi kesalahan" + tombol "Coba lagi", menggantikan layar putih.
+
+Dampak operator: jika suatu halaman gagal, tombol "Coba lagi" biasanya cukup;
+kalau berulang, laporkan ke admin sistem.
+
 ## 2026-08-29 — Daftar santri di /data/santri bisa dipakai tanpa hafal NIS
 
 Dua hal membuat halaman ini praktis tidak terpakai. Pertama, nama santri tidak

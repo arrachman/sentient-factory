@@ -1,39 +1,49 @@
-import { URUT_PEGAWAI, type FilterPegawai } from './filter';
-
-const gaya = { minWidth: 138, marginBottom: 0 } as const;
+import { PenyaringOtomatis } from '@/components';
+import { hrefKepegawaian, URUT_PEGAWAI, type FilterPegawai } from './filter';
 
 /**
- * Pencarian + penyaring ringan. Dikirim lewat GET biasa (bukan JS) supaya
- * hasilnya jadi URL yang bisa dibookmark dan dibagikan — sesuai pola tab
- * server-side di app ini. Pilihan lembaga/status ikut sebagai hidden input agar
- * penjelajah di atasnya tidak ter-reset saat form disubmit.
+ * Pencarian + penyaring ringan.
+ *
+ * Aturan tunggal di seluruh app: **pilihan berlaku seketika, ketikan berlaku
+ * saat Enter**. Dulu chip lembaga di atas berlaku instan sementara select di
+ * sini menunggu tombol "Terapkan" — dua idiom bertumpuk di satu layar. Kini
+ * select memakai `PenyaringOtomatis`, pencarian tetap form GET.
+ *
+ * Keadaan tetap hidup di query supaya URL bisa dibookmark dan dibagikan.
  */
 export function BarisFilter({ f, tab }: { f: FilterPegawai; tab: string }) {
   return (
-    <form method="get" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-      <input type="hidden" name="tab" value={tab} />
-      {f.unit && <input type="hidden" name="unit" value={f.unit} />}
-      {f.status && <input type="hidden" name="status" value={f.status} />}
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+      <form method="get" style={{ display: 'flex', gap: 10, flex: '1 1 220px', minWidth: 220 }}>
+        <input type="hidden" name="tab" value={tab} />
+        {/* Penjelajah lembaga/status dipertahankan saat form disubmit. */}
+        {f.unit && <input type="hidden" name="unit" value={f.unit} />}
+        {f.status && <input type="hidden" name="status" value={f.status} />}
+        <div className="field" style={{ flex: 1, marginBottom: 0 }}>
+          <label>Pencarian</label>
+          <input type="search" name="q" placeholder="Nama, NIP, jabatan, atau mapel" defaultValue={f.q} />
+        </div>
+        <button type="submit" className="btn" style={{ alignSelf: 'end' }}>Cari</button>
+      </form>
 
-      <div className="field" style={{ flex: 1, minWidth: 220, marginBottom: 0 }}>
-        <label>Pencarian</label>
-        <input type="search" name="q" placeholder="Nama, NIP, jabatan, atau mapel" defaultValue={f.q} />
-      </div>
-      <div className="field" style={gaya}>
-        <label>Jenis kelamin</label>
-        <select name="jk" defaultValue={f.jk ?? ''}>
-          <option value="">Semua</option>
-          <option value="L">Putra</option>
-          <option value="P">Putri</option>
-        </select>
-      </div>
-      <div className="field" style={gaya}>
-        <label>Urutkan</label>
-        <select name="urut" defaultValue={f.urut}>
-          {Object.entries(URUT_PEGAWAI).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-        </select>
-      </div>
-      <button type="submit" className="btn">Terapkan</button>
-    </form>
+      <PenyaringOtomatis
+        label="Jenis kelamin"
+        lebar={138}
+        nilai={f.jk ?? ''}
+        opsi={[
+          { nilai: '', label: 'Semua', href: hrefKepegawaian(tab, f, { jk: undefined }) },
+          { nilai: 'L', label: 'Putra', href: hrefKepegawaian(tab, f, { jk: 'L' }) },
+          { nilai: 'P', label: 'Putri', href: hrefKepegawaian(tab, f, { jk: 'P' }) },
+        ]}
+      />
+      <PenyaringOtomatis
+        label="Urutkan"
+        lebar={138}
+        nilai={f.urut}
+        opsi={Object.entries(URUT_PEGAWAI).map(([k, v]) => ({
+          nilai: k, label: v.label, href: hrefKepegawaian(tab, f, { urut: k as FilterPegawai['urut'] }),
+        }))}
+      />
+    </div>
   );
 }

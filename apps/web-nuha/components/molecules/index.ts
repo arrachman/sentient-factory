@@ -8,3 +8,4 @@ export * from './StatCard';
 export * from './Tabel';
 export * from './Tabs';
 export * from './PemilihBanyakOrang';
+export * from './PenyaringOtomatis';
