@@ -47,11 +47,17 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
   // Cacah alumni per unit dihitung dengan `whereFilter` sendiri (bukan turunan
   // `whereDasar`) karena syarat alumni bersandar pada RiwayatPendidikan dan
   // sengaja tidak memaksa status Mukim — alumni SMP yang kini mukim di MA ikut.
+  // Saat penyaring status berada di santri aktif (Mukim — juga nilai bawaan),
+  // cabang Alumni tidak relevan: operator sedang melihat santri yang masih
+  // mukim, jadi simpulnya disembunyikan dengan cacah 0.
+  const statusEfektif = f.status ?? 'Mukim';
   const alumniPerUnit = new Map<number, number>(
-    await Promise.all(unitRows.map(async (u): Promise<[number, number]> => [
-      u.id,
-      await prisma.santri.count({ where: whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: u.id }) }),
-    ])),
+    statusEfektif === 'Mukim'
+      ? []
+      : await Promise.all(unitRows.map(async (u): Promise<[number, number]> => [
+        u.id,
+        await prisma.santri.count({ where: whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: u.id }) }),
+      ])),
   );
 
   const unit: SimpulUnit[] = unitRows
