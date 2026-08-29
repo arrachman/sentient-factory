@@ -431,6 +431,26 @@ label.toggle, .field label.toggle {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
+/* --- Master-detail /induk: pohon lembaga, daftar hasil, lalu profil --- */
+.induk-grid { grid-template-columns: 250px 300px 1fr; }
+
+/* Pohon lembaga dilipat lebih dulu: ia konteks, bukan isi utama. */
+@media (max-width: 1279px) {
+  .induk-grid { grid-template-columns: 220px 1fr; }
+}
+
+/* --- Skeleton loading: blok abu berdenyut untuk app/**/loading.tsx --- */
+.skeleton {
+  background: var(--krem-3);
+  border-radius: 8px;
+  animation: skeleton-denyut 1.4s ease-in-out infinite;
+}
+.skeleton-baris { height: 14px; border-radius: 6px; }
+@keyframes skeleton-denyut {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
 /* --- Kartu ujian: tampil grid di layar, satu lembar penuh saat dicetak --- */
 .kartu-lembar {
   display: grid;
