@@ -4,6 +4,15 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — "Belum berkelas" disembunyikan untuk status non-aktif (`487fae84`)
+
+Alumni dan santri Keluar per definisi tidak punya `kelasId`, jadi saat chip
+status non-aktif dipilih, seluruh hasil jatuh ke cabang "Belum berkelas" (mis.
+17 dari 17 alumni) — penyaring yang tidak menyaring apa pun. Cabang itu kini
+hanya tampil untuk status aktif (Mukim). Selain itu, memilih status non-aktif
+ikut membersihkan sisa filter unit/kelas dari klik sebelumnya, supaya hasil
+tidak mendadak kosong. Tidak ada perubahan skema.
+
 ## 2026-08-29 — Filter status kembali di /induk (`56371750`)
 
 Chip **Status** (Aktif / Alumni / Keluar) di penyaring `/induk` hilang sejak
