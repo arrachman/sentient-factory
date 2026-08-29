@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { FilterAktif, type ChipFilter } from '@/components';
-import { hrefInduk, type FilterInduk } from './filter';
+import { hrefInduk, STATUS_SANTRI, type FilterInduk } from './filter';
 
 /** Satu tombol pilihan yang menyala saat nilainya sedang dipakai; klik ulang mematikannya.
  * Memakai kelas `.chip` bersama (globals.css), bukan gaya sebaris, supaya seragam
@@ -31,6 +31,7 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
   const copot: ChipFilter[] = [
     ...(f.q ? [{ label: `Cari: "${f.q}"`, href: hrefInduk(f, { q: '' }) }] : []),
     ...(f.alumniUnitId ? [{ label: 'Alumni', href: hrefInduk(f, { alumniUnitId: undefined }) }] : []),
+    ...(f.status && f.status !== 'Mukim' ? [{ label: `Status: ${f.status}`, href: hrefInduk(f, { status: undefined }) }] : []),
     ...(f.jk ? [{ label: `Jenis kelamin: ${f.jk === 'L' ? 'Putra' : 'Putri'}`, href: hrefInduk(f, { jk: undefined }) }] : []),
     ...(f.angkatan ? [{ label: `Angkatan: ${f.angkatan}`, href: hrefInduk(f, { angkatan: undefined }) }] : []),
   ];
@@ -42,6 +43,7 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
           {f.unitId && <input type="hidden" name="unit" value={f.unitId} />}
           {f.kelasId && <input type="hidden" name="kelas" value={f.kelasId} />}
           {f.alumniUnitId && <input type="hidden" name="alumni" value={f.alumniUnitId} />}
+          {f.status && <input type="hidden" name="status" value={f.status} />}
           {f.angkatan && <input type="hidden" name="angkatan" value={f.angkatan} />}
           <input
             type="search"
@@ -64,6 +66,20 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
       <FilterAktif chip={copot} hrefBersih="/induk" />
 
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', borderTop: '1px solid var(--garis)', paddingTop: 10 }}>
+        <Kelompok
+          judul="Status"
+          anak={STATUS_SANTRI.map((s) => (
+            <Opsi
+              key={s}
+              f={f}
+              ubah={{ status: s }}
+              // "Aktif" adalah bawaan: menyala juga saat tak ada status di URL,
+              // tapi tidak saat sedang menelusuri cabang Alumni per unit.
+              aktif={s === 'Mukim' ? !f.alumniUnitId && (!f.status || f.status === 'Mukim') : f.status === s}
+              anak={s === 'Mukim' ? 'Aktif' : s}
+            />
+          ))}
+        />
         <Kelompok
           judul="Jenis kelamin"
           anak={[

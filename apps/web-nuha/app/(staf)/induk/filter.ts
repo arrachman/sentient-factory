@@ -1,10 +1,12 @@
 import type { Prisma } from '@prisma/client';
 
-/** Status santri yang ditampilkan di /induk tanpa filter alumni. Halaman ini
- * adalah **data induk aktif**: hanya santri mukim. Santri keluar sengaja tidak
- * bisa dijangkau lewat URL. Alumni dijangkau lewat cabang "Alumni" per unit
- * (`alumniUnitId`), bukan lewat status — lihat `whereFilter`. */
-const STATUS_AKTIF = 'Mukim' as const;
+/** Status santri yang boleh dipilih di penyaring. Tanpa pilihan eksplisit,
+ * /induk menampilkan santri aktif (Mukim) saja. Cabang "Alumni" per unit di
+ * pohon lembaga (`alumniUnitId`) memakai riwayat pendidikan, bukan kolom
+ * status, jadi keduanya saling meniadakan — lihat `whereFilter`. */
+export const STATUS_SANTRI = ['Mukim', 'Alumni', 'Keluar'] as const;
+export type StatusPilihan = (typeof STATUS_SANTRI)[number];
+const STATUS_AKTIF: StatusPilihan = 'Mukim';
 
 export type FilterInduk = {
   q: string;
@@ -12,6 +14,7 @@ export type FilterInduk = {
   kelasId?: number | 'none';
   jk?: 'L' | 'P';
   angkatan?: string;
+  status?: StatusPilihan;
   alumniUnitId?: number;
 };
 
@@ -28,7 +31,9 @@ const angkaPositif = (s?: string) => {
 
 export function bacaFilter(sp: Record<string, string | string[] | undefined>): FilterInduk {
   const jk = ambilSatu(sp, 'jk');
+  const status = ambilSatu(sp, 'status');
   return {
+    status: STATUS_SANTRI.includes(status as StatusPilihan) ? (status as StatusPilihan) : undefined,
     q: ambilSatu(sp, 'q') ?? '',
     unitId: angkaPositif(ambilSatu(sp, 'unit')),
     kelasId: ambilSatu(sp, 'kelas') === 'none' ? 'none' : angkaPositif(ambilSatu(sp, 'kelas')),
@@ -49,7 +54,7 @@ export function whereFilter(f: FilterInduk): Prisma.SantriWhereInput {
     if (f.kelasId === 'none') syarat.push({ kelasId: null });
     else if (f.kelasId) syarat.push({ kelasId: f.kelasId });
     else if (f.unitId) syarat.push({ unitId: f.unitId });
-    syarat.push({ status: STATUS_AKTIF });
+    syarat.push({ status: f.status ?? STATUS_AKTIF });
   }
   if (f.angkatan) syarat.push({ tahunMasuk: f.angkatan });
   if (f.jk) syarat.push({ orang: { jk: f.jk } });
@@ -72,6 +77,7 @@ export function queryFilter(f: Partial<FilterInduk>): string {
   if (f.unitId) p.set('unit', String(f.unitId));
   if (f.kelasId) p.set('kelas', String(f.kelasId));
   if (f.alumniUnitId) p.set('alumni', String(f.alumniUnitId));
+  if (f.status) p.set('status', f.status);
   if (f.jk) p.set('jk', f.jk);
   if (f.angkatan) p.set('angkatan', f.angkatan);
   return p.toString();
@@ -89,7 +95,7 @@ export function hrefInduk(
   // "santri mana", jadi memilih salah satu harus membersihkan yang lain.
   const bersih: Partial<FilterInduk> = 'alumniUnitId' in ubah
     ? { unitId: undefined, kelasId: undefined }
-    : ('unitId' in ubah || 'kelasId' in ubah) ? { alumniUnitId: undefined } : {};
+    : ('unitId' in ubah || 'kelasId' in ubah || 'status' in ubah) ? { alumniUnitId: undefined } : {};
   const gabung = { ...f, ...bersih, ...ubah };
   const p = new URLSearchParams(queryFilter(gabung));
   if (extra.sel !== undefined) p.set('sel', String(extra.sel));
@@ -100,5 +106,5 @@ export function hrefInduk(
 }
 
 export function jumlahFilterAktif(f: FilterInduk): number {
-  return [f.q, f.unitId, f.kelasId, f.alumniUnitId, f.jk, f.angkatan].filter(Boolean).length;
+  return [f.q, f.unitId, f.kelasId, f.alumniUnitId, f.status, f.jk, f.angkatan].filter(Boolean).length;
 }
