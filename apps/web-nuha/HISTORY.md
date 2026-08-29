@@ -4,6 +4,25 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Sinkron biodata & wali 24 alumni SMP 2025/2026
+
+Commit `8438da9d`. `import-alumni-smp-2025-2026.ts` kini tidak hanya menulis
+`RiwayatPendidikan`, tapi juga menyinkronkan biodata dari berkas data diri
+terbaru: RT/RW, kelurahan, kecamatan, kabupaten, HP santri, serta nama/NIK/HP
+wali. Kolom yang kosong di sumber tidak menimpa nilai lama.
+
+Koreksi data yang masuk: HP wali **Reni Hartini** (Achmad Tsaaqib) dan **Nur
+Hamidah** (Maulana Malik Ibrahim) diperbarui ke nomor terbaru; kelurahan
+**Mutma'inatus Zahro** dibetulkan dari `Nglanjurk` ke `Nglanjuk`. Peran
+Ayah/Ibu yang sudah dikenal dari sumber MA ditulis eksplisit di data, supaya
+kolom gabungan "NAMA IBU/AYAH/WALI" milik berkas SMP tidak menurunkan peran
+`Ibu` yang sudah tercatat menjadi `Wali`.
+
+Dampak operator: 24 riwayat kelulusan SMP IX-A TA 2025/2026 utuh di basis
+data (`riwayat_pendidikan`), meski sejak commit `6cd16b95` tidak lagi
+ditelusuri lewat /induk. Skrip idempoten — aman dijalankan ulang dengan
+`npm run import:alumni-smp-2025`.
+
 ## 2026-08-29 — /induk hanya data induk aktif: alumni & keluar dihapus
 
 Halaman `/induk` sekarang **murni data santri aktif (Mukim)**. Yang dihapus:
