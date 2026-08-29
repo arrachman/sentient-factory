@@ -70,6 +70,18 @@ export const BAGIAN: Bagian[] = [
       'Server menolak permintaan ganti peran dari siapa pun yang peran aslinya bukan super admin — dropdown yang tersembunyi bukan pengaman. Setiap pergantian tercatat di audit sebagai GANTI_PERAN.',
   },
   {
+    id: 'induk',
+    judul: 'Data induk santri',
+    ringkas:
+      'Data Induk menghubungkan daftar santri dengan satu profil lintas akademik, kepesantrenan, kesehatan, keuangan, dan wali. Penyaring serta santri yang dipilih tersimpan di alamat halaman sehingga tampilan dapat dibagikan atau dibuka kembali.',
+    langkah: [
+      { judul: 'Cari dan saring daftar', detail: 'Ketik nama, NIS, atau NISN lalu tekan Cari. Status, jenis kelamin, dan angkatan bisa dipilih melalui chip; pilihan yang aktif muncul sebagai chip bertanda × untuk dicopot satuan.' },
+      { judul: 'Telusuri lembaga dan kelas', detail: 'Panel Lembaga & kelas dapat dibuka atau dilipat. Pilih lembaga atau kelas untuk mempersempit hasil tanpa menghapus penyaring lain.' },
+      { judul: 'Buka profil santri', detail: 'Pilih satu nama untuk membuka profil dan tab detailnya. Daftar hasil memakai halaman agar tetap cepat ketika jumlah santri bertambah.' },
+      { judul: 'Gunakan dari layar kecil', detail: 'Di ponsel, setelah profil dipilih hanya detail yang ditampilkan agar tidak terjepit. Gunakan tautan “‹ Kembali ke daftar” di atas profil untuk kembali ke hasil pencarian.' },
+    ],
+  },
+  {
     id: 'akademik',
     judul: 'Menjelajah data akademik',
     ringkas:

@@ -4,6 +4,19 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Tata letak /induk responsif di layar kecil
+
+Grid master-detail `/induk` (pohon lembaga · daftar hasil · profil) memakai
+gaya sebaris tetap `250px 300px 1fr`, jadi tak bisa disesuaikan lewat media
+query dan menjepit di layar sempit. Kini tiga breakpoint: ≥1280px seperti
+semula; 900–1279px pohon lembaga menyusut ke 220px dan jadi `<details>` yang
+bisa dilipat; <900px satu kolom — begitu santri dipilih (`?sel=`), pohon dan
+daftar hasil disembunyikan, hanya profil yang tampil, dengan tautan "‹ Kembali
+ke daftar" di atasnya untuk balik ke hasil.
+
+Bagian "Data induk santri" ditambahkan di `app/docs/isi.ts` sesuai perubahan
+layar yang material.
+
 ## 2026-08-29 — Penyaring jenis kelamin di /induk
 
 /induk sudah punya penyaring Status dan Angkatan, tapi jenis kelamin — meski

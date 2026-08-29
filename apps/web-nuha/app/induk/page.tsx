@@ -88,11 +88,11 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
 
       <BarisFilter f={f} angkatan={angkatan} hasil={total} />
 
-      <div className="grid induk-grid" style={{ alignItems: 'start', marginTop: 14 }}>
-        <div className="card" style={{ padding: 12 }}>
-          <div className="label" style={{ marginBottom: 8, paddingLeft: 4 }}>Lembaga & kelas</div>
+      <div className={`grid induk-grid${sel ? ' induk-grid--sel' : ''}`} style={{ alignItems: 'start', marginTop: 14 }}>
+        <details className="card induk-pohon" style={{ padding: 12 }} open>
+          <summary className="label" style={{ marginBottom: 8, paddingLeft: 4, cursor: 'pointer' }}>Lembaga & kelas</summary>
           <PohonLembaga pohon={pohon} f={f} />
-        </div>
+        </details>
 
         <div className="card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div className="label" style={{ paddingLeft: 4 }}>Hasil ({total})</div>
@@ -112,6 +112,9 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
           {sel ? (
             <>
+              <Link href={hrefInduk(f, {}, { tab: tabAktif, halaman })} className="induk-kembali muted" style={{ alignItems: 'center', gap: 6, fontSize: 12.5, fontWeight: 600 }}>
+                ‹ Kembali ke daftar
+              </Link>
               <HeaderSantri sel={sel} />
               <nav className="tabbar">
                 {TABS.map((t) => (

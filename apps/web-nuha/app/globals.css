@@ -439,6 +439,18 @@ label.toggle, .field label.toggle {
   .induk-grid { grid-template-columns: 220px 1fr; }
 }
 
+/* < 900px: satu kolom. Saat ?sel= ada (kelas `.induk-grid--sel` dari server),
+   sembunyikan pohon lembaga & daftar hasil, tampilkan profil santri saja +
+   tautan kembali — pola master-detail mobile tanpa JavaScript karena seleksi
+   sudah hidup di URL. */
+.induk-kembali { display: none; }
+@media (max-width: 899px) {
+  .induk-grid { grid-template-columns: 1fr; }
+  .induk-grid--sel > :nth-child(1),
+  .induk-grid--sel > :nth-child(2) { display: none; }
+  .induk-kembali { display: inline-flex; }
+}
+
 /* --- Skeleton loading: blok abu berdenyut untuk tiap loading.tsx --- */
 .skeleton {
   background: var(--krem-3);
