@@ -4,6 +4,21 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Pencarian entitas di /data
+
+/data menampilkan 21+ kartu entitas dalam satu layar tanpa cara menyaringnya
+selain scroll. Ditambahkan kotak cari klien (`PencarianEntitas.tsx`) yang
+menyaring kartu persona dan kelompok modul per label — datanya tetap dihitung
+di server (RBAC tidak berubah), komponen klien hanya menyaring tampilan yang
+sudah lolos akses. Pesan "Tidak ada data yang cocok" muncul saat hasil nihil.
+
+Sekaligus memperbaiki bug yang ditemukan saat verifikasi: `IkonMenu` yang
+sebelumnya melekat di `Shell.tsx` (Server Component yang mengimpor
+`next/headers`/Prisma) membuat `/data` gagal total (500) begitu diimpor dari
+komponen klien baru. Dipindah ke `components/atoms/IkonMenu.tsx` yang bebas
+dependensi server; `Shell.tsx` kini re-export dari sana agar konsumen lama
+tidak berubah.
+
 ## 2026-08-29 — Aksesibilitas chip penjelajah/penyaring
 
 Chip aktif di penjelajah `/akademik`, `/kepegawaian`, dan penyaring `/induk`

@@ -1,5 +1,5 @@
-import Link from 'next/link';
-import { Shell, IkonMenu } from '@/components/templates/Shell';
+import { Shell } from '@/components/templates/Shell';
+import { PencarianEntitas } from './PencarianEntitas';
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { ENTITIES } from '@/lib/crud/registry';
@@ -25,37 +25,18 @@ export default async function DataPage() {
     if (!grup.has(entity.menu)) grup.set(entity.menu, []);
     grup.get(entity.menu)!.push(entity);
   }
-  const kelompok = [...grup.entries()].sort((a, b) => (menuInfo.get(a[0])?.urutan ?? 999) - (menuInfo.get(b[0])?.urutan ?? 999));
+  const kelompok = [...grup.entries()]
+    .sort((a, b) => (menuInfo.get(a[0])?.urutan ?? 999) - (menuInfo.get(b[0])?.urutan ?? 999))
+    .map(([menuKey, items]) => ({
+      menuKey,
+      label: menuInfo.get(menuKey)?.label ?? menuKey,
+      icon: menuInfo.get(menuKey)?.icon,
+      items: items.map((entity) => ({ key: entity.key, label: entity.label })),
+    }));
+  const personaKartu = persona.map((item) => ({ ...item, icon: menuInfo.get('induk')?.icon }));
 
   return <Shell session={session} active="data" title="Kelola Data">
     <div className="card"><h3>Kelola data operasional</h3><p className="muted">Di sini Anda bisa menambah, mengubah, dan menghapus data. Daftarnya dikelompokkan per modul, dan Anda hanya melihat data yang menunya boleh Anda akses. Semua perubahan otomatis tercatat di audit log.</p></div>
-    {persona.length > 0 && <div className="card" style={{ marginTop: 16 }}>
-      <h4 style={{ margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <IkonMenu menuKey="induk" path={menuInfo.get('induk')?.icon} size={18} />
-        Data orang per peran
-      </h4>
-      <p className="muted" style={{ margin: '0 0 12px', fontSize: 12.5 }}>Pintasan satu-layar: identitas dan baris perannya dibuat sekaligus, tanpa perlu menyalin ID Orang antar menu.</p>
-      <div className="grid g2">
-        {persona.map((item) => <Link className="card" style={{ textDecoration: 'none' }} href={`/data/${item.key}`} key={item.key}>
-          <strong style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <IkonMenu menuKey="induk" path={menuInfo.get('induk')?.icon} size={16} />
-            {item.label}
-          </strong>
-          <p className="muted" style={{ margin: '6px 0 0', fontSize: 12.5 }}>{item.ringkas}</p>
-        </Link>)}
-      </div>
-    </div>}
-    {kelompok.map(([menuKey, items]) => <div className="card" key={menuKey} style={{ marginTop: 16 }}>
-      <h4 style={{ margin: '0 0 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-        <IkonMenu menuKey={menuKey} path={menuInfo.get(menuKey)?.icon} size={18} />
-        {menuInfo.get(menuKey)?.label ?? menuKey}
-      </h4>
-      <div className="grid g3">
-        {items.map((entity) => <Link className="card" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10 }} href={`/data/${entity.key}`} key={entity.key}>
-          <IkonMenu menuKey={menuKey} path={menuInfo.get(menuKey)?.icon} size={16} />
-          <strong>{entity.label}</strong>
-        </Link>)}
-      </div>
-    </div>)}
+    <PencarianEntitas persona={personaKartu} kelompok={kelompok} />
   </Shell>;
 }
