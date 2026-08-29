@@ -4,6 +4,27 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Kelas Madin tidak lagi tampil ganda di pohon /induk (`4802ad9a`)
+
+"Kelas 6" muncul **dua baris** di bawah Tingkat VI (5 dan 2) — dan sebenarnya
+setiap tingkat Madin bernasib sama. Penyebabnya: satu rombel punya baris `Kelas`
+sendiri di tiap tahun ajaran, sedangkan 93 santri Madin masih menempati kelas
+**TA 2025/2026** (warisan `import-santri-madin-riwayat.ts` yang menyetel
+`kelasId` ke TA berkas presensinya), padahal TA aktif adalah 2026/2027.
+
+- `prisma/import/pindah-santri-ke-ta-aktif.ts` (baru, idempoten,
+  `npm run pindah:santri-ta-aktif`): memindahkan `santri.kelasId` **dan** baris
+  `santri_kelas` ke kelas bernama sama di TA aktif. Memvalidasi seluruh
+  pemetaan dulu (batal bila ada kelas TA lama tanpa kembaran di TA aktif), jadi
+  tidak ada partial write. `riwayat_pendidikan` tidak disentuh — sejarah utuh.
+- `app/(staf)/induk/pohon.ts` (ikut commit `08a49dcc`): daftar kelas disaring ke
+  `tahunAjaran.aktif`, supaya kelas TA lama tidak lagi jadi baris kedua.
+- Ini **bukan kenaikan tingkat** — santri pindah ke kelas dengan nama sama
+  persis (Kelas 3 lama → Kelas 3 TA aktif). Promosi tetap proses terpisah.
+
+Hasil pohon Madin: I'dad 23, I 19, II 14, III 11, IV 9, V 12, **VI 7** —
+masing-masing satu baris.
+
 ## 2026-08-29 — Santri bisa menempati lebih dari satu kelas; anggota I'dad Madin ditetapkan
 
 Commit `08a49dcc`.
