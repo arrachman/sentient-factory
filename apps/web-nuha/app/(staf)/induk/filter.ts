@@ -46,7 +46,9 @@ export function whereFilter(f: FilterInduk): Prisma.SantriWhereInput {
   if (f.kelasId === 'none') syarat.push({ kelasId: null });
   else if (f.kelasId) syarat.push({ kelasId: f.kelasId });
   else if (f.unitId) syarat.push({ unitId: f.unitId });
-  if (f.status) syarat.push({ status: f.status });
+  // Tanpa filter status eksplisit, hanya santri aktif (Mukim) yang tampil —
+  // alumni/keluar baru terlihat kalau operator memilih status itu sendiri.
+  syarat.push({ status: f.status ?? 'Mukim' });
   if (f.angkatan) syarat.push({ tahunMasuk: f.angkatan });
   if (f.jk) syarat.push({ orang: { jk: f.jk } });
   if (f.q) {

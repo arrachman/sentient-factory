@@ -4,6 +4,17 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Filter status /induk default ke santri aktif (Mukim)
+
+`whereFilter` di `app/(staf)/induk/filter.ts` sebelumnya tidak menyaring
+status kalau operator belum memilih chip Status, jadi santri Alumni/Keluar
+ikut tercampur di daftar & pohon lembaga (termasuk 7 alumni SMP IX-A yang
+`kelas_id`-nya sempat masih terisi — sudah dibersihkan langsung di DB).
+Sekarang tanpa filter status eksplisit, query selalu menambahkan
+`status: 'Mukim'`; Alumni/Keluar baru muncul saat chip statusnya dipilih.
+Dampak: total "Hasil" dan cacah di pohon lembaga di `/induk` sekarang
+menghitung santri aktif saja secara default.
+
 ## 2026-08-29 — Riwayat kelulusan SMP IX-A 2025/2026 untuk 24 alumni
 
 Ditambahkan model `RiwayatPendidikan` (migrasi
