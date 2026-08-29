@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { hrefInduk, jumlahFilterAktif, STATUS_SANTRI, type FilterInduk } from './filter';
+import { FilterAktif, type ChipFilter } from '@/components';
+import { hrefInduk, STATUS_SANTRI, type FilterInduk } from './filter';
 
 /** Satu tombol pilihan yang menyala saat nilainya sedang dipakai; klik ulang mematikannya.
  * Memakai kelas `.chip` bersama (globals.css), bukan gaya sebaris, supaya seragam
@@ -25,7 +26,15 @@ function Kelompok({ judul, anak }: { judul: string; anak: React.ReactNode }) {
 /** Penyaring cepat di atas daftar. Semua pilihan berupa tautan (bukan form),
  * jadi satu klik = satu keadaan URL yang bisa dibookmark dan di-back. */
 export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: string[]; hasil: number }) {
-  const aktif = jumlahFilterAktif(f);
+  // Unit & kelas sengaja tidak dijadikan chip: pohon lembaga di sebelah sudah
+  // menyorot pilihannya, jadi chip-nya cuma duplikat yang bikin baris ini ramai.
+  const copot: ChipFilter[] = [
+    ...(f.q ? [{ label: `Cari: "${f.q}"`, href: hrefInduk(f, { q: '' }) }] : []),
+    ...(f.status ? [{ label: `Status: ${f.status}`, href: hrefInduk(f, { status: undefined }) }] : []),
+    ...(f.jk ? [{ label: `Jenis kelamin: ${f.jk === 'L' ? 'Putra' : 'Putri'}`, href: hrefInduk(f, { jk: undefined }) }] : []),
+    ...(f.angkatan ? [{ label: `Angkatan: ${f.angkatan}`, href: hrefInduk(f, { angkatan: undefined }) }] : []),
+  ];
+
   return (
     <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: 14 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
@@ -47,18 +56,12 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
             Cari
           </button>
         </form>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span className="muted" style={{ fontSize: 12.5 }}>
-            <strong style={{ color: 'var(--teks-kuat)' }}>{hasil}</strong> santri cocok
-          </span>
-          {aktif > 0 && (
-            <Link href="/induk" className="chip-copot">
-              <span className="x">×</span>
-              Hapus {aktif} filter
-            </Link>
-          )}
-        </div>
+        <span className="muted" style={{ fontSize: 12.5 }}>
+          <strong style={{ color: 'var(--teks-kuat)' }}>{hasil}</strong> santri cocok
+        </span>
       </div>
+
+      <FilterAktif chip={copot} hrefBersih="/induk" />
 
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', borderTop: '1px solid var(--garis)', paddingTop: 10 }}>
         <Kelompok

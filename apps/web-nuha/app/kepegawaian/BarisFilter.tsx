@@ -1,5 +1,5 @@
-import { PenyaringOtomatis } from '@/components';
-import { hrefKepegawaian, URUT_PEGAWAI, type FilterPegawai } from './filter';
+import { FilterAktif, PenyaringOtomatis, type ChipFilter } from '@/components';
+import { hrefKepegawaian, filterPegawaiKosong, URUT_PEGAWAI, type FilterPegawai } from './filter';
 
 /**
  * Pencarian + penyaring ringan.
@@ -12,7 +12,15 @@ import { hrefKepegawaian, URUT_PEGAWAI, type FilterPegawai } from './filter';
  * Keadaan tetap hidup di query supaya URL bisa dibookmark dan dibagikan.
  */
 export function BarisFilter({ f, tab }: { f: FilterPegawai; tab: string }) {
+  // Unit tidak dijadikan chip: penjelajah lembaga di atas sudah menyorotnya.
+  const copot: ChipFilter[] = [
+    ...(f.q ? [{ label: `Cari: "${f.q}"`, href: hrefKepegawaian(tab, f, { q: '' }) }] : []),
+    ...(f.status ? [{ label: `Status: ${f.status}`, href: hrefKepegawaian(tab, f, { status: undefined }) }] : []),
+    ...(f.jk ? [{ label: `Jenis kelamin: ${f.jk === 'L' ? 'Putra' : 'Putri'}`, href: hrefKepegawaian(tab, f, { jk: undefined }) }] : []),
+  ];
+
   return (
+    <>
     <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
       <form method="get" style={{ display: 'flex', gap: 10, flex: '1 1 220px', minWidth: 220 }}>
         <input type="hidden" name="tab" value={tab} />
@@ -45,5 +53,9 @@ export function BarisFilter({ f, tab }: { f: FilterPegawai; tab: string }) {
         }))}
       />
     </div>
+    <div style={{ marginTop: 12 }}>
+      <FilterAktif chip={copot} hrefBersih={hrefKepegawaian(tab, filterPegawaiKosong(f))} />
+    </div>
+    </>
   );
 }

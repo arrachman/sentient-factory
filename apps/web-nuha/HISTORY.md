@@ -4,6 +4,19 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Chip penyaring aktif seragam di induk/akademik/kepegawaian
+
+Tiga modul menampilkan penyaring aktif dengan cara berbeda: /akademik punya chip
+per penyaring, /induk hanya tombol "Hapus n filter" (tidak bisa mencopot satu
+saja), /kepegawaian menampilkannya di dua tempat sekaligus — baris di Penjelajah
+dan tidak ada di BarisFilter. Kini semuanya lewat molekul baru
+`FilterAktif`: satu baris, satu chip per penyaring, tiap chip bisa dicopot
+sendiri, dan "Bersihkan semua (n)" muncul hanya kalau ada lebih dari satu.
+
+Baris chip duplikat di `app/kepegawaian/Penjelajah.tsx` dihapus. Unit/kelas
+sengaja tidak dijadikan chip karena pohon lembaga di sebelahnya sudah menyorot
+pilihan itu.
+
 ## 2026-08-29 — Penyaring select berlaku seketika, tanpa tombol Terapkan
 
 Di /akademik dan /kepegawaian dulu ada dua idiom bertumpuk di satu layar: chip

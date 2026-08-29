@@ -1,6 +1,5 @@
-import Link from 'next/link';
-import { PenyaringOtomatis } from '@/components';
-import { hrefAkademik, jumlahFilterAktif, filterKosong, STATUS_SANTRI, URUT, type FilterAkademik } from './filter';
+import { FilterAktif, PenyaringOtomatis, type ChipFilter } from '@/components';
+import { hrefAkademik, filterKosong, STATUS_SANTRI, URUT, type FilterAkademik } from './filter';
 
 export type OpsiFilter = {
   program: string[];
@@ -20,10 +19,9 @@ export type OpsiFilter = {
  * membuat tiap penyaring bisa dicopot satu per satu.
  */
 export function BarisFilter({ f, opsi, tab }: { f: FilterAkademik; opsi: OpsiFilter; tab: string }) {
-  const aktif = jumlahFilterAktif(f);
   const namaAsrama = (id: number) => opsi.asrama.find((a) => a.id === id)?.nama ?? String(id);
 
-  const copot: { label: string; href: string }[] = [
+  const copot: ChipFilter[] = [
     ...(f.q ? [{ label: `Cari: "${f.q}"`, href: hrefAkademik(tab, f, { q: '' }) }] : []),
     ...(f.status ? [{ label: `Status: ${f.status}`, href: hrefAkademik(tab, f, { status: undefined }) }] : []),
     ...(f.jk ? [{ label: `Jenis kelamin: ${f.jk === 'L' ? 'Putra' : 'Putri'}`, href: hrefAkademik(tab, f, { jk: undefined }) }] : []),
@@ -105,20 +103,9 @@ export function BarisFilter({ f, opsi, tab }: { f: FilterAkademik; opsi: OpsiFil
         />
       </div>
 
-      {(copot.length > 0 || aktif > 0) && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, alignItems: 'center', marginTop: 12 }}>
-          {copot.map((c) => (
-            <Link key={c.href} href={c.href} className="chip-copot">
-              {c.label} <span className="x">×</span>
-            </Link>
-          ))}
-          {aktif > 0 && (
-            <Link href={hrefAkademik(tab, filterKosong(f))} className="chip-copot">
-              Bersihkan semua ({aktif})
-            </Link>
-          )}
-        </div>
-      )}
+      <div style={{ marginTop: 12 }}>
+        <FilterAktif chip={copot} hrefBersih={hrefAkademik(tab, filterKosong(f))} />
+      </div>
     </>
   );
 }

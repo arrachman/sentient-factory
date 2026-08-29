@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { hrefKepegawaian, jumlahFilterPegawai, filterPegawaiKosong, type FilterPegawai } from './filter';
+import { hrefKepegawaian, type FilterPegawai } from './filter';
 import type { PohonPegawai } from './pohon';
 
 /** Satu chip pilihan: label + jumlah pegawai di baliknya. */
@@ -40,8 +40,6 @@ function Remah({ f, pohon, tab }: { f: FilterPegawai; pohon: PohonPegawai; tab: 
  * operator berpindah tab — mengikuti pola yang sama di /induk dan /akademik.
  */
 export function Penjelajah({ f, pohon, tab }: { f: FilterPegawai; pohon: PohonPegawai; tab: string }) {
-  const aktif = jumlahFilterPegawai(f);
-
   return (
     <div className="penjelajah">
       <Remah f={f} pohon={pohon} tab={tab} />
@@ -86,23 +84,6 @@ export function Penjelajah({ f, pohon, tab }: { f: FilterPegawai; pohon: PohonPe
         </div>
       )}
 
-      {aktif > 0 && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, alignItems: 'center' }}>
-          {f.q && (
-            <Link href={hrefKepegawaian(tab, f, { q: '' })} className="chip-copot">
-              Cari: &quot;{f.q}&quot; <span className="x">×</span>
-            </Link>
-          )}
-          {f.jk && (
-            <Link href={hrefKepegawaian(tab, f, { jk: undefined })} className="chip-copot">
-              {f.jk === 'L' ? 'Putra' : 'Putri'} <span className="x">×</span>
-            </Link>
-          )}
-          <Link href={hrefKepegawaian(tab, filterPegawaiKosong(f))} className="chip-copot">
-            Bersihkan semua ({aktif})
-          </Link>
-        </div>
-      )}
     </div>
   );
 }

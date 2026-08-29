@@ -1,4 +1,5 @@
 export * from './Card';
+export * from './FilterAktif';
 export * from './FilterBar';
 export * from './JudulHalaman';
 export * from './InputField';
