@@ -4,6 +4,25 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — 95 alumni Madin ditampilkan kembali di /induk (data)
+
+Operator menyerahkan daftar alumni Madin dan meminta statusnya diperbaiki.
+Pemeriksaan TA aktif `2026/2027 Gasal` memisahkan 11 nama yang masih tercatat
+aktif di Madin, sehingga tidak disentuh. Sisa daftar menghasilkan **95 orang
+unik** (bukan 103; `Ali Wafa` tercantum dua kali di sumber) yang sebelumnya
+sudah memiliki `riwayat_pendidikan` Madin berstatus `Alumni`, tetapi belum
+mempunyai baris `santri`. Karena pohon `/induk` menghitung dari `Santri`, cabang
+Alumni Madin salah menampilkan 0.
+
+Ditambahkan baris `santri` berstatus `Alumni`, unit Madin, tanpa kelas atau
+`santri_kelas` aktif untuk 95 identitas tersebut. Semua penulisan tercatat di
+`audit_log`; 11 santri Madin aktif tetap tidak termasuk alumni. Skrip idempoten
+`prisma/import/tetapkan-alumni-madin.ts` menyimpan daftar identitas dan
+verifikasi total agar koreksi dapat diulang tanpa membuat duplikat.
+
+Dampak operasional: cabang Alumni Madin di `/induk` sekarang menampilkan
+**95 alumni**; status dan kelas 11 santri Madin aktif tidak berubah.
+
 ## 2026-08-29 — Anggota Madin Kelas 2 dilengkapi jadi 19 santri (data, bukan kode)
 
 Operator meminta verifikasi anggota Madin Kelas 2 (TA 2026/2027 Gasal, kelas
