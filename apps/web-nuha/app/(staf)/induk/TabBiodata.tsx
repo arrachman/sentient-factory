@@ -7,7 +7,10 @@ const formatTgl = (tgl: Date | null) =>
 export async function TabBiodata({ santriId }: { santriId: bigint }) {
   const santri = await prisma.santri.findUnique({
     where: { id: santriId },
-    include: { orang: true, unit: true, kelas: true, kamar: { include: { asrama: true } } },
+    include: {
+      orang: { include: { riwayatPendidikan: { include: { unit: true, tahunAjaran: true }, orderBy: { tahunAjaran: { kode: 'desc' } } } } },
+      unit: true, kelas: true, kamar: { include: { asrama: true } },
+    },
   });
   if (!santri) return null;
 
@@ -41,6 +44,14 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
             </div>
           </div>
         )}
+        {santri.orang.riwayatPendidikan.map((riwayat) => (
+          <div key={String(riwayat.id)} className="inset" style={{ background: '#F5F8FF', border: '1px solid #CBD9F5' }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1E40AF' }}>Riwayat pendidikan</div>
+            <div className="muted" style={{ marginTop: 3 }}>
+              {riwayat.status} {riwayat.unit.nama} · kelas {riwayat.kelasNama} · tahun ajaran {riwayat.tahunAjaran.kode} {riwayat.tahunAjaran.semester}
+            </div>
+          </div>
+        ))}
         <div className="inset" style={{ background: '#F5F8FF', border: '1px solid #CBD9F5' }}>
           <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1E40AF' }}>Pasien Poskestren</div>
           <div className="muted" style={{ marginTop: 3 }}>{jumlahRekamMedis} catatan pemeriksaan tercatat pada profil ini.</div>

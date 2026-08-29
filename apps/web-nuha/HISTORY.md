@@ -4,6 +4,24 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Riwayat kelulusan SMP IX-A 2025/2026 untuk 24 alumni
+
+Ditambahkan model `RiwayatPendidikan` (migrasi
+`20260829150000_add_riwayat_pendidikan`) untuk mencatat jenjang yang pernah
+dijalani seorang `Orang`, terpisah dari `Santri.status/unitId/kelasId` yang
+hanya menyimpan jenjang AKTIF. Diperlukan karena 24 siswa kelas IX-A SMP
+lulusan TA 2025/2026 yang diserahkan operator TERNYATA sudah ada di DB — 18
+dari 24 sudah aktif sebagai santri MA Kelas 1 (Mukim, TA 2026/2027). Menulis
+status `Alumni` langsung ke `Santri` akan menghapus status MA aktif mereka
+(satu `Orang` cuma boleh punya satu baris `Santri`), jadi kelulusan SMP
+dicatat sebagai baris `RiwayatPendidikan` lewat skrip baru
+`npm run import:alumni-smp-2025` (24 baris di-upsert lewat pencocokan NIK,
+tanpa mengubah `Santri` yang ada). Tab Biodata di `/induk`
+(`TabBiodata.tsx`) sekarang menampilkan kartu "Riwayat pendidikan" per
+baris `RiwayatPendidikan`. Catatan: NISN Errena Tembang Sosialista Tazheva
+di sumber operator (`0112234300`) berbeda dari yang tersimpan di DB
+(`0112234304`) — dicocokkan lewat NIK, NISN tidak diubah tanpa konfirmasi.
+
 ## 2026-08-29 — Ganti santri/tab di /induk tidak reset scroll ke atas
 
 Memilih santri di daftar (`DaftarSantri.tsx`) dan berpindah tab profil

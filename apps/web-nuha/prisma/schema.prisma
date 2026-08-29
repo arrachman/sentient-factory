@@ -55,6 +55,7 @@ model Orang {
 
   user        User?
   santri      Santri?
+  riwayatPendidikan RiwayatPendidikan[]
   pegawai     Pegawai?
   waliDari    RelasiWali[] @relation("WaliOrang")
   sebagaiAnak RelasiWali[] @relation("AnakOrang")
@@ -188,6 +189,7 @@ model Unit {
 
   kelas         Kelas[]
   santri        Santri[]
+  riwayatPendidikan RiwayatPendidikan[]
   pegawai       Pegawai[]  @relation("PegawaiUnit")
   jadwal        JadwalPelajaran[]
   ujian         Ujian[]
@@ -258,6 +260,7 @@ model TahunAjaran {
 
   kelas    Kelas[]
   bebanJam BebanJam[]
+  riwayatPendidikan RiwayatPendidikan[]
 
   @@unique([kode, semester])
   @@map("tahun_ajaran")
@@ -333,6 +336,29 @@ model Santri {
 
   @@index([status])
   @@map("santri")
+}
+
+/// Jenjang yang pernah/sedang dijalani seorang `Orang` (SD → SMP → MA, dst),
+/// TERPISAH dari `Santri.status/unitId/kelasId` yang hanya menyimpan jenjang
+/// AKTIF saat ini. Perlu supaya lulus SMP bisa dicatat tanpa menimpa status
+/// aktif MA santri yang sama (satu Orang hanya boleh punya satu baris Santri).
+model RiwayatPendidikan {
+  id            BigInt   @id @default(autoincrement())
+  orangId       BigInt   @map("orang_id")
+  unitId        Int      @map("unit_id")
+  kelasNama     String   @map("kelas_nama") @db.VarChar(32)
+  tingkat       String   @db.VarChar(16)
+  tahunAjaranId Int      @map("tahun_ajaran_id")
+  status        StatusSantri @default(Alumni)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  orang       Orang       @relation(fields: [orangId], references: [id], onDelete: Cascade)
+  unit        Unit        @relation(fields: [unitId], references: [id])
+  tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id])
+
+  @@unique([orangId, unitId, tahunAjaranId])
+  @@map("riwayat_pendidikan")
 }
 
 /// Profil kesehatan sekali-isi (BB, TB, riwayat penyakit) — beda dari `RekamMedis`
