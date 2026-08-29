@@ -4,6 +4,16 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Indikator "Belum berkelas" jadi tautan filter di /induk
+
+Baris "Belum berkelas" di pohon lembaga (`PohonLembaga.tsx`) sebelumnya cuma
+teks statis. Sekarang jadi tautan yang mengeset `?kelas=none`, menyaring
+daftar ke santri dengan `kelasId` null (klik ulang mematikannya). `FilterInduk.kelasId`
+diperluas ke `number | 'none'` di `app/(staf)/induk/filter.ts`, dan
+`whereFilter` menerjemahkan `'none'` ke `{ kelasId: null }`. Diverifikasi
+lewat Playwright ke `http://202.59.200.26:3226/induk`: hasil berubah dari
+89 → 1 santri saat filter aktif.
+
 ## 2026-08-29 — Urutan lembaga SMP-MA-Madin & rename kelas IX-A/IX-B
 
 Urutan lembaga di pohon /induk diubah dari Madin → MA → SMP menjadi

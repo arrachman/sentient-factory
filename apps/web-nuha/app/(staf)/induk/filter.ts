@@ -8,7 +8,7 @@ export type StatusPilihan = (typeof STATUS_SANTRI)[number];
 export type FilterInduk = {
   q: string;
   unitId?: number;
-  kelasId?: number;
+  kelasId?: number | 'none';
   status?: StatusPilihan;
   jk?: 'L' | 'P';
   angkatan?: string;
@@ -31,7 +31,7 @@ export function bacaFilter(sp: Record<string, string | string[] | undefined>): F
   return {
     q: ambilSatu(sp, 'q') ?? '',
     unitId: angkaPositif(ambilSatu(sp, 'unit')),
-    kelasId: angkaPositif(ambilSatu(sp, 'kelas')),
+    kelasId: ambilSatu(sp, 'kelas') === 'none' ? 'none' : angkaPositif(ambilSatu(sp, 'kelas')),
     status: STATUS_SANTRI.includes(status as StatusPilihan) ? (status as StatusPilihan) : undefined,
     jk: jk === 'L' || jk === 'P' ? jk : undefined,
     angkatan: ambilSatu(sp, 'angkatan'),
@@ -43,7 +43,8 @@ export function bacaFilter(sp: Record<string, string | string[] | undefined>): F
  * Kelas menang atas unit karena kelas sudah menyiratkan unitnya. */
 export function whereFilter(f: FilterInduk): Prisma.SantriWhereInput {
   const syarat: Prisma.SantriWhereInput[] = [];
-  if (f.kelasId) syarat.push({ kelasId: f.kelasId });
+  if (f.kelasId === 'none') syarat.push({ kelasId: null });
+  else if (f.kelasId) syarat.push({ kelasId: f.kelasId });
   else if (f.unitId) syarat.push({ unitId: f.unitId });
   if (f.status) syarat.push({ status: f.status });
   if (f.angkatan) syarat.push({ tahunMasuk: f.angkatan });

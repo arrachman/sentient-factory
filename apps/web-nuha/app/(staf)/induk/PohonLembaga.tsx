@@ -28,7 +28,9 @@ function Cacah({ n, aktif }: { n: number; aktif: boolean }) {
  * dibuka otomatis lewat prop `open`. */
 export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }) {
   const semuaAktif = !f.unitId && !f.kelasId;
-  const kelasTerpilihUnit = pohon.unit.find((u) => u.tingkat.some((t) => t.kelas.some((k) => k.id === f.kelasId)))?.id;
+  const kelasTerpilihUnit = typeof f.kelasId === 'number'
+    ? pohon.unit.find((u) => u.tingkat.some((t) => t.kelas.some((k) => k.id === f.kelasId)))?.id
+    : undefined;
 
   return (
     <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -92,10 +94,13 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
       })}
 
       {pohon.tanpaKelas > 0 && (
-        <span style={{ ...baris(false, 0), fontStyle: 'italic' }}>
-          <span className="muted" style={{ fontSize: 11.5 }}>Belum berkelas</span>
-          <Cacah n={pohon.tanpaKelas} aktif={false} />
-        </span>
+        <Link
+          href={hrefInduk(f, { unitId: undefined, kelasId: f.kelasId === 'none' ? undefined : 'none' })}
+          style={{ ...baris(f.kelasId === 'none', 0), fontStyle: 'italic' }}
+        >
+          <span className="muted" style={{ fontSize: 11.5, color: f.kelasId === 'none' ? 'inherit' : undefined }}>Belum berkelas</span>
+          <Cacah n={pohon.tanpaKelas} aktif={f.kelasId === 'none'} />
+        </Link>
       )}
     </nav>
   );
