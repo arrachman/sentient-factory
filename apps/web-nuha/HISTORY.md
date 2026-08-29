@@ -4,6 +4,14 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Ganti santri/tab di /induk tidak reset scroll ke atas
+
+Memilih santri di daftar (`DaftarSantri.tsx`) dan berpindah tab profil
+(`page.tsx`) memakai `<Link>` ke query `?sel=&tab=` — Next.js App Router
+men-scroll ke atas pada tiap navigasi begitu, walau posisi elemen sama.
+Ditambahkan `scroll={false}` di kedua tautan itu supaya posisi scroll
+operator tetap terjaga saat menjelajah daftar panjang.
+
 ## 2026-08-29 — Indikator "Belum berkelas" jadi tautan filter di /induk
 
 Baris "Belum berkelas" di pohon lembaga (`PohonLembaga.tsx`) sebelumnya cuma

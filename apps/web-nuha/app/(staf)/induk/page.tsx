@@ -120,6 +120,7 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
                   <Link
                     key={t.key}
                     href={hrefInduk(f, {}, { sel: selId!, tab: t.key, halaman })}
+                    scroll={false}
                     className={`tab ${t.key === tabAktif ? 'active' : ''}`}
                   >
                     {t.label}
