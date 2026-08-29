@@ -2,9 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { Kosong, satu, type SearchParams } from '@/components';
 import { simpanNilaiKelas } from './actions';
 import { bacaFilter } from './filter';
-import { bacaPohon } from './pohon';
 import { bacaKelasOpsi } from './kelas-opsi';
-import { Penjelajah } from './Penjelajah';
 
 const PERIODE_DEFAULT = 'Ganjil 2026/2027';
 
@@ -12,8 +10,7 @@ type Params = SearchParams;
 
 export async function TabNilai({ searchParams }: { searchParams: Params }) {
   const f = bacaFilter(searchParams);
-  const [pohon, kelasOpts, mapelOpts] = await Promise.all([
-    bacaPohon(f),
+  const [kelasOpts, mapelOpts] = await Promise.all([
     bacaKelasOpsi(f),
     prisma.mataPelajaran.findMany({ orderBy: { nama: 'asc' } }),
   ]);
@@ -35,10 +32,6 @@ export async function TabNilai({ searchParams }: { searchParams: Params }) {
   const nilaiBySantri = new Map(nilaiAda.map((n) => [String(n.santriId), n]));
 
   return (
-    <>
-    <div className="card" style={{ marginBottom: 16 }}>
-      <Penjelajah f={f} pohon={pohon} tab="nilai" />
-    </div>
     <div className="card">
       <form method="get" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 16 }}>
         <input type="hidden" name="tab" value="nilai" />
@@ -111,6 +104,5 @@ export async function TabNilai({ searchParams }: { searchParams: Params }) {
         </form>
       )}
     </div>
-    </>
   );
 }

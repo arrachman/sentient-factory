@@ -4,6 +4,18 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Penjelajah & penyaring akademik naik ke atas tabbar
+
+Penjelajah lembaga dan baris penyaring dulu diulang di dalam masing-masing tab
+(Siswa, Presensi, Nilai, Rapor), sehingga berpindah tab terasa seperti mereset
+konteks: operator yang sudah menyaring "SMP › 7A" harus menyaring ulang. Kini
+keduanya dirender sekali di `app/akademik/page.tsx` di atas tabbar — ia menyaring
+keempat tab sekaligus — dan tabbar memakai `hrefTab` supaya filter ikut terbawa
+saat tab berganti.
+
+Efek samping yang diinginkan: tab Nilai dan Rapor sekarang ikut punya pencarian
+dan penyaring yang sebelumnya hanya ada di Siswa/Presensi.
+
 ## 2026-08-29 — Chip penyaring aktif seragam di induk/akademik/kepegawaian
 
 Tiga modul menampilkan penyaring aktif dengan cara berbeda: /akademik punya chip

@@ -1,19 +1,13 @@
 import { prisma } from '@/lib/prisma';
 import { Avatar, Badge, Kosong, Pagination, UKURAN_HALAMAN, bacaHalaman, type SearchParams } from '@/components';
 import { bacaFilter, whereFilter, hrefAkademik, URUT } from './filter';
-import { bacaPohon } from './pohon';
-import { bacaOpsi } from './opsi';
-import { Penjelajah } from './Penjelajah';
-import { BarisFilter } from './BarisFilter';
 
 export async function TabSiswa({ searchParams }: { searchParams: SearchParams }) {
   const f = bacaFilter(searchParams);
   const halaman = bacaHalaman(searchParams);
   const where = whereFilter(f);
 
-  const [pohon, opsi, total, siswaRows] = await Promise.all([
-    bacaPohon(f),
-    bacaOpsi(),
+  const [total, siswaRows] = await Promise.all([
     prisma.santri.count({ where }),
     prisma.santri.findMany({
       where,
@@ -26,15 +20,8 @@ export async function TabSiswa({ searchParams }: { searchParams: SearchParams })
   const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN));
 
   return (
-    <>
-      <div className="card" style={{ marginBottom: 16 }}>
-        <Penjelajah f={f} pohon={pohon} />
-      </div>
-
-      <div className="card">
-        <BarisFilter f={f} opsi={opsi} tab="siswa" />
-
-        <div className="muted" style={{ fontSize: 12.5, margin: '14px 0 10px' }}>
+    <div className="card">
+        <div className="muted" style={{ fontSize: 12.5, margin: '0 0 10px' }}>
           {total.toLocaleString('id-ID')} santri cocok · halaman {halaman} dari {totalHalaman}
         </div>
 
@@ -79,7 +66,6 @@ export async function TabSiswa({ searchParams }: { searchParams: SearchParams })
           ukuranHalaman={UKURAN_HALAMAN}
           buatHref={(p) => hrefAkademik('siswa', f, {}, { halaman: p })}
         />
-      </div>
-    </>
+    </div>
   );
 }

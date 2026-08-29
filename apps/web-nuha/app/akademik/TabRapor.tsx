@@ -1,15 +1,13 @@
 import { prisma } from '@/lib/prisma';
 import { Kosong, type SearchParams } from '@/components';
 import { bacaFilter } from './filter';
-import { bacaPohon } from './pohon';
 import { bacaKelasOpsi } from './kelas-opsi';
-import { Penjelajah } from './Penjelajah';
 
 type Params = SearchParams;
 
 export async function TabRapor({ searchParams }: { searchParams: Params }) {
   const f = bacaFilter(searchParams);
-  const [pohon, kelasOpts] = await Promise.all([bacaPohon(f), bacaKelasOpsi(f)]);
+  const kelasOpts = await bacaKelasOpsi(f);
   // Rombel dari penjelajah menang; kalau belum dipilih, ambil yang pertama tersisa.
   const kelasId = (f.kelasId && kelasOpts.some((k) => k.id === f.kelasId) ? f.kelasId : 0) || kelasOpts[0]?.id;
   const kelas = kelasOpts.find((k) => k.id === kelasId);
@@ -29,10 +27,6 @@ export async function TabRapor({ searchParams }: { searchParams: Params }) {
     : [];
 
   return (
-    <>
-    <div className="card" style={{ marginBottom: 16 }}>
-      <Penjelajah f={f} pohon={pohon} tab="rapor" />
-    </div>
     <div className="card">
       <h3 className="card-judul">Cetak rapor</h3>
       <p className="card-sub" style={{ maxWidth: 640 }}>
@@ -89,6 +83,5 @@ export async function TabRapor({ searchParams }: { searchParams: Params }) {
         </div>
       )}
     </div>
-    </>
   );
 }

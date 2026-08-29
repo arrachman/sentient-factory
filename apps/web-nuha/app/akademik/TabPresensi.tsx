@@ -1,10 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { ProgressBar, Kosong, type SearchParams } from '@/components';
 import { bacaFilter, whereFilter } from './filter';
-import { bacaPohon } from './pohon';
-import { bacaOpsi } from './opsi';
-import { Penjelajah } from './Penjelajah';
-import { BarisFilter } from './BarisFilter';
 
 type Rekap = { kelas: string; hadir: number; sakit: number; izin: number; alpa: number; total: number };
 
@@ -13,16 +9,12 @@ export async function TabPresensi({ searchParams }: { searchParams: SearchParams
   const awalBulan = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), 1));
   const namaBulan = awalBulan.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 
-  const [pohon, opsi, presensi] = await Promise.all([
-    bacaPohon(f),
-    bacaOpsi(),
-    prisma.presensi.findMany({
-      // Rekap mengikuti penjelajah & penyaring yang sama dengan tab Siswa,
-      // supaya "SMP › 7 › 7A" berarti hal yang sama di seluruh modul.
-      where: { tgl: { gte: awalBulan }, santri: whereFilter(f) },
-      include: { santri: { include: { kelas: true, unit: true } } },
-    }),
-  ]);
+  // Rekap mengikuti penjelajah & penyaring yang sama dengan tab Siswa,
+  // supaya "SMP › 7 › 7A" berarti hal yang sama di seluruh modul.
+  const presensi = await prisma.presensi.findMany({
+    where: { tgl: { gte: awalBulan }, santri: whereFilter(f) },
+    include: { santri: { include: { kelas: true, unit: true } } },
+  });
 
   const perKelas = new Map<string, Rekap>();
   for (const p of presensi) {
@@ -39,14 +31,8 @@ export async function TabPresensi({ searchParams }: { searchParams: SearchParams
   const rekapPresensi = [...perKelas.values()].sort((a, b) => a.kelas.localeCompare(b.kelas, 'id'));
 
   return (
-    <>
-      <div className="card" style={{ marginBottom: 16 }}>
-        <Penjelajah f={f} pohon={pohon} />
-      </div>
-
-      <div className="card">
-        <BarisFilter f={f} opsi={opsi} tab="presensi" />
-        <h3 className="card-judul" style={{ marginTop: 18 }}>Rekap presensi per rombel — {namaBulan}</h3>
+    <div className="card">
+      <h3 className="card-judul">Rekap presensi per rombel — {namaBulan}</h3>
         <p className="card-sub">Status &quot;Sakit&quot; yang bersumber dari Poskestren sudah terhitung otomatis.</p>
         {rekapPresensi.length === 0 && <Kosong pesan="Belum ada catatan presensi bulan ini untuk penyaring yang dipilih." />}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 11, marginTop: 14 }}>
@@ -62,7 +48,6 @@ export async function TabPresensi({ searchParams }: { searchParams: SearchParams
             );
           })}
         </div>
-      </div>
-    </>
+    </div>
   );
 }
