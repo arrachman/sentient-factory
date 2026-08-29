@@ -4,6 +4,30 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Santri Madin aktif tidak lagi dicap alumni di /induk (`44b1680c`)
+
+Agus Rosifat Aqli muncul sebagai alumni Madin padahal masih aktif di Tingkat VI
+TA 2026/2027. Penyebabnya syarat alumni yang hanya memeriksa "punya riwayat
+berstatus `Alumni` di unit itu": `import-santri-madin-riwayat.ts` menulis satu
+baris `riwayat_pendidikan` **per tahun ajaran**, dan setiap baris TA lampau
+berstatus `Alumni`. Jadi santri yang naik dari Kelas 2 (2021/2022) ke Tingkat VI
+tetap menyandang baris `Alumni` untuk tahun lamanya — 11 santri Madin kena.
+
+- `app/(staf)/induk/filter.ts`: helper `alumniDiUnit()` — alumni sebuah lembaga
+  kini berarti punya riwayat `Alumni` di unit itu **dan** tidak lagi menempati
+  rombel unit yang sama (`SantriKelas`). Kepindahan antar-lembaga tetap terbaca
+  alumni (lulus SMP lalu mukim di MA: rombel SMP-nya sudah tidak ada), jadi
+  angka SMP tidak berubah.
+- Cabang "Alumni" tanpa unit terpilih tidak bisa lagi dijawab satu predikat
+  tunggal — seseorang bisa beralumni di satu lembaga sambil aktif di lembaga
+  lain — jadi `whereFilter` menerima daftar unit dan menyusunnya sebagai OR per
+  unit. Daftar itu datang dari `unitIdsPohon()` (baru, di `pohon.ts`), dipakai
+  bersama oleh `page.tsx` dan `ambilPohon()`.
+
+Dampak operasional: cacah alumni Madin 11 → 0, SMP tetap 24, MA tetap 0. Tidak
+ada perubahan skema atau data — hanya cara membacanya. Terverifikasi lewat
+Prisma dan SQL; `npx tsc --noEmit` bersih.
+
 ## 2026-08-29 — Kelas Madin tidak lagi tampil ganda di pohon /induk (`4802ad9a`)
 
 "Kelas 6" muncul **dua baris** di bawah Tingkat VI (5 dan 2) — dan sebenarnya
