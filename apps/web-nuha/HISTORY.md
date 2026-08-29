@@ -4,6 +4,14 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Penyaring jenis kelamin di /induk
+
+/induk sudah punya penyaring Status dan Angkatan, tapi jenis kelamin — meski
+logikanya sudah ada di `filter.ts` sejak awal — tidak punya kontrol di layar
+sama sekali. Ditambahkan kelompok chip "Putra"/"Putri" di samping Status,
+memakai pola `Opsi` yang sama (klik ulang untuk mematikan, tergabung ke chip
+penyaring aktif yang seragam).
+
 ## 2026-08-29 — Penjelajah & penyaring akademik naik ke atas tabbar
 
 Penjelajah lembaga dan baris penyaring dulu diulang di dalam masing-masing tab

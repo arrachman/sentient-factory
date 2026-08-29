@@ -70,6 +70,13 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
             <Opsi key={s} f={f} ubah={{ status: s }} aktif={f.status === s} anak={s} />
           ))}
         />
+        <Kelompok
+          judul="Jenis kelamin"
+          anak={[
+            <Opsi key="L" f={f} ubah={{ jk: 'L' }} aktif={f.jk === 'L'} anak="Putra" />,
+            <Opsi key="P" f={f} ubah={{ jk: 'P' }} aktif={f.jk === 'P'} anak="Putri" />,
+          ]}
+        />
         {angkatan.length > 0 && (
           <Kelompok
             judul="Angkatan"
