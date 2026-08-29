@@ -64,12 +64,29 @@ export type Field = {
   filterWhere?: Record<string, Record<string, unknown>>;
   /** Hanya muncul di bilah filter, tidak pernah dirender di form. */
   hanyaFilter?: boolean;
+  /**
+   * Nilai filter yang berlaku saat operator belum memilih apa pun. Untuk
+   * membuka semua baris, filter dikirim bernilai `semua` — bukan kosong,
+   * karena kosong berarti "pakai bawaan".
+   */
+  filterDefault?: string;
 };
 
 /** Tautan ke modul lain yang memakai baris ini (mis. Orang → Santri/Pegawai/Akun). */
 export type Keterkaitan = { label: string; detail: string; href?: string; nada?: 'hijau' | 'biru' | 'kuning' | 'netral' };
 
-export type Column = { name: string; label: string };
+/**
+ * `name` boleh menyusuri relasi dengan titik (mis. `orang.nama`) selama relasi
+ * itu ikut di `Entity.include`.
+ */
+export type Column = {
+  name: string;
+  label: string;
+  /** Baris kedua abu-abu di sel yang sama, mis. NIS di bawah nama. */
+  subName?: string;
+  /** Render sebagai badge; peta nilai → nada kelas `badge-*`. */
+  badge?: Record<string, string>;
+};
 
 export type Entity = {
   key: string;
@@ -87,6 +104,11 @@ export type Entity = {
    * yang berperan tertentu.
    */
   whereDasar?: Record<string, unknown>;
+  /**
+   * Path relasi yang ikut disapu kotak "Cari", mis. `orang.nama` — tanpa ini
+   * pencarian hanya melihat kolom teks milik tabel entitas sendiri.
+   */
+  cariPath?: string[];
   fields: Field[];
   columns: Column[];
   include?: Record<string, unknown>;

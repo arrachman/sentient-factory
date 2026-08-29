@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import type { ClientEntity } from '@/lib/crud/types';
+import { SEMUA } from '@/lib/crud/filter-nilai';
 
 /** Jeda sebelum ketikan pada kotak cari ikut memicu filter. */
 const JEDA_CARI_MS = 400;
@@ -21,7 +22,9 @@ export function FilterBar({ entity, hrefBase, filters, limit }: Props) {
       ? Boolean(field.options?.length)
       : entity.columns.some((column) => column.name === field.name) && (field.refOptions || field.type === 'select')
   ));
-  const adaFilterAktif = Boolean(filters.q) || filterableFields.some((field) => filters[field.name]);
+  // Filter berbawaan (mis. Status = Mukim) tetap terhitung "aktif" hanya bila
+  // operator memilih sesuatu selain bawaannya — reset mengembalikannya ke sana.
+  const adaFilterAktif = Boolean(filters.q) || filterableFields.some((field) => filters[field.name] && filters[field.name] !== field.filterDefault);
 
   const formRef = useRef<HTMLFormElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -49,8 +52,8 @@ export function FilterBar({ entity, hrefBase, filters, limit }: Props) {
         const options = field.refOptions ?? (field.options ?? []).map((option) => ({ id: option, label: field.optionLabels?.[option] ?? option }));
         return <div className="bilah-filter-kolom" key={field.name} style={{ flex: '0 1 190px' }}>
           <label htmlFor={`filter-${field.name}`}>{field.label}</label>
-          <select id={`filter-${field.name}`} name={field.name} defaultValue={filters[field.name] ?? ''} onChange={kirim}>
-            <option value="">Semua</option>
+          <select id={`filter-${field.name}`} name={field.name} defaultValue={filters[field.name] ?? field.filterDefault ?? ''} onChange={kirim}>
+            <option value={field.filterDefault ? SEMUA : ''}>Semua</option>
             {options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
         </div>;

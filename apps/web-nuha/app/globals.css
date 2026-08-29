@@ -224,6 +224,16 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
 
 .empty { padding: 32px; text-align: center; color: var(--teks-lembut); font-size: 13.5px; }
 
+.sel-sub { display: block; font-size: 11px; color: var(--teks-lembut); margin-top: 1px; }
+
+/* Ringkasan di atas tabel: pintasan filter, bukan sekadar angka. */
+.ringkas-bar { margin-top: 16px; padding: 12px 16px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.ringkas-item { display: inline-flex; align-items: baseline; gap: 6px; padding: 6px 12px; border: 1px solid var(--garis); border-radius: 999px; font-size: 12.5px; text-decoration: none; color: var(--teks); background: #fff; }
+.ringkas-item:hover { border-color: var(--hijau-muda); }
+.ringkas-item[aria-current='true'] { border-color: var(--hijau); background: #f2f8f4; font-weight: 600; }
+.ringkas-angka { font-size: 14px; font-weight: 700; }
+.ringkas-item-sorot .ringkas-angka { color: #9a3412; }
+
 /* Tombol */
 .btn { display: inline-block; background: var(--hijau); color: var(--krem); border: 0; border-radius: 11px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; }
 .btn:hover { background: var(--hijau-gelap); color: var(--krem); }

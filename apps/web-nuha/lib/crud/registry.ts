@@ -2,6 +2,7 @@ import type { Entity } from './types';
 import { FIELD_PERAN, FILTER_KATEGORI_ORANG, daftarkanPeran, selaraskanPeran } from './peran-orang';
 import { FIELD_ORANG_DASAR } from './orang-fields';
 import { ENTITAS_PERSONA } from './persona';
+import { FILTER_JK_SANTRI, FILTER_LENGKAP_SANTRI } from './santri-filter';
 
 const text = (name: string, label: string, required = true) => ({ name, label, type: 'text' as const, required });
 const number = (name: string, label: string, required = false) => ({ name, label, type: 'number' as const, required, step: 1 });
@@ -29,7 +30,39 @@ export const ENTITIES: Entity[] = [
     sesudahBuat: daftarkanPeran,
     sesudahUbah: selaraskanPeran,
   },
-  { key: 'santri', menu: 'induk', model: 'santri', label: 'Santri (detail akademik)', deskripsi: 'Data akademik per santri: unit, kelas, kamar, program, tahun masuk. Untuk menambah santri baru beserta identitas dan walinya, pakai pintasan persona "Santri".', idType: 'bigint', fields: [number('orangId', 'ID Orang (buat dulu di menu Identitas Orang)', true), text('nis', 'NIS', false), text('nisn', 'NISN', false), { ...number('unitId', 'Unit'), ref: { model: 'unit', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kelasId', 'Kelas'), ref: { model: 'kelas', label: 'nama', orderBy: { nama: 'asc' } } }, { ...number('kamarId', 'Kamar'), ref: { model: 'kamar', label: 'kode', orderBy: { kode: 'asc' } } }, { name: 'status', label: 'Status', type: 'select', options: ['Mukim', 'Alumni', 'Keluar'], required: true }, text('program', 'Program', false), text('tahunMasuk', 'Tahun masuk', false)], columns: columns(['orangId', 'ID Orang'], ['nis', 'NIS'], ['nisn', 'NISN'], ['status', 'Status'], ['tahunMasuk', 'Tahun masuk']), orderBy: { createdAt: 'desc' } },
+  {
+    key: 'santri',
+    menu: 'induk',
+    model: 'santri',
+    label: 'Santri (detail akademik)',
+    deskripsi: 'Data akademik per santri: unit, kelas, kamar, program, tahun masuk. Untuk menambah santri baru beserta identitas dan walinya, pakai pintasan persona "Santri".',
+    idType: 'bigint',
+    // Nama hidup di tabel `orang`, jadi tanpa ini kotak Cari tak pernah
+    // menemukan siapa pun kecuali yang hafal NIS.
+    cariPath: ['orang.nama'],
+    include: { orang: true },
+    fields: [
+      { ...number('orangId', 'ID Orang (buat dulu di menu Identitas Orang)', true), hanyaBaru: true },
+      text('nis', 'NIS', false),
+      text('nisn', 'NISN', false),
+      { ...number('unitId', 'Unit'), ref: { model: 'unit', label: 'nama', orderBy: { nama: 'asc' } } },
+      { ...number('kelasId', 'Kelas'), ref: { model: 'kelas', label: 'nama', orderBy: { nama: 'asc' } } },
+      { ...number('kamarId', 'Kamar'), ref: { model: 'kamar', label: 'kode', labelTambahan: 'asrama.nama', include: { asrama: true }, orderBy: { kode: 'asc' } } },
+      { name: 'status', label: 'Status', type: 'select', options: ['Mukim', 'Alumni', 'Keluar'], required: true, filterDefault: 'Mukim' },
+      text('program', 'Program', false),
+      text('tahunMasuk', 'Tahun masuk', false),
+      FILTER_JK_SANTRI,
+      FILTER_LENGKAP_SANTRI,
+    ],
+    columns: [
+      { name: 'orang.nama', label: 'Nama', subName: 'nis' },
+      { name: 'orang.jk', label: 'JK' },
+      ...columns(['unitId', 'Unit'], ['kelasId', 'Kelas'], ['kamarId', 'Kamar']),
+      { name: 'status', label: 'Status', badge: { Mukim: 'hijau', Alumni: 'netral', Keluar: 'merah' } },
+      { name: 'tahunMasuk', label: 'Tahun masuk' },
+    ],
+    orderBy: { createdAt: 'desc' },
+  },
   {
     key: 'unit',
     menu: 'pengaturan',

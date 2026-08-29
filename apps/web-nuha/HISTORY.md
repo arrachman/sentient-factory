@@ -4,6 +4,47 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Daftar santri di /data/santri bisa dipakai tanpa hafal NIS
+
+Dua hal membuat halaman ini praktis tidak terpakai. Pertama, nama santri tidak
+pernah muncul maupun bisa dicari: kolom pertama menampilkan `orangId` (nomor
+internal), dan kotak Cari hanya menyapu kolom teks milik tabel `santri`,
+sedangkan nama hidup di tabel `orang` — mengetik nama selalu nihil. Kedua,
+filter Unit/Kelas/Kamar tidak muncul walau kolomnya ada, karena `FilterBar`
+mensyaratkan field itu juga terdaftar sebagai kolom tabel.
+
+Perubahan mesin CRUD (berlaku umum, bukan khusus santri): `Entity.cariPath`
+menambahkan path relasi ke klausa OR pencarian (`orang.nama`); `Column.name`
+kini boleh bertitik dan diratakan di server sehingga tabel klien tetap membaca
+`row[nama]`; `Column.subName` memberi baris kecil kedua di sel yang sama, dan
+`Column.badge` memetakan nilai → nada badge. `Field.filterDefault` membuat
+filter punya nilai bawaan — nilai `semua` (konstanta di `lib/crud/filter-nilai.ts`,
+modul terpisah agar bilah filter tidak menarik Prisma ke bundel browser)
+dipakai untuk membatalkannya.
+
+Entitas `santri`: kolom jadi Nama (+NIS sebagai sub-baris) / JK / Unit / Kelas /
+Kamar / Status (badge) / Tahun masuk. Filter bertambah Jenis kelamin dan
+Kelengkapan data (`lib/crud/santri-filter.ts`), Status berbawaan `Mukim`, dan
+Kamar menampilkan kode + nama asrama. `orangId` ditandai `hanyaBaru` sehingga
+tidak dirender saat mengubah — mencegah satu baris santri dipindah ke identitas
+orang lain. Baris ringkasan baru (`app/data/ringkasan-santri.tsx`) menampilkan
+Semua/Mukim/Alumni plus tiga daftar kerja operator (belum ada kelas/kamar/NIS),
+masing-masing menautkan ke daftar yang sudah tersaring.
+
+**Dampak operator.** Status kini tersaring ke Mukim secara bawaan; alumni
+dimunculkan lewat opsi "Semua" pada dropdown Status. Tombol Reset hanya muncul
+bila filter menyimpang dari bawaan itu.
+
+Verifikasi lewat Chromium ke `http://202.59.200.26:3226` dengan login riil:
+`q=Hamdan` → 2 hasil dan `q=Zzzqqq` → 0 (sebelumnya nama tak pernah ketemu),
+kolom JK terisi L/P dari relasi, jkSantri L=55 P=34, `lengkap=tanpaKelas` → 1,
+badge status hijau, uji negatif akun `santri.*`/`wali.*` dialihkan ke `/` tanpa
+`pageerror`, dan mutasi ubah dicek sampai baris DB (`program` tersimpan,
+`orangId` & `nis` utuh, lalu dipulihkan). `npx tsc --noEmit` bersih.
+
+Catatan: DB uji saat ini hanya memuat `superadmin` + akun portal santri/wali;
+akun `guru.*`/staf belum di-seed, jadi uji negatif memakai akun portal.
+
 ## 2026-08-27 — Profil unit & yayasan bisa diedit lewat /data
 
 Kolom profil yang ditambahkan sebelumnya belum punya pintu edit: entitas CRUD

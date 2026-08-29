@@ -1,8 +1,13 @@
 import { prisma } from '@/lib/prisma';
 import type { ClientEntity, Entity, Field, Row } from './types';
 import { lampirkanKeterkaitan } from './keterkaitan';
+import { SEMUA } from './filter-nilai';
 
 export type Filters = Record<string, string>;
+
+/** `orang.nama` → `{ orang: { nama: { contains: q } } }`. */
+const wherePath = (path: string, q: string): Record<string, unknown> =>
+  path.split('.').reverse().reduce<Record<string, unknown>>((acc, key, i) => ({ [key]: i === 0 ? { contains: q } : acc }), {});
 
 /** OR-contains across text fields for `q`, exact match for select/ref fields. */
 function buildWhere(entity: Entity, filters: Filters): Record<string, unknown> | undefined {
@@ -11,11 +16,12 @@ function buildWhere(entity: Entity, filters: Filters): Record<string, unknown> |
   const q = filters.q?.trim();
   if (q) {
     const stringFields = entity.fields.filter((field) => !field.ref && !field.virtual && (field.type === 'text' || field.type === 'textarea')).map((field) => field.name);
-    if (stringFields.length) and.push({ OR: stringFields.map((name) => ({ [name]: { contains: q } })) });
+    const cocok = [...stringFields.map((name) => ({ [name]: { contains: q } })), ...(entity.cariPath ?? []).map((path) => wherePath(path, q))];
+    if (cocok.length) and.push({ OR: cocok });
   }
   for (const field of entity.fields) {
     const value = filters[field.name];
-    if (!value) continue;
+    if (!value || value === SEMUA) continue;
     // Filter turunan relasi (mis. kategori orang) membawa klausa `where`-nya
     // sendiri karena tidak punya kolom di tabel.
     if (field.filterWhere) {
@@ -128,9 +134,20 @@ export async function listRows(entity: Entity, halaman = 1, ukuranHalaman = 10, 
     skip: (Math.max(1, halaman) - 1) * ukuranHalaman,
     take: ukuranHalaman,
   });
-  const dasar = rows.map((row) => ({ ...(serialize(row) as Record<string, unknown>), id: String(row.id) }));
+  const dasar = rows.map((row) => {
+    const datar: Row = { ...(serialize(row) as Record<string, unknown>), id: String(row.id) };
+    // Kolom bertitik (mis. `orang.nama`) diratakan di server supaya tabel klien
+    // tetap membaca `row[column.name]` tanpa tahu bentuk relasinya.
+    for (const path of kolomBertitik(entity)) datar[path] = serialize(readPath(datar, path));
+    return datar;
+  });
   return lampirkanKeterkaitan(entity, dasar);
 }
+
+const kolomBertitik = (entity: Entity) => {
+  const dari = (name?: string) => (name && name.includes('.') ? [name] : []);
+  return entity.columns.flatMap((column) => [...dari(column.name), ...dari(column.subName)]);
+};
 
 const readPath = (row: Record<string, unknown>, path: string): unknown =>
   path.split('.').reduce<unknown>((acc, key) => (acc && typeof acc === 'object' ? (acc as Record<string, unknown>)[key] : undefined), row);

@@ -7,6 +7,7 @@ import { CrudPanel } from '@/components/CrudPanel';
 import { Pagination, LimitPicker, FilterBar, bacaHalaman, bacaLimit, satu, filterQuery } from '@/components';
 import { getEntity } from '@/lib/crud/registry';
 import { listRows, countRows, toClientEntity } from '@/lib/crud/engine';
+import { RingkasanSantri } from '../ringkasan-santri';
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -23,7 +24,9 @@ export default async function EntityPage({ params, searchParams }: { params: Pro
   const q = satu(sp.q);
   if (q) filters.q = q;
   for (const field of entity.fields) {
-    const value = satu(sp[field.name]);
+    // Tanpa parameter di URL, filter berbawaan (mis. Status = Mukim) yang
+    // berlaku; "Semua" mengirim nilai eksplisit untuk membatalkannya.
+    const value = satu(sp[field.name]) || field.filterDefault;
     if (value) filters[field.name] = value;
   }
   const [rows, total, menuInfo, clientEntity] = await Promise.all([
@@ -38,6 +41,7 @@ export default async function EntityPage({ params, searchParams }: { params: Pro
     <Link href="/data" className="muted" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
       <IkonMenu menuKey={entity.menu} path={menuInfo?.icon} size={15} /> &larr; Kembali ke Kelola Data
     </Link>
+    {key === 'santri' && <RingkasanSantri filters={filters} />}
     <FilterBar entity={clientEntity} hrefBase={`/data/${key}`} filters={filters} limit={limit} />
     <CrudPanel entity={clientEntity} rows={rows} />
     <Pagination

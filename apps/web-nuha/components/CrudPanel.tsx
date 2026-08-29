@@ -2,7 +2,7 @@
 
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ClientEntity, ClientField, Keterkaitan, Row } from '@/lib/crud/types';
+import type { ClientEntity, ClientField, Column, Keterkaitan, Row } from '@/lib/crud/types';
 import { InputField } from '@/components/molecules/InputField';
 
 const IkonTambah = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M12 5v14M5 12h14" /></svg>;
@@ -26,6 +26,17 @@ const display = (value: unknown, refOptions?: ClientField['refOptions']) => {
   const text = String(value);
   return /^\d{4}-\d{2}-\d{2}T/.test(text) ? new Date(text).toLocaleDateString('id-ID') : text;
 };
+
+/** Sel tabel: badge bila kolomnya bernada, plus baris kedua opsional. */
+function Sel({ row, column, refOptions }: { row: Row; column: Column; refOptions?: ClientField['refOptions'] }) {
+  const utama = display(row[column.name], refOptions);
+  const sub = column.subName ? display(row[column.subName]) : null;
+  const nada = column.badge?.[String(row[column.name])];
+  return <>
+    {nada ? <span className={`badge badge-${nada}`}>{utama}</span> : utama}
+    {column.subName && <span className="sel-sub">{sub}</span>}
+  </>;
+}
 
 /** Kelompokkan field sesuai `group`; yang tanpa grup jatuh ke "Data utama". */
 function kelompokkan(fields: ClientField[]): { judul: string; fields: ClientField[] }[] {
@@ -216,7 +227,7 @@ export function CrudPanel({ entity, rows }: { entity: ClientEntity; rows: Row[] 
         <tbody>
           {rows.length === 0 && <tr><td colSpan={entity.columns.length + (adaKait ? 2 : 1)} className="empty">Tidak ada data yang cocok.</td></tr>}
           {rows.map((row) => <tr key={row.id} data-testid={`row-${entity.key}`}>
-            {entity.columns.map((column) => <td key={column.name}>{display(row[column.name], refByField.get(column.name))}</td>)}
+            {entity.columns.map((column) => <td key={column.name}><Sel row={row} column={column} refOptions={refByField.get(column.name)} /></td>)}
             {adaKait && <td><span className="kait-sel">
               {(row._kait ?? []).length === 0
                 ? <span className="muted">—</span>
