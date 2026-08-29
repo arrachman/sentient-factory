@@ -1,4 +1,4 @@
-import { simpanJawaban } from '@/app/ujian/peserta-actions';
+import { simpanJawaban } from '@/app/(staf)/ujian/peserta-actions';
 
 /**
  * Autosave jawaban. Route, bukan server action, agar bisa dipanggil dari

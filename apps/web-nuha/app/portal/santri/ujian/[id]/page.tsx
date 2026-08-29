@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { pesertaSaya } from '@/app/ujian/cbt-bersama';
-import { selesaikanKerja } from '@/app/ujian/peserta-actions';
+import { pesertaSaya } from '@/app/(staf)/ujian/cbt-bersama';
+import { selesaikanKerja } from '@/app/(staf)/ujian/peserta-actions';
 import { prisma } from '@/lib/prisma';
 import { Pengawas } from './Pengawas';
 import { KartuSoal } from './KartuSoal';

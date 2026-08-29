@@ -1,4 +1,4 @@
-import { laporPelanggaran } from '@/app/ujian/peserta-actions';
+import { laporPelanggaran } from '@/app/(staf)/ujian/peserta-actions';
 
 /**
  * Jalur pelaporan pelanggaran dari pengawasan sisi klien. Sengaja route,
