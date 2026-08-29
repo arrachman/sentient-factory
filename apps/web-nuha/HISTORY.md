@@ -4,6 +4,27 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Urutan lembaga SMP-MA-Madin & rename kelas IX-A/IX-B
+
+Urutan lembaga di pohon /induk diubah dari Madin → MA → SMP menjadi
+SMP → MA → Madin lewat `URUTAN_UNIT` di `app/(staf)/induk/pohon.ts`.
+Kelas 3A dan 3B pada SMP Tingkat IX (tahun ajaran aktif 2026/2027 Gasal)
+di-rename langsung di data (`Kelas.nama`) menjadi IX-A dan IX-B, bukan
+sekadar label tampilan — perubahan ini terjadi di database, bukan diff
+kode. Ditemukan juga (dilaporkan, belum diperbaiki): MA Tingkat X
+menampilkan dua kelas "Kelas 1" karena ada dua baris `Kelas` untuk
+tingkat 10 di dua tahun ajaran berbeda (aktif & tidak aktif) — query
+pohon /induk belum menyaring berdasarkan tahun ajaran aktif.
+
+## 2026-08-29 — Sidebar staf persisten saat navigasi
+
+Rute staf dipindahkan ke route group `(staf)` tanpa mengubah URL. `Shell` kini
+hidup sekali di layout grup sehingga sidebar, topbar, menu RBAC, dan agenda tidak
+terpasang ulang ketika operator berpindah menu; hanya konten halaman yang
+berganti. Navigasi dan judul aktif memakai komponen klien kecil agar status aktif
+tetap berubah tanpa reload kerangka. Import modul ujian yang bergantung pada
+lokasi rute juga diperbarui.
+
 ## 2026-08-29 — Label tingkat & urutan lembaga di penyaring /induk
 
 Penyaring pohon lembaga di /induk sebelumnya melabeli sub-tingkat sebagai
