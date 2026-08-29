@@ -12,6 +12,10 @@ export type FilterInduk = {
   status?: StatusPilihan;
   jk?: 'L' | 'P';
   angkatan?: string;
+  /** Simpul "Alumni" milik satu unit. Berdiri sendiri dari `unitId`/`kelasId`
+   * karena alumni dilacak lewat `RiwayatPendidikan`, bukan kelas aktif —
+   * satu santri bisa alumni SMP sekaligus mukim di kelas MA. */
+  alumniUnitId?: number;
 };
 
 const ambilSatu = (sp: Record<string, string | string[] | undefined>, k: string) => {
@@ -35,6 +39,7 @@ export function bacaFilter(sp: Record<string, string | string[] | undefined>): F
     status: STATUS_SANTRI.includes(status as StatusPilihan) ? (status as StatusPilihan) : undefined,
     jk: jk === 'L' || jk === 'P' ? jk : undefined,
     angkatan: ambilSatu(sp, 'angkatan'),
+    alumniUnitId: angkaPositif(ambilSatu(sp, 'alumni')),
   };
 }
 
@@ -43,12 +48,20 @@ export function bacaFilter(sp: Record<string, string | string[] | undefined>): F
  * Kelas menang atas unit karena kelas sudah menyiratkan unitnya. */
 export function whereFilter(f: FilterInduk): Prisma.SantriWhereInput {
   const syarat: Prisma.SantriWhereInput[] = [];
-  if (f.kelasId === 'none') syarat.push({ kelasId: null });
-  else if (f.kelasId) syarat.push({ kelasId: f.kelasId });
-  else if (f.unitId) syarat.push({ unitId: f.unitId });
-  // Tanpa filter status eksplisit, hanya santri aktif (Mukim) yang tampil —
-  // alumni/keluar baru terlihat kalau operator memilih status itu sendiri.
-  syarat.push({ status: f.status ?? 'Mukim' });
+  if (f.alumniUnitId) {
+    // Simpul Alumni: yang dicari kelulusan di unit itu, bukan penempatan aktif.
+    // Status santri sengaja tidak dibatasi — alumni SMP yang kini mukim di MA
+    // tetap harus muncul di cabang Alumni SMP.
+    syarat.push({ orang: { riwayatPendidikan: { some: { unitId: f.alumniUnitId, status: 'Alumni' } } } });
+    if (f.status) syarat.push({ status: f.status });
+  } else {
+    if (f.kelasId === 'none') syarat.push({ kelasId: null });
+    else if (f.kelasId) syarat.push({ kelasId: f.kelasId });
+    else if (f.unitId) syarat.push({ unitId: f.unitId });
+    // Tanpa filter status eksplisit, hanya santri aktif (Mukim) yang tampil —
+    // alumni/keluar baru terlihat kalau operator memilih status itu sendiri.
+    syarat.push({ status: f.status ?? 'Mukim' });
+  }
   if (f.angkatan) syarat.push({ tahunMasuk: f.angkatan });
   if (f.jk) syarat.push({ orang: { jk: f.jk } });
   if (f.q) {
@@ -69,6 +82,7 @@ export function queryFilter(f: Partial<FilterInduk>): string {
   if (f.q) p.set('q', f.q);
   if (f.unitId) p.set('unit', String(f.unitId));
   if (f.kelasId) p.set('kelas', String(f.kelasId));
+  if (f.alumniUnitId) p.set('alumni', String(f.alumniUnitId));
   if (f.status) p.set('status', f.status);
   if (f.jk) p.set('jk', f.jk);
   if (f.angkatan) p.set('angkatan', f.angkatan);
@@ -83,7 +97,12 @@ export function hrefInduk(
   ubah: Partial<FilterInduk> = {},
   extra: { sel?: bigint | string; tab?: string; halaman?: number } = {},
 ): string {
-  const gabung = { ...f, ...ubah };
+  // Simpul Alumni dan simpul unit/kelas saling meniadakan: keduanya menjawab
+  // "santri mana", jadi memilih salah satu harus membersihkan yang lain.
+  const bersih: Partial<FilterInduk> = 'alumniUnitId' in ubah
+    ? { unitId: undefined, kelasId: undefined }
+    : ('unitId' in ubah || 'kelasId' in ubah) ? { alumniUnitId: undefined } : {};
+  const gabung = { ...f, ...bersih, ...ubah };
   const p = new URLSearchParams(queryFilter(gabung));
   if (extra.sel !== undefined) p.set('sel', String(extra.sel));
   if (extra.tab) p.set('tab', extra.tab);
@@ -93,5 +112,5 @@ export function hrefInduk(
 }
 
 export function jumlahFilterAktif(f: FilterInduk): number {
-  return [f.q, f.unitId, f.kelasId, f.status, f.jk, f.angkatan].filter(Boolean).length;
+  return [f.q, f.unitId, f.kelasId, f.alumniUnitId, f.status, f.jk, f.angkatan].filter(Boolean).length;
 }

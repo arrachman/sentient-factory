@@ -41,6 +41,7 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
         <form action="/induk" method="get" style={{ display: 'flex', gap: 7, alignItems: 'center', flex: '1 1 260px' }}>
           {f.unitId && <input type="hidden" name="unit" value={f.unitId} />}
           {f.kelasId && <input type="hidden" name="kelas" value={f.kelasId} />}
+          {f.alumniUnitId && <input type="hidden" name="alumni" value={f.alumniUnitId} />}
           {f.status && <input type="hidden" name="status" value={f.status} />}
           {f.angkatan && <input type="hidden" name="angkatan" value={f.angkatan} />}
           <input
@@ -71,7 +72,9 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
               key={s}
               f={f}
               ubah={{ status: s }}
-              aktif={s === 'Mukim' ? !f.status || f.status === 'Mukim' : f.status === s}
+              // Di simpul Alumni tidak ada status bawaan (semua lulusan tampil,
+              // mukim maupun tidak), jadi "Aktif" hanya menyala kalau dipilih.
+              aktif={s === 'Mukim' && !f.alumniUnitId ? !f.status || f.status === 'Mukim' : f.status === s}
               anak={s === 'Mukim' ? 'Aktif' : s}
             />
           ))}

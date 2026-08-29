@@ -4,6 +4,20 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Simpul "Alumni" per unit di pohon /induk
+
+Pohon lembaga `/induk` kini punya cabang **Alumni** sejajar tingkat kelas di
+bawah tiap unit (label cukup "Alumni" — unitnya sudah tersirat dari hierarki).
+Cabang ini bersandar pada `RiwayatPendidikan`, bukan penempatan aktif, sehingga
+santri yang lulus SMP lalu mukim di MA muncul di **dua** tempat sekaligus:
+Alumni SMP dan kelas aktifnya di MA. Filter baru `?alumni=<unitId>` saling
+meniadakan dengan `?unit=`/`?kelas=` di `hrefInduk`.
+
+Dampak operator: di simpul Alumni, chip Status tidak lagi default ke "Aktif" —
+semua lulusan tampil, dan Status dipakai untuk memisah yang lanjut (Mukim) dari
+yang benar-benar keluar. Data sekarang: SMP 24 alumni = 17 Mukim (lanjut MA) +
+7 Alumni. Cacah unit tetap menghitung penempatan aktif saja agar tidak dobel.
+
 ## 2026-08-29 — Filter status /induk default ke santri aktif (Mukim)
 
 `whereFilter` di `app/(staf)/induk/filter.ts` sebelumnya tidak menyaring
