@@ -30,7 +30,7 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
   // menyorot pilihannya, jadi chip-nya cuma duplikat yang bikin baris ini ramai.
   const copot: ChipFilter[] = [
     ...(f.q ? [{ label: `Cari: "${f.q}"`, href: hrefInduk(f, { q: '' }) }] : []),
-    ...(f.status ? [{ label: `Status: ${f.status}`, href: hrefInduk(f, { status: undefined }) }] : []),
+    ...(f.status && f.status !== 'Mukim' ? [{ label: `Status: ${f.status}`, href: hrefInduk(f, { status: undefined }) }] : []),
     ...(f.jk ? [{ label: `Jenis kelamin: ${f.jk === 'L' ? 'Putra' : 'Putri'}`, href: hrefInduk(f, { jk: undefined }) }] : []),
     ...(f.angkatan ? [{ label: `Angkatan: ${f.angkatan}`, href: hrefInduk(f, { angkatan: undefined }) }] : []),
   ];
@@ -66,8 +66,14 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', borderTop: '1px solid var(--garis)', paddingTop: 10 }}>
         <Kelompok
           judul="Status"
-          anak={STATUS_SANTRI.filter((s) => s !== 'Mukim').map((s) => (
-            <Opsi key={s} f={f} ubah={{ status: s }} aktif={f.status === s} anak={s} />
+          anak={STATUS_SANTRI.map((s) => (
+            <Opsi
+              key={s}
+              f={f}
+              ubah={{ status: s }}
+              aktif={s === 'Mukim' ? !f.status || f.status === 'Mukim' : f.status === s}
+              anak={s === 'Mukim' ? 'Aktif' : s}
+            />
           ))}
         />
         <Kelompok
