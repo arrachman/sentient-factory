@@ -4,7 +4,7 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
-## 2026-08-29 — Pegawai bisa bertugas di lebih dari satu unit; Alfan Jamil digabung (`c60f5b82`)
+## 2026-08-29 — Pegawai bisa bertugas di lebih dari satu unit; Alfan Jamil digabung (`d32da92f`)
 
 "Alfan Jamil, M.Si, Gr" (`GTT-MA-005`, guru Fikih MA — dari `DATA GURU.xlsx`)
 dan "Alfan Jamil" (`AST-004`, asatidz Madin) adalah **orang yang sama**, tetapi
@@ -729,7 +729,7 @@ yang memisah Ayah/Ibu — peran `Wali` akan berhenti jadi kontak utama sendiriny
 Alumni SMP yang dipindah tidak punya nilai/presensi, jadi tidak ada data akademik
 yang tertinggal. Skrip idempoten (jalan kedua: 0 diproses, 24 dilewati).
 
-## 2026-08-27 — Tempat/tgl lahir & pendidikan terakhir di Identitas Orang (`c60f5b82`)
+## 2026-08-27 — Tempat/tgl lahir & pendidikan terakhir di Identitas Orang (`d32da92f`)
 
 Form `/data/orang` menambah tiga isian opsional: **Tempat lahir** dan **Tanggal
 lahir** (grup Identitas, pemilih tanggal) memakai kolom `tmp_lahir`/`tgl_lahir`
@@ -743,7 +743,7 @@ berlaku untuk semua peran (guru, staf, wali), bukan hanya pegawai. Migrasi
 `20260827140000_orang_pendidikan_terakhir` sudah di-apply ke DB uji; jalankan
 `prisma migrate deploy` di environment lain.
 
-## 2026-08-27 — Impor 8 siswa MA angkatan 2026/2027 (`c60f5b82`)
+## 2026-08-27 — Impor 8 siswa MA angkatan 2026/2027 (`d32da92f`)
 
 Importir baru `prisma/import/import-siswa-ma-2026.ts` (`npm run
 import:siswa-ma-2026`) memasukkan 8 siswa MA ke **Kelas 1 (tingkat 10)** pada
