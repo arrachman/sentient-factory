@@ -4,6 +4,31 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Impor riwayat Madin 2019–2026 dari berkas presensi (`1be7b024`)
+
+Berkas operator `docs/PRESENSI DAN JURNAL JULI-AGUSTUS AJARAN BARU
+2025_111924.xlsx` dimuat lewat `npm run import:santri-madin-riwayat`:
+**248 orang** (188 baru, 60 dicocokkan ke `Orang` yang sudah ada) dan
+**284 baris `riwayat_pendidikan`** pada unit Madin, lintas empat tahun ajaran
+2019/2020, 2021/2022, 2023/2024, 2025/2026.
+
+Yang perlu diketahui operator:
+
+- **Hanya roster 2025/2026** yang menyentuh tabel `santri` (status `Mukim`,
+  NIS `2025PONDOK001+`). TA lama murni riwayat berstatus `Alumni`, jadi status
+  santri MA/SMP yang juga mengaji di Madin **tidak berubah** — 53 santri unit
+  lain hanya bertambah riwayat Madin, unit/kelasnya dibiarkan.
+- **TahunAjaran 2019/2020, 2021/2022, 2023/2024 dibuat baru** dengan
+  `aktif: false` (generator hanya mulai 2024/2025).
+- **Jenis kelamin 188 orang baru adalah terkaan** (dari penanda sheet PA/PI
+  dan kata kunci nama) — berkas presensi tidak punya kolom JK. Mohon dikoreksi
+  bila ada yang keliru; kolom NIS/NISN/TTL/alamat/wali sengaja kosong.
+- Keputusan operator yang dipatok di skrip: sheet `Lembar1` dibaca sebagai
+  **Kelas 6** (judul internalnya begitu, bukan nama sheet-nya); `Ali Wafa`
+  yang tercatat ganda di TA 2021/2022 diambil **Kelas 4**; `M Ilham Arifin`
+  dan `M Irham Arifin` adalah **dua orang berbeda**.
+- Skrip idempoten — dijalankan ulang tidak menggandakan data.
+
 ## 2026-08-29 — Chip Alumni /induk ikut riwayat pendidikan (`dc091133`)
 
 Chip **Status: Alumni** menampilkan 17, sedangkan cabang **SMP → Alumni** di
