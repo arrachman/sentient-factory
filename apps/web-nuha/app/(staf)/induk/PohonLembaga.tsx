@@ -106,7 +106,10 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
         );
       })}
 
-      {pohon.tanpaKelas > 0 && (
+      {/* "Belum berkelas" hanya bermakna untuk santri aktif. Alumni & santri
+          keluar pasti tidak punya kelas, jadi cabang ini akan menampung semuanya
+          dan tidak menyaring apa pun — sembunyikan saat status non-aktif. */}
+      {pohon.tanpaKelas > 0 && (!f.status || f.status === 'Mukim') && (
         <Link
           href={hrefInduk(f, { unitId: undefined, kelasId: f.kelasId === 'none' ? undefined : 'none' })}
           style={{ ...baris(f.kelasId === 'none', 0), fontStyle: 'italic' }}

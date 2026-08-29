@@ -93,9 +93,14 @@ export function hrefInduk(
 ): string {
   // Simpul Alumni dan simpul unit/kelas saling meniadakan: keduanya menjawab
   // "santri mana", jadi memilih salah satu harus membersihkan yang lain.
+  // Status non-aktif (Alumni/Keluar) juga membuang unit/kelas: santri berstatus
+  // itu tidak lagi terikat kelas, jadi menahan `kelas=none` dari klik sebelumnya
+  // hanya menyisakan penyaring yang tidak menyaring apa pun.
   const bersih: Partial<FilterInduk> = 'alumniUnitId' in ubah
     ? { unitId: undefined, kelasId: undefined }
-    : ('unitId' in ubah || 'kelasId' in ubah || 'status' in ubah) ? { alumniUnitId: undefined } : {};
+    : 'status' in ubah
+      ? { alumniUnitId: undefined, ...(ubah.status && ubah.status !== STATUS_AKTIF ? { unitId: undefined, kelasId: undefined } : {}) }
+      : ('unitId' in ubah || 'kelasId' in ubah) ? { alumniUnitId: undefined } : {};
   const gabung = { ...f, ...bersih, ...ubah };
   const p = new URLSearchParams(queryFilter(gabung));
   if (extra.sel !== undefined) p.set('sel', String(extra.sel));
