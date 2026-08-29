@@ -4,6 +4,27 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Cabang Alumni dicacah per lembaga saja, bukan per tingkat/kelas
+
+Atas permintaan operator, simpul **Alumni** di pohon lembaga `/induk` tidak lagi
+dipecah per tingkat maupun per kelas — cukup satu angka per lembaga. Alasannya:
+keanggotaan alumni berasal dari `RiwayatPendidikan`, sedangkan tingkat/kelas
+menggambarkan penempatan rombel santri **aktif**. Menampilkan keduanya bersamaan
+memunculkan angka menyesatkan (mis. alumni SMP yang kini mukim di MA ikut
+terhitung di "MA Tingkat X"). Total "Semua lembaga" juga ikut mencacah alumni di
+mode ini supaya tidak bentrok dengan angka lembaga di bawahnya.
+
+Perubahan kodenya (`app/(staf)/induk/pohon.ts`, penanda `modeAlumni`) ikut
+terbawa pada commit `ecf4f2d0`; berkas diagnostik sementara `_cek.ts` yang
+tidak sengaja ikut ter-commit di sana dihapus menyusul.
+
+Verifikasi Playwright ke `http://202.59.200.26:3226` — kontrol `?unit=4` (Mukim)
+tetap merender 7 baris Tingkat, sedangkan `?status=Alumni`, `?alumni=4` (Madin)
+dan `?alumni=2` (SMP) merender **nol** baris Tingkat/Kelas dengan Hasil 35 / 11 /
+24 yang cocok dengan angka pohon, tanpa `pageerror`.
+
+Catatan id unit untuk penelusuran berikutnya: MA=1, SMP=2, Poskestren=3, Madin=4.
+
 ## 2026-08-29 — Gabungkan duplikat santri Madin: Bismar & Wardatul (`ecf4f2d0`)
 
 Wardatul Haizatil Husna dan M. Bismar As Sidiq muncul **dua kali** sebagai
