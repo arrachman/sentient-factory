@@ -199,6 +199,7 @@ model Unit {
 
   kelas         Kelas[]
   santri        Santri[]
+  santriKelas   SantriKelas[]
   riwayatPendidikan RiwayatPendidikan[]
   pegawai       Pegawai[]  @relation("PegawaiUnit")
   pegawaiUnit   PegawaiUnit[]
@@ -254,6 +255,7 @@ model Kelas {
   waliKelasPegawai Pegawai?      @relation(fields: [waliKelasId], references: [id])
   tahunAjaran      TahunAjaran?  @relation(fields: [tahunAjaranId], references: [id])
   santri           Santri[]
+  santriKelas      SantriKelas[]
   jadwalUjian      JadwalUjian[]
   sesiCbt          SesiCbt[]
 
@@ -344,9 +346,36 @@ model Santri {
   nilaiUjian      NilaiUjian[]
   pesertaCbt      PesertaCbt[]
   profilKesehatan ProfilKesehatan?
+  kelasLain       SantriKelas[]
 
   @@index([status])
   @@map("santri")
+}
+
+/// Penempatan rombel seorang santri, jamak: satu santri bisa sekolah formal di
+/// SMP/MA **sekaligus** mengaji di Madin pada tahun ajaran yang sama. Kolom
+/// `Santri.unitId/kelasId` dipertahankan sebagai penempatan UTAMA (dipakai
+/// modul yang memang hanya butuh satu jawaban: kartu identitas, tagihan, kamar),
+/// sedangkan tabel ini adalah sumber kebenaran untuk "santri ini ada di kelas
+/// mana saja" — dipakai pohon induk, penyaring unit/kelas, dan presensi.
+/// Baris dengan `utama = true` harus konsisten dengan kolom lama.
+model SantriKelas {
+  santriId BigInt   @map("santri_id")
+  kelasId  Int      @map("kelas_id")
+  /// Disalin dari `Kelas.unitId` saat penulisan supaya penyaring per-unit tidak
+  /// perlu join ke `kelas`; wajib sama dengan unit kelasnya.
+  unitId   Int      @map("unit_id")
+  utama    Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  kelas  Kelas  @relation(fields: [kelasId], references: [id], onDelete: Cascade)
+  unit   Unit   @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@id([santriId, kelasId])
+  @@index([kelasId])
+  @@index([unitId])
+  @@map("santri_kelas")
 }
 
 /// Jenjang yang pernah/sedang dijalani seorang `Orang` (SD → SMP → MA, dst),

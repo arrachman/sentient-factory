@@ -52,8 +52,17 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
     // Poskestren bukan lembaga tempat santri terdaftar (layanan kesehatan,
     // bukan jenjang) — dikeluarkan dari pohon induk santri.
     prisma.unit.findMany({ where: { aktif: true, key: { not: 'Poskestren' } } }),
-    prisma.kelas.findMany({ orderBy: [{ tingkat: 'asc' }, { nama: 'asc' }] }),
-    prisma.santri.groupBy({ by: ['kelasId'], where: whereDasar, _count: { _all: true } }),
+    // Hanya kelas **tahun ajaran aktif**: satu rombel yang sama punya baris
+    // `Kelas` sendiri di tiap TA, jadi tanpa saringan ini setiap tingkat tampil
+    // ganda (mis. "Kelas 6" dua kali — TA lama dan TA aktif). Sejarah rombel
+    // tetap dibaca dari `RiwayatPendidikan`, bukan dari pohon ini.
+    prisma.kelas.findMany({
+      where: { tahunAjaran: { aktif: true } },
+      orderBy: [{ tingkat: 'asc' }, { nama: 'asc' }],
+    }),
+    // Dicacah dari `SantriKelas` supaya santri berkelas jamak (mis. SMP + Madin)
+    // terhitung di kedua cabang lembaga, bukan hanya di penempatan utamanya.
+    prisma.santriKelas.groupBy({ by: ['kelasId'], where: { santri: whereDasar }, _count: { _all: true } }),
     // Di mode alumni, "Semua lembaga" harus mencacah alumni lintas unit —
     // bukan santri aktif — supaya tidak bentrok dengan angka per lembaga di
     // bawahnya (mis. 153 aktif vs 11 alumni Madin pada layar yang sama).
@@ -62,7 +71,7 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
         ? whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: undefined, status: 'Alumni' })
         : whereDasar,
     }),
-    prisma.santri.count({ where: { AND: [whereDasar, { kelasId: null }] } }),
+    prisma.santri.count({ where: { AND: [whereDasar, { kelasLain: { none: {} } }] } }),
   ]);
 
   const perKelas = new Map<number, number>();

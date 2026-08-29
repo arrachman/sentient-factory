@@ -58,9 +58,13 @@ export function whereFilter(f: FilterInduk): Prisma.SantriWhereInput {
   if (f.alumniUnitId || f.status === 'Alumni') {
     syarat.push({ orang: { riwayatPendidikan: { some: { status: 'Alumni', ...(unitAlumni ? { unitId: unitAlumni } : {}) } } } });
   } else {
-    if (f.kelasId === 'none') syarat.push({ kelasId: null });
-    else if (f.kelasId) syarat.push({ kelasId: f.kelasId });
-    else if (f.unitId) syarat.push({ unitId: f.unitId });
+    // Unit/kelas dijawab dari `SantriKelas`, bukan kolom `santri.unitId/kelasId`:
+    // satu santri bisa sekolah di SMP sekaligus mengaji di Madin, dan kolom lama
+    // hanya memuat penempatan utama — memakainya akan menghilangkan santri dari
+    // cabang unit keduanya. "Tanpa kelas" berarti tidak punya penempatan sama sekali.
+    if (f.kelasId === 'none') syarat.push({ kelasLain: { none: {} } });
+    else if (f.kelasId) syarat.push({ kelasLain: { some: { kelasId: f.kelasId } } });
+    else if (f.unitId) syarat.push({ kelasLain: { some: { unitId: f.unitId } } });
     syarat.push({ status: f.status ?? STATUS_AKTIF });
   }
   if (f.angkatan) syarat.push({ tahunMasuk: f.angkatan });
