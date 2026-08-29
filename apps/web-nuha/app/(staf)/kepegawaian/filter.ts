@@ -40,10 +40,19 @@ export function bacaFilterPegawai(sp: Record<string, string | string[] | undefin
   };
 }
 
-/** Syarat unit dipakai ulang oleh tab lain lewat relasi `pegawai`, jadi dipisah. */
+/** Syarat unit dipakai ulang oleh tab lain lewat relasi `pegawai`, jadi dipisah.
+ *
+ * Seorang pegawai bisa bertugas di lebih dari satu lembaga — mis. Alfan Jamil
+ * mengajar Fikih di MA sekaligus jadi asatidz Madin — dan harus muncul pada
+ * kedua penyaring. Penugasan tambahan hidup di `unitLain` (`pegawai_unit`),
+ * sedangkan `unitId` adalah unit utama. Keduanya dicocokkan dengan OR supaya
+ * pegawai yang belum punya baris `pegawai_unit` (dibuat lewat menu CRUD atau
+ * seed) tetap terhitung — tabel jung tidak wajib terisi. */
 export function whereUnit(unit?: string): Prisma.PegawaiWhereInput | undefined {
   if (!unit) return undefined;
-  return unit === TANPA_LEMBAGA ? { unitId: null } : { unit: { key: unit } };
+  return unit === TANPA_LEMBAGA
+    ? { AND: [{ unitId: null }, { unitLain: { none: {} } }] }
+    : { OR: [{ unit: { key: unit } }, { unitLain: { some: { unit: { key: unit } } } }] };
 }
 
 /** WHERE Prisma untuk daftar pegawai. Disusun sebagai daftar AND supaya

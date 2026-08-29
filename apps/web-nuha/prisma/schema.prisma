@@ -201,6 +201,7 @@ model Unit {
   santri        Santri[]
   riwayatPendidikan RiwayatPendidikan[]
   pegawai       Pegawai[]  @relation("PegawaiUnit")
+  pegawaiUnit   PegawaiUnit[]
   jadwal        JadwalPelajaran[]
   ujian         Ujian[]
   kepalaPegawai Pegawai?   @relation("UnitKepala", fields: [kepalaPegawaiId], references: [id])
@@ -421,8 +422,36 @@ model Pegawai {
   bebanJam        BebanJam[]
   arsipSk         ArsipSk[]
   jabatanStruktural JabatanStruktural[]
+  unitLain        PegawaiUnit[]
 
   @@map("pegawai")
+}
+
+/// Penugasan seorang pegawai di sebuah unit. Satu orang bisa mengabdi di lebih
+/// dari satu lembaga (contoh: Alfan Jamil — guru Fikih di MA sekaligus asatidz
+/// Madin), sehingga `Pegawai.unitId` saja tidak cukup.
+///
+/// `Pegawai.unitId` tetap ada dan berarti **unit utama** (dipakai untuk kolom
+/// ringkas & urutan lama); tabel ini adalah daftar lengkap penugasannya dan
+/// harus memuat unit utama itu juga, supaya filter/pohon kepegawaian cukup
+/// membaca satu sumber.
+model PegawaiUnit {
+  pegawaiId BigInt   @map("pegawai_id")
+  unitId    Int      @map("unit_id")
+  /// Jabatan pada unit ini bila berbeda dari `Pegawai.jabatan`
+  /// (mis. "Guru Mapel" di MA, "Asatidz" di Madin).
+  jabatan   String?  @db.VarChar(120)
+  /// NIP/kode kepegawaian pada unit ini bila unit menerbitkan nomornya sendiri.
+  nip       String?  @db.VarChar(32)
+  utama     Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+  unit    Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+
+  @@id([pegawaiId, unitId])
+  @@index([unitId])
+  @@map("pegawai_unit")
 }
 
 /// Struktur organisasi dari SK pengangkatan (unit MA, pengurus asrama, dst).

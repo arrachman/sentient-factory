@@ -19,12 +19,7 @@ export type PohonPegawai = {
  * menunjukkan "kalau saya klik ini, dapat berapa", bukan nol semua.
  */
 export async function bacaPohonPegawai(f: FilterPegawai): Promise<PohonPegawai> {
-  const [perUnit, perStatus, unitRows, total] = await Promise.all([
-    prisma.pegawai.groupBy({
-      by: ['unitId'],
-      where: wherePegawai({ ...f, unit: undefined }),
-      _count: { _all: true },
-    }),
+  const [perStatus, unitRows, total, tanpa] = await Promise.all([
     prisma.pegawai.groupBy({
       by: ['status'],
       where: wherePegawai({ ...f, status: undefined }),
@@ -32,20 +27,26 @@ export async function bacaPohonPegawai(f: FilterPegawai): Promise<PohonPegawai> 
     }),
     prisma.unit.findMany({ orderBy: { id: 'asc' } }),
     prisma.pegawai.count({ where: wherePegawai({ ...f, unit: undefined }) }),
+    prisma.pegawai.count({ where: wherePegawai({ ...f, unit: TANPA_LEMBAGA }) }),
   ]);
 
-  const jumlahUnit = new Map(perUnit.map((r) => [r.unitId, r._count._all]));
+  // Dihitung per unit lewat `whereUnit` yang sama dengan daftarnya (unit utama
+  // ATAU penugasan tambahan), bukan `groupBy('unitId')` — pegawai lintas
+  // lembaga harus terhitung di setiap unit tempat ia bertugas, dan angka chip
+  // harus persis sama dengan jumlah baris saat chip itu diklik.
+  const jumlahUnit = await Promise.all(
+    unitRows.map((u) => prisma.pegawai.count({ where: wherePegawai({ ...f, unit: u.key }) })),
+  );
 
   const lembaga: SimpulLembaga[] = unitRows
-    .map((u) => ({
+    .map((u, i) => ({
       key: u.key,
       nama: u.nama.replace(/ Nurul Huda Mergosono$/, ''),
-      jumlah: jumlahUnit.get(u.id) ?? 0,
+      jumlah: jumlahUnit[i],
     }))
     .filter((u) => u.jumlah > 0)
     .sort((a, b) => b.jumlah - a.jumlah);
 
-  const tanpa = jumlahUnit.get(null) ?? 0;
   if (tanpa > 0) lembaga.push({ key: TANPA_LEMBAGA, nama: 'Tanpa lembaga', jumlah: tanpa });
 
   const status = perStatus

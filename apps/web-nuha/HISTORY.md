@@ -4,6 +4,41 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Pegawai bisa bertugas di lebih dari satu unit; Alfan Jamil digabung (`c60f5b82`)
+
+"Alfan Jamil, M.Si, Gr" (`GTT-MA-005`, guru Fikih MA — dari `DATA GURU.xlsx`)
+dan "Alfan Jamil" (`AST-004`, asatidz Madin) adalah **orang yang sama**, tetapi
+terdaftar sebagai dua `Pegawai` dengan dua `Orang` terpisah. `Pegawai.unitId`
+hanya menampung satu lembaga, sehingga duplikat itu satu-satunya cara ia muncul
+di MA sekaligus Madin.
+
+- Skema: tabel baru `pegawai_unit` (migrasi `20260829180000_pegawai_multi_unit`)
+  — penugasan pegawai↔unit dengan `jabatan`/`nip` per unit dan penanda `utama`.
+  `Pegawai.unitId` **tetap ada** dan berarti unit utama; migrasi mengisi
+  `pegawai_unit` dari `unitId` yang sudah ada (39 baris).
+- Data: `prisma/import/gabung-alfan-jamil.ts` (idempoten) melebur `AST-004` ke
+  `GTT-MA-005` — Madin jadi penugasan kedua, gelar "Gus" + panggilan "Gus Alfan"
+  pindah ke `Orang` yang bertahan, nama dirapikan jadi "Alfan Jamil" (gelar
+  akademik tidak lagi menempel di kolom nama), lalu `Orang` duplikat dihapus.
+  Tidak ada data transaksional yang hilang: jadwal/piket/jurnal/presensi/beban
+  jam/slip gaji/SK kedua baris nihil; satu-satunya `KomponenGaji` ada di baris
+  yang dipertahankan.
+- Penyaring: `whereUnit()` di `app/(staf)/kepegawaian/filter.ts` kini
+  mencocokkan unit utama **ATAU** penugasan tambahan (OR), jadi pegawai lintas
+  lembaga muncul di kedua chip, dan pegawai yang belum punya baris
+  `pegawai_unit` (dibuat lewat menu CRUD/seed) tetap terhitung — tabel jung
+  tidak wajib terisi. `pohon.ts` menghitung chip lewat `whereUnit` yang sama
+  agar angka chip persis sama dengan jumlah baris saat diklik.
+- `import-asatidz.ts`: daftar `SUDAH_TERDAFTAR` memetakan asatidz yang sudah
+  jadi pegawai lewat impor lain ke NIP yang bertahan; untuk mereka impor hanya
+  menambah penugasan Madin, tidak membuat `Orang`/`Pegawai` kembar. Impor ulang
+  diverifikasi: 0 baru, `AST-004` tidak lahir kembali.
+
+**Dampak operator**: Alfan Jamil kini satu baris di /kepegawaian, muncul pada
+filter MA maupun Madin (MA 17, Madin 22 — Alfan terhitung di keduanya). Total
+pegawai turun 39 → 38. Untuk pegawai lintas lembaga berikutnya, tambahkan baris
+`pegawai_unit`, jangan membuat baris `Pegawai` kedua.
+
 ## 2026-08-29 — Impor riwayat Madin 2019–2026 dari berkas presensi (`1a6c3622`)
 
 Berkas operator `docs/PRESENSI DAN JURNAL JULI-AGUSTUS AJARAN BARU
@@ -694,7 +729,7 @@ yang memisah Ayah/Ibu — peran `Wali` akan berhenti jadi kontak utama sendiriny
 Alumni SMP yang dipindah tidak punya nilai/presensi, jadi tidak ada data akademik
 yang tertinggal. Skrip idempoten (jalan kedua: 0 diproses, 24 dilewati).
 
-## 2026-08-27 — Tempat/tgl lahir & pendidikan terakhir di Identitas Orang (`PENDING`)
+## 2026-08-27 — Tempat/tgl lahir & pendidikan terakhir di Identitas Orang (`c60f5b82`)
 
 Form `/data/orang` menambah tiga isian opsional: **Tempat lahir** dan **Tanggal
 lahir** (grup Identitas, pemilih tanggal) memakai kolom `tmp_lahir`/`tgl_lahir`
@@ -708,7 +743,7 @@ berlaku untuk semua peran (guru, staf, wali), bukan hanya pegawai. Migrasi
 `20260827140000_orang_pendidikan_terakhir` sudah di-apply ke DB uji; jalankan
 `prisma migrate deploy` di environment lain.
 
-## 2026-08-27 — Impor 8 siswa MA angkatan 2026/2027 (`PENDING`)
+## 2026-08-27 — Impor 8 siswa MA angkatan 2026/2027 (`c60f5b82`)
 
 Importir baru `prisma/import/import-siswa-ma-2026.ts` (`npm run
 import:siswa-ma-2026`) memasukkan 8 siswa MA ke **Kelas 1 (tingkat 10)** pada

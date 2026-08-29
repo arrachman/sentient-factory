@@ -61,6 +61,20 @@ const DAFTAR: readonly BarisAsatidz[] = [
   { gelar: 'Ustadzah', nama: "Khoirunnisa'", panggilan: 'Ustadzah Nisa', jk: JenisKelamin.P },
 ];
 
+/**
+ * Asatidz yang ternyata sudah terdaftar sebagai pegawai lewat impor lain —
+ * orang yang sama, NIP berbeda. Kuncinya nama di `DAFTAR`, nilainya NIP baris
+ * yang bertahan. Untuk mereka, impor ini TIDAK membuat `Orang`/`Pegawai` baru;
+ * ia hanya menambahkan penugasan Madin ke pegawai yang sudah ada.
+ *
+ * Alfan Jamil masuk ke DATA GURU.xlsx sebagai "Alfan Jamil, M.Si, Gr"
+ * (GTT-MA-005, guru Fikih MA) sekaligus tercantum sebagai Gus di daftar
+ * asatidz. Duplikatnya digabung oleh `gabung-alfan-jamil.ts`.
+ */
+const SUDAH_TERDAFTAR: Readonly<Record<string, string>> = Object.freeze({
+  'Alfan Jamil': 'GTT-MA-005',
+});
+
 const AKTOR_SKRIP = { nama: 'Importir asatidz (skrip)' };
 
 async function jalankan(): Promise<void> {
@@ -80,6 +94,25 @@ async function jalankan(): Promise<void> {
     // membedakan lewat teks jabatan, jadi nilainya harus stabil.
     const jabatan = baris.jk === JenisKelamin.P ? 'Asatidzah' : 'Asatidz';
 
+    // Orang yang sudah punya baris Pegawai dari impor lain cukup ditambah
+    // penugasan Madin-nya — jangan bikin Orang/Pegawai kembar.
+    const nipLain = SUDAH_TERDAFTAR[baris.nama];
+    if (nipLain) {
+      const adaDuluan = await prisma.pegawai.findUnique({ where: { nip: nipLain } });
+      if (!adaDuluan) {
+        throw new Error(
+          `${baris.nama} dipetakan ke NIP ${nipLain} (lihat SUDAH_TERDAFTAR) tetapi pegawai itu tidak ada — ` +
+            'jalankan impor guru MA lebih dulu, atau perbaiki pemetaannya',
+        );
+      }
+      await prisma.pegawaiUnit.upsert({
+        where: { pegawaiId_unitId: { pegawaiId: adaDuluan.id, unitId: unit.id } },
+        create: { pegawaiId: adaDuluan.id, unitId: unit.id, jabatan, utama: false },
+        update: { jabatan },
+      });
+      continue;
+    }
+
     const identitas = {
       nama: baris.nama,
       gelar: baris.gelar,
@@ -97,13 +130,21 @@ async function jalankan(): Promise<void> {
     const sebelum = await prisma.pegawai.findUnique({ where: { nip } });
     if (!sebelum) dibuat += 1;
 
-    await prisma.pegawai.upsert({
+    const pegawai = await prisma.pegawai.upsert({
       where: { nip },
       create: { orangId: orang.id, nip, unitId: unit.id, jabatan, status: 'Aktif' },
       // `jabatan`/`unitId` sengaja TIDAK ditimpa saat update: keduanya boleh
       // diubah operator lewat aplikasi (mis. dipromosikan jadi Pengasuh) dan
       // impor ulang tidak boleh mengembalikannya ke nilai awal.
       update: { orangId: orang.id },
+    });
+
+    // Penyaring & pohon kepegawaian membaca `pegawai_unit`, jadi unit utama
+    // harus punya barisnya sendiri di sana.
+    await prisma.pegawaiUnit.upsert({
+      where: { pegawaiId_unitId: { pegawaiId: pegawai.id, unitId: pegawai.unitId ?? unit.id } },
+      create: { pegawaiId: pegawai.id, unitId: pegawai.unitId ?? unit.id, jabatan, nip, utama: true },
+      update: { utama: true },
     });
   }
 
