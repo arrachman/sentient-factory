@@ -4,6 +4,16 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Madin: tambah Tingkat I'dad di bawah Kelas I–VI
+
+Jenjang diniyah Madin kini I'dad + I–VI. Kelas baru `Kelas I'dad` (tingkat `'0'`,
+supaya terurut paling depan) ditambahkan di `prisma/seed.ts` dan sudah di-upsert
+ke DB uji (kelas id 36, unit Pondok, TA 2026/2027). Pohon `/induk` memberi label
+romawi khusus Madin: `Tingkat I'dad`, `Tingkat I` … `Tingkat VI`.
+
+Dampak operator: santri Madin yang belum lancar baca kitab/Al-Qur'an dapat
+ditempatkan ke `Kelas I'dad` lewat menu Induk/Kesantrian seperti kelas lain.
+
 ## 2026-08-29 — 22 Asatidz/Asatidzah masuk sebagai Pegawai + kolom gelar
 
 `Orang` dapat tiga kolom baru: `gelar` (KH./Gus/Ning/Nyai Hj./Ustadz/Ustadzah),

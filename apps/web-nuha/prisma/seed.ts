@@ -203,17 +203,21 @@ async function seedJadwalLintasUnit() {
     prisma.unit.findMany(),
   ]);
   const pondok = unitSemua.find((unit) => unit.key === 'Pondok');
-  // Diniyah pondok berjenjang kelas 1–6, satu rombel per tingkat, jadi guru
-  // yang merangkap ustadz punya tempat mengajar di tiap jenjangnya.
+  // Diniyah pondok berjenjang I'dad (kelas persiapan bagi santri yang belum
+  // lancar baca kitab/Al-Qur'an) lalu kelas 1–6, satu rombel per tingkat, jadi
+  // guru yang merangkap ustadz punya tempat mengajar di tiap jenjangnya.
+  // I'dad memakai tingkat '0' supaya urut paling depan.
   if (pondok) {
     const tahunAjaranAktif = await seedTahunAjaran();
-    for (let tingkat = 1; tingkat <= 6; tingkat += 1) {
-      const nama = `Kelas ${tingkat}`;
-      const tingkatStr = String(tingkat);
+    const jenjang: { nama: string; tingkat: string }[] = [
+      { nama: "Kelas I'dad", tingkat: '0' },
+      ...Array.from({ length: 6 }, (_, i) => ({ nama: `Kelas ${i + 1}`, tingkat: String(i + 1) })),
+    ];
+    for (const { nama, tingkat } of jenjang) {
       await prisma.kelas.upsert({
         where: { unitId_nama_tahunAjaranId: { unitId: pondok.id, nama, tahunAjaranId: tahunAjaranAktif.id } },
-        create: { unitId: pondok.id, nama, tingkat: tingkatStr, tahunAjaranId: tahunAjaranAktif.id },
-        update: {},
+        create: { unitId: pondok.id, nama, tingkat, tahunAjaranId: tahunAjaranAktif.id },
+        update: { tingkat },
       });
     }
   }

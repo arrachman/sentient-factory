@@ -9,10 +9,20 @@ export type SimpulUnit = { id: number; nama: string; jumlah: number; tingkat: Si
 const URUTAN_UNIT = ['SMP', 'MA', 'Madin'];
 
 /** Label tingkat per unit — SMP & MA memakai angka romawi tingkat sekolah,
- * unit lain (mis. Madin) memakai angka tingkat apa adanya. */
+ * Madin memakai jenjang diniyah I'dad + I–VI (I'dad = kelas persiapan, tingkat '0'
+ * supaya selalu terurut paling depan). Unit lain memakai angka tingkat apa adanya. */
 const LABEL_TINGKAT: Record<string, Record<string, string>> = {
   SMP: { '7': 'Tingkat VII', '8': 'Tingkat VIII', '9': 'Tingkat IX' },
   MA: { '10': 'Tingkat X', '11': 'Tingkat XI', '12': 'Tingkat XII' },
+  Madin: {
+    '0': "Tingkat I'dad",
+    '1': 'Tingkat I',
+    '2': 'Tingkat II',
+    '3': 'Tingkat III',
+    '4': 'Tingkat IV',
+    '5': 'Tingkat V',
+    '6': 'Tingkat VI',
+  },
 };
 
 function labelTingkat(unitNama: string, tingkat: string): string {
