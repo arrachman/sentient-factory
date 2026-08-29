@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { FilterAktif, type ChipFilter } from '@/components';
-import { hrefInduk, STATUS_SANTRI, type FilterInduk } from './filter';
+import { hrefInduk, type FilterInduk } from './filter';
 
 /** Satu tombol pilihan yang menyala saat nilainya sedang dipakai; klik ulang mematikannya.
  * Memakai kelas `.chip` bersama (globals.css), bukan gaya sebaris, supaya seragam
@@ -30,7 +30,6 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
   // menyorot pilihannya, jadi chip-nya cuma duplikat yang bikin baris ini ramai.
   const copot: ChipFilter[] = [
     ...(f.q ? [{ label: `Cari: "${f.q}"`, href: hrefInduk(f, { q: '' }) }] : []),
-    ...(f.status && f.status !== 'Mukim' ? [{ label: `Status: ${f.status}`, href: hrefInduk(f, { status: undefined }) }] : []),
     ...(f.jk ? [{ label: `Jenis kelamin: ${f.jk === 'L' ? 'Putra' : 'Putri'}`, href: hrefInduk(f, { jk: undefined }) }] : []),
     ...(f.angkatan ? [{ label: `Angkatan: ${f.angkatan}`, href: hrefInduk(f, { angkatan: undefined }) }] : []),
   ];
@@ -41,8 +40,6 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
         <form action="/induk" method="get" style={{ display: 'flex', gap: 7, alignItems: 'center', flex: '1 1 260px' }}>
           {f.unitId && <input type="hidden" name="unit" value={f.unitId} />}
           {f.kelasId && <input type="hidden" name="kelas" value={f.kelasId} />}
-          {f.alumniUnitId && <input type="hidden" name="alumni" value={f.alumniUnitId} />}
-          {f.status && <input type="hidden" name="status" value={f.status} />}
           {f.angkatan && <input type="hidden" name="angkatan" value={f.angkatan} />}
           <input
             type="search"
@@ -65,20 +62,6 @@ export function BarisFilter({ f, angkatan, hasil }: { f: FilterInduk; angkatan: 
       <FilterAktif chip={copot} hrefBersih="/induk" />
 
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', borderTop: '1px solid var(--garis)', paddingTop: 10 }}>
-        <Kelompok
-          judul="Status"
-          anak={STATUS_SANTRI.map((s) => (
-            <Opsi
-              key={s}
-              f={f}
-              ubah={{ status: s }}
-              // Di simpul Alumni tidak ada status bawaan (semua lulusan tampil,
-              // mukim maupun tidak), jadi "Aktif" hanya menyala kalau dipilih.
-              aktif={s === 'Mukim' && !f.alumniUnitId ? !f.status || f.status === 'Mukim' : f.status === s}
-              anak={s === 'Mukim' ? 'Aktif' : s}
-            />
-          ))}
-        />
         <Kelompok
           judul="Jenis kelamin"
           anak={[

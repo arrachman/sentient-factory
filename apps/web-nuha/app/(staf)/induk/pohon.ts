@@ -3,7 +3,7 @@ import { whereFilter, type FilterInduk } from './filter';
 
 export type SimpulKelas = { id: number; nama: string; jumlah: number };
 export type SimpulTingkat = { tingkat: string; label: string; jumlah: number; kelas: SimpulKelas[] };
-export type SimpulUnit = { id: number; nama: string; jumlah: number; tingkat: SimpulTingkat[]; alumni: number };
+export type SimpulUnit = { id: number; nama: string; jumlah: number; tingkat: SimpulTingkat[] };
 
 /** Urutan tampil lembaga di pohon: SMP lebih dulu, lalu MA, lalu Madin. */
 const URUTAN_UNIT = ['SMP', 'MA', 'Madin'];
@@ -29,7 +29,7 @@ export type PohonInduk = {
  * Cacah menghormati filter selain unit/kelas (status, JK, angkatan, pencarian),
  * supaya angka di pohon = angka yang benar-benar akan muncul saat simpul diklik. */
 export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
-  const whereDasar = whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: undefined });
+  const whereDasar = whereFilter({ ...f, unitId: undefined, kelasId: undefined });
 
   const [unitRows, kelasRows, cacah, total, tanpaKelas] = await Promise.all([
     // Poskestren bukan lembaga tempat santri terdaftar (layanan kesehatan,
@@ -43,22 +43,6 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
 
   const perKelas = new Map<number, number>();
   for (const b of cacah) if (b.kelasId !== null) perKelas.set(b.kelasId, b._count._all);
-
-  // Cacah alumni per unit dihitung dengan `whereFilter` sendiri (bukan turunan
-  // `whereDasar`) karena syarat alumni bersandar pada RiwayatPendidikan dan
-  // sengaja tidak memaksa status Mukim — alumni SMP yang kini mukim di MA ikut.
-  // Saat penyaring status berada di santri aktif (Mukim — juga nilai bawaan),
-  // cabang Alumni tidak relevan: operator sedang melihat santri yang masih
-  // mukim, jadi simpulnya disembunyikan dengan cacah 0.
-  const statusEfektif = f.status ?? 'Mukim';
-  const alumniPerUnit = new Map<number, number>(
-    statusEfektif === 'Mukim'
-      ? []
-      : await Promise.all(unitRows.map(async (u): Promise<[number, number]> => [
-        u.id,
-        await prisma.santri.count({ where: whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: u.id }) }),
-      ])),
-  );
 
   const unit: SimpulUnit[] = unitRows
     .slice()
@@ -82,11 +66,8 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
       return {
         id: u.id,
         nama: u.nama,
-        // Cacah unit tetap berisi penempatan aktif saja; alumni punya cacahnya
-        // sendiri supaya santri yang alumni SMP + mukim MA tidak terhitung dobel.
         jumlah: tingkat.reduce((a, t) => a + t.jumlah, 0),
         tingkat,
-        alumni: alumniPerUnit.get(u.id) ?? 0,
       };
     });
 

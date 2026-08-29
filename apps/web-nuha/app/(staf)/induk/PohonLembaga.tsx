@@ -41,8 +41,7 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
 
       {pohon.unit.map((u) => {
         const unitAktif = f.unitId === u.id && !f.kelasId;
-        const alumniAktif = f.alumniUnitId === u.id;
-        const terbuka = f.unitId === u.id || kelasTerpilihUnit === u.id || alumniAktif;
+        const terbuka = f.unitId === u.id || kelasTerpilihUnit === u.id;
         return (
           <details key={u.id} open={terbuka}>
             <summary style={{ listStyle: 'none', cursor: 'pointer' }}>
@@ -59,8 +58,7 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
 
             {u.tingkat.map((t) => {
               // Kelas kosong disembunyikan (kecuali sedang aktif dipilih) supaya
-              // pohon tidak dipenuhi cabang 0 saat filter status menyempitkan data
-              // (mis. Alumni hanya mengisi satu kelas dari beberapa kelas paralel).
+              // pohon tidak dipenuhi cabang 0 saat penyaring menyempitkan data.
               const kelasTampil = t.kelas.filter((k) => k.jumlah > 0 || f.kelasId === k.id);
               if (kelasTampil.length === 0) return null;
 
@@ -97,14 +95,6 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
               );
             })}
 
-            {/* Alumni berdiri sejajar tingkat kelas: lulusan unit ini, terlepas
-              * dari penempatan aktifnya sekarang (alumni SMP bisa mukim di MA). */}
-            {(u.alumni > 0 || alumniAktif) && (
-              <Link href={hrefInduk(f, { alumniUnitId: u.id })} style={baris(alumniAktif, 1)}>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Alumni</span>
-                <Cacah n={u.alumni} aktif={alumniAktif} />
-              </Link>
-            )}
           </details>
         );
       })}

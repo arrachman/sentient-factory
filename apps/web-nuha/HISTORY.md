@@ -4,6 +4,21 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — /induk hanya data induk aktif: alumni & keluar dihapus
+
+Halaman `/induk` sekarang **murni data santri aktif (Mukim)**. Yang dihapus:
+cabang **Alumni** per unit di pohon lembaga (beserta param `?alumni=`), chip
+status **Alumni** dan **Keluar**, serta param `?status=`. `whereFilter()`
+mengunci mati `status = 'Mukim'`, jadi tidak ada lagi jalan dari URL untuk
+memunculkan alumni atau santri keluar di halaman ini — `?status=Alumni` dan
+`?alumni=1` kini menghasilkan daftar aktif yang sama.
+
+Dampak operator: baris chip di atas daftar tinggal **Jenis kelamin** dan
+**Angkatan**; 24 lulusan SMP tidak lagi bisa ditelusuri dari /induk. Ini
+membatalkan fitur cabang Alumni dari commit `0965c780`/`adf80e90`.
+Terverifikasi via Playwright ke `http://202.59.200.26:3226/induk` (login
+superadmin): 74 santri cocok, tanpa `pageerror`.
+
 ## 2026-08-29 — Naik kelas 11 santri MA ke Kelas 2 + biodata lengkap di /induk
 
 Sebelas santri MA angkatan 2025 masih menunjuk **Kelas 1 (tingkat 10, TA
