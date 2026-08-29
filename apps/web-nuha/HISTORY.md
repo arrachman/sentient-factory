@@ -4,6 +4,25 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Chip Alumni /induk ikut riwayat pendidikan (`dc091133`)
+
+Chip **Status: Alumni** menampilkan 17, sedangkan cabang **SMP → Alumni** di
+pohon lembaga menampilkan 24 — dua sumber berbeda untuk pertanyaan yang sama.
+Chip memakai kolom `santri.status`, cabang memakai `riwayat_pendidikan`.
+Selisih 7 adalah alumni SMP yang kini **mukim di MA Kelas 1** (Achmad Tsaaqib,
+Addafi Syar'i, Aisyah Aulia, Errena Tembang, M. Uwais Qorne, Maulana Malik
+Ibrahim, Siti Munawaroh), jadi status mereka `Mukim`, bukan `Alumni`.
+
+Atas pilihan operator, chip disamakan dengan pohon: `whereFilter` menjawab
+"Alumni" selalu dari `riwayat_pendidikan`, dan `unit=` pada status Alumni
+berarti "alumni lembaga mana" (bukan unit santri sekarang). Cacah lembaga di
+pohon saat status Alumni juga diambil dari riwayat alumni — sebelumnya semua
+baris lembaga tampil `0` karena alumni tidak menempati rombel.
+
+Dampak operator: 7 santri MA Kelas 1 itu kini **muncul di daftar chip Alumni**
+meski masih mukim aktif — itu memang alumni SMP-nya. Jangan pakai chip ini
+sebagai daftar "santri tidak aktif".
+
 ## 2026-08-29 — "Belum berkelas" disembunyikan untuk status non-aktif (`487fae84`)
 
 Alumni dan santri Keluar per definisi tidak punya `kelasId`, jadi saat chip
