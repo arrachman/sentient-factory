@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { Avatar, Badge, Kosong, Pagination, UKURAN_HALAMAN, bacaHalaman, type SearchParams } from '@/components';
-import { bacaFilter, whereFilter, hrefAkademik, URUT } from './filter';
+import { bacaFilter, whereFilter, hrefAkademik, queryFilter, URUT } from './filter';
 
 export async function TabSiswa({ searchParams }: { searchParams: SearchParams }) {
   const f = bacaFilter(searchParams);
@@ -19,10 +19,17 @@ export async function TabSiswa({ searchParams }: { searchParams: SearchParams })
   ]);
   const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN));
 
+  const queryExport = queryFilter(f).toString();
+
   return (
     <div className="card">
-        <div className="muted" style={{ fontSize: 12.5, margin: '0 0 10px' }}>
-          {total.toLocaleString('id-ID')} santri cocok · halaman {halaman} dari {totalHalaman}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, margin: '0 0 10px' }}>
+          <div className="muted" style={{ fontSize: 12.5 }}>
+            {total.toLocaleString('id-ID')} santri cocok · halaman {halaman} dari {totalHalaman}
+          </div>
+          <a href={`/akademik/export${queryExport ? `?${queryExport}` : ''}`} className="btn btn-sekunder" style={{ whiteSpace: 'nowrap' }}>
+            Ekspor CSV (SMP &amp; MA)
+          </a>
         </div>
 
         <div className="tabel-wrap">
