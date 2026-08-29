@@ -4,6 +4,27 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Anggota Madin Kelas 2 dilengkapi jadi 19 santri (data, bukan kode)
+
+Operator meminta verifikasi anggota Madin Kelas 2 (TA 2026/2027 Gasal, kelas
+`#29`) terhadap daftar 19 nama. 14 sudah cocok; 5 belum punya penempatan
+Madin sama sekali:
+
+- **Addafi Syar'i Muhammad** — sudah aktif (Mukim) di **MA Kelas 1**;
+  ditambahkan Madin Kelas 2 sebagai penempatan **kedua** (`santri_kelas`),
+  kelas utamanya tetap MA.
+- **Gus Ramadhani, Maulana Ridwan Aqilah, Muhammad, Muhammad Fathian Akbar Al
+  Aqil** — keempatnya berstatus **Alumni SMP** tanpa kelas aktif sama
+  sekali. Atas konfirmasi operator, status diubah ke **Mukim** dan
+  ditempatkan di Madin Kelas 2 sebagai penempatan **utama**
+  (`santri.unit_id/kelas_id` + `santri_kelas`).
+
+Dieksekusi lewat SQL langsung (bukan skrip Prisma baru — koreksi data
+ad-hoc untuk 5 orang bernama, bukan operasi berulang) di dalam transaksi
+tunggal, tercatat di `audit_log`. Terverifikasi: `santri_kelas` untuk
+kelas `#29` sekarang berjumlah 19 baris, seluruhnya cocok dengan daftar
+operator. Tidak ada perubahan skema atau kode aplikasi.
+
 ## 2026-08-29 — Santri Madin aktif tidak lagi dicap alumni di /induk (`44b1680c`)
 
 Agus Rosifat Aqli muncul sebagai alumni Madin padahal masih aktif di Tingkat VI
