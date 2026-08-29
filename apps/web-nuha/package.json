@@ -30,6 +30,7 @@
     "fix:wali-utama": "tsx prisma/import/perbaiki-wali-utama.ts",
     "import:jadwal-ma": "tsx prisma/import/import-jadwal-ma.ts",
     "import:presensi-ma": "tsx prisma/import/import-presensi-ma.ts",
+    "import:santri-madin-6-2026": "tsx prisma/import/import-santri-madin-6-2026.ts",
     "cron:tick": "tsx scripts/cron.ts",
     "cron:loop": "tsx scripts/cron.ts --loop"
   },

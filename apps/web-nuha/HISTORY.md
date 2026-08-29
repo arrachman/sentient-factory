@@ -4,6 +4,23 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — 7 santri masuk Madin Tingkat VI (Kelas 6) TA 2026/2027
+
+Skrip `prisma/import/import-santri-madin-6-2026.ts` (`npm run
+import:santri-madin-6-2026`) mendaftarkan 7 santri ke `Kelas 6` unit Pondok/Madin,
+ber-NIS pola `2026PONDOK001..007`, status `Mukim`, plus baris `RiwayatPendidikan`
+TA 2026/2027. Idempoten (pencocokan nama / `orangId` tetap); dijalankan dua kali,
+hasil akhir sama.
+
+Dampak operator: **tiga dari tujuh adalah pegawai MA aktif yang sama** —
+M. Bismar As Sidiq (Guru Mapel), Wardatul Haizatil Husna (Guru Mapel), dan
+Wildana Izza Afkarina (Bendahara/TU). Atas konfirmasi operator, mereka memang
+guru/TU yang juga mengaji di Madin, jadi baris `Santri` ditambahkan ke `Orang`
+yang sudah ada (bukan orang baru) dan baris `Pegawai`-nya tidak disentuh.
+Konsekuensinya nama mereka kini muncul di daftar santri `/induk` lengkap dengan
+gelar. Biodata NIK/NISN/TTL/alamat/wali belum diserahkan, jadi masih kosong untuk
+empat santri baru — perlu dilengkapi lewat menu Induk bila dibutuhkan.
+
 ## 2026-08-29 — Madin: tambah Tingkat I'dad di bawah Kelas I–VI
 
 Jenjang diniyah Madin kini I'dad + I–VI. Kelas baru `Kelas I'dad` (tingkat `'0'`,
