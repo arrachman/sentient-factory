@@ -40,6 +40,13 @@ export type PohonInduk = {
  * supaya angka di pohon = angka yang benar-benar akan muncul saat simpul diklik. */
 export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
   const whereDasar = whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: undefined });
+  // Alumni dicacah **per lembaga saja**, tidak per tingkat/kelas: keanggotaan
+  // alumni berasal dari `RiwayatPendidikan`, sedangkan tingkat/kelas di pohon
+  // menggambarkan penempatan rombel santri aktif. Menampilkan keduanya bersamaan
+  // memunculkan angka yang menyesatkan — mis. alumni SMP yang kini mukim di MA
+  // ikut terhitung di "MA Tingkat X", padahal cabang itu bukan jawaban dari
+  // pertanyaan "alumni lembaga mana".
+  const modeAlumni = f.status === 'Alumni' || typeof f.alumniUnitId === 'number';
 
   const [unitRows, kelasRows, cacah, total, tanpaKelas] = await Promise.all([
     // Poskestren bukan lembaga tempat santri terdaftar (layanan kesehatan,
@@ -47,7 +54,14 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
     prisma.unit.findMany({ where: { aktif: true, key: { not: 'Poskestren' } } }),
     prisma.kelas.findMany({ orderBy: [{ tingkat: 'asc' }, { nama: 'asc' }] }),
     prisma.santri.groupBy({ by: ['kelasId'], where: whereDasar, _count: { _all: true } }),
-    prisma.santri.count({ where: whereDasar }),
+    // Di mode alumni, "Semua lembaga" harus mencacah alumni lintas unit —
+    // bukan santri aktif — supaya tidak bentrok dengan angka per lembaga di
+    // bawahnya (mis. 153 aktif vs 11 alumni Madin pada layar yang sama).
+    prisma.santri.count({
+      where: modeAlumni
+        ? whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: undefined, status: 'Alumni' })
+        : whereDasar,
+    }),
     prisma.santri.count({ where: { AND: [whereDasar, { kelasId: null }] } }),
   ]);
 
@@ -75,7 +89,7 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
         list.push({ id: k.id, nama: k.nama, jumlah: perKelas.get(k.id) ?? 0 });
         perTingkat.set(k.tingkat, list);
       }
-      const tingkat: SimpulTingkat[] = [...perTingkat.entries()]
+      const tingkat: SimpulTingkat[] = modeAlumni ? [] : [...perTingkat.entries()]
         .map(([nama, kelas]) => ({
           tingkat: nama,
           label: labelTingkat(u.nama, nama),
@@ -84,13 +98,10 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
         }))
         .sort((a, b) => a.tingkat.localeCompare(b.tingkat, 'id', { numeric: true }));
       const alumni = alumniPerUnit.get(u.id) ?? 0;
-      // Saat menyaring status Alumni, cacah per kelas selalu 0 (alumni tidak
-      // menempati rombel), jadi angka lembaga diambil dari riwayat alumni —
-      // tanpa ini seluruh baris lembaga tampil 0 padahal hasilnya tidak kosong.
       return {
         id: u.id,
         nama: u.nama,
-        jumlah: f.status === 'Alumni' ? alumni : tingkat.reduce((a, t) => a + t.jumlah, 0),
+        jumlah: modeAlumni ? alumni : tingkat.reduce((a, t) => a + t.jumlah, 0),
         tingkat,
         alumni,
       };

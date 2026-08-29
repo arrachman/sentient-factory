@@ -4,6 +4,31 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Gabungkan duplikat santri Madin: Bismar & Wardatul (`PENDING`)
+
+Wardatul Haizatil Husna dan M. Bismar As Sidiq muncul **dua kali** sebagai
+santri Madin Kelas 6. Penyebabnya sama seperti kasus Alfan Jamil: mereka sudah
+ada di DB sebagai guru MA dengan nama **bergelar** ("…, S.H" / "…, S.Sos., Gr"),
+sedangkan roster Madin menulis nama tanpa gelar. `import-santri-madin-riwayat.ts`
+mencocokkan nama persis dan barisnya tidak diberi `orangIdExisting`, jadi skrip
+membuat `Orang` + `Santri` baru (#589/#590, NIS `2025PONDOK128`/`2025PONDOK130`).
+
+- Keputusan operator: keduanya **memang** santri Madin Kelas 6 (guru MA yang
+  juga mengaji di Madin) — yang salah hanya duplikatnya.
+- `prisma/import/gabung-santri-madin-duplikat.ts` (baru, idempoten,
+  `npm run gabung:santri-madin-duplikat`): memindahkan `riwayat_pendidikan`
+  duplikat ke `Orang` asli lalu menghapus duplikatnya. Skrip menolak jalan bila
+  duplikat punya nilai/tagihan/presensi/hafalan/akun user (di kasus ini nol).
+- `import-santri-madin-riwayat.ts`: baris no. 128 & 130 dipatok
+  `orangIdExisting: 414` dan `419` agar tidak menduplikasi lagi bila diimpor ulang.
+- Hasil: Bismar (`2026PONDOK004`) riwayat 2021/2022 Kelas 2 + 2025/2026 &
+  2026/2027 Kelas 6; Wardatul (`2026PONDOK006`) riwayat 2025/2026 & 2026/2027
+  Kelas 6. Wildana Izza Afkarina tidak terdampak — barisnya sudah memakai
+  `orangIdExisting` sejak awal.
+
+Dampak operator: dua nama ganda di daftar santri Madin Kelas 6 hilang; jumlah
+santri Madin berkurang 2. Tidak ada data akademik/keuangan yang hilang.
+
 ## 2026-08-29 — Pegawai bisa bertugas di lebih dari satu unit; Alfan Jamil digabung (`d32da92f`)
 
 "Alfan Jamil, M.Si, Gr" (`GTT-MA-005`, guru Fikih MA — dari `DATA GURU.xlsx`)

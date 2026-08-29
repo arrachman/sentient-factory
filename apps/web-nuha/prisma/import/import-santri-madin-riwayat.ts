@@ -221,9 +221,13 @@ const DAFTAR: BarisOrang[] = [
   { no: 125, nama: 'Agus Rosifat Aqli', jk: JenisKelamin.L, orangIdExisting: 515, riwayat: [{ ta: '2021/2022', kelas: 'Kelas 2', tingkat: '2' }, { ta: '2025/2026', kelas: 'Kelas 6', tingkat: '6' }] },
   { no: 126, nama: 'Ahmad Dzakkir Waspodo', jk: JenisKelamin.L, orangIdExisting: 516, riwayat: [{ ta: '2025/2026', kelas: 'Kelas 6', tingkat: '6' }] },
   { no: 127, nama: 'Fahruz Zakiyyah Almah', jk: JenisKelamin.P, orangIdExisting: 517, riwayat: [{ ta: '2025/2026', kelas: 'Kelas 6', tingkat: '6' }] },
-  { no: 128, nama: 'M. Bismar As Sidiq', jk: JenisKelamin.L, riwayat: [{ ta: '2021/2022', kelas: 'Kelas 2', tingkat: '2' }, { ta: '2025/2026', kelas: 'Kelas 6', tingkat: '6' }] },
+  // DB: "Muhammmad Bismar As Sidiq, S.H" (Guru Mapel MA yang juga mengaji di
+  // Madin). Nama roster tanpa gelar, jadi pencocokan nama persis gagal dan
+  // sempat membuat Orang duplikat — dipatok lewat id.
+  { no: 128, nama: 'M. Bismar As Sidiq', jk: JenisKelamin.L, orangIdExisting: 414, riwayat: [{ ta: '2021/2022', kelas: 'Kelas 2', tingkat: '2' }, { ta: '2025/2026', kelas: 'Kelas 6', tingkat: '6' }] },
   { no: 129, nama: 'M. Misbahussurur', jk: JenisKelamin.L, orangIdExisting: 518, riwayat: [{ ta: '2021/2022', kelas: 'Kelas 3', tingkat: '3' }, { ta: '2025/2026', kelas: 'Kelas 6', tingkat: '6' }] },
-  { no: 130, nama: 'Wardatul Haizatil Husna', jk: JenisKelamin.P, riwayat: [{ ta: '2025/2026', kelas: 'Kelas 6', tingkat: '6' }] },
+  // DB: "Wardatul Haizatil Husna, S.Sos., Gr" — sama seperti no. 128.
+  { no: 130, nama: 'Wardatul Haizatil Husna', jk: JenisKelamin.P, orangIdExisting: 419, riwayat: [{ ta: '2025/2026', kelas: 'Kelas 6', tingkat: '6' }] },
   { no: 131, nama: 'Wildana Izza Afkarina', jk: JenisKelamin.P, orangIdExisting: 423, riwayat: [{ ta: '2025/2026', kelas: 'Kelas 6', tingkat: '6' }] },
   { no: 132, nama: 'Abdul Rahman', jk: JenisKelamin.L, riwayat: [{ ta: '2021/2022', kelas: 'Kelas 6', tingkat: '6' }] },
   { no: 133, nama: 'Ach. Faridhal Athros', jk: JenisKelamin.L, riwayat: [{ ta: '2021/2022', kelas: 'Kelas 5', tingkat: '5' }] },
