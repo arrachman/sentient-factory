@@ -4,6 +4,41 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — MA Kelas 1 TA 2026/2027 dikembalikan ke 8 santri resmi
+
+Skrip baru `prisma/import/perbaiki-ma-kelas1-2026.ts` (`npm run
+fix:ma-kelas1-2026`) menegakkan daftar tertutup 8 NIK sesuai tabel operator.
+Dua penyimpangan ditambal:
+
+- **3 santri gelombang 1 tercecer** (Achmad Tsaaqib, Addaafi Syar'i, Aisyah
+  Aulia) — tergerus jadi `unit = SMP`, `status = Alumni`, tanpa kelas oleh
+  `import-alumni-smp-2025-2026.ts` yang jalan belakangan. Dikembalikan ke MA
+  Kelas 1, `Mukim`, tahun masuk 2026.
+- **13 alumni SMP ikut terbawa masuk** (NIS 2026MA013..025) oleh
+  `import-siswa-ma-2026-gelombang2.ts`. Dikeluarkan dari rombel: kembali ke
+  `unit = SMP`, `status = Alumni`, `kelasId = null`, `tahunMasuk = null`.
+
+**Dampak operasional.** Lulus SMP **tidak** otomatis berarti masuk MA — alumni
+boleh berdiri tanpa kelas. `import-siswa-ma-2026-gelombang2.ts` dibangun di atas
+asumsi sebaliknya, jadi skripnya **dinonaktifkan**: entri `import:siswa-ma-2026-g2`
+dihapus dari `package.json` dan berkasnya diberi peringatan jangan-dijalankan
+(dipertahankan sebagai catatan sumber biodata/wali tabel Dinkes). Menjalankannya
+lagi akan mengulang kesalahan yang sama.
+
+Koreksi biodata yang ikut masuk (semua bekas gelombang 2): jenis kelamin
+**Achmad Tsaaqib** dibetulkan `P` → `L` (sesuai tabel operator dan pola NIK),
+dan `Orang.hp` empat santri pertama dikosongkan karena yang tersimpan
+sebenarnya nomor **wali** — nomor itu tidak hilang, tetap ada di `RelasiWali`
+yang memang jalur kontak notifikasi.
+
+Baris `Santri` yang dikeluarkan tidak dihapus dan NIS `2026MA0xx`-nya
+dibiarkan: mereka masih punya `Nilai`/`Presensi`/`NilaiUjian` hasil seed.
+Skrip idempoten (kunci NIK) dan memvalidasi jumlah akhir rombel = 8.
+
+Verifikasi: `npx tsc --noEmit` bersih; Playwright ke
+`http://202.59.200.26:3226/induk?unit=1` — 8 nama hadir di cabang MA, 13 nama
+absen, tanpa `pageerror`.
+
 ## 2026-08-29 — Sinkron biodata & wali 24 alumni SMP 2025/2026
 
 Commit `8438da9d`. `import-alumni-smp-2025-2026.ts` kini tidak hanya menulis

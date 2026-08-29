@@ -24,7 +24,15 @@
  * pada impor lama pernah dipakai sebagai NIS sementara), wali dikunci NIK.
  * Alamat yang sudah rapi di DB dipertahankan — sumber hanya mengisi yang kosong.
  *
- * Jalankan: `npm run import:siswa-ma-2026-g2`
+ * ⚠️ **JANGAN DIJALANKAN LAGI.** Asumsi pokoknya keliru: skrip ini menyimpulkan
+ * bahwa 17 alumni SMP otomatis naik ke MA. Operator menegaskan pada 2026-08-29
+ * bahwa lulus SMP **tidak** berarti masuk MA — alumni boleh berdiri tanpa kelas,
+ * dan MA Kelas 1 TA 2026/2027 hanya berisi 8 nama gelombang 1. Penempatan yang
+ * telanjur dibuat sudah dibatalkan oleh `perbaiki-ma-kelas1-2026.ts`; menjalankan
+ * skrip ini lagi akan mengulang kesalahan yang sama. Berkas dipertahankan sebagai
+ * catatan sumber (biodata & wali dari tabel Dinkes) — bukan untuk dieksekusi.
+ *
+ * Jalankan: — (dinonaktifkan; lihat `npm run fix:ma-kelas1-2026`)
  */
 import { prisma } from '@/lib/prisma';
 import { recordAudit } from '@/lib/audit';
