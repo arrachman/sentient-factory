@@ -8,7 +8,7 @@ import { hrefInduk, STATUS_SANTRI, type FilterInduk } from './filter';
 function Opsi({ f, ubah, aktif, anak }: { f: FilterInduk; ubah: Partial<FilterInduk>; aktif: boolean; anak: React.ReactNode }) {
   const mati = Object.fromEntries(Object.keys(ubah).map((k) => [k, undefined])) as Partial<FilterInduk>;
   return (
-    <Link href={hrefInduk(f, aktif ? mati : ubah)} className={`chip ${aktif ? 'chip-aktif' : ''}`} aria-pressed={aktif}>
+    <Link href={hrefInduk(f, aktif ? mati : ubah)} className={`chip ${aktif ? 'chip-aktif' : ''}`} aria-pressed={aktif} aria-current={aktif ? 'true' : undefined}>
       {anak}
     </Link>
   );

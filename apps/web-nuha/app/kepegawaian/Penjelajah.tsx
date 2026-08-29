@@ -5,7 +5,7 @@ import type { PohonPegawai } from './pohon';
 /** Satu chip pilihan: label + jumlah pegawai di baliknya. */
 function Chip({ href, label, jumlah, aktif }: { href: string; label: string; jumlah: number; aktif: boolean }) {
   return (
-    <Link href={href} className={`chip ${aktif ? 'chip-aktif' : ''}`}>
+    <Link href={href} className={`chip ${aktif ? 'chip-aktif' : ''}`} aria-current={aktif ? 'true' : undefined}>
       <span>{label}</span>
       <span className="chip-angka">{jumlah}</span>
     </Link>

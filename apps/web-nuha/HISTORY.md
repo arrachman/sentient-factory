@@ -4,6 +4,16 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Aksesibilitas chip penjelajah/penyaring
+
+Chip aktif di penjelajah `/akademik`, `/kepegawaian`, dan penyaring `/induk`
+hanya bergantung pada warna (hijau vs putih) untuk menandai pilihan yang
+sedang dipakai — tidak terbaca pembaca layar dan tidak lolos WCAG 1.4.1.
+Ditambahkan `aria-current="true"` di setiap chip aktif serta penanda "✓"
+non-warna lewat `.chip-aktif::before`. Kontras teks krem di atas hijau aktif
+diukur `6.20:1` (hover `9.76:1`) — di atas ambang AA 4.5:1, jadi tidak perlu
+diubah.
+
 ## 2026-08-29 — Tata letak /induk responsif di layar kecil
 
 Grid master-detail `/induk` (pohon lembaga · daftar hasil · profil) memakai
