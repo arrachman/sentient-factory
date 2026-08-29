@@ -4,6 +4,14 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Cabang Alumni /induk tersembunyi saat status Mukim (adf80e90)
+
+Saat penyaring STATUS berada di **Aktif** (Mukim — juga nilai bawaan), cabang
+**Alumni** di pohon lembaga tidak lagi ditampilkan: cacahnya dipaksa 0 sehingga
+simpulnya hilang. Alumni baru muncul kembali ketika operator memilih status
+Alumni/Keluar. Dampak: cacah unit di pohon kini konsisten dengan daftar santri
+aktif — tidak ada lagi baris "Alumni 17" di bawah SMP saat melihat santri aktif.
+
 ## 2026-08-29 — Simpul "Alumni" per unit di pohon /induk
 
 Pohon lembaga `/induk` kini punya cabang **Alumni** sejajar tingkat kelas di
