@@ -4,6 +4,43 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Santri bisa menempati lebih dari satu kelas; anggota I'dad Madin ditetapkan
+
+Commit `08a49dcc`.
+
+Sebelumnya satu santri hanya bisa punya satu `unit_id`/`kelas_id`, padahal
+kenyataannya banyak siswa SMP/MA yang **juga** mengaji di Madin. Ditambahkan
+tabel pivot **`santri_kelas`** (migrasi `20260829190000_santri_multi_kelas`),
+di-backfill otomatis dari penempatan tunggal yang sudah ada — jadi tidak ada
+data yang perlu diisi ulang manual.
+
+Kolom `santri.unit_id/kelas_id` **tetap dipertahankan** sebagai penempatan
+*utama*, dipakai modul yang memang hanya butuh satu jawaban (kartu identitas,
+tagihan, kamar). Yang berubah: pohon lembaga dan penyaring unit/kelas di
+`/induk` kini membaca pivot, sehingga santri berkelas jamak muncul di **kedua**
+cabang lembaga. Chip "Tanpa kelas" kini berarti tidak punya penempatan sama
+sekali.
+
+Skrip baru `npm run kelas:idad-madin` menetapkan 23 anggota resmi kelas I'dad
+Madin berdasarkan **NIS** (kebal terhadap beda penulisan nama — daftar operator
+menulis "M Ilham Arifin", DB menyimpan "Muhammad Ilham Arifin"). 17 siswa SMP
+ditambahkan sebagai kelas kedua tanpa melepas rombel SMP-nya. Skrip idempoten;
+santri di I'dad yang tidak ada di daftar hanya dilepas dari kelas itu, tidak
+dihapus dari sistem.
+
+**Yang perlu diketahui operator:**
+
+- Angka per lembaga di `/induk` kini bisa **lebih besar dari jumlah santri**,
+  karena satu santri sengaja terhitung di SMP dan Madin sekaligus. Ini benar,
+  bukan duplikat.
+- Kelas I'dad Madin masih **kembar**: `#36` (kosong) dan `#37` (berisi 23).
+  Skrip otomatis memakai yang berisi, tapi baris kosongnya belum dibersihkan.
+- "Kelas 6" Madin juga masih terpecah dua baris (`#45` 5 santri, `#33` 2 santri).
+  Belum ditangani di commit ini.
+- Tiga nama tersimpan dengan gelar yang janggal untuk santri
+  (`Muhammmad Bismar As Sidiq, S.H`, `Wardatul Haizatil Husna, S.Sos., Gr`) —
+  perlu dikonfirmasi apakah itu memang santri atau salah masuk tabel.
+
 ## 2026-08-29 — Cabang Alumni dicacah per lembaga saja, bukan per tingkat/kelas
 
 Atas permintaan operator, simpul **Alumni** di pohon lembaga `/induk` tidak lagi
