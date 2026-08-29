@@ -4,6 +4,27 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Naik kelas 11 santri MA ke Kelas 2 + biodata lengkap di /induk
+
+Sebelas santri MA angkatan 2025 masih menunjuk **Kelas 1 (tingkat 10, TA
+2025/2026)** padahal tahun ajaran aktif sudah 2026/2027, sehingga rombel
+**Kelas 2 (tingkat 11)** kosong. Skrip baru `prisma/import/promosi-ma-2026.ts`
+(`npm run promosi:ma-2026`, idempoten) memindahkan mereka ke Kelas 2 TA
+2026/2027 dan mencatat `RiwayatPendidikan` MA Kelas 1 TA 2025/2026 berstatus
+`Mukim` (naik kelas, bukan lulus) agar jejak jenjangnya tetap ada.
+
+NIS **Muhammad Fajar Putra Sulhari** dikoreksi dari NIS sintetis `2025MA007`
+menjadi NIS resmi `131235730007250129` yang baru diterbitkan operator;
+`import-siswa-ma-2025.ts` ikut disesuaikan agar sumbernya konsisten.
+
+Tab Biodata `/induk` kini merender **NIK, No. KK, anak ke-N dari M saudara,
+hobi, cita-cita, no. HP, dan asal sekolah** — semuanya sudah tersimpan di
+`Orang` sejak impor, tapi tidak pernah ditampilkan. Tidak ada perubahan skema.
+
+Dampak: operator melihat buku induk yang lengkap, dan rombel MA kelas XI kini
+berisi 11 santri. Verifikasi Playwright ke `http://202.59.200.26:3226`: login
+superadmin, 6 tab `/induk` tanpa `pageerror`, nilai biodata & NIS baru tampil.
+
 ## 2026-08-29 — Cabang Alumni /induk tersembunyi saat status Mukim (adf80e90)
 
 Saat penyaring STATUS berada di **Aktif** (Mukim — juga nilai bawaan), cabang

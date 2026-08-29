@@ -78,6 +78,8 @@ export const BAGIAN: Bagian[] = [
       { judul: 'Cari dan saring daftar', detail: 'Ketik nama, NIS, atau NISN lalu tekan Cari. Status, jenis kelamin, dan angkatan bisa dipilih melalui chip; pilihan yang aktif muncul sebagai chip bertanda × untuk dicopot satuan.' },
       { judul: 'Telusuri lembaga dan kelas', detail: 'Panel Lembaga & kelas dapat dibuka atau dilipat. Pilih lembaga atau kelas untuk mempersempit hasil tanpa menghapus penyaring lain.' },
       { judul: 'Buka profil santri', detail: 'Pilih satu nama untuk membuka profil dan tab detailnya. Daftar hasil memakai halaman agar tetap cepat ketika jumlah santri bertambah.' },
+      { judul: 'Baca biodata lengkap', detail: 'Tab Biodata memuat isian buku induk: nama, tempat & tanggal lahir, jenis kelamin, NIK, No. KK, alamat, anak ke-berapa dari berapa saudara, hobi, cita-cita, no. HP, asal sekolah, dan tahun masuk. Kolom yang belum diisi operator ditampilkan sebagai tanda hubung.' },
+      { judul: 'Lihat riwayat jenjang', detail: 'Kartu Riwayat pendidikan di kolom kanan mencatat kelas dan tahun ajaran sebelumnya, sehingga santri yang naik kelas atau pindah jenjang tetap punya jejak kelas lamanya.' },
       { judul: 'Gunakan dari layar kecil', detail: 'Di ponsel, setelah profil dipilih hanya detail yang ditampilkan agar tidak terjepit. Gunakan tautan “‹ Kembali ke daftar” di atas profil untuk kembali ke hasil pencarian.' },
     ],
   },

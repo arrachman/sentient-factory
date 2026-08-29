@@ -3,6 +3,14 @@ import { prisma } from '@/lib/prisma';
 const formatTgl = (tgl: Date | null) =>
   tgl ? tgl.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
 
+/** "Anak ke-2 dari 3 saudara"; luwes bila salah satu angkanya belum diisi. */
+const formatAnakKe = (anakKe: number | null, jumlahSaudara: number | null) => {
+  if (anakKe === null && jumlahSaudara === null) return '-';
+  if (anakKe === null) return `dari ${jumlahSaudara} saudara`;
+  if (jumlahSaudara === null) return `ke-${anakKe}`;
+  return `ke-${anakKe} dari ${jumlahSaudara} saudara`;
+};
+
 /** Tab Biodata: identitas dasar dari `Orang` + peran aktifnya sebagai `Santri`. */
 export async function TabBiodata({ santriId }: { santriId: bigint }) {
   const santri = await prisma.santri.findUnique({
@@ -25,7 +33,14 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
         <Baris label="Tanggal lahir" nilai={formatTgl(santri.orang.tglLahir)} />
         <Baris label="Tempat lahir" nilai={santri.orang.tmpLahir ?? '-'} />
         <Baris label="Jenis kelamin" nilai={santri.orang.jk === 'L' ? 'Putra' : 'Putri'} />
+        <Baris label="NIK" nilai={santri.orang.nik ?? '-'} />
+        <Baris label="No. KK" nilai={santri.orang.noKk ?? '-'} />
         <Baris label="Alamat" nilai={santri.orang.alamat ?? '-'} />
+        <Baris label="Anak ke" nilai={formatAnakKe(santri.orang.anakKe, santri.orang.jumlahSaudara)} />
+        <Baris label="Hobi" nilai={santri.orang.hobi ?? '-'} />
+        <Baris label="Cita-cita" nilai={santri.orang.citaCita ?? '-'} />
+        <Baris label="No. HP" nilai={santri.orang.hp ?? '-'} />
+        <Baris label="Asal sekolah" nilai={santri.orang.asalSekolah ?? '-'} />
         <Baris label="Tahun masuk" nilai={santri.tahunMasuk ?? '-'} terakhir />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>

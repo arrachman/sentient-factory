@@ -11,9 +11,11 @@
  * per-anak-per-peran bila NIK kosong, lihat `lib/tulis-wali.ts`).
  *
  * Catatan data sumber yang sengaja dipertahankan apa adanya:
- *   - No. 7 (Muhammad Fajar Putra Sulhari) **tidak punya NIS** di tabel
- *     operator → NIS dibuat deterministik oleh `buatNis()` (`2025MA007`).
- *     Sepuluh sisanya memakai NIS resmi 18 digit dari sumber.
+ *   - No. 7 (Muhammad Fajar Putra Sulhari) semula tidak punya NIS di tabel
+ *     operator sehingga sempat dibuatkan NIS sintetis `2025MA007`. Operator
+ *     menyusulkan NIS resminya (`131235730007250129`) pada 2026-08-29, jadi
+ *     seluruh 11 baris kini memakai NIS resmi 18 digit dari sumber.
+ *     Perpindahan NIS lama → baru ditangani `promosi-ma-2026.ts`.
  *   - No. 11 (Muhammad Hamdan Zaini) tidak punya baris di tabel kesehatan, dan
  *     ibunya (Noer Laila) hanya diketahui namanya — tanpa NIK/TTL/pekerjaan.
  *     Blok alamat wali di sumber juga kosong untuk baris ini.
@@ -245,7 +247,7 @@ const DATA: BarisSiswa[] = [
     nik: '3579021105100002',
     noKk: '3579021104080007',
     nisn: '0109024036',
-    nis: null, // operator belum menerbitkan NIS untuk siswa ini
+    nis: '131235730007250129', // NIS resmi menyusul dari operator (2026-08-29)
     alamat: 'DUSUN PRAMBATAN RT 003/RW 001 GUNUNGSARI, BUMIAJI, BATU, JAWA TIMUR',
     anakKe: 2,
     jumlahSaudara: 3,
