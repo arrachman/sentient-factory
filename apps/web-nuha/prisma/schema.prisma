@@ -28,7 +28,17 @@ enum JenisKelamin {
 model Orang {
   id            BigInt       @id @default(autoincrement())
   nik           String?      @unique @db.VarChar(32)
+  /// Nama tampilan sehari-hari (tanpa gelar). Tetap kolom utama yang dipakai
+  /// seluruh UI & pencocokan jadwal guru — jangan ganti jadi nama lengkap.
   nama          String       @db.VarChar(160)
+  /// Gelar/sapaan kehormatan yang mendahului nama: "KH.", "Nyai Hj.", "Gus",
+  /// "Ning", "Ustadz", "Ustadzah". Dipisah supaya bisa dirender/difilter
+  /// tanpa mengurai string nama.
+  gelar         String?      @db.VarChar(60)
+  /// Nama panggilan akrab (mis. "Gus Alfan") untuk sapaan di UI/WA.
+  panggilan     String?      @db.VarChar(80)
+  /// Nama lengkap resmi termasuk gelar depan & belakang, sesuai dokumen.
+  namaLengkap   String?      @map("nama_lengkap") @db.VarChar(255)
   jk            JenisKelamin
   tglLahir      DateTime?    @map("tgl_lahir") @db.Date
   tmpLahir      String?      @map("tmp_lahir") @db.VarChar(120)

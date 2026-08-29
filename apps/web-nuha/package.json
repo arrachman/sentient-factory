@@ -19,6 +19,7 @@
     "db:studio": "prisma studio",
     "import:keuangan": "tsx prisma/import/keuangan.ts",
     "import:guru-ma": "tsx prisma/import/import-guru-ma.ts",
+    "import:asatidz": "tsx prisma/import/import-asatidz.ts",
     "import:siswa-ma": "tsx prisma/import/import-siswa-ma.ts",
     "import:siswa-ma-2025": "tsx prisma/import/import-siswa-ma-2025.ts",
     "import:siswa-ma-2026": "tsx prisma/import/import-siswa-ma-2026.ts",

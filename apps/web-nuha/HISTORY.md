@@ -4,6 +4,23 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — 22 Asatidz/Asatidzah masuk sebagai Pegawai + kolom gelar
+
+`Orang` dapat tiga kolom baru: `gelar` (KH./Gus/Ning/Nyai Hj./Ustadz/Ustadzah),
+`panggilan`, dan `nama_lengkap` — migrasi `20260829170000_orang_gelar_panggilan`.
+Kolom `nama` tetap nama tanpa gelar dan tetap jadi kunci pencocokan jadwal guru.
+
+Importir baru `npm run import:asatidz` menulis 18 Asatidz + 4 Asatidzah ke
+`Orang` + `Pegawai` unit **Pondok**, NIP internal `AST-001`…`AST-022`, jabatan
+awal "Asatidz"/"Asatidzah". Idempoten; impor ulang **tidak** menimpa `jabatan`
+dan `unitId` supaya perubahan yang dilakukan operator lewat aplikasi bertahan.
+
+Dampak operator: **belum ada akun login** untuk 22 orang ini — penugasan peran
+(staf, pengasuh, bendahara, dst.) dan pembuatan user dilakukan lewat aplikasi.
+Satu orang bisa multi-peran (`user_peran`), multi-jabatan (`jabatan_struktural`),
+sekaligus terdaftar sebagai santri/siswa, karena `Pegawai` dan `Santri` sama-sama
+menggantung ke satu baris `Orang`.
+
 ## 2026-08-29 — Cabang Alumni /induk dikembalikan, tidak lagi peduli kelas
 
 Commit `6cd16b95` sempat menghapus total cabang "Alumni" dari pohon lembaga
