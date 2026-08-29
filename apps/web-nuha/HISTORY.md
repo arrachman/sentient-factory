@@ -4,7 +4,7 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
-## 2026-08-29 — Impor riwayat Madin 2019–2026 dari berkas presensi (`1be7b024`)
+## 2026-08-29 — Impor riwayat Madin 2019–2026 dari berkas presensi (`1a6c3622`)
 
 Berkas operator `docs/PRESENSI DAN JURNAL JULI-AGUSTUS AJARAN BARU
 2025_111924.xlsx` dimuat lewat `npm run import:santri-madin-riwayat`:
