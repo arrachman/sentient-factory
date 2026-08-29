@@ -60,7 +60,7 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
                 const aktif = f.kelasId === k.id;
                 return (
                   <Link key={t.tingkat} href={hrefInduk(f, { unitId: u.id, kelasId: k.id })} style={baris(aktif, 1)}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k.nama}</span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</span>
                     <Cacah n={k.jumlah} aktif={aktif} />
                   </Link>
                 );
@@ -70,7 +70,7 @@ export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }
                   <summary style={{ listStyle: 'none', cursor: 'pointer' }}>
                     <span style={baris(false, 1)}>
                       <span className="muted" style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 0.3 }}>
-                        Kelas {i + 1}
+                        {t.label}
                       </span>
                       <Cacah n={t.jumlah} aktif={false} />
                     </span>

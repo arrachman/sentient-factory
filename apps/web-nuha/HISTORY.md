@@ -4,6 +4,17 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Label tingkat & urutan lembaga di penyaring /induk
+
+Penyaring pohon lembaga di /induk sebelumnya melabeli sub-tingkat sebagai
+"Kelas 1/2/3" generik dan mengurutkan lembaga alfabetis (MA, Madin, SMP).
+Diubah: SMP kini berlabel Tingkat VII/VIII/IX, MA berlabel Tingkat X/XI/XII
+(Madin tetap 1–6 apa adanya), dan urutan lembaga dipaksa Madin → MA → SMP
+lewat `URUTAN_UNIT` di `app/induk/pohon.ts` (bukan lagi `orderBy nama asc`).
+Tingkat dengan tepat satu kelas langsung memakai label tingkat sebagai
+tautan filter, tanpa sub-menu nama kelas — pola yang sudah ada sebelumnya,
+kini labelnya ikut memakai `t.label`.
+
 ## 2026-08-29 — Pencarian entitas di /data
 
 /data menampilkan 21+ kartu entitas dalam satu layar tanpa cara menyaringnya

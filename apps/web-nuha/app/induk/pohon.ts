@@ -2,8 +2,22 @@ import { prisma } from '@/lib/prisma';
 import { whereFilter, type FilterInduk } from './filter';
 
 export type SimpulKelas = { id: number; nama: string; jumlah: number };
-export type SimpulTingkat = { tingkat: string; jumlah: number; kelas: SimpulKelas[] };
+export type SimpulTingkat = { tingkat: string; label: string; jumlah: number; kelas: SimpulKelas[] };
 export type SimpulUnit = { id: number; nama: string; jumlah: number; tingkat: SimpulTingkat[] };
+
+/** Urutan tampil lembaga di pohon: Madin lebih dulu, lalu MA, lalu SMP. */
+const URUTAN_UNIT = ['Madin', 'MA', 'SMP'];
+
+/** Label tingkat per unit — SMP & MA memakai angka romawi tingkat sekolah,
+ * unit lain (mis. Madin) memakai angka tingkat apa adanya. */
+const LABEL_TINGKAT: Record<string, Record<string, string>> = {
+  SMP: { '7': 'Tingkat VII', '8': 'Tingkat VIII', '9': 'Tingkat IX' },
+  MA: { '10': 'Tingkat X', '11': 'Tingkat XI', '12': 'Tingkat XII' },
+};
+
+function labelTingkat(unitNama: string, tingkat: string): string {
+  return LABEL_TINGKAT[unitNama]?.[tingkat] ?? `Tingkat ${tingkat}`;
+}
 
 export type PohonInduk = {
   total: number;
@@ -20,7 +34,7 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
   const [unitRows, kelasRows, cacah, total, tanpaKelas] = await Promise.all([
     // Poskestren bukan lembaga tempat santri terdaftar (layanan kesehatan,
     // bukan jenjang) — dikeluarkan dari pohon induk santri.
-    prisma.unit.findMany({ where: { aktif: true, key: { not: 'Poskestren' } }, orderBy: { nama: 'asc' } }),
+    prisma.unit.findMany({ where: { aktif: true, key: { not: 'Poskestren' } } }),
     prisma.kelas.findMany({ orderBy: [{ tingkat: 'asc' }, { nama: 'asc' }] }),
     prisma.santri.groupBy({ by: ['kelasId'], where: whereDasar, _count: { _all: true } }),
     prisma.santri.count({ where: whereDasar }),
@@ -30,28 +44,32 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
   const perKelas = new Map<number, number>();
   for (const b of cacah) if (b.kelasId !== null) perKelas.set(b.kelasId, b._count._all);
 
-  const unit: SimpulUnit[] = unitRows.map((u) => {
-    const perTingkat = new Map<string, SimpulKelas[]>();
-    for (const k of kelasRows) {
-      if (k.unitId !== u.id) continue;
-      const list = perTingkat.get(k.tingkat) ?? [];
-      list.push({ id: k.id, nama: k.nama, jumlah: perKelas.get(k.id) ?? 0 });
-      perTingkat.set(k.tingkat, list);
-    }
-    const tingkat: SimpulTingkat[] = [...perTingkat.entries()]
-      .map(([nama, kelas]) => ({
-        tingkat: nama,
-        kelas,
-        jumlah: kelas.reduce((a, k) => a + k.jumlah, 0),
-      }))
-      .sort((a, b) => a.tingkat.localeCompare(b.tingkat, 'id', { numeric: true }));
-    return {
-      id: u.id,
-      nama: u.nama,
-      jumlah: tingkat.reduce((a, t) => a + t.jumlah, 0),
-      tingkat,
-    };
-  });
+  const unit: SimpulUnit[] = unitRows
+    .slice()
+    .sort((a, b) => URUTAN_UNIT.indexOf(a.nama) - URUTAN_UNIT.indexOf(b.nama))
+    .map((u) => {
+      const perTingkat = new Map<string, SimpulKelas[]>();
+      for (const k of kelasRows) {
+        if (k.unitId !== u.id) continue;
+        const list = perTingkat.get(k.tingkat) ?? [];
+        list.push({ id: k.id, nama: k.nama, jumlah: perKelas.get(k.id) ?? 0 });
+        perTingkat.set(k.tingkat, list);
+      }
+      const tingkat: SimpulTingkat[] = [...perTingkat.entries()]
+        .map(([nama, kelas]) => ({
+          tingkat: nama,
+          label: labelTingkat(u.nama, nama),
+          kelas,
+          jumlah: kelas.reduce((a, k) => a + k.jumlah, 0),
+        }))
+        .sort((a, b) => a.tingkat.localeCompare(b.tingkat, 'id', { numeric: true }));
+      return {
+        id: u.id,
+        nama: u.nama,
+        jumlah: tingkat.reduce((a, t) => a + t.jumlah, 0),
+        tingkat,
+      };
+    });
 
   return { total, tanpaKelas, unit };
 }
