@@ -21,17 +21,17 @@ const WARNA_STATUS: Record<string, string> = {
 /** Panel daftar hasil. Seleksi dibawa lewat query ?sel= (bukan state klien) supaya
  * satu tautan mewakili satu tampilan penuh: filter + santri terpilih + tab. */
 export function DaftarSantri({
-  daftar, f, selId, tab,
-}: { daftar: BarisDaftar[]; f: FilterInduk; selId?: bigint; tab?: string }) {
+  daftar, f, selId, tab, halaman,
+}: { daftar: BarisDaftar[]; f: FilterInduk; selId?: bigint; tab?: string; halaman?: number }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 520, overflowY: 'auto' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {daftar.length === 0 && <Kosong pesan="Tidak ada santri yang cocok dengan penyaring ini." />}
       {daftar.map((baris) => {
         const aktif = selId !== undefined && baris.id === selId;
         return (
           <Link
             key={String(baris.id)}
-            href={hrefInduk(f, {}, { sel: baris.id, tab })}
+            href={hrefInduk(f, {}, { sel: baris.id, tab, halaman })}
             className="baris-santri"
             style={{
               display: 'flex', gap: 10, alignItems: 'center', padding: '9px 10px', borderRadius: 10,

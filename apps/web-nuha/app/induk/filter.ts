@@ -73,16 +73,18 @@ export function queryFilter(f: Partial<FilterInduk>): string {
 }
 
 /** Tautan ke /induk dengan filter sekarang + perubahan. `sel`/`tab` opsional
- * karena mengganti filter harus mereset seleksi (santri lama bisa tersaring keluar). */
+ * karena mengganti filter harus mereset seleksi (santri lama bisa tersaring keluar).
+ * `halaman` juga tidak ikut terbawa: penyaring baru selalu mulai dari halaman 1. */
 export function hrefInduk(
   f: FilterInduk,
   ubah: Partial<FilterInduk> = {},
-  extra: { sel?: bigint | string; tab?: string } = {},
+  extra: { sel?: bigint | string; tab?: string; halaman?: number } = {},
 ): string {
   const gabung = { ...f, ...ubah };
   const p = new URLSearchParams(queryFilter(gabung));
   if (extra.sel !== undefined) p.set('sel', String(extra.sel));
   if (extra.tab) p.set('tab', extra.tab);
+  if (extra.halaman && extra.halaman > 1) p.set('halaman', String(extra.halaman));
   const s = p.toString();
   return s ? `/induk?${s}` : '/induk';
 }

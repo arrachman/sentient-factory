@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { Shell } from '@/components/templates/Shell';
-import { JudulHalaman, Kosong, type TabDef } from '@/components';
+import { JudulHalaman, Kosong, type TabDef, bacaHalaman, UKURAN_HALAMAN, Pagination } from '@/components';
 import { BarisFilter } from './BarisFilter';
 import { DaftarSantri } from './DaftarSantri';
 import { PohonLembaga } from './PohonLembaga';
@@ -39,8 +39,9 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
   const tabAktif = TABS.some((t) => t.key === tabRaw) ? (tabRaw as string) : TABS[0].key;
 
   const where = whereFilter(f);
+  const halaman = bacaHalaman(sp);
 
-  const [daftar, pohon, angkatan] = await Promise.all([
+  const [daftar, total, pohon, angkatan] = await Promise.all([
     prisma.santri.findMany({
       where,
       select: {
@@ -50,13 +51,24 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
         unit: { select: { nama: true } },
       },
       orderBy: { orang: { nama: 'asc' } },
+      skip: (halaman - 1) * UKURAN_HALAMAN,
+      take: UKURAN_HALAMAN,
     }),
+    prisma.santri.count({ where }),
     ambilPohon(f),
     ambilAngkatan(),
   ]);
 
+  const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN));
+
+  // Dengan paginasi, santri terpilih bisa berada di halaman lain — jadi ?sel=
+  // divalidasi lewat query sendiri (harus lolos `where` yang sama), bukan
+  // dicari di `daftar`. Tanpa ini seleksi ikut hilang tiap ganti halaman.
   const selRaw = ambil('sel');
-  const selId = daftar.some((s) => String(s.id) === selRaw) ? BigInt(selRaw as string) : daftar[0]?.id;
+  const selDiminta = selRaw && /^\d+$/.test(selRaw) ? BigInt(selRaw) : undefined;
+  const selId = selDiminta !== undefined && await prisma.santri.count({ where: { AND: [where, { id: selDiminta }] } })
+    ? selDiminta
+    : daftar[0]?.id;
 
   const sel = selId
     ? await prisma.santri.findUnique({ where: { id: selId }, include: { orang: true, unit: true } })
@@ -74,17 +86,27 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
         </Link>
       </div>
 
-      <BarisFilter f={f} angkatan={angkatan} hasil={daftar.length} />
+      <BarisFilter f={f} angkatan={angkatan} hasil={total} />
 
-      <div className="grid" style={{ gridTemplateColumns: '250px 300px 1fr', alignItems: 'start', marginTop: 14 }}>
+      <div className="grid induk-grid" style={{ alignItems: 'start', marginTop: 14 }}>
         <div className="card" style={{ padding: 12 }}>
           <div className="label" style={{ marginBottom: 8, paddingLeft: 4 }}>Lembaga & kelas</div>
           <PohonLembaga pohon={pohon} f={f} />
         </div>
 
-        <div className="card" style={{ padding: 12 }}>
-          <div className="label" style={{ marginBottom: 8, paddingLeft: 4 }}>Hasil ({daftar.length})</div>
-          <DaftarSantri daftar={daftar} f={f} selId={selId} tab={tabAktif} />
+        <div className="card" style={{ padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="label" style={{ paddingLeft: 4 }}>Hasil ({total})</div>
+          <DaftarSantri daftar={daftar} f={f} selId={selId} tab={tabAktif} halaman={halaman} />
+          {totalHalaman > 1 && (
+            <Pagination
+              halaman={halaman}
+              totalHalaman={totalHalaman}
+              total={total}
+              jumlahBaris={daftar.length}
+              ukuranHalaman={UKURAN_HALAMAN}
+              buatHref={(p) => hrefInduk(f, {}, { halaman: p })}
+            />
+          )}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
@@ -95,7 +117,7 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
                 {TABS.map((t) => (
                   <Link
                     key={t.key}
-                    href={hrefInduk(f, {}, { sel: selId!, tab: t.key })}
+                    href={hrefInduk(f, {}, { sel: selId!, tab: t.key, halaman })}
                     className={`tab ${t.key === tabAktif ? 'active' : ''}`}
                   >
                     {t.label}

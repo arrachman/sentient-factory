@@ -439,7 +439,7 @@ label.toggle, .field label.toggle {
   .induk-grid { grid-template-columns: 220px 1fr; }
 }
 
-/* --- Skeleton loading: blok abu berdenyut untuk app/**/loading.tsx --- */
+/* --- Skeleton loading: blok abu berdenyut untuk tiap loading.tsx --- */
 .skeleton {
   background: var(--krem-3);
   border-radius: 8px;
