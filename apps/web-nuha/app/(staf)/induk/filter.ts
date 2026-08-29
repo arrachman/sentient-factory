@@ -43,10 +43,23 @@ export function bacaFilter(sp: Record<string, string | string[] | undefined>): F
   };
 }
 
+/** Alumni sebuah lembaga = punya riwayat berstatus `Alumni` di unit itu DAN
+ * tidak lagi terdaftar di rombel unit yang sama. Syarat kedua wajib: importir
+ * riwayat menulis satu baris per tahun ajaran, sehingga santri yang masih aktif
+ * (mis. Madin Tingkat VI 2026/2027) tetap memiliki baris `Alumni` untuk tahun-
+ * tahun lampaunya. Tanpa penyaring `SantriKelas`, 11 santri Madin yang masih
+ * mengaji — termasuk yang naik dari Kelas 2 ke Kelas 6 — salah dicap alumni.
+ * Kepindahan antar-lembaga tetap terbaca alumni (lulus SMP → mukim di MA:
+ * rombel SMP-nya sudah tidak ada), jadi perilaku lama untuk SMP tidak berubah. */
+const alumniDiUnit = (unitId: number): Prisma.SantriWhereInput => ({
+  orang: { riwayatPendidikan: { some: { status: 'Alumni', unitId } } },
+  kelasLain: { none: { unitId } },
+});
+
 /** WHERE Prisma dari filter, disusun sebagai daftar AND supaya pencarian bebas
  * (OR nama/NIS/NISN) tidak bentrok dengan penyaring jenis kelamin di relasi yang sama.
  * Kelas menang atas unit karena kelas sudah menyiratkan unitnya. */
-export function whereFilter(f: FilterInduk): Prisma.SantriWhereInput {
+export function whereFilter(f: FilterInduk, opsi: { unitIds?: number[] } = {}): Prisma.SantriWhereInput {
   const syarat: Prisma.SantriWhereInput[] = [];
   // "Alumni" selalu dijawab dari `RiwayatPendidikan`, bukan kolom `santri.status`.
   // Alasannya: santri yang lulus SMP lalu mukim di MA tetap beralumni SMP,
@@ -56,7 +69,11 @@ export function whereFilter(f: FilterInduk): Prisma.SantriWhereInput {
   // status aktif diabaikan di cabang ini — unit disaring lewat riwayatnya.
   const unitAlumni = f.alumniUnitId ?? (f.status === 'Alumni' ? f.unitId : undefined);
   if (f.alumniUnitId || f.status === 'Alumni') {
-    syarat.push({ orang: { riwayatPendidikan: { some: { status: 'Alumni', ...(unitAlumni ? { unitId: unitAlumni } : {}) } } } });
+    syarat.push(
+      unitAlumni ? alumniDiUnit(unitAlumni)
+        : opsi.unitIds?.length ? { OR: opsi.unitIds.map(alumniDiUnit) }
+          : { orang: { riwayatPendidikan: { some: { status: 'Alumni' } } } },
+    );
   } else {
     // Unit/kelas dijawab dari `SantriKelas`, bukan kolom `santri.unitId/kelasId`:
     // satu santri bisa sekolah di SMP sekaligus mengaji di Madin, dan kolom lama

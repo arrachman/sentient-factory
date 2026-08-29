@@ -35,11 +35,24 @@ export type PohonInduk = {
   unit: SimpulUnit[];
 };
 
+/** Unit yang tampil di pohon (Poskestren dikecualikan — layanan kesehatan,
+ * bukan jenjang). Dipakai juga sebagai daftar unit untuk syarat "alumni lembaga
+ * mana pun": alumni harus diperiksa per unit, karena seseorang bisa beralumni di
+ * satu lembaga sambil masih aktif di lembaga lain. */
+export async function unitIdsPohon(): Promise<number[]> {
+  const rows = await prisma.unit.findMany({
+    where: { aktif: true, key: { not: 'Poskestren' } },
+    select: { id: true },
+  });
+  return rows.map((u) => u.id);
+}
+
 /** Susunan lembaga → tingkat → kelas beserta cacah santri.
  * Cacah menghormati filter selain unit/kelas (status, JK, angkatan, pencarian),
  * supaya angka di pohon = angka yang benar-benar akan muncul saat simpul diklik. */
 export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
-  const whereDasar = whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: undefined });
+  const unitIds = await unitIdsPohon();
+  const whereDasar = whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: undefined }, { unitIds });
   // Alumni dicacah **per lembaga saja**, tidak per tingkat/kelas: keanggotaan
   // alumni berasal dari `RiwayatPendidikan`, sedangkan tingkat/kelas di pohon
   // menggambarkan penempatan rombel santri aktif. Menampilkan keduanya bersamaan
@@ -68,7 +81,7 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
     // bawahnya (mis. 153 aktif vs 11 alumni Madin pada layar yang sama).
     prisma.santri.count({
       where: modeAlumni
-        ? whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: undefined, status: 'Alumni' })
+        ? whereFilter({ ...f, unitId: undefined, kelasId: undefined, alumniUnitId: undefined, status: 'Alumni' }, { unitIds })
         : whereDasar,
     }),
     prisma.santri.count({ where: { AND: [whereDasar, { kelasLain: { none: {} } }] } }),

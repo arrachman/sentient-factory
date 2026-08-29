@@ -6,7 +6,7 @@ import { BarisFilter } from './BarisFilter';
 import { DaftarSantri } from './DaftarSantri';
 import { PohonLembaga } from './PohonLembaga';
 import { bacaFilter, hrefInduk, whereFilter } from './filter';
-import { ambilAngkatan, ambilPohon } from './pohon';
+import { ambilAngkatan, ambilPohon, unitIdsPohon } from './pohon';
 import { HeaderSantri } from './HeaderSantri';
 import { TabBiodata } from './TabBiodata';
 import { TabAkademik } from './TabAkademik';
@@ -37,7 +37,11 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
   const tabRaw = ambil('tab');
   const tabAktif = TABS.some((t) => t.key === tabRaw) ? (tabRaw as string) : TABS[0].key;
 
-  const where = whereFilter(f);
+  // Daftar unit diambil lebih dulu karena syarat "alumni lembaga mana pun"
+  // harus diperiksa per unit — seseorang bisa beralumni di satu lembaga sambil
+  // masih aktif di lembaga lain, jadi tidak cukup sekadar "punya riwayat Alumni".
+  const unitIds = await unitIdsPohon();
+  const where = whereFilter(f, { unitIds });
   const halaman = bacaHalaman(sp);
 
   const [daftar, total, pohon, angkatan] = await Promise.all([
