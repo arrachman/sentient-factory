@@ -4,6 +4,26 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-29 — Penetapan Madin Kelas 1 sesuai daftar resmi (data)
+
+Daftar resmi TA 2026/2027 Gasal ditetapkan untuk Madin Kelas 1 (`#21`):
+**50 anggota** cocok tepat dengan daftar operator, tanpa anggota kurang atau
+berlebih. Delapan santri yang sebelumnya tercatat sebagai alumni dipulihkan
+menjadi Mukim dan dijadikan penempatan utama Madin Kelas 1; riwayat pendidikan
+Madin serta audit log mereka juga diperbarui.
+
+Empat santri alumni lain dipulihkan sebagai Mukim dan penempatan utama Madin
+Kelas 2 (`#29`), sehingga jumlah Kelas 2 tetap **19 anggota**. Santri SMP/MA
+yang juga mengaji di Madin tetap mempertahankan penempatan utama SMP/MA mereka;
+Madin dicatat sebagai keanggotaan kedua melalui `santri_kelas`.
+
+Skrip idempoten `prisma/import/tetapkan-kelas-1-madin-2026.ts` menyimpan daftar
+NIS, validasi seluruh identitas sebelum transaksi, mencatat pelepasan anggota
+lama pada audit log, serta memverifikasi jumlah akhir Kelas 1.
+
+Dampak operasional: daftar Kelas 1 Madin siap dipakai sebagai daftar resmi
+TA aktif; Kelas 2 tetap berisi 19 santri yang telah diverifikasi.
+
 ## 2026-08-29 — 95 alumni Madin ditampilkan kembali di /induk (data)
 
 Operator menyerahkan daftar alumni Madin dan meminta statusnya diperbaiki.
