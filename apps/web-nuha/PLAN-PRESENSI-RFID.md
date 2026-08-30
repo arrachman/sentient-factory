@@ -67,6 +67,11 @@ juga sudah punya `Terlambat`. Catatan: daftar sesi sah di
 `"Gerbang"` harus ditambahkan ke sana (atau alur gerbang dipisah dari
 `simpanAbsenJamaah`, yang lebih bersih).
 
+Catatan tipe: sketsa di bawah memakai `String @default(cuid())` agar ringkas,
+tetapi skema existing (`Presensi`, `Santri`) memakai `BigInt @default(autoincrement())`.
+**Saat implementasi, ikuti konvensi existing `BigInt`** — termasuk `santriId` pada
+`KartuRfid` dan `TapPresensi` — supaya FK-nya cocok.
+
 ```prisma
 model PerangkatPresensi {
   id         String   @id @default(cuid())
@@ -157,8 +162,17 @@ Pengaman:
   `pisahkanBerdasarkanHp()` yang sudah ada di `lib/penjadwal/kontak.ts`.
 - Nomor wali diambil lewat `Santri → orang → sebagaiAnak[] → wali.hp`, ambil
   wali `utama` dulu, jatuh ke wali pertama yang punya `hp`.
-- `WA_DRY_RUN=true` tetap default. **Uji seluruh alur dalam dry-run dulu**;
-  `WA_DEBUG_REDIRECT` untuk uji kirim nyata ke satu nomor milik sendiri.
+- `WA_DRY_RUN=true` tetap default (`lib/wa.ts:49`) → seluruh blok fetch dilewati,
+  `LogWa.status = 'Dry-run'`, dan `ok: true`. **Uji seluruh alur dalam dry-run dulu.**
+  Untuk uji kirim nyata: `WA_DRY_RUN=false` **plus** `WA_DEBUG_REDIRECT=<hp sendiri>`.
+  Perhatikan `WA_DEBUG_REDIRECT` berlaku terlepas dari `WA_DRY_RUN`
+  (`lib/wa.ts:24`), jadi ia bukan pengganti dry-run — ia hanya mengalihkan tujuan.
+
+**Penting untuk logika retry**: gateway bergaya Fonnte — kegagalan tetap balas
+HTTP 200 dengan body `status:false` (`lib/wa-gateway.ts:37`). Jadi worker
+**tidak boleh** menilai sukses dari status HTTP; pakai nilai `ok` dari
+`kirimWa()`, yang sudah menangani hal ini. Tandai `Gagal` + backoff hanya
+berdasarkan `ok === false`.
 
 ## 6. Firmware ESP32 (garis besar)
 
