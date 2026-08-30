@@ -4,6 +4,20 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-30 — Kepala Madrasah MA diganti Khalimatus Sa'diyah (data)
+
+SK MA (`SK_MA` di `prisma/import/import-struktur.ts`) dan `kepalaNama` unit MA
+di `prisma/seed-dasar.ts` diperbarui: Kepala Madrasah kini **Khalimatus
+Sa'diyah, S.Si** (sebelumnya Tika Kartika, S.Pd). Posisi Kordinator Tata Usaha
+yang sebelumnya dijabatnya dikosongkan (`namaMentah: ''`) sampai penggantinya
+ditentukan operator.
+
+Dampak operasional: setelah deploy, jalankan ulang
+`npm exec tsx prisma/import/import-struktur.ts` (upsert idempoten via
+`skNomor`+`urutan`) agar tabel `jabatan_struktural` dan tampilan Struktur
+Organisasi di kepegawaian ikut terbarui. Data 25-baris "Struktur Yayasan Kyai
+Masduqi" belum dimasukkan — menunggu nomor SK dan masa berlaku dari operator.
+
 ## 2026-08-29 — Penetapan Madin Kelas 1 sesuai daftar resmi (data)
 
 Daftar resmi TA 2026/2027 Gasal ditetapkan untuk Madin Kelas 1 (`#21`):

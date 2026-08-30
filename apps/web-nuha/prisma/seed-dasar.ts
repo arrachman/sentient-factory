@@ -58,7 +58,7 @@ const UNIT_ROWS = [
     email: 'manuhamergosono@gmail.com',
     website: 'https://nuha.pesantren.web.id',
     // Nama dari SK struktur MA (lihat prisma/import/import-struktur.ts).
-    kepalaNama: 'Tika Kartika, S.Pd',
+    kepalaNama: "Khalimatus Sa'diyah, S.Si",
     kepalaJabatan: 'Kepala Madrasah',
     visi: 'Madrasah yang unggul dalam tafaqquh fid-din dan siap melanjutkan ke perguruan tinggi.',
     misi: 'Menguatkan penguasaan kitab dan Al-Qur’an; menyiapkan peminatan IPA, IPS, dan Keagamaan; membina karakter santri yang moderat.',

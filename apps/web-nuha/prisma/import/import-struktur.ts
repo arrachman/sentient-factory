@@ -70,13 +70,15 @@ const SK_MA: SumberSk = {
   periodeSelesai: '2029-07-10',
   baris: [
     { jabatan: 'Pengawas Internal', namaMentah: 'Dra. Nyai Hj. Roudlatul Hasanah, M.Pd', divisi: null },
-    { jabatan: 'Kepala Madrasah', namaMentah: 'Tika Kartika, S.Pd', divisi: null },
+    { jabatan: 'Kepala Madrasah', namaMentah: "Khalimatus Sa'diyah, S.Si", divisi: null },
     { jabatan: 'Wakil Ketua Bid. Kurikulum', namaMentah: 'Ilmi Nurhasni Addin', divisi: null },
     { jabatan: 'Wakil Ketua Bid. Kesiswaan', namaMentah: 'Murida Azkia, S.Pd', divisi: null },
     { jabatan: 'Wakil Ketua Bid. Sarana Prasarana', namaMentah: 'Isma Izha Utama', divisi: null },
     { jabatan: 'Wakil Ketua Bid. Humas', namaMentah: "Aulan Nisa' Ulil Kamaliah, S.Pd", divisi: null },
     { jabatan: 'Kepala Laboratorium', namaMentah: 'Isma Izha Utama', divisi: null },
-    { jabatan: 'Kordinator Tata Usaha', namaMentah: "Khalimatus Sa'diyah, S.Si", divisi: null },
+    // Kordinator TU sebelumnya dijabat Khalimatus Sa'diyah (kini Kepala
+    // Madrasah) — pengganti belum ditentukan, dikosongkan sesuai instruksi.
+    { jabatan: 'Kordinator Tata Usaha', namaMentah: '', divisi: null },
     { jabatan: 'Bimbingan Konseling', namaMentah: 'Wardatul Haaizatil Husna, S.Pd., Gr', divisi: null },
   ],
 };
