@@ -179,6 +179,31 @@ HTTP 200 dengan body `status:false` (`lib/wa-gateway.ts:37`). Jadi worker
 `kirimWa()`, yang sudah menangani hal ini. Tandai `Gagal` + backoff hanya
 berdasarkan `ok === false`.
 
+## 5b. Kontrak existing yang dipakai ulang (jangan tulis ulang)
+
+```ts
+requirePage(menuKey: string): Promise<SessionPayload>   // lib/access.ts:9
+recordAudit({ aksi, entitas, entitasId?, ringkasan,
+              perubahan?, aktor?, ip? }): Promise<void> // lib/audit.ts:24
+requestIp(request: Request): string | null              // lib/audit.ts:55
+pisahkanBerdasarkanHp<T extends { hp: string | null }>  // lib/penjadwal/kontak.ts:6
+```
+
+- `recordAudit()` **tidak pernah throw** — kegagalan audit tidak membatalkan tap.
+  Jadi aman dipanggil di dalam alur tap tanpa try/catch tambahan.
+- Route tap pakai `requestIp(request)` untuk mengisi `ip` pada audit; **bukan**
+  `requirePage()` (itu untuk halaman berkuki, dan ia `redirect()` — perilaku yang
+  salah untuk perangkat, yang butuh balasan JSON 401).
+- `StatusHadir` (`schema:645`) sudah punya `Terlambat` **dan `PulangCepat`** —
+  keduanya pas untuk gerbang: tap masuk lewat jam batas → `Terlambat`, tap pulang
+  sebelum jam batas → `PulangCepat`. Tidak perlu menambah nilai enum.
+- `SantriKelas` (`schema:362`) adalah sumber kebenaran "santri di kelas mana";
+  pakai ini kalau rekap gerbang perlu difilter per rombel.
+- **Risiko operasional**: `tokenPengirim()` (`lib/wa-gateway.ts:95`) jatuh ke
+  "perangkat terhubung pertama" bila `WA_GATEWAY_TOKEN` kosong. Untuk notifikasi
+  otomatis sebaiknya `WA_GATEWAY_TOKEN` **diisi eksplisit**, supaya pesan tidak
+  berpindah nomor pengirim saat daftar perangkat gateway berubah.
+
 ## 6. Firmware ESP32 (garis besar)
 
 - WiFi + `HTTPClient`, `Authorization: Bearer <token>` disimpan di NVS.
