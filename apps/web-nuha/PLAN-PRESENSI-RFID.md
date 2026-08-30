@@ -9,7 +9,10 @@ Tujuan: santri tap kartu → presensi tercatat → WA otomatis ke nomor wali.
 
 | Pertanyaan | Keputusan | Alasan |
 |---|---|---|
-| Transport ESP32 → server | **HTTPS POST langsung** ke `/api/perangkat/tap` | Tidak menambah service baru (MQTT broker). Beban nyata kecil: 30 tap ≈ 30 request dalam ~30 detik — jauh di bawah kapasitas Next.js. MQTT baru layak kalau perangkat >10 unit atau WiFi gerbang sering putus lama. |
+| Transport ESP32 → server | **HTTPS POST langsung** ke `/api/perangkat/tap` | Tidak menambah service baru (MQTT broker). Beban nyata kecil: 30 tap ≈ 30 request dalam ~30 detik — jauh di bawah kapasitas Next.js. MQTT juga **tidak menolong** di sini: alat ada di LAN dan server di cloud (§1c), sehingga broker harus ditaruh di cloud — kompleksitas naik tanpa mengurangi ketergantungan pada internet. |
+| Topologi | Alat di **LAN pesantren**, app di **cloud**; koneksi **keluar saja** | Tidak perlu port forwarding/VPN/IP publik di sisi pesantren. Lihat §1c. |
+| Jam masuk/pulang | Tabel `JadwalGerbang` **per hari**, bukan konstanta | Jumat & Sabtu beda jam pulang, Ahad libur; ganti jadwal tidak boleh perlu deploy. |
+| Retry WA | 3 percobaan, backoff 1→5 menit, lalu **alarm email** | Notifikasi presensi basi tidak berguna; lebih baik menyerah cepat lalu lapor. Lihat §5c. |
 | Stabilitas saat burst | **Endpoint tap tidak mengirim WA.** Tap hanya menulis DB lalu balas `200` (<200 ms). Pengiriman WA dilepas ke **outbox + worker** | Gateway Baileys serial dan lambat (~1–3 dtk/pesan). Kalau WA dikirim di dalam request tap, tap ke-30 menunggu ~60 dtk → LCD hang, santri antre, ESP32 timeout. |
 | Kehilangan data saat WiFi putus | **Buffer di ESP32** (ring buffer di NVS/SPIFFS, ~200 tap) + kirim ulang dengan `tapId` unik | Presensi tetap valid meski server/WiFi mati; idempotensi mencegah duplikat saat kirim ulang. |
 | Auth perangkat | **Token per perangkat** (`Authorization: Bearer <token>`), disimpan ter-hash | Endpoint ini terekspos jaringan; kuki sesi tidak berlaku untuk perangkat. |
@@ -20,8 +23,95 @@ Tujuan: santri tap kartu → presensi tercatat → WA otomatis ke nomor wali.
 MQTT unggul saat perangkat banyak dan koneksi labil, tapi menambah Mosquitto ke
 compose, satu proses subscriber yang harus dijaga hidup, dan jalur auth kedua.
 Manfaat utamanya — tahan jaringan putus — sudah didapat dari buffer di ESP32.
-Kalau nanti ada >10 titik tap, migrasi mudah: worker tap dipindah dari route HTTP
-ke subscriber MQTT, sisa alurnya tidak berubah.
+
+Dengan topologi LAN→cloud (§1c) argumennya makin kuat: broker tetap harus di
+cloud, jadi tap tetap melewati internet yang sama. MQTT hanya akan memindahkan
+titik gagalnya, bukan menghapusnya. Kalau internet benar-benar sering putus,
+jawabannya **relay lokal** (§1c), bukan MQTT.
+
+## 1c. Topologi: RFID di LAN pesantren, web-nuha di cloud
+
+```
+┌─ Jaringan lokal pesantren (IP privat, di balik NAT) ─┐
+│                                                       │
+│   [ESP32 + RC522]  192.168.x.x                        │
+│         │  WiFi                                        │
+│         │  HTTPS POST keluar (port 443)                 │
+│         ▼                                              │
+│   [Router / NAT] ─────────────────────────┐            │
+└───────────────────────────────────────────│────────────┘
+                                            │  internet
+                                            ▼
+                            ┌─ Cloud (VPS web-nuha) ─────────┐
+                            │  nuha.pesantren.web.id:443     │
+                            │   reverse proxy (TLS)          │
+                            │     └→ nuha-app :3226          │
+                            │          ├→ nuha-mysql         │
+                            │          └→ wa-gateway :3204   │
+                            └────────────────────────────────┘
+```
+
+**Kabar baiknya: arah koneksinya keluar saja, jadi integrasinya sederhana.**
+ESP32 yang memulai koneksi ke cloud, bukan sebaliknya. Konsekuensinya:
+
+- **Tidak perlu port forwarding** di router pesantren. Tidak perlu IP publik,
+  tidak perlu DDNS, tidak perlu VPN. NAT keluar sudah cukup.
+- **Tidak perlu membuka port apa pun di firewall pesantren.** Justru jangan:
+  mengekspos ESP32 ke internet adalah risiko tanpa manfaat.
+- ESP32 **tidak boleh** bicara langsung ke MySQL. Kredensial DB di firmware =
+  siapa pun yang membuka kotak alat bisa membaca seluruh basis data. Satu-satunya
+  jalur adalah endpoint HTTPS `/api/perangkat/tap`.
+- Aturan UFW repo (§4.1) berlaku untuk **port cloud**, bukan LAN pesantren.
+  Yang perlu terbuka global hanya 443 di VPS.
+
+### Blocker wajib: HTTPS + nama domain
+
+Sekarang app diuji lewat `http://202.59.200.26:3226` — **HTTP polos**. Token
+perangkat yang dikirim sebagai `Authorization: Bearer` di atas HTTP polos bisa
+disadap di sepanjang jalur internet, dan siapa pun yang menyadapnya bisa
+memalsukan presensi santri mana pun. Jadi sebelum perangkat menunjuk ke cloud:
+
+1. Domain (mis. `nuha.pesantren.web.id`) mengarah ke VPS.
+2. Reverse proxy (Caddy/nginx) + sertifikat Let's Encrypt, terminasi TLS di 443.
+3. `nuha-app:3226` **tidak** diekspos langsung ke internet; hanya proxy yang boleh.
+4. Perangkat menunjuk ke `https://<domain>/api/perangkat/tap`, bukan ke IP:port.
+
+Selama masa uji boleh HTTP di LAN, tapi jangan pernah token produksi lewat HTTP publik.
+
+### Gotcha TLS di ESP32 (sering bikin gagal berjam-jam)
+
+- Pakai `WiFiClientSecure` dengan **root CA `ISRG Root X1`** yang di-pin, bukan
+  sertifikat leaf. Let's Encrypt memperbarui leaf tiap ~60 hari; kalau yang
+  di-pin leaf, alat mati total setiap perpanjangan. Root X1 berlaku sampai 2035.
+- **Sinkron NTP dulu sebelum request pertama.** Validasi sertifikat butuh jam
+  yang benar; ESP32 boot dengan jam 1970 → semua TLS handshake gagal dengan
+  galat yang menyesatkan. Urutan boot: WiFi → NTP → baru HTTPS.
+- Sediakan `setInsecure()` **hanya** di build debug, dan jangan pernah kirim
+  token produksi lewat build itu.
+- Heap: TLS handshake butuh ~30–40 KB. Jangan alokasi buffer besar sebelum request.
+
+### Kalau internet pesantren sering putus: relay lokal (opsi lanjutan)
+
+Buffer di ESP32 (§6) sudah menutup putus jaringan sampai ~200 tap. Kalau ternyata
+kurang, tambahkan relay di LAN — **bukan** ganti arsitektur:
+
+```
+[ESP32] ──HTTP polos di LAN──► [Relay: Pi/mini-PC] ──HTTPS──► [Cloud]
+                                 buffer SQLite, retry
+```
+
+Keuntungan: LCD tetap responsif walau internet mati berhari-hari, TLS diurus
+satu tempat (bukan di tiap ESP32), dan buffer sebesar disk. Biaya: satu perangkat
+tambahan yang harus dijaga hidup. Kontrak endpoint cloud-nya identik, jadi
+migrasi ke relay tidak mengubah sisi server sama sekali. **Mulai tanpa relay;
+tambahkan kalau data lapangan menunjukkan perlu.**
+
+### Yang perlu dipastikan di lapangan sebelum implementasi
+
+- Jangkauan WiFi di gerbang (ESP32 antena internal, beton/besi banyak menyerap).
+- Apakah WiFi pesantren pakai captive portal / WPA2-Enterprise — ESP32 **tidak**
+  bisa lewat captive portal, dan WPA2-Enterprise butuh konfigurasi khusus.
+- Apakah DNS lokal bisa meresolusi domain publik (kalau ada filter DNS).
 
 ## 2. Alur end-to-end
 
@@ -132,6 +222,53 @@ berselang >`JEDA_ARAH` (default 30 menit) = kebalikan tap terakhir. Tap ulang
 dalam <30 menit dianggap salah-pencet → dicatat di `TapPresensi` tapi tidak
 membuat baris antrean WA baru.
 
+### Jam masuk & pulang per hari
+
+Jam **tidak** di-hardcode — disimpan per hari agar Jumat dan hari libur bisa beda
+tanpa deploy ulang:
+
+```prisma
+model JadwalGerbang {
+  id            Int      @id @default(autoincrement())
+  hari          Int      @unique          // 0=Ahad, 1=Senin … 6=Sabtu
+  aktif         Boolean  @default(true)   // false = libur, tap dicatat tanpa WA rutin
+  jamMasuk      String   @db.VarChar(5)   // "06:30" — batas datang tepat waktu
+  toleransiMnt  Int      @default(10)     // ≤06:40 masih Hadir, >06:40 Terlambat
+  jamPulang     String   @db.VarChar(5)   // "14:00" — sebelum ini = PulangCepat
+  batasAlpaMnt  Int      @default(120)    // belum tap 2 jam lewat jamMasuk → Alpa
+}
+```
+
+Contoh isian seed (silakan koreksi sesuai jadwal MA sebenarnya — **ini asumsi
+saya, mohon dikonfirmasi**):
+
+| Hari | Aktif | Masuk | Toleransi | Pulang |
+|---|---|---|---|---|
+| Senin–Kamis | ya | 06:30 | 10 mnt | 14:00 |
+| Jumat | ya | 06:30 | 10 mnt | 11:00 |
+| Sabtu | ya | 06:30 | 10 mnt | 12:00 |
+| Ahad | tidak | — | — | — |
+
+Pemetaan tap → `StatusHadir` (semua nilai enum sudah ada, tidak perlu migrasi enum):
+
+| Kondisi tap | Status |
+|---|---|
+| Masuk ≤ `jamMasuk + toleransi` | `Hadir` |
+| Masuk > `jamMasuk + toleransi` | `Terlambat` |
+| Pulang < `jamPulang` | `PulangCepat` |
+| Pulang ≥ `jamPulang` | tidak mengubah status masuk |
+| Tidak ada tap sampai `jamMasuk + batasAlpa` | `Alpa` (oleh job harian) |
+| Ada `Izin`/sakit tercatat | status dari `Izin`, tap tidak menimpanya |
+
+`Alpa` diisi job harian yang jalan sekali setelah `batasAlpaMnt`, hanya untuk
+santri yang tidak punya baris `Presensi` hari itu dan tidak punya `Izin` aktif.
+**Hari `aktif=false` dilewati** — libur bukan alpa.
+
+Tanggal & jam memakai zona **Asia/Jakarta** secara eksplisit. Server cloud lazim
+berjalan UTC; kalau `tgl` dihitung dari waktu UTC, tap pukul 06:30 WIB akan
+tercatat di tanggal yang benar tapi tap malam bisa lompat hari. Simpan `waktu`
+sebagai UTC, tapi turunkan `tgl` dan perbandingan jam di zona Jakarta.
+
 ## 4. Endpoint & modul baru
 
 | Berkas | Isi |
@@ -204,6 +341,92 @@ pisahkanBerdasarkanHp<T extends { hp: string | null }>  // lib/penjadwal/kontak.
   otomatis sebaiknya `WA_GATEWAY_TOKEN` **diisi eksplisit**, supaya pesan tidak
   berpindah nomor pengirim saat daftar perangkat gateway berubah.
 
+## 5c. Skema retry & laporan kegagalan ke email
+
+Tiga lapis retry yang berbeda tujuan — jangan dicampur:
+
+| Lapis | Gagal apa | Strategi | Maks |
+|---|---|---|---|
+| ESP32 → cloud | WiFi/internet putus | buffer NVS, kirim ulang tiap 10 dtk | tak terbatas (buffer ring ~200 tap) |
+| Worker → gateway WA | gateway mati / nomor invalid | backoff berjenjang | **3 percobaan** |
+| Alarm | worker menyerah | email ke admin | 1 email per kejadian, di-batch |
+
+### Backoff worker WA
+
+```
+percobaan 1 → gagal → kirimSetelah = now + 1 menit
+percobaan 2 → gagal → kirimSetelah = now + 5 menit
+percobaan 3 → gagal → status = Gagal, dilaporkan = false  ← berhenti
+```
+
+Total rentang ~6 menit sebelum menyerah. Sengaja pendek: notifikasi presensi
+kehilangan nilainya kalau tiba 3 jam setelah anak sampai. Lebih baik gagal cepat
+lalu memberi tahu admin daripada mengirim pesan basi.
+
+**Jangan retry untuk kegagalan permanen.** Bedakan dua hal:
+- *Sementara* (gateway mati, timeout, `status:false` dari gateway) → retry.
+- *Permanen* (nomor tidak valid, wali tidak punya HP) → langsung
+  `DilewatiTanpaHp`/`Gagal` tanpa membakar 3 percobaan.
+
+Tambahan field pada `AntreanWa`:
+
+```prisma
+  dilaporkan   Boolean  @default(false)   // sudah masuk email alarm?
+  galatTerakhir String? @db.Text
+```
+
+### Alarm email
+
+```prisma
+model LogAlarm {
+  id        BigInt   @id @default(autoincrement())
+  jenis     String   @db.VarChar(32)   // "WA_GAGAL" | "PERANGKAT_SENYAP"
+  ringkasan String   @db.Text
+  jumlah    Int      @default(1)
+  dikirim   DateTime @default(now())
+}
+```
+
+Berkas baru `lib/alarm/email.ts` — `kirimAlarm({ jenis, ringkasan })`.
+Transport: **nodemailer + SMTP** (dependensi baru; repo belum punya jalur email
+sama sekali). Env baru: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`,
+`ALARM_EMAIL_TO=arrrachm4n@gmail.com`, `ALARM_DRY_RUN` (default `true`,
+mengikuti pola `WA_DRY_RUN` yang sudah ada).
+
+Dua pemicu alarm:
+
+1. **WA gagal** — job tiap 15 menit mengumpulkan `AntreanWa` berstatus `Gagal`
+   dengan `dilaporkan=false`, kirim **satu email berisi ringkasan semua**, lalu
+   tandai `dilaporkan=true`.
+2. **Perangkat senyap** — job tiap 30 menit: bila `PerangkatPresensi.aktif` tapi
+   `terakhirAktif` > 60 menit lalu **pada jam operasional**, kirim alarm. Ini
+   menangkap kasus terburuk: alat mati diam-diam dan tidak ada yang sadar sampai
+   wali protes. Di luar jam operasional dan hari libur, sepi itu normal — jangan
+   kirim.
+
+Isi email (teks polos, ringkas):
+
+```
+[NUHA] 4 notifikasi WA gagal terkirim — 30 Agu 2026 14:15
+
+Gagal setelah 3 percobaan:
+  06:41  Ahmad Fauzi (X-A)     → 6281234567890  galat: gateway timeout
+  06:42  Siti Aminah (XI-B)    → 6281234567891  galat: status:false
+  ...
+Tindakan: cek koneksi wa-gateway (docker compose logs wa-gateway).
+Antrean tertahan saat ini: 12.
+```
+
+**Anti banjir email (penting).** Kalau gateway WA mati sehari penuh, tanpa
+peredam Anda menerima ratusan email dan justru berhenti membacanya:
+- Batching per 15 menit (bukan per kegagalan).
+- Maks **6 email/jam**; kelebihannya diringkas jadi satu "dan N lainnya".
+- Kegagalan berulang dengan sebab sama dalam 1 jam → satu email, `jumlah` naik.
+- `LogAlarm` menjadi rem sekaligus jejak audit.
+
+Kegagalan mengirim email **tidak boleh** membatalkan apa pun — bungkus try/catch
+dan catat ke log, mengikuti pola `recordAudit()` yang never-throw.
+
 ## 6. Firmware ESP32 (garis besar)
 
 - WiFi + `HTTPClient`, `Authorization: Bearer <token>` disimpan di NVS.
@@ -229,21 +452,43 @@ pisahkanBerdasarkanHp<T extends { hp: string | null }>  // lib/penjadwal/kontak.
 
 ## 8. Urutan pengerjaan
 
-1. Skema Prisma + migrasi + `prisma migrate deploy` (wajib sebelum lanjut).
-2. `lib/presensi/arah.ts` & `lib/presensi/tap.ts` + unit test (murni, tanpa HTTP).
-3. `lib/perangkat/auth.ts` + `app/api/perangkat/tap/route.ts`; uji dengan `curl`.
-4. `lib/wa/antrean.ts` + `scripts/worker-wa.ts`, jalankan dengan `WA_DRY_RUN=true`.
-5. UI: TabPerangkat (terbitkan token, petakan kartu) → TabGerbang (pantau tap).
-6. Seed: menu + menu_peran + template WA + satu perangkat contoh.
-7. Firmware ESP32, uji satu kartu, lalu uji burst 30 tap.
-8. Uji terima: 30 tap berturut-turut ≤ 200 ms/tap; cabut WiFi saat tap, sambung
-   lagi → tidak ada presensi hilang, tidak ada WA ganda.
-9. `npx tsc --noEmit`, verifikasi Playwright ke `http://202.59.200.26:3226`.
-10. Dokumentasi: bagian baru di `app/docs/isi.ts` + catatan di `HISTORY.md`.
+0. **Prasyarat infra**: domain + reverse proxy + TLS Let's Encrypt (§1c). Ini
+   blocker untuk perangkat produksi, tapi langkah 1–6 bisa jalan paralel di LAN.
+1. Skema Prisma (`PerangkatPresensi`, `KartuRfid`, `TapPresensi`, `AntreanWa`,
+   `JadwalGerbang`, `LogAlarm`) + migrasi + `prisma migrate deploy`.
+2. `lib/presensi/arah.ts`, `lib/presensi/jadwal.ts` (jam→StatusHadir),
+   `lib/presensi/tap.ts` + unit test. Murni, tanpa HTTP — uji zona Jakarta,
+   batas toleransi, Jumat, dan hari libur di sini.
+3. `lib/perangkat/auth.ts` + `app/api/perangkat/tap/route.ts`; uji `curl`.
+4. `lib/wa/antrean.ts` + tick worker di `scripts/cron.ts`, `WA_DRY_RUN=true`.
+5. `lib/alarm/email.ts` + job alarm; uji dengan `ALARM_DRY_RUN=true`, lalu satu
+   email nyata ke `arrrachm4n@gmail.com` untuk memastikan tidak masuk spam.
+6. UI: TabPerangkat (token + peta kartu), TabGerbang (pantau tap), TabJadwal.
+7. Seed: menu + menu_peran + template WA + `JadwalGerbang` + perangkat contoh.
+8. Firmware ESP32: WiFi → NTP → HTTPS (urutan ini wajib), buffer NVS, uji 1 kartu.
+9. Uji terima:
+   - 30 tap berturut-turut, tiap tap balas ≤ 200 ms;
+   - cabut WiFi saat tap lalu sambungkan → tidak ada presensi hilang, **tidak ada
+     WA ganda** (uji idempotensi `tapId`);
+   - matikan `wa-gateway` → 3 percobaan lalu satu email alarm, bukan ratusan;
+   - tap Jumat & Ahad → status sesuai jadwal, libur tidak menghasilkan Alpa;
+   - token salah/dicabut → 401, tidak ada baris tertulis.
+10. `npx tsc --noEmit`, verifikasi Playwright ke URL publik.
+11. Dokumentasi: bagian baru di `app/docs/isi.ts` + catatan di `HISTORY.md`.
 
 ## 9. Yang masih perlu diputuskan
 
-- Jam operasional gerbang (di luar jam itu, tap dianggap apa?).
+**Perlu jawaban sebelum implementasi:**
+- **Jam di tabel §4 masih asumsi saya** (06:30 masuk, Jumat pulang 11:00, Ahad
+  libur). Mohon dikoreksi dengan jadwal MA sebenarnya.
+- **Santri mukim vs pulang-pergi.** Kalau sebagian santri menginap di pesantren,
+  presensi gerbang harian tidak masuk akal untuk mereka — perlu penanda supaya
+  wali santri mukim tidak menerima WA "tiba di pesantren" tiap pagi.
+- **Kredensial SMTP** untuk alarm email (host/port/user/pass). Gmail biasa butuh
+  App Password; SMTP domain sendiri lebih tahan lama.
+- Domain final untuk cloud + siapa yang mengelola DNS-nya.
+
+**Bisa menyusul:**
 - Apakah wali boleh menonaktifkan notifikasi per santri.
-- Perlukah presensi gerbang ini memengaruhi rekap presensi akademik, atau
-  berdiri sendiri sebagai catatan kehadiran di pesantren.
+- Apakah presensi gerbang memengaruhi rekap presensi akademik atau berdiri sendiri.
+- Prosedur kartu hilang (nonaktifkan + terbitkan ulang sudah didukung skema).
