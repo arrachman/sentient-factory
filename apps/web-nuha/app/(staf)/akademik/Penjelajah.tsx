@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { TabLembaga } from '@/components';
 import { hrefAkademik, type FilterAkademik } from './filter';
 import type { PohonAkademik } from './pohon';
 
@@ -45,24 +46,19 @@ export function Penjelajah({ f, pohon, tab = 'siswa' }: { f: FilterAkademik; poh
     <div className="penjelajah">
       <Remah f={f} pohon={pohon} tab={tab} />
 
-      <div className="chip-baris">
-        <span className="chip-label">Lembaga</span>
-        <Chip
-          href={hrefAkademik(tab, f, { unit: undefined, tingkat: undefined, kelasId: undefined })}
-          label="Semua"
-          jumlah={pohon.total}
-          aktif={!f.unit}
-        />
-        {pohon.unit.map((u) => (
-          <Chip
-            key={u.key}
-            href={hrefAkademik(tab, f, { unit: u.key, tingkat: undefined, kelasId: undefined })}
-            label={u.nama.replace(/ Nurul Huda Mergosono$/, '')}
-            jumlah={u.jumlah}
-            aktif={f.unit === u.key}
-          />
-        ))}
-      </div>
+      {/* Lembaga naik jadi tab, bukan chip: SMP/MA/Madin adalah organisasi
+          terpisah, jadi ia konteks halaman. Tingkat & kelas di bawah tetap chip
+          karena keduanya drill-down di dalam lembaga yang sudah dipilih. */}
+      <TabLembaga
+        items={pohon.unit.map((u) => ({
+          key: u.key,
+          label: u.nama.replace(/ Nurul Huda Mergosono$/, ''),
+          jumlah: u.jumlah,
+        }))}
+        aktif={f.unit}
+        jumlahSemua={pohon.total}
+        hrefItem={(key) => hrefAkademik(tab, f, { unit: key, tingkat: undefined, kelasId: undefined })}
+      />
 
       {f.unit && pohon.tingkatAktif.length > 0 && (
         <div className="chip-baris">

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { TabLembaga } from '@/components';
 import { hrefKepegawaian, type FilterPegawai } from './filter';
 import type { PohonPegawai } from './pohon';
 
@@ -44,24 +45,15 @@ export function Penjelajah({ f, pohon, tab }: { f: FilterPegawai; pohon: PohonPe
     <div className="penjelajah">
       <Remah f={f} pohon={pohon} tab={tab} />
 
-      <div className="chip-baris">
-        <span className="chip-label">Lembaga</span>
-        <Chip
-          href={hrefKepegawaian(tab, f, { unit: undefined, status: undefined })}
-          label="Semua"
-          jumlah={pohon.total}
-          aktif={!f.unit}
-        />
-        {pohon.lembaga.map((l) => (
-          <Chip
-            key={l.key}
-            href={hrefKepegawaian(tab, f, { unit: l.key, status: undefined })}
-            label={l.nama}
-            jumlah={l.jumlah}
-            aktif={f.unit === l.key}
-          />
-        ))}
-      </div>
+      {/* Lembaga naik jadi tab, bukan chip: SMP/MA/Madin/Pondok adalah organisasi
+          terpisah, jadi ia konteks halaman — bukan sekadar satu filter di antara
+          filter lain. Status di bawah tetap chip karena ia memang penyaring. */}
+      <TabLembaga
+        items={pohon.lembaga.map((l) => ({ key: l.key, label: l.nama, jumlah: l.jumlah }))}
+        aktif={f.unit}
+        jumlahSemua={pohon.total}
+        hrefItem={(key) => hrefKepegawaian(tab, f, { unit: key, status: undefined })}
+      />
 
       {pohon.status.length > 1 && (
         <div className="chip-baris">

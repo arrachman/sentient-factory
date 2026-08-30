@@ -8,6 +8,7 @@ import { PohonLembaga } from './PohonLembaga';
 import { bacaFilter, hrefInduk, whereFilter } from './filter';
 import { ambilAngkatan, ambilPohon, unitIdsPohon } from './pohon';
 import { HeaderSantri } from './HeaderSantri';
+import { TabUnit } from './TabUnit';
 import { TabBiodata } from './TabBiodata';
 import { TabAkademik } from './TabAkademik';
 import { TabKepesantrenan } from './TabKepesantrenan';
@@ -89,7 +90,14 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
         </Link>
       </div>
 
-      <BarisFilter f={f} angkatan={angkatan} hasil={total} />
+      {/* Lembaga naik ke tab paling atas: SMP, MA, dan Madin adalah organisasi
+          terpisah, jadi memilih lembaga adalah keputusan pertama — bukan cabang
+          pohon yang harus dicari. Pohon di bawah tetap untuk drill-down tingkat/kelas. */}
+      <TabUnit pohon={pohon} f={f} />
+
+      <div style={{ marginTop: 12 }}>
+        <BarisFilter f={f} angkatan={angkatan} hasil={total} />
+      </div>
 
       <div className={`grid induk-grid${sel ? ' induk-grid--sel' : ''}`} style={{ alignItems: 'start', marginTop: 14 }}>
         <details className="card induk-pohon" style={{ padding: 12 }} open>

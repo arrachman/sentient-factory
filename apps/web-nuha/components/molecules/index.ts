@@ -7,6 +7,7 @@ export * from './LimitPicker';
 export * from './Pagination';
 export * from './StatCard';
 export * from './Tabel';
+export * from './TabLembaga';
 export * from './Tabs';
 export * from './PemilihBanyakOrang';
 export * from './PenyaringOtomatis';

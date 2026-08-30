@@ -4,6 +4,36 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-30 — Lembaga jadi tab utama di /induk, /akademik, /kepegawaian
+
+SMP, MA, dan Madin adalah organisasi terpisah, jadi pemilihan lembaga dinaikkan
+menjadi keputusan pertama di halaman — bukan penyaring yang harus dicari.
+Ditambahkan molekul bersama `components/molecules/TabLembaga.tsx` (diekspor
+lewat barrel `@/components`) yang dipakai tiga modul:
+
+- `/induk` — komponen baru `TabUnit.tsx` di atas baris penyaring; memetakan ke
+  parameter `unit=` yang sudah ada, **bukan** `?tab=`, karena kunci `tab` sudah
+  dipakai tab profil santri. Pohon "Lembaga & kelas" tetap ada untuk drill-down
+  tingkat/kelas dan tersinkron dengan tab karena keduanya menulis filter sama.
+- `/akademik` dan `/kepegawaian` — baris chip "Lembaga" di dalam `Penjelajah`
+  diganti `TabLembaga`; chip tingkat/kelas/status tetap chip karena memang
+  penyaring, bukan konteks. Posisinya tetap di ATAS tabbar modul supaya pilihan
+  lembaga bertahan saat operator berpindah tab.
+
+CSS: `.tab` jadi flex dan ditambah `.tab-cacah` (pil angka di dalam tab).
+
+Dampak operasional: tidak ada perubahan skema atau migrasi. URL lama tetap
+berlaku — tab hanya menulis penyaring yang sudah ada. Catatan untuk operator:
+tab berlabel **Madin** mengirim `unit=Pondok`; itu benar, karena baris unit itu
+ber-`key='Pondok'` dengan `nama='Madin'` di tabel `unit`.
+
+Verifikasi (Chromium/Playwright ke `http://202.59.200.26:3226`): login
+superadmin, tab render di ketiga halaman (induk 4 tab, akademik 4, kepegawaian
+3) dengan cacah dari DB; memilih lembaga lalu berpindah tab tetap membawa
+`unit=`; tanpa `pageerror`. Negatif: akun santri diarahkan keluar `/induk` dan
+tab tidak dirender. `npx tsc --noEmit` bersih. Peran `guru` memang berhak atas
+menu `induk` (8 peran), jadi akses guru ke halaman ini bukan kebocoran.
+
 ## 2026-08-30 — Kepala Madrasah MA diganti Khalimatus Sa'diyah (data)
 
 SK MA (`SK_MA` di `prisma/import/import-struktur.ts`) dan `kepalaNama` unit MA
