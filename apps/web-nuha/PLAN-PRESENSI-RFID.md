@@ -150,7 +150,12 @@ di `components/templates/Shell.tsx`.
 
 ## 5. Pesan WA & pengendalian spam
 
-Template baru di tabel template (kode `PRESENSI_MASUK`, `PRESENSI_PULANG`):
+Template baru di `TemplateWa` (`prisma/schema.prisma:1166`), kode `PRESENSI_MASUK`
+dan `PRESENSI_PULANG`. Placeholder `{{kunci}}` diisi oleh `renderTemplate()`
+(`lib/wa.ts:32`). Pengiriman lewat
+`kirimWa({ nomor, tujuan, isi, templateId?, actor?, ip? })` (`lib/wa.ts:46`),
+yang sudah menulis `LogWa` + `recordAudit('KIRIM_WA')` sendiri — worker tidak
+perlu menduplikasi audit.
 
 > Assalamu'alaikum. Ananda *{{nama}}* tercatat *{{arah}}* di {{lokasi}} pukul {{jam}}, {{tanggal}}. — PP Nurul Huda Mergosono
 
