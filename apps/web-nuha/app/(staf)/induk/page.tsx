@@ -53,6 +53,11 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
         orang: { select: { nama: true } },
         kelas: { select: { nama: true } },
         unit: { select: { nama: true } },
+        // Penanda lembaga di daftar dibaca dari `kelasLain`, bukan kolom `unit`:
+        // satu santri bisa sekolah di SMP sekaligus mengaji di Madin, dan kolom
+        // lama hanya memuat penempatan utama — memakainya akan menyembunyikan
+        // lembaga keduanya justru di tampilan "Semua lembaga".
+        kelasLain: { select: { unit: { select: { id: true, nama: true } } } },
       },
       orderBy: { orang: { nama: 'asc' } },
       skip: (halaman - 1) * UKURAN_HALAMAN,
@@ -101,7 +106,7 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
 
       <div className={`grid induk-grid${sel ? ' induk-grid--sel' : ''}`} style={{ alignItems: 'start', marginTop: 14 }}>
         <details className="card induk-pohon" style={{ padding: 12 }} open>
-          <summary className="label" style={{ marginBottom: 8, paddingLeft: 4, cursor: 'pointer' }}>Lembaga & kelas</summary>
+          <summary className="label" style={{ marginBottom: 8, paddingLeft: 4, cursor: 'pointer' }}>Tingkat & kelas</summary>
           <PohonLembaga pohon={pohon} f={f} />
         </details>
 

@@ -23,93 +23,89 @@ function Cacah({ n, aktif }: { n: number; aktif: boolean }) {
   );
 }
 
-/** Navigasi berjenjang lembaga → tingkat → kelas. Memakai <details> asli browser
- * supaya buka/tutup tetap jalan tanpa JavaScript klien, dan cabang unit terpilih
- * dibuka otomatis lewat prop `open`. */
+/** Navigasi tingkat → kelas **di dalam lembaga yang sedang aktif**.
+ *
+ * Baris nama lembaga sengaja tidak ada di sini: pemilihan lembaga sudah naik ke
+ * tab di atas halaman (`TabUnit`), jadi mengulanginya di panel ini hanya membuat
+ * dua kontrol yang mengerjakan hal sama. Selama belum ada lembaga terpilih,
+ * panel hanya mengarahkan ke tab itu — tingkat & kelas milik lembaga berbeda
+ * tidak sebanding untuk ditumpuk dalam satu daftar.
+ */
 export function PohonLembaga({ pohon, f }: { pohon: PohonInduk; f: FilterInduk }) {
-  const semuaAktif = !f.unitId && !f.kelasId;
-  const kelasTerpilihUnit = typeof f.kelasId === 'number'
-    ? pohon.unit.find((u) => u.tingkat.some((t) => t.kelas.some((k) => k.id === f.kelasId)))?.id
-    : undefined;
+  const unitAktif = f.alumniUnitId ?? f.unitId;
+  const u = unitAktif ? pohon.unit.find((x) => x.id === unitAktif) : undefined;
+  const alumniAktif = typeof f.alumniUnitId === 'number';
+
+  // "Belum berkelas" hanya bermakna untuk santri aktif. Alumni & santri keluar
+  // pasti tidak punya kelas, jadi cabang ini akan menampung semuanya dan tidak
+  // menyaring apa pun — sembunyikan saat status non-aktif.
+  const tampilTanpaKelas = pohon.tanpaKelas > 0 && (!f.status || f.status === 'Mukim');
 
   return (
     <nav style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Link href={hrefInduk(f, { unitId: undefined, kelasId: undefined })} style={baris(semuaAktif, 0)}>
-        <span>Semua lembaga</span>
-        <Cacah n={pohon.total} aktif={semuaAktif} />
-      </Link>
+      {!u ? (
+        <p className="muted" style={{ fontSize: 11.5, lineHeight: 1.5, padding: '2px 4px 6px', margin: 0 }}>
+          Pilih lembaga di tab atas untuk menelusuri tingkat dan kelasnya.
+        </p>
+      ) : (
+        <>
+          {u.tingkat.map((t) => {
+            // Kelas kosong disembunyikan (kecuali sedang aktif dipilih) supaya
+            // panel tidak dipenuhi cabang 0 saat penyaring menyempitkan data.
+            const kelasTampil = t.kelas.filter((k) => k.jumlah > 0 || f.kelasId === k.id);
+            if (kelasTampil.length === 0) return null;
 
-      {pohon.unit.map((u) => {
-        const unitAktif = f.unitId === u.id && !f.kelasId;
-        const alumniAktif = f.alumniUnitId === u.id;
-        const terbuka = f.unitId === u.id || kelasTerpilihUnit === u.id || alumniAktif;
-        return (
-          <details key={u.id} open={terbuka}>
-            <summary style={{ listStyle: 'none', cursor: 'pointer' }}>
-              <span style={baris(unitAktif, 0)}>
-                <Link
-                  href={hrefInduk(f, { unitId: u.id, kelasId: undefined })}
-                  style={{ color: 'inherit', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                >
-                  {u.nama}
-                </Link>
-                <Cacah n={u.jumlah} aktif={unitAktif} />
-              </span>
-            </summary>
-
-            {u.tingkat.map((t) => {
-              // Kelas kosong disembunyikan (kecuali sedang aktif dipilih) supaya
-              // pohon tidak dipenuhi cabang 0 saat penyaring menyempitkan data.
-              const kelasTampil = t.kelas.filter((k) => k.jumlah > 0 || f.kelasId === k.id);
-              if (kelasTampil.length === 0) return null;
-
-              if (kelasTampil.length === 1) {
-                const k = kelasTampil[0];
-                const aktif = f.kelasId === k.id;
-                return (
-                  <Link key={t.tingkat} href={hrefInduk(f, { unitId: u.id, kelasId: k.id })} style={baris(aktif, 1)}>
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</span>
-                    <Cacah n={k.jumlah} aktif={aktif} />
-                  </Link>
-                );
-              }
+            if (kelasTampil.length === 1) {
+              const k = kelasTampil[0];
+              const aktif = f.kelasId === k.id;
               return (
-                <details key={t.tingkat} open={t.kelas.some((k) => k.id === f.kelasId)}>
-                  <summary style={{ listStyle: 'none', cursor: 'pointer' }}>
-                    <span style={baris(false, 1)}>
-                      <span className="muted" style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 0.3 }}>
-                        {t.label}
-                      </span>
-                      <Cacah n={t.jumlah} aktif={false} />
-                    </span>
-                  </summary>
-                  {kelasTampil.map((k) => {
-                    const aktif = f.kelasId === k.id;
-                    return (
-                      <Link key={k.id} href={hrefInduk(f, { unitId: u.id, kelasId: k.id })} style={baris(aktif, 2)}>
-                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k.nama}</span>
-                        <Cacah n={k.jumlah} aktif={aktif} />
-                      </Link>
-                    );
-                  })}
-                </details>
+                <Link key={t.tingkat} href={hrefInduk(f, { unitId: u.id, kelasId: k.id })} style={baris(aktif, 0)}>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.label}</span>
+                  <Cacah n={k.jumlah} aktif={aktif} />
+                </Link>
               );
-            })}
+            }
+            return (
+              <details key={t.tingkat} open={t.kelas.some((k) => k.id === f.kelasId)}>
+                <summary style={{ listStyle: 'none', cursor: 'pointer' }}>
+                  <span style={baris(false, 0)}>
+                    <span className="muted" style={{ fontSize: 11.5, fontWeight: 700, letterSpacing: 0.3 }}>
+                      {t.label}
+                    </span>
+                    <Cacah n={t.jumlah} aktif={false} />
+                  </span>
+                </summary>
+                {kelasTampil.map((k) => {
+                  const aktif = f.kelasId === k.id;
+                  return (
+                    <Link key={k.id} href={hrefInduk(f, { unitId: u.id, kelasId: k.id })} style={baris(aktif, 1)}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{k.nama}</span>
+                      <Cacah n={k.jumlah} aktif={aktif} />
+                    </Link>
+                  );
+                })}
+              </details>
+            );
+          })}
 
-            {(u.alumni > 0 || alumniAktif) && (
-              <Link href={hrefInduk(f, { alumniUnitId: u.id })} style={baris(alumniAktif, 1)}>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Alumni</span>
-                <Cacah n={u.alumni} aktif={alumniAktif} />
-              </Link>
-            )}
-          </details>
-        );
-      })}
+          {/* Semua tingkat: mengembalikan cakupan ke seluruh lembaga aktif tanpa
+              harus lewat tab (yang akan ikut membuang cabang alumni). */}
+          {f.kelasId !== undefined && (
+            <Link href={hrefInduk(f, { unitId: u.id, kelasId: undefined })} style={baris(false, 0)}>
+              <span className="muted" style={{ fontSize: 11.5 }}>Semua tingkat</span>
+            </Link>
+          )}
 
-      {/* "Belum berkelas" hanya bermakna untuk santri aktif. Alumni & santri
-          keluar pasti tidak punya kelas, jadi cabang ini akan menampung semuanya
-          dan tidak menyaring apa pun — sembunyikan saat status non-aktif. */}
-      {pohon.tanpaKelas > 0 && (!f.status || f.status === 'Mukim') && (
+          {(u.alumni > 0 || alumniAktif) && (
+            <Link href={hrefInduk(f, alumniAktif ? { alumniUnitId: undefined, unitId: u.id } : { alumniUnitId: u.id })} style={baris(alumniAktif, 0)}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>Alumni</span>
+              <Cacah n={u.alumni} aktif={alumniAktif} />
+            </Link>
+          )}
+        </>
+      )}
+
+      {tampilTanpaKelas && (
         <Link
           href={hrefInduk(f, { unitId: undefined, kelasId: f.kelasId === 'none' ? undefined : 'none' })}
           style={{ ...baris(f.kelasId === 'none', 0), fontStyle: 'italic' }}

@@ -4,6 +4,28 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-08-30 — /induk: panel kiri tak lagi ulang daftar lembaga, daftar diberi penanda unit
+
+Lanjutan dari entri di bawah. Setelah lembaga naik jadi tab, panel kiri masih
+menampilkan baris "Semua lembaga / SMP / MA / Madin" — dua kontrol untuk hal
+yang sama. Baris lembaga dibuang dari `PohonLembaga.tsx`; panel kini memuat
+**tingkat & kelas milik lembaga yang aktif** saja (judul ikut berubah menjadi
+"Tingkat & kelas"), plus cabang Alumni dan "Belum berkelas". Saat belum ada
+lembaga terpilih, panel menunjuk ke tab di atas — tingkat milik lembaga berbeda
+tidak sebanding untuk ditumpuk jadi satu daftar.
+
+Sebagai gantinya, di tab "Semua lembaga" tiap baris hasil diberi penanda
+lembaga (`.tanda-unit` di globals.css). Penanda dibaca dari `kelasLain`, bukan
+kolom `santri.unit`: kolom itu hanya memuat penempatan utama, sehingga santri
+yang sekolah di SMP sekaligus mengaji di Madin akan kehilangan lembaga
+keduanya justru di tampilan lintas-lembaga. Penanda otomatis hilang saat satu
+lembaga/kelas dipilih karena saat itu semua baris berlabel sama.
+
+Verifikasi (Playwright ke `http://202.59.200.26:3226`, superadmin): di "Semua
+lembaga" panel hanya berisi ajakan memilih lembaga dan 20 penanda muncul
+(termasuk baris ber-`SMP`+`MADIN` sekaligus); di `?unit=2` panel berisi Tingkat
+VII/VIII/IX + Alumni dan penanda 0. Tanpa `pageerror`; `npx tsc --noEmit` bersih.
+
 ## 2026-08-30 — Lembaga jadi tab utama di /induk, /akademik, /kepegawaian
 
 SMP, MA, dan Madin adalah organisasi terpisah, jadi pemilihan lembaga dinaikkan
