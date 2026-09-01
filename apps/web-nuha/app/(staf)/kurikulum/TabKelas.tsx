@@ -26,7 +26,7 @@ export async function TabKelas({ session }: { session: SessionPayload }) {
       <Kosong
         pesan={adaJadwal > 0
           ? `Tidak ada jadwal atas nama "${namaGuru}". Nama pada jadwal pelajaran harus sama persis dengan nama akun.`
-          : 'Jadwal pelajaran masih kosong. Isi lewat Kelola Data terlebih dahulu.'}
+          : 'Jadwal pelajaran masih kosong. Isi lewat Master Data terlebih dahulu.'}
       />
     );
   }

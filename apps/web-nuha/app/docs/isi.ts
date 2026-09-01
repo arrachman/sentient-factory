@@ -115,7 +115,7 @@ export const BAGIAN: Bagian[] = [
     ],
     gambar: [{ file: 'guru-kelas-saya.png', caption: 'Kelas Saya untuk Bu Dwi Astuti — mengampu di MA, SMP, dan merangkap ustadzah diniyah di pondok.' }],
     catatan:
-      'Kelas yang belum berisi santri ditandai jelas pada kartunya; presensi dan nilai baru bisa diisi setelah santri dimasukkan lewat Kelola Data.',
+      'Kelas yang belum berisi santri ditandai jelas pada kartunya; presensi dan nilai baru bisa diisi setelah santri dimasukkan lewat Master Data.',
   },
   {
     id: 'ujian',
@@ -203,7 +203,7 @@ export const BAGIAN: Bagian[] = [
       { file: 'portal-santri.png', caption: 'Portal santri dengan dock navigasi di bawah.' },
     ],
     catatan:
-      'Ke-76 santri kini punya baris relasi wali utama, sehingga tab Wali & Keluarga dan pemicu notifikasi selalu menemukan kontak. Tiga santri belum memiliki akun portal wali (73 dari 76) karena kontak walinya belum lengkap — dilengkapi lewat Kelola Data.',
+      'Ke-76 santri kini punya baris relasi wali utama, sehingga tab Wali & Keluarga dan pemicu notifikasi selalu menemukan kontak. Tiga santri belum memiliki akun portal wali (73 dari 76) karena kontak walinya belum lengkap — dilengkapi lewat Master Data.',
   },
   {
     id: 'publik',
@@ -224,7 +224,7 @@ export const BAGIAN: Bagian[] = [
   },
   {
     id: 'kelola-data',
-    judul: 'Kelola Data & relasi wali',
+    judul: 'Master Data & relasi wali',
     ringkas:
       'CRUD data operasional per modul, dengan hak akses menu yang sama. Relasi wali↔santri tidak berhalaman sendiri: ditunjuk langsung dari bagian "Peran" pada form identitas orang, baik saat menambah maupun mengubah.',
     langkah: [
@@ -249,7 +249,7 @@ export const BAGIAN: Bagian[] = [
       'Tindakan yang mengubah keadaan dicatat dengan pelaku, ringkasan, dan isi perubahannya — termasuk pergantian peran, pengiriman WhatsApp, dan perubahan perangkat.',
     langkah: [
       { judul: 'Apa yang dicatat', detail: 'Aksi, entitas, id entitas, ringkasan terbaca manusia, perubahan sebelum dan sesudah, pelaku, dan waktu.' },
-      { judul: 'Di mana dilihat', detail: 'Menu Kelola Data untuk peran yang berwenang.' },
+      { judul: 'Di mana dilihat', detail: 'Menu Master Data untuk peran yang berwenang.' },
     ],
   },
 ];

@@ -39,7 +39,7 @@ export default async function EntityPage({ params, searchParams }: { params: Pro
   const fq = filterQuery(filters);
   return <>
     <Link href="/data" className="muted" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-      <IkonMenu menuKey={entity.menu} path={menuInfo?.icon} size={15} /> &larr; Kembali ke Kelola Data
+      <IkonMenu menuKey={entity.menu} path={menuInfo?.icon} size={15} /> &larr; Kembali ke Master Data
     </Link>
     {key === 'santri' && <RingkasanSantri filters={filters} />}
     <FilterBar entity={clientEntity} hrefBase={`/data/${key}`} filters={filters} limit={limit} />

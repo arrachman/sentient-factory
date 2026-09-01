@@ -4,6 +4,17 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-01 — Master Data: submenu entitas sesuai akses peran
+
+Menu staf **Kelola Data** berganti nama menjadi **Master Data**. Saat menu
+tersebut dibuka, sidebar menampilkan submenu bertingkat untuk setiap entitas,
+dikelompokkan menurut modul dan hanya berisi data yang diizinkan oleh
+`menu_peran` sesi aktif. Sumber daftar yang sama sekarang dipakai oleh halaman
+`/data` dan sidebar, sehingga hak akses dan daftar keduanya selalu selaras.
+
+Dampak operator: pilih Master Data lalu langsung pilih entitas dari sidebar;
+pada layar sempit submenu disembunyikan agar navigasi bawah tetap ringkas.
+
 ## 2026-08-30 — /induk: panel kiri tak lagi ulang daftar lembaga, daftar diberi penanda unit
 
 Lanjutan dari entri di bawah. Setelah lembaga naik jadi tab, panel kiri masih

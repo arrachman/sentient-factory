@@ -1,19 +1,22 @@
 import { redirect } from 'next/navigation';
 import { readSession, isSuperAdmin } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { daftarMaster } from '@/lib/crud/daftar';
 import { StaffShell } from '@/components/templates/StaffShell';
 
 export default async function StafLayout({ children }: { children: React.ReactNode }) {
   const session = await readSession();
   if (!session) redirect('/beranda');
 
-  const [menus, agenda] = await Promise.all([
+  const [menus, agenda, { persona, kelompok }] = await Promise.all([
     prisma.menu.findMany({
       where: { akses: { some: { peran: { key: { in: session.peran } } } } },
       orderBy: { urutan: 'asc' },
     }),
     prisma.agenda.findMany({ orderBy: { tgl: 'asc' }, take: 6 }),
+    daftarMaster(session.peran),
   ]);
+  const masterGroups = [persona, ...kelompok].filter((group) => group.items.length > 0);
 
   const MENU_DISEMBUNYIKAN = new Set([
     'kurikulum', 'poskestren', 'keuangan', 'lms', 'gaji', 'ujian',
@@ -36,6 +39,7 @@ export default async function StafLayout({ children }: { children: React.ReactNo
     <StaffShell
       session={session}
       menus={visible}
+      masterGroups={masterGroups}
       ticker={ticker}
       showRolePicker={isSuperAdmin(session)}
     >

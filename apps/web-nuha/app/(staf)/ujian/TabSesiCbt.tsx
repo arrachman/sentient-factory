@@ -30,7 +30,7 @@ export async function TabSesiCbt({ bolehKelola }: { bolehKelola: boolean }) {
   });
 
   if (sesi.length === 0) {
-    return <Kosong pesan="Belum ada sesi CBT. Buat paket soal lalu jadwalkan sesinya lewat Kelola Data." />;
+    return <Kosong pesan="Belum ada sesi CBT. Buat paket soal lalu jadwalkan sesinya lewat Master Data." />;
   }
 
   return (

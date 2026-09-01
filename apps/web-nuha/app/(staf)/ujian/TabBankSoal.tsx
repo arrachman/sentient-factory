@@ -39,7 +39,7 @@ export async function TabBankSoal({ namaGuru }: { namaGuru: string | null }) {
       <Kosong pesan={
         namaGuru
           ? 'Belum ada soal untuk mata pelajaran yang Anda ampu.'
-          : 'Bank soal masih kosong. Tambahkan butir soal lewat Kelola Data.'
+          : 'Bank soal masih kosong. Tambahkan butir soal lewat Master Data.'
       } />
     );
   }

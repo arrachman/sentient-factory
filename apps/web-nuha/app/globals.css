@@ -76,6 +76,13 @@ a:hover { color: var(--emas); }
 .menuitem.active { background: rgba(232, 151, 58, 0.16); color: var(--emas-lembut); font-weight: 700; }
 .menuitem.active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 999px; background: var(--emas); }
 .menulabel { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menuwrap { min-width: 0; }
+.submenu { margin: 2px 0 8px 16px; padding: 4px 0 4px 10px; border-left: 1px solid rgba(243, 241, 233, 0.16); }
+.submenu-group + .submenu-group { margin-top: 8px; }
+.submenu-heading { display: flex; align-items: center; gap: 6px; margin: 0 0 3px; color: rgba(243, 241, 233, 0.5); font-size: 10px; font-weight: 700; letter-spacing: 0.25px; text-transform: uppercase; }
+.submenuitem { display: block; padding: 5px 8px; border-radius: 7px; color: rgba(243, 241, 233, 0.7); font-size: 12px; line-height: 1.25; }
+.submenuitem:hover, .submenuitem.active { background: rgba(243, 241, 233, 0.09); color: var(--emas-lembut); }
+.submenuitem.active { font-weight: 700; }
 
 .sidefoot { padding: 14px; border-top: 1px solid rgba(243, 241, 233, 0.12); }
 .userchip { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: rgba(243, 241, 233, 0.07); }
@@ -140,7 +147,7 @@ td { padding: 11px 12px; font-size: 13px; color: var(--teks-kuat); border-bottom
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 td.num { font-weight: 700; color: var(--hijau-gelap); }
 
-/* Tabel compact (mis. CRUD Kelola Data) */
+/* Tabel compact (mis. CRUD Master Data) */
 .table-compact th { padding: 7px 10px; font-size: 10.5px; }
 .table-compact td { padding: 6px 10px; font-size: 12.5px; }
 
@@ -292,7 +299,7 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
 .input-cari::placeholder { color: var(--teks-samar); }
 .input-cari:focus-visible { outline: 2px solid var(--hijau-muda); outline-offset: 1px; border-color: var(--hijau-muda); background: #fff; }
 
-/* Bilah penyaring tabel Kelola Data: kolom-kolom rata bawah, tombol sejajar input */
+/* Bilah penyaring tabel Master Data: kolom-kolom rata bawah, tombol sejajar input */
 .bilah-filter { margin-top: 16px; padding: 14px 16px; display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
 .bilah-filter-kolom { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .bilah-filter-kolom label { font-size: 12px; font-weight: 600; color: var(--teks-lembut); text-transform: uppercase; letter-spacing: 0.4px; }
@@ -419,7 +426,9 @@ label.toggle, .field label.toggle {
   }
   .sidehead, .sidefoot { display: none; }
   .menu { flex-direction: row; padding: 6px; }
+  .menuwrap { flex: 0 0 auto; }
   .menuitem { flex-direction: column; gap: 4px; min-width: 74px; text-align: center; }
+  .submenu { display: none; }
   .menuitem.active::before { display: none; }
   .menulabel { font-size: 10px; }
   .main { padding-bottom: 96px; }

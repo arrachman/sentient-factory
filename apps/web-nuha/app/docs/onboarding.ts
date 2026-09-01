@@ -32,7 +32,7 @@ export const PETA_MODUL: PetaModul[] = [
     modul: [
       { menu: 'Dashboard', path: '/', untuk: 'Ringkasan lintas unit: KPI santri/pegawai, tren, komposisi, keuangan, agenda.' },
       { menu: 'Data Induk', path: '/induk', untuk: 'Buku induk santri: biodata, akademik, kepesantrenan, kesehatan, keuangan, dan data walinya — satu santri satu berkas utuh.' },
-      { menu: 'Kelola Data', path: '/data', untuk: 'CRUD generik seluruh entitas untuk admin: menambah kelas, jadwal, tagihan, pengguna, dan lainnya tanpa menunggu fitur khusus.' },
+      { menu: 'Master Data', path: '/data', untuk: 'CRUD generik seluruh entitas untuk admin: menambah kelas, jadwal, tagihan, pengguna, dan lainnya tanpa menunggu fitur khusus.' },
     ],
   },
   {

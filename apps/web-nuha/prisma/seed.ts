@@ -365,7 +365,7 @@ async function seedPortalAccess() {
   const menus = [
     { key: 'portal-santri', label: 'Portal Santri', urutan: 90, peranId: roleSantri.id },
     { key: 'portal-wali', label: 'Portal Wali', urutan: 91, peranId: roleWali.id },
-    { key: 'data', label: 'Kelola Data', urutan: 92, peranId: roleKetua.id },
+    { key: 'data', label: 'Master Data', urutan: 92, peranId: roleKetua.id },
   ];
   for (const row of menus) {
     const menu = await prisma.menu.upsert({ where: { key: row.key }, create: { key: row.key, label: row.label, urutan: row.urutan }, update: { label: row.label } });
@@ -390,7 +390,7 @@ async function seedPortalAccess() {
     }
   }
 
-  // Staff share the Kelola Data entry; each entity is still gated by its own menu grant.
+  // Staff share the Master Data entry; each entity is still gated by its own menu grant.
   const dataMenu = await prisma.menu.findUnique({ where: { key: 'data' } });
   const staffRoles = await prisma.peran.findMany({ where: { key: { notIn: ['santri', 'wali'] } } });
   if (dataMenu) for (const role of staffRoles) {

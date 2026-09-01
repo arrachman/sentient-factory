@@ -16,7 +16,7 @@ export async function TabGelombang({ bolehKelola }: { bolehKelola: boolean }) {
     orderBy: [{ mulai: 'desc' }],
   });
 
-  if (ujian.length === 0) return <Kosong pesan="Belum ada gelombang ujian. Tambahkan lewat Kelola Data." />;
+  if (ujian.length === 0) return <Kosong pesan="Belum ada gelombang ujian. Tambahkan lewat Master Data." />;
 
   return (
     <div className="card">
