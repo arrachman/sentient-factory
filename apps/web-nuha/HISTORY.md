@@ -4,6 +4,11 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Jarak ikon dropdown pemilih peran diperbaiki
+
+Padding kanan dropdown "Lihat sebagai" diperbesar agar ikon panah native tidak
+terlalu mepet ke tepi. Tidak ada perubahan pada opsi atau perilaku pergantian peran.
+
 ## 2026-09-02 — Label wajib pada formulir Master Data dihapus
 
 Keterangan `* wajib diisi` di bagian aksi modal Master Data dihapus. Penanda
