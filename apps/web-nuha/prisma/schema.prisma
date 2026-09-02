@@ -1367,26 +1367,26 @@ model AntreanNotifikasi {
 // Pengumuman & agenda
 // ─────────────────────────────────────────────────────────────
 
-model Pengumuman {
+model Announcement {
   id        BigInt   @id @default(autoincrement())
-  tgl       DateTime @db.Date
-  judul     String   @db.VarChar(200)
-  isi       String   @db.Text
+  date      DateTime @db.Date
+  title     String   @db.VarChar(200)
+  content   String   @db.Text
   target    String   @default("Semua") @db.VarChar(64)
   createdAt DateTime @default(now()) @map("created_at")
 
-  @@index([tgl])
-  @@map("pengumuman")
+  @@index([date])
+  @@map("announcements")
 }
 
 model Agenda {
   id    BigInt   @id @default(autoincrement())
-  tgl   DateTime @db.Date
-  jam   String?  @db.VarChar(16)
-  judul String   @db.VarChar(200)
+  date  DateTime @db.Date
+  time  String?  @db.VarChar(16)
+  title String   @db.VarChar(200)
   unit  String?  @db.VarChar(64)
 
-  @@index([tgl])
+  @@index([date])
   @@map("agenda")
 }
 

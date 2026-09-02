@@ -25,7 +25,7 @@ const parseDate = (value: unknown, tahunDefault = 2026): Date => {
 };
 
 /**
- * Kolom `agenda.jam` hanya VarChar(16), sedangkan prototype menulis
+ * Kolom `agenda.time` hanya VarChar(16), sedangkan prototype menulis
  * "09.00 · Aula Utama". Ambil segmen jamnya saja lalu potong seaman kolom.
  */
 const jamSingkat = (value: unknown): string => String(value ?? '').split('·')[0].trim().slice(0, 16);
@@ -522,7 +522,7 @@ async function seedOperational() {
   if (await prisma.agenda.count() <= 1) {
     await prisma.agenda.deleteMany({});
     for (const row of source.agenda) {
-      await prisma.agenda.create({ data: { tgl: parseDate(row.tgl), jam: jamSingkat(row.jam), judul: String(row.judul), unit: String(row.unit) } });
+      await prisma.agenda.create({ data: { date: parseDate(row.tgl), time: jamSingkat(row.jam), title: String(row.judul), unit: String(row.unit) } });
     }
   }
 
@@ -651,8 +651,8 @@ async function main() {
   for (const row of source.obat) await prisma.obat.upsert({ where: { nama: String(row.nama) }, create: { nama: String(row.nama), satuan: String(row.satuan), kategori: String(row.kategori), stok: Number(row.stok), stokMin: Number(row.min), kadaluarsa: String(row.exp) }, update: { stok: Number(row.stok) } });
   for (const [index, row] of source.kegiatanHarian.entries()) await prisma.kegiatanHarian.upsert({ where: { id: index + 1 }, create: { id: index + 1, jam: String(row.jam), nama: String(row.nama), ket: String(row.ket), urutan: index }, update: { nama: String(row.nama) } });
   for (const row of source.halaqah) await prisma.halaqah.create({ data: { nama: String(row.nama), ustadz: String(row.ustadz), waktu: String(row.waktu), tempat: String(row.tempat), jenjang: String(row.jenjang), anggota: Number(row.anggota) } }).catch(() => undefined);
-  for (const row of source.pengumumanSantri) await prisma.pengumuman.create({ data: { tgl: parseDate(row.tgl), judul: String(row.judul), isi: String(row.isi), target: 'Santri' } }).catch(() => undefined);
-  for (const row of source.agenda) await prisma.agenda.create({ data: { tgl: parseDate(row.tgl), jam: jamSingkat(row.jam), judul: String(row.judul), unit: String(row.unit) } }).catch(() => undefined);
+  for (const row of source.pengumumanSantri) await prisma.announcement.create({ data: { date: parseDate(row.tgl), title: String(row.judul), content: String(row.isi), target: 'Santri' } }).catch(() => undefined);
+  for (const row of source.agenda) await prisma.agenda.create({ data: { date: parseDate(row.tgl), time: jamSingkat(row.jam), title: String(row.judul), unit: String(row.unit) } }).catch(() => undefined);
   for (const row of source.waCases) await prisma.templateWa.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), role: String(row.role), judul: String(row.judul), pemicu: String(row.pemicu), waktu: String(row.waktu), isi: String(row.isi), aktif: Boolean(row.aktif) }, update: { aktif: Boolean(row.aktif) } });
   await seedPenjadwalNotifikasi();
 

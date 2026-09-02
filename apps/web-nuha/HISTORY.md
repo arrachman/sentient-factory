@@ -4,6 +4,24 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Rename teknis Pengumuman/Agenda ke Bahasa Inggris
+
+Model Prisma `Pengumuman` dan tabel fisik `pengumuman` kini menjadi
+`Announcement`/`announcements`. Kolom teknis kedua model diterjemahkan:
+`tgl→date`, `judul→title`, `isi→content` (Pengumuman), serta `tgl→date`,
+`jam→time`, `judul→title` (Agenda, model & tabel `agenda` tetap sama karena
+sudah Inggris). Kunci rute CRUD (`pengumuman`, `agenda`), label UI, dan
+sumber data prototipe (`row.tgl`, `row.judul`, `row.isi`) tetap berbahasa
+Indonesia sebagai kontrak presentasi.
+
+Migrasi `20260902210000_rename_announcement_agenda_to_english` memakai
+`CHANGE COLUMN`, `RENAME TABLE`, dan `RENAME INDEX` non-destruktif. Konsumen
+yang diperbarui: beranda publik, layout staf, dashboard staf, Shell (ticker
+agenda sidebar), tab portal santri (beranda + pengumuman), dan tab ringkasan
+portal wali. `npx tsc --noEmit` dan `prisma migrate status` bersih; verifikasi
+Playwright di `http://202.59.200.26:3226` mengonfirmasi beranda publik dan
+dashboard Super Admin merender tanpa `pageerror`.
+
 ## 2026-09-02 — Rename teknis PPDB ke Bahasa Inggris
 
 Model Prisma dan tabel fisik PPDB kini memakai `Applicant`/`applicants` dan

@@ -23,7 +23,7 @@ export default async function BerandaPage() {
     prisma.santri.count({ where: { status: 'Mukim' } }),
     prisma.pegawai.count({ where: { status: { notIn: ['Nonaktif', 'Keluar', 'Pensiun'] } } }),
     prisma.unit.findMany({ where: { aktif: true }, orderBy: { id: 'asc' }, include: { _count: { select: { santri: true } } } }),
-    prisma.agenda.findMany({ where: { tgl: { gte: new Date() } }, orderBy: { tgl: 'asc' }, take: 5 }),
+    prisma.agenda.findMany({ where: { date: { gte: new Date() } }, orderBy: { date: 'asc' }, take: 5 }),
   ]);
 
   const heroStats = [
@@ -133,12 +133,12 @@ export default async function BerandaPage() {
           ) : agenda.map((g) => (
             <div key={String(g.id)} className="pub-agenda-row">
               <div className="pub-agenda-tgl">
-                <b>{g.tgl.toLocaleDateString('id-ID', { day: '2-digit' })}</b>
-                <span>{g.tgl.toLocaleDateString('id-ID', { month: 'short' })}</span>
+                <b>{g.date.toLocaleDateString('id-ID', { day: '2-digit' })}</b>
+                <span>{g.date.toLocaleDateString('id-ID', { month: 'short' })}</span>
               </div>
               <div>
-                <div className="pub-agenda-judul">{g.judul}</div>
-                <div className="pub-agenda-unit">{g.unit ?? 'Yayasan'}{g.jam ? ` · ${g.jam}` : ''}</div>
+                <div className="pub-agenda-judul">{g.title}</div>
+                <div className="pub-agenda-unit">{g.unit ?? 'Yayasan'}{g.time ? ` · ${g.time}` : ''}</div>
               </div>
             </div>
           ))}

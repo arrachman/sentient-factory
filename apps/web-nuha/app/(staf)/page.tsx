@@ -17,8 +17,8 @@ export default async function DashboardPage() {
       prisma.invoice.aggregate({ _sum: { amount: true, paidAmount: true } }),
       prisma.unit.findMany({ where: { aktif: true }, orderBy: { id: 'asc' }, include: { _count: { select: { santri: true } } } }),
       prisma.cashTransaction.groupBy({ by: ['direction'], _sum: { amount: true } }),
-      prisma.agenda.findMany({ orderBy: { tgl: 'asc' }, take: 5 }),
-      prisma.pengumuman.findMany({ orderBy: { tgl: 'desc' }, take: 5 }),
+      prisma.agenda.findMany({ orderBy: { date: 'asc' }, take: 5 }),
+      prisma.announcement.findMany({ orderBy: { date: 'desc' }, take: 5 }),
     ]);
 
   const totalInvoice = Number(invoices._sum.amount ?? 0);
@@ -109,11 +109,11 @@ export default async function DashboardPage() {
               {agenda.map((a) => (
                 <li key={String(a.id)} style={{ display: 'flex', gap: 11, alignItems: 'flex-start' }}>
                   <span className="pill-agenda" style={{ flex: '0 0 auto' }}>
-                    {a.tgl.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
+                    {a.date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
                   </span>
                   <span style={{ minWidth: 0 }}>
-                    <b style={{ display: 'block', fontSize: 13 }}>{a.judul}</b>
-                    <span className="muted">{a.unit ?? 'Yayasan'}{a.jam ? ` · ${a.jam}` : ''}</span>
+                    <b style={{ display: 'block', fontSize: 13 }}>{a.title}</b>
+                    <span className="muted">{a.unit ?? 'Yayasan'}{a.time ? ` · ${a.time}` : ''}</span>
                   </span>
                 </li>
               ))}
@@ -125,9 +125,9 @@ export default async function DashboardPage() {
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
               {pengumuman.map((p) => (
                 <li key={String(p.id)}>
-                  <b style={{ display: 'block', fontSize: 13 }}>{p.judul}</b>
-                  <span className="muted">{p.tgl.toLocaleDateString('id-ID', { dateStyle: 'medium' })}</span>
-                  <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--teks-2)' }}>{p.isi}</p>
+                  <b style={{ display: 'block', fontSize: 13 }}>{p.title}</b>
+                  <span className="muted">{p.date.toLocaleDateString('id-ID', { dateStyle: 'medium' })}</span>
+                  <p style={{ margin: '3px 0 0', fontSize: 12.5, color: 'var(--teks-2)' }}>{p.content}</p>
                 </li>
               ))}
             </ul>

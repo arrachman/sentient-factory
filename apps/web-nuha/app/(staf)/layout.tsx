@@ -13,7 +13,7 @@ export default async function StafLayout({ children }: { children: React.ReactNo
       where: { roles: { some: { role: { key: { in: session.peran } } } } },
       orderBy: { order: 'asc' },
     }),
-    prisma.agenda.findMany({ orderBy: { tgl: 'asc' }, take: 6 }),
+    prisma.agenda.findMany({ orderBy: { date: 'asc' }, take: 6 }),
     daftarMaster(session.peran),
   ]);
   const masterGroups = [persona, ...kelompok].filter((group) => group.items.length > 0);
@@ -31,8 +31,8 @@ export default async function StafLayout({ children }: { children: React.ReactNo
     .map((menu) => ({ key: menu.key, label: menu.label, icon: menu.icon }));
 
   const ticker = agenda.map((a) => {
-    const tgl = a.tgl.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
-    return `${tgl} · ${a.judul}${a.unit ? ` — ${a.unit}` : ''}`;
+    const date = a.date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+    return `${date} · ${a.title}${a.unit ? ` — ${a.unit}` : ''}`;
   });
 
   return (

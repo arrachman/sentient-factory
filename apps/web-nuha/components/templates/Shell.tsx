@@ -48,15 +48,15 @@ export async function Shell({ session, active, title, children }: { session: Ses
       where: { roles: { some: { role: { key: { in: session.peran } } } } },
       orderBy: { order: 'asc' },
     }),
-    prisma.agenda.findMany({ orderBy: { tgl: 'asc' }, take: 6 }),
+    prisma.agenda.findMany({ orderBy: { date: 'asc' }, take: 6 }),
   ]);
   const visible = menus.filter((menu) => HREF_BY_KEY[menu.key] && !MENU_DISEMBUNYIKAN.has(menu.key));
   const peranUtama = session.peran[0] ?? 'pengguna';
   const menyamar = Boolean(session.peranAsli);
 
   const ticker = agenda.map((a) => {
-    const tgl = a.tgl.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
-    return `${tgl} · ${a.judul}${a.unit ? ` — ${a.unit}` : ''}`;
+    const date = a.date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+    return `${date} · ${a.title}${a.unit ? ` — ${a.unit}` : ''}`;
   });
 
   return (

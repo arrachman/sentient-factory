@@ -18,7 +18,7 @@ export async function TabBeranda({ santri }: { santri: SantriLengkap }) {
     prisma.hafalan.count({ where: { santriId: santri.id } }),
     prisma.tugasLms.count({ where: { status: { not: 'Selesai' } } }),
     prisma.nilai.findMany({ where: { santriId: santri.id } }),
-    prisma.pengumuman.findMany({ orderBy: { tgl: 'desc' }, take: 3 }),
+    prisma.announcement.findMany({ orderBy: { date: 'desc' }, take: 3 }),
     santri.kelas ? prisma.jadwalPelajaran.findMany({ where: { kelas: santri.kelas.nama, hari: namaBesok }, orderBy: { jamKe: 'asc' } }) : Promise.resolve([]),
     prisma.kursusLms.findMany(),
   ]);
@@ -55,9 +55,9 @@ export async function TabBeranda({ santri }: { santri: SantriLengkap }) {
           {pengumuman.length === 0 && <Kosong pesan="Belum ada pengumuman." />}
           {pengumuman.map((p) => (
             <div key={String(p.id)} style={{ padding: '13px 15px', borderRadius: 12, background: '#FAF8F3', border: '1px solid #F0EDE4', marginBottom: 10 }}>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1F2937' }}>{p.judul}</div>
-              <div style={{ fontSize: 12.5, color: '#4B5563', marginTop: 3, lineHeight: 1.6 }}>{p.isi}</div>
-              <div style={{ fontSize: 11.5, color: '#9CA3AF', marginTop: 4 }}>{p.tgl.toLocaleDateString('id-ID')}</div>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1F2937' }}>{p.title}</div>
+              <div style={{ fontSize: 12.5, color: '#4B5563', marginTop: 3, lineHeight: 1.6 }}>{p.content}</div>
+              <div style={{ fontSize: 11.5, color: '#9CA3AF', marginTop: 4 }}>{p.date.toLocaleDateString('id-ID')}</div>
             </div>
           ))}
         </div>

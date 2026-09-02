@@ -13,7 +13,7 @@ export async function TabRingkasan({ santriId, program }: { santriId: bigint; pr
     prisma.presensi.groupBy({ by: ['status'], where: { santriId, tgl: { gte: awalBulan } }, _count: true }),
     prisma.hafalan.count({ where: { santriId } }),
     prisma.rekamMedis.findMany({ where: { santriId }, orderBy: { tgl: 'desc' }, take: 2 }),
-    prisma.pengumuman.findMany({ orderBy: { tgl: 'desc' }, take: 3 }),
+    prisma.announcement.findMany({ orderBy: { date: 'desc' }, take: 3 }),
   ]);
 
   const totalPresensi = presensi.reduce((n, r) => n + r._count, 0);
@@ -56,9 +56,9 @@ export async function TabRingkasan({ santriId, program }: { santriId: bigint; pr
         {pengumuman.length === 0 && <Kosong pesan="Belum ada pengumuman." />}
         {pengumuman.map((p) => (
           <div key={String(p.id)} style={{ paddingBottom: 10, borderBottom: '1px solid #F5F2EA', marginBottom: 10 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#1F2937' }}>{p.judul}</div>
-            <div style={{ fontSize: 12, color: '#4B5563', marginTop: 3, lineHeight: 1.55 }}>{p.isi}</div>
-            <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>{p.tgl.toLocaleDateString('id-ID')}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#1F2937' }}>{p.title}</div>
+            <div style={{ fontSize: 12, color: '#4B5563', marginTop: 3, lineHeight: 1.55 }}>{p.content}</div>
+            <div style={{ fontSize: 11, color: '#9CA3AF', marginTop: 3 }}>{p.date.toLocaleDateString('id-ID')}</div>
           </div>
         ))}
       </div>

@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { Kosong } from '@/components';
 
 export async function TabPengumuman() {
-  const pengumuman = await prisma.pengumuman.findMany({ orderBy: { tgl: 'desc' }, take: 30 });
+  const pengumuman = await prisma.announcement.findMany({ orderBy: { date: 'desc' }, take: 30 });
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
@@ -12,10 +12,10 @@ export async function TabPengumuman() {
           <div style={{ display: 'flex', gap: 9, alignItems: 'center', flexWrap: 'wrap' }}>
             <span style={{ padding: '4px 10px', borderRadius: 999, background: '#DBEAFE', color: '#1E40AF', fontSize: 11, fontWeight: 700 }}>{p.target}</span>
             <div style={{ flex: 1 }} />
-            <span style={{ fontSize: 11.5, color: '#9CA3AF' }}>{p.tgl.toLocaleDateString('id-ID')}</span>
+            <span style={{ fontSize: 11.5, color: '#9CA3AF' }}>{p.date.toLocaleDateString('id-ID')}</span>
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#1F2937', lineHeight: 1.4 }}>{p.judul}</div>
-          <div style={{ fontSize: 13, color: '#4B5563', lineHeight: 1.65 }}>{p.isi}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#1F2937', lineHeight: 1.4 }}>{p.title}</div>
+          <div style={{ fontSize: 13, color: '#4B5563', lineHeight: 1.65 }}>{p.content}</div>
         </div>
       ))}
     </div>
