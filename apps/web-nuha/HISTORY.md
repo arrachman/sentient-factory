@@ -12,6 +12,12 @@ filter — navigasi kembali sudah tersedia lewat sidebar. Jarak vertikal antara
 kotak filter (CARI) dan kotak daftar data juga dirapatkan (16px → 10px).
 Murni styling/UI, tidak ada perubahan data atau akses.
 
+## 2026-09-02 — Layout Master Data: jarak antarseksi dipersempit
+
+Jarak vertikal standar di area konten staf (`.pad`) diturunkan dari 16px ke
+12px. Filter, tabel, dan pagination kini lebih rapat tanpa mengubah padding
+internal card atau ukuran kontrol.
+
 ## 2026-09-02 — Sidebar: submenu Master Data bisa dibuka/tutup per grup, dianimasikan
 
 Tiap kelompok di submenu Master Data (Data Orang per Peran, Dashboard, Data
