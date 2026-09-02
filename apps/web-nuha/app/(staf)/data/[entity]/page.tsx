@@ -1,8 +1,5 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { IkonMenu } from '@/components/templates/Shell';
 import { requirePage } from '@/lib/access';
-import { prisma } from '@/lib/prisma';
 import { CrudPanel } from '@/components/CrudPanel';
 import { Pagination, LimitPicker, FilterBar, bacaHalaman, bacaLimit, satu, filterQuery } from '@/components';
 import { getEntity } from '@/lib/crud/registry';
@@ -29,18 +26,14 @@ export default async function EntityPage({ params, searchParams }: { params: Pro
     const value = satu(sp[field.name]) || field.filterDefault;
     if (value) filters[field.name] = value;
   }
-  const [rows, total, menuInfo, clientEntity] = await Promise.all([
+  const [rows, total, clientEntity] = await Promise.all([
     listRows(entity, halaman, limit, filters),
     countRows(entity, filters),
-    prisma.menu.findUnique({ where: { key: entity.menu }, select: { icon: true } }),
     toClientEntity(entity),
   ]);
   const totalHalaman = Math.max(1, Math.ceil(total / limit));
   const fq = filterQuery(filters);
   return <>
-    <Link href="/data" className="muted" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
-      <IkonMenu menuKey={entity.menu} path={menuInfo?.icon} size={15} /> &larr; Kembali ke Master Data
-    </Link>
     {key === 'santri' && <RingkasanSantri filters={filters} />}
     <FilterBar entity={clientEntity} hrefBase={`/data/${key}`} filters={filters} limit={limit} />
     <CrudPanel entity={clientEntity} rows={rows} />

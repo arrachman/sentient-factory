@@ -4,6 +4,14 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Halaman entitas Master Data: hapus tautan "Kembali ke Master Data", rapatkan gap
+
+Halaman `/data/<entity>` (dipakai semua entitas Master Data, mis. mapel,
+santri) tidak lagi menampilkan tautan "← Kembali ke Master Data" di atas
+filter — navigasi kembali sudah tersedia lewat sidebar. Jarak vertikal antara
+kotak filter (CARI) dan kotak daftar data juga dirapatkan (16px → 10px).
+Murni styling/UI, tidak ada perubahan data atau akses.
+
 ## 2026-09-02 — Sidebar: submenu Master Data bisa dibuka/tutup per grup, dianimasikan
 
 Tiap kelompok di submenu Master Data (Data Orang per Peran, Dashboard, Data
