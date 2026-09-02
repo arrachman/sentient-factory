@@ -218,7 +218,6 @@ export function CrudPanel({ entity, rows: initialRows }: { entity: ClientEntity;
               supaya mata operator langsung jatuh ke form. */}
           {editing?._kait && <PanelKeterkaitan kait={editing._kait} />}
           <div className="modal-aksi">
-            <span className="muted" style={{ fontSize: 12, marginRight: 'auto' }}><span className="wajib">*</span> wajib diisi</span>
             <button className="btn btn-sekunder" type="button" onClick={() => { setEditing(null); setOpen(false); }}>Batal</button>
             <button className="btn" disabled={busy} type="submit">{busy ? 'Menyimpan…' : editing ? 'Simpan perubahan' : 'Simpan'}</button>
           </div>

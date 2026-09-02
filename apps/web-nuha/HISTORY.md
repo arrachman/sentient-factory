@@ -4,6 +4,12 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Label wajib pada formulir Master Data dihapus
+
+Keterangan `* wajib diisi` di bagian aksi modal Master Data dihapus. Penanda
+pada field yang wajib tetap tersedia; tidak ada perubahan pada validasi atau
+perilaku penyimpanan.
+
 ## 2026-09-02 — Tombol formulir Master Data lebih jelas
 
 Aksi pada modal tambah dan ubah Master Data kini memakai tombol teks **Batal**
