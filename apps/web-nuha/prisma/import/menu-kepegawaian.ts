@@ -12,21 +12,21 @@ import { prisma } from '@/lib/prisma';
 const PERAN_DIBERI_AKSES = ['superadmin', 'kepsmp', 'kepma', 'tata-usaha'];
 
 async function jalankan(): Promise<void> {
-  const menu = await prisma.menu.upsert({
+  const menu = await prisma.menuItem.upsert({
     where: { key: 'kepegawaian' },
-    create: { key: 'kepegawaian', label: 'Kepegawaian', urutan: 14 },
+    create: { key: 'kepegawaian', label: 'Kepegawaian', order: 14 },
     update: { label: 'Kepegawaian' },
   });
 
   for (const key of PERAN_DIBERI_AKSES) {
-    const peran = await prisma.peran.findUnique({ where: { key } });
+    const peran = await prisma.role.findUnique({ where: { key } });
     if (!peran) {
       console.warn(`Peran "${key}" tidak ditemukan — dilewati.`);
       continue;
     }
-    await prisma.menuPeran.upsert({
-      where: { menuId_peranId: { menuId: menu.id, peranId: peran.id } },
-      create: { menuId: menu.id, peranId: peran.id },
+    await prisma.menuRole.upsert({
+      where: { menuId_roleId: { menuId: menu.id, roleId: peran.id } },
+      create: { menuId: menu.id, roleId: peran.id },
       update: {},
     });
   }

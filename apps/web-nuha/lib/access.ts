@@ -11,8 +11,8 @@ export async function requirePage(menuKey: string): Promise<SessionPayload> {
   if (!session) redirect('/login');
 
   if (menuKey !== 'dashboard') {
-    const granted = await prisma.menuPeran.count({
-      where: { menu: { key: menuKey }, peran: { key: { in: session.peran } } },
+    const granted = await prisma.menuRole.count({
+      where: { menu: { key: menuKey }, role: { key: { in: session.peran } } },
     });
     if (granted === 0) redirect('/');
   }

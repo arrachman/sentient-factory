@@ -9,9 +9,9 @@ export default async function StafLayout({ children }: { children: React.ReactNo
   if (!session) redirect('/beranda');
 
   const [menus, agenda, { persona, kelompok }] = await Promise.all([
-    prisma.menu.findMany({
-      where: { akses: { some: { peran: { key: { in: session.peran } } } } },
-      orderBy: { urutan: 'asc' },
+    prisma.menuItem.findMany({
+      where: { roles: { some: { role: { key: { in: session.peran } } } } },
+      orderBy: { order: 'asc' },
     }),
     prisma.agenda.findMany({ orderBy: { tgl: 'asc' }, take: 6 }),
     daftarMaster(session.peran),

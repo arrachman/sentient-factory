@@ -44,9 +44,9 @@ export { IkonMenu };
 
 export async function Shell({ session, active, title, children }: { session: SessionPayload; active: string; title: string; children: React.ReactNode }) {
   const [menus, agenda] = await Promise.all([
-    prisma.menu.findMany({
-      where: { akses: { some: { peran: { key: { in: session.peran } } } } },
-      orderBy: { urutan: 'asc' },
+    prisma.menuItem.findMany({
+      where: { roles: { some: { role: { key: { in: session.peran } } } } },
+      orderBy: { order: 'asc' },
     }),
     prisma.agenda.findMany({ orderBy: { tgl: 'asc' }, take: 6 }),
   ]);

@@ -4,6 +4,20 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Rename teknis auth/RBAC ke Bahasa Inggris (Fase 3)
+
+Model dan tabel otorisasi kini memakai kosakata Inggris: `Peran→Role`
+(`peran→roles`), `UserPeran→UserRole` (`user_peran→user_roles`),
+`Menu→MenuItem` (`menu→menu_items`), dan `MenuPeran→MenuRole`
+(`menu_peran→menu_roles`). Kolom serta indeks terkait juga diterjemahkan,
+termasuk `nama→name`, `deskripsi→description`, `urutan→order`, dan
+`peran_id→role_id`.
+
+Migrasi `20260902160000_rename_auth_rbac_to_english` menjaga seluruh baris
+role dan grant melalui rename tabel/kolom/index serta pembangunan ulang FK.
+Nilai key role/menu, payload sesi `peran`, rute, dan label UI tetap kompatibel.
+Prisma migration status dan typecheck TypeScript bersih setelah penerapan.
+
 ## 2026-09-02 — Rename teknis Orang ke Person (Fase 2)
 
 Model Prisma `Orang` dan tabel fisik `orang` kini menjadi `Person`/`people`.

@@ -16,7 +16,7 @@ export async function GET() {
   const session = await readSession();
   if (!session) return Response.json({ success: false, data: null, error: { code: 'UNAUTHORIZED', message: 'Perlu masuk.' } }, { status: 401 });
 
-  const granted = await prisma.menuPeran.count({ where: { menu: { key: 'laporan' }, peran: { key: { in: session.peran } } } });
+  const granted = await prisma.menuRole.count({ where: { menu: { key: 'laporan' }, role: { key: { in: session.peran } } } });
   if (!granted) return Response.json({ success: false, data: null, error: { code: 'FORBIDDEN', message: 'Tidak berwenang mengakses laporan.' } }, { status: 403 });
 
   const rows = await ambilRekapLaporan();

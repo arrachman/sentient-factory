@@ -60,7 +60,7 @@ export async function GET(request: Request) {
   const session = await readSession();
   if (!session) return Response.json({ success: false, data: null, error: { code: 'UNAUTHORIZED', message: 'Perlu masuk.' } }, { status: 401 });
 
-  const granted = await prisma.menuPeran.count({ where: { menu: { key: 'akademik' }, peran: { key: { in: session.peran } } } });
+  const granted = await prisma.menuRole.count({ where: { menu: { key: 'akademik' }, role: { key: { in: session.peran } } } });
   if (!granted) return Response.json({ success: false, data: null, error: { code: 'FORBIDDEN', message: 'Tidak berwenang mengakses akademik.' } }, { status: 403 });
 
   const searchParams = Object.fromEntries(new URL(request.url).searchParams.entries());

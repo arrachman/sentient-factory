@@ -15,7 +15,7 @@ const schema = z.object({
 export async function POST(request: Request) {
   const session = await readSession();
   if (!session) return Response.json({ success: false, data: null, error: { code: 'UNAUTHORIZED', message: 'Sesi wajib diisi.' } }, { status: 401 });
-  const granted = await prisma.menuPeran.count({ where: { menu: { key: 'wa' }, peran: { key: { in: session.peran } } } });
+  const granted = await prisma.menuRole.count({ where: { menu: { key: 'wa' }, role: { key: { in: session.peran } } } });
   if (!granted) return Response.json({ success: false, data: null, error: { code: 'FORBIDDEN', message: 'Tidak berwenang.' } }, { status: 403 });
 
   const parsed = schema.safeParse(await request.json().catch(() => null));

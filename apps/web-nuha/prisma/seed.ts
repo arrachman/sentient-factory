@@ -37,7 +37,7 @@ const kunciPeran = (nama: string): string =>
 /** Peran tanpa grant menu apa pun — akses ditambahkan manual lewat Pengaturan. */
 const perolehPeran = (nama: string) => {
   const key = kunciPeran(nama);
-  return prisma.peran.upsert({ where: { key }, create: { key, nama }, update: { nama } });
+  return prisma.role.upsert({ where: { key }, create: { key, name: nama }, update: { name: nama } });
 };
 
 /** Prototype hanya memuat jadwal satu rombongan belajar. */
@@ -109,10 +109,10 @@ async function seedAcademicContent() {
 async function seedSuperAdmin(passwordHashBawaan: string) {
   const sandi = process.env.SUPERADMIN_PASSWORD;
   const passwordHash = sandi ? await bcrypt.hash(sandi, 12) : passwordHashBawaan;
-  const peran = await prisma.peran.upsert({
+  const peran = await prisma.role.upsert({
     where: { key: 'superadmin' },
-    create: { key: 'superadmin', nama: 'Super Admin' },
-    update: { nama: 'Super Admin' },
+    create: { key: 'superadmin', name: 'Super Admin' },
+    update: { name: 'Super Admin' },
   });
 
   const orang = await prisma.person.upsert({
@@ -125,18 +125,18 @@ async function seedSuperAdmin(passwordHashBawaan: string) {
     create: { personId: orang.id, email: orang.email!, username: 'superadmin', passwordHash, unitScope: 'Semua unit', aktif: true },
     update: { username: 'superadmin', passwordHash, aktif: true },
   });
-  await prisma.userPeran.upsert({
-    where: { userId_peranId: { userId: user.id, peranId: peran.id } },
-    create: { userId: user.id, peranId: peran.id },
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: user.id, roleId: peran.id } },
+    create: { userId: user.id, roleId: peran.id },
     update: {},
   });
 
   // Semua menu diberikan agar super admin bisa membuka layar mana pun tanpa
   // harus menyamar lebih dulu.
-  for (const menu of await prisma.menu.findMany()) {
-    await prisma.menuPeran.upsert({
-      where: { menuId_peranId: { menuId: menu.id, peranId: peran.id } },
-      create: { menuId: menu.id, peranId: peran.id },
+  for (const menu of await prisma.menuItem.findMany()) {
+    await prisma.menuRole.upsert({
+      where: { menuId_roleId: { menuId: menu.id, roleId: peran.id } },
+      create: { menuId: menu.id, roleId: peran.id },
       update: {},
     });
   }
@@ -149,9 +149,9 @@ async function seedSuperAdmin(passwordHashBawaan: string) {
  * pengajar di jadwal, bukan dari tabel pegawai (namanya tidak selalu sama).
  */
 async function seedGuru(passwordHash: string) {
-  const peran = await prisma.peran.upsert({
+  const peran = await prisma.role.upsert({
     where: { key: 'guru' },
-    create: { key: 'guru', nama: 'Guru / Wali Kelas' },
+    create: { key: 'guru', name: 'Guru / Wali Kelas' },
     update: {},
   });
 
@@ -173,9 +173,9 @@ async function seedGuru(passwordHash: string) {
       create: { personId: orang.id, email, username: `guru.${index + 1}`, passwordHash, unitScope: 'Unit mengajar', aktif: true },
       update: { username: `guru.${index + 1}`, passwordHash, aktif: true },
     });
-    await prisma.userPeran.upsert({
-      where: { userId_peranId: { userId: user.id, peranId: peran.id } },
-      create: { userId: user.id, peranId: peran.id },
+    await prisma.userRole.upsert({
+      where: { userId_roleId: { userId: user.id, roleId: peran.id } },
+      create: { userId: user.id, roleId: peran.id },
       update: {},
     });
   }
@@ -358,43 +358,43 @@ async function seedUjian() {
 
 async function seedPortalAccess() {
   const passwordHash = await bcrypt.hash('Nuha2026!', 12);
-  const roleSantri = await prisma.peran.upsert({ where: { key: 'santri' }, create: { key: 'santri', nama: 'Santri' }, update: {} });
-  const roleWali = await prisma.peran.upsert({ where: { key: 'wali' }, create: { key: 'wali', nama: 'Wali Santri' }, update: {} });
+  const roleSantri = await prisma.role.upsert({ where: { key: 'santri' }, create: { key: 'santri', name: 'Santri' }, update: {} });
+  const roleWali = await prisma.role.upsert({ where: { key: 'wali' }, create: { key: 'wali', name: 'Wali Santri' }, update: {} });
 
-  const roleKetua = await prisma.peran.upsert({ where: { key: 'ketua' }, create: { key: 'ketua', nama: 'Ketua' }, update: {} });
+  const roleKetua = await prisma.role.upsert({ where: { key: 'ketua' }, create: { key: 'ketua', name: 'Ketua' }, update: {} });
   const menus = [
-    { key: 'portal-santri', label: 'Portal Santri', urutan: 90, peranId: roleSantri.id },
-    { key: 'portal-wali', label: 'Portal Wali', urutan: 91, peranId: roleWali.id },
-    { key: 'data', label: 'Master Data', urutan: 92, peranId: roleKetua.id },
+    { key: 'portal-santri', label: 'Portal Santri', order: 90, roleId: roleSantri.id },
+    { key: 'portal-wali', label: 'Portal Wali', order: 91, roleId: roleWali.id },
+    { key: 'data', label: 'Master Data', order: 92, roleId: roleKetua.id },
   ];
   for (const row of menus) {
-    const menu = await prisma.menu.upsert({ where: { key: row.key }, create: { key: row.key, label: row.label, urutan: row.urutan }, update: { label: row.label } });
-    await prisma.menuPeran.upsert({ where: { menuId_peranId: { menuId: menu.id, peranId: row.peranId } }, create: { menuId: menu.id, peranId: row.peranId }, update: {} });
+    const menu = await prisma.menuItem.upsert({ where: { key: row.key }, create: { key: row.key, label: row.label, order: row.order }, update: { label: row.label } });
+    await prisma.menuRole.upsert({ where: { menuId_roleId: { menuId: menu.id, roleId: row.roleId } }, create: { menuId: menu.id, roleId: row.roleId }, update: {} });
   }
 
   // Ujian dipegang bersama: kepala unit menyusun gelombangnya, guru mengisi
   // nilai sesi yang diampu. Ikon mengikuti gaya path menu lain di seed prototype.
-  const menuUjian = await prisma.menu.upsert({
+  const menuUjian = await prisma.menuItem.upsert({
     where: { key: 'ujian' },
-    create: { key: 'ujian', label: 'Ujian', icon: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11', urutan: 8 },
+    create: { key: 'ujian', label: 'Ujian', icon: 'M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11', order: 8 },
     update: { label: 'Ujian' },
   });
   for (const key of ['ketua', 'kepsmp', 'kepma', 'guru']) {
-    const peran = await prisma.peran.findUnique({ where: { key } });
+    const peran = await prisma.role.findUnique({ where: { key } });
     if (peran) {
-      await prisma.menuPeran.upsert({
-        where: { menuId_peranId: { menuId: menuUjian.id, peranId: peran.id } },
-        create: { menuId: menuUjian.id, peranId: peran.id },
+      await prisma.menuRole.upsert({
+        where: { menuId_roleId: { menuId: menuUjian.id, roleId: peran.id } },
+        create: { menuId: menuUjian.id, roleId: peran.id },
         update: {},
       });
     }
   }
 
   // Staff share the Master Data entry; each entity is still gated by its own menu grant.
-  const dataMenu = await prisma.menu.findUnique({ where: { key: 'data' } });
-  const staffRoles = await prisma.peran.findMany({ where: { key: { notIn: ['santri', 'wali'] } } });
+  const dataMenu = await prisma.menuItem.findUnique({ where: { key: 'data' } });
+  const staffRoles = await prisma.role.findMany({ where: { key: { notIn: ['santri', 'wali'] } } });
   if (dataMenu) for (const role of staffRoles) {
-    await prisma.menuPeran.upsert({ where: { menuId_peranId: { menuId: dataMenu.id, peranId: role.id } }, create: { menuId: dataMenu.id, peranId: role.id }, update: {} });
+    await prisma.menuRole.upsert({ where: { menuId_roleId: { menuId: dataMenu.id, roleId: role.id } }, create: { menuId: dataMenu.id, roleId: role.id }, update: {} });
   }
 
   await seedSuperAdmin(passwordHash);
@@ -411,7 +411,7 @@ async function seedPortalAccess() {
       create: { personId: santri.personId, email: santri.person.email ?? `santri.${santri.nis}@nuha.local`, username: `santri.${santri.nis}`, passwordHash },
       update: { username: `santri.${santri.nis}` },
     });
-    await prisma.userPeran.upsert({ where: { userId_peranId: { userId: user.id, peranId: roleSantri.id } }, create: { userId: user.id, peranId: roleSantri.id }, update: {} });
+    await prisma.userRole.upsert({ where: { userId_roleId: { userId: user.id, roleId: roleSantri.id } }, create: { userId: user.id, roleId: roleSantri.id }, update: {} });
   }
 
   // Data client menandai ayah DAN ibu sebagai kontak utama (lihat
@@ -435,7 +435,7 @@ async function seedPortalAccess() {
       create: { personId: relasi.waliId, email: relasi.wali.email ?? `wali.${nis}@nuha.local`, username: `wali.${nis}`, passwordHash },
       update: { username: `wali.${nis}` },
     });
-    await prisma.userPeran.upsert({ where: { userId_peranId: { userId: user.id, peranId: roleWali.id } }, create: { userId: user.id, peranId: roleWali.id }, update: {} });
+    await prisma.userRole.upsert({ where: { userId_roleId: { userId: user.id, roleId: roleWali.id } }, create: { userId: user.id, roleId: roleWali.id }, update: {} });
   }
 }
 
@@ -559,10 +559,10 @@ async function main() {
   const passwordHash = await bcrypt.hash('Nuha2026!', 12);
   const tahunAjaranAktif = await seedTahunAjaran();
 
-  const roles = await Promise.all(source.roles.map((row) => prisma.peran.upsert({
+  const roles = await Promise.all(source.roles.map((row) => prisma.role.upsert({
     where: { key: String(row.key) },
-    create: { key: String(row.key), nama: String(row.nama) },
-    update: { nama: String(row.nama) },
+    create: { key: String(row.key), name: String(row.nama) },
+    update: { name: String(row.nama) },
   })));
   const roleByKey = new Map(roles.map((role) => [role.key, role]));
 
@@ -625,18 +625,18 @@ async function main() {
     // Jabatan yang belum punya peran (Musyrif, Tata Usaha) dibuatkan peran
     // sendiri tanpa grant menu. Sebelumnya jatuh ke `ketua`, sehingga staf biasa
     // otomatis memperoleh hak akses tertinggi.
-    const role = roles.find((item) => item.nama === row.peran || String(row.peran).startsWith(item.nama))
+    const role = roles.find((item) => item.name === row.peran || String(row.peran).startsWith(item.name))
       ?? await perolehPeran(String(row.peran));
     const orang = await prisma.person.upsert({ where: { email: String(row.email) }, create: { fullName: String(row.nama), gender: JenisKelamin.L, email: String(row.email), isActive: Boolean(row.aktif) }, update: { fullName: String(row.nama), isActive: Boolean(row.aktif) } });
     const user = await prisma.user.upsert({ where: { personId: orang.id }, create: { personId: orang.id, email: String(row.email), passwordHash, unitScope: String(row.unit), aktif: Boolean(row.aktif) }, update: { passwordHash, aktif: Boolean(row.aktif) } });
-    await prisma.userPeran.upsert({ where: { userId_peranId: { userId: user.id, peranId: role.id } }, create: { userId: user.id, peranId: role.id }, update: {} });
+    await prisma.userRole.upsert({ where: { userId_roleId: { userId: user.id, roleId: role.id } }, create: { userId: user.id, roleId: role.id }, update: {} });
   }
 
   for (const [index, row] of source.menuDefs.entries()) {
-    const menu = await prisma.menu.upsert({ where: { key: String(row.key) }, create: { key: String(row.key), label: String(row.label), icon: String(row.icon ?? ''), urutan: index }, update: { label: String(row.label), icon: String(row.icon ?? ''), urutan: index } });
+    const menu = await prisma.menuItem.upsert({ where: { key: String(row.key) }, create: { key: String(row.key), label: String(row.label), icon: String(row.icon ?? ''), order: index }, update: { label: String(row.label), icon: String(row.icon ?? ''), order: index } });
     for (const key of (row.roles as string[]) ?? []) {
       const role = roleByKey.get(key);
-      if (role) await prisma.menuPeran.upsert({ where: { menuId_peranId: { menuId: menu.id, peranId: role.id } }, create: { menuId: menu.id, peranId: role.id }, update: {} });
+      if (role) await prisma.menuRole.upsert({ where: { menuId_roleId: { menuId: menu.id, roleId: role.id } }, create: { menuId: menu.id, roleId: role.id }, update: {} });
     }
   }
 

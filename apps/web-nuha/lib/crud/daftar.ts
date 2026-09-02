@@ -12,8 +12,8 @@ export type KelompokMaster = { menuKey: string; label: string; icon: string | nu
  */
 export async function daftarMaster(peran: string[]): Promise<{ persona: KelompokMaster; kelompok: KelompokMaster[] }> {
   const [grants, menus] = await Promise.all([
-    prisma.menuPeran.findMany({ where: { peran: { key: { in: peran } } }, select: { menu: { select: { key: true } } } }),
-    prisma.menu.findMany({ select: { key: true, label: true, urutan: true, icon: true } }),
+    prisma.menuRole.findMany({ where: { role: { key: { in: peran } } }, select: { menu: { select: { key: true } } } }),
+    prisma.menuItem.findMany({ select: { key: true, label: true, order: true, icon: true } }),
   ]);
   const allowed = new Set(grants.map((grant) => grant.menu.key));
   const semua = ENTITIES.filter((entity) => entity.menu === 'dashboard' || allowed.has(entity.menu));
@@ -36,7 +36,7 @@ export async function daftarMaster(peran: string[]): Promise<{ persona: Kelompok
     grup.get(entity.menu)!.push({ key: entity.key, label: entity.label });
   }
   const kelompok = [...grup.entries()]
-    .sort((a, b) => (menuInfo.get(a[0])?.urutan ?? 999) - (menuInfo.get(b[0])?.urutan ?? 999))
+    .sort((a, b) => (menuInfo.get(a[0])?.order ?? 999) - (menuInfo.get(b[0])?.order ?? 999))
     .map(([menuKey, items]) => ({
       menuKey,
       label: menuInfo.get(menuKey)?.label ?? menuKey,

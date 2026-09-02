@@ -191,16 +191,16 @@ model Person {
   @@map("people")
 }
 
-model Peran {
-  id        Int     @id @default(autoincrement())
-  key       String  @unique @db.VarChar(32)
-  nama      String  @db.VarChar(120)
-  deskripsi String? @db.VarChar(255)
+model Role {
+  id          Int     @id @default(autoincrement())
+  key         String  @unique @db.VarChar(32)
+  name        String  @map("name") @db.VarChar(120)
+  description String? @map("description") @db.VarChar(255)
 
-  users     UserPeran[]
-  menuAkses MenuPeran[]
+  users     UserRole[]
+  menuItems MenuRole[]
 
-  @@map("peran")
+  @@map("roles")
 }
 
 model User {
@@ -215,44 +215,44 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  person Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
-  peran  UserPeran[]
+  person Person     @relation(fields: [personId], references: [id], onDelete: Cascade)
+  roles  UserRole[]
 
   @@map("user")
 }
 
-model UserPeran {
-  userId  BigInt @map("user_id")
-  peranId Int    @map("peran_id")
+model UserRole {
+  userId BigInt @map("user_id")
+  roleId Int    @map("role_id")
 
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  peran Peran @relation(fields: [peranId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  @@id([userId, peranId])
-  @@map("user_peran")
+  @@id([userId, roleId])
+  @@map("user_roles")
 }
 
-model Menu {
-  id     Int     @id @default(autoincrement())
-  key    String  @unique @db.VarChar(32)
-  label  String  @db.VarChar(120)
-  icon   String? @db.VarChar(255)
-  urutan Int     @default(0)
+model MenuItem {
+  id    Int     @id @default(autoincrement())
+  key   String  @unique @db.VarChar(32)
+  label String  @db.VarChar(120)
+  icon  String? @db.VarChar(255)
+  order Int     @default(0) @map("order")
 
-  akses MenuPeran[]
+  roles MenuRole[]
 
-  @@map("menu")
+  @@map("menu_items")
 }
 
-model MenuPeran {
-  menuId  Int @map("menu_id")
-  peranId Int @map("peran_id")
+model MenuRole {
+  menuId Int @map("menu_id")
+  roleId Int @map("role_id")
 
-  menu  Menu  @relation(fields: [menuId], references: [id], onDelete: Cascade)
-  peran Peran @relation(fields: [peranId], references: [id], onDelete: Cascade)
+  menu MenuItem @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  role Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
-  @@id([menuId, peranId])
-  @@map("menu_peran")
+  @@id([menuId, roleId])
+  @@map("menu_roles")
 }
 
 model RelasiWali {

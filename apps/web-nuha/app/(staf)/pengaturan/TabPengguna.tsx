@@ -20,7 +20,7 @@ export async function TabPengguna({ searchParams }: { searchParams: SearchParams
     prisma.user.count({ where }),
     prisma.user.findMany({
       where,
-      include: { person: true, peran: { include: { peran: true } } },
+      include: { person: true, roles: { include: { role: true } } },
       orderBy: { email: 'asc' },
       skip: (halaman - 1) * UKURAN_HALAMAN,
       take: UKURAN_HALAMAN,
@@ -52,7 +52,7 @@ export async function TabPengguna({ searchParams }: { searchParams: SearchParams
                   </div>
                 </div>
               </td>
-              <td>{user.peran.map((r) => r.peran.nama).join(', ') || '-'}</td>
+              <td>{user.roles.map((r) => r.role.name).join(', ') || '-'}</td>
               <td className="muted">{user.unitScope ?? 'Seluruh unit'}</td>
               <td><Badge status={user.aktif ? 'Aktif' : 'Nonaktif'} /></td>
             </tr>

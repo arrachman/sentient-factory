@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   if (!session) return Response.json({ success: false, data: null, error: { code: 'UNAUTHORIZED', message: 'Sesi wajib diisi.' } }, { status: 401 });
 
   // Authority is data-driven: whoever the menu grants may manage slips, no hardcoded role list.
-  const granted = await prisma.menuPeran.count({ where: { menu: { key: 'gaji' }, peran: { key: { in: session.peran } } } });
+  const granted = await prisma.menuRole.count({ where: { menu: { key: 'gaji' }, role: { key: { in: session.peran } } } });
   if (!granted) return Response.json({ success: false, data: null, error: { code: 'FORBIDDEN', message: 'Tidak berwenang mengatur slip gaji.' } }, { status: 403 });
 
   const parsed = schema.safeParse(await request.json().catch(() => null));

@@ -25,7 +25,7 @@ export async function gantiPeran(formData: FormData): Promise<void> {
   if (!target || target === PERAN_SUPERADMIN) {
     await createSession({ userId: session.userId, nama: session.nama, email: session.email, peran: asli });
   } else {
-    const peran = await prisma.peran.findUnique({ where: { key: target } });
+    const peran = await prisma.role.findUnique({ where: { key: target } });
     if (!peran) throw new Error('Peran tidak dikenal.');
     await createSession({
       userId: session.userId,

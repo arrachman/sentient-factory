@@ -137,25 +137,25 @@ async function tautkanKepalaUnit() {
 const TAHUN_AJARAN_ROWS = daftarTahunAjaran();
 
 async function seedPeranDanMenu() {
-  const roles = await Promise.all(source.roles.map((row) => prisma.peran.upsert({
+  const roles = await Promise.all(source.roles.map((row) => prisma.role.upsert({
     where: { key: String(row.key) },
-    create: { key: String(row.key), nama: String(row.nama) },
-    update: { nama: String(row.nama) },
+    create: { key: String(row.key), name: String(row.nama) },
+    update: { name: String(row.nama) },
   })));
   const roleByKey = new Map(roles.map((role) => [role.key, role]));
 
   for (const [index, row] of source.menuDefs.entries()) {
-    const menu = await prisma.menu.upsert({
+    const menu = await prisma.menuItem.upsert({
       where: { key: String(row.key) },
-      create: { key: String(row.key), label: String(row.label), icon: String(row.icon ?? ''), urutan: index },
-      update: { label: String(row.label), icon: String(row.icon ?? ''), urutan: index },
+      create: { key: String(row.key), label: String(row.label), icon: String(row.icon ?? ''), order: index },
+      update: { label: String(row.label), icon: String(row.icon ?? ''), order: index },
     });
     for (const key of (row.roles as string[]) ?? []) {
       const role = roleByKey.get(key);
       if (!role) continue;
-      await prisma.menuPeran.upsert({
-        where: { menuId_peranId: { menuId: menu.id, peranId: role.id } },
-        create: { menuId: menu.id, peranId: role.id },
+      await prisma.menuRole.upsert({
+        where: { menuId_roleId: { menuId: menu.id, roleId: role.id } },
+        create: { menuId: menu.id, roleId: role.id },
         update: {},
       });
     }
@@ -165,10 +165,10 @@ async function seedPeranDanMenu() {
 /** Sandi diambil dari SUPERADMIN_PASSWORD agar deployment nyata tak memakai sandi seed bersama. */
 async function seedSuperAdmin() {
   const passwordHash = await bcrypt.hash(process.env.SUPERADMIN_PASSWORD ?? 'Nuha2026!', 12);
-  const peran = await prisma.peran.upsert({
+  const peran = await prisma.role.upsert({
     where: { key: 'superadmin' },
-    create: { key: 'superadmin', nama: 'Super Admin' },
-    update: { nama: 'Super Admin' },
+    create: { key: 'superadmin', name: 'Super Admin' },
+    update: { name: 'Super Admin' },
   });
   const orang = await prisma.person.upsert({
     where: { email: 'superadmin@nuha.pesantren.web.id' },
@@ -180,15 +180,15 @@ async function seedSuperAdmin() {
     create: { personId: orang.id, email: orang.email!, username: 'superadmin', passwordHash, unitScope: 'Semua unit', aktif: true },
     update: { username: 'superadmin', passwordHash, aktif: true },
   });
-  await prisma.userPeran.upsert({
-    where: { userId_peranId: { userId: user.id, peranId: peran.id } },
-    create: { userId: user.id, peranId: peran.id },
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: user.id, roleId: peran.id } },
+    create: { userId: user.id, roleId: peran.id },
     update: {},
   });
-  for (const menu of await prisma.menu.findMany()) {
-    await prisma.menuPeran.upsert({
-      where: { menuId_peranId: { menuId: menu.id, peranId: peran.id } },
-      create: { menuId: menu.id, peranId: peran.id },
+  for (const menu of await prisma.menuItem.findMany()) {
+    await prisma.menuRole.upsert({
+      where: { menuId_roleId: { menuId: menu.id, roleId: peran.id } },
+      create: { menuId: menu.id, roleId: peran.id },
       update: {},
     });
   }

@@ -9,9 +9,9 @@ import { PemilihPeranSelect } from '@/components/PemilihPeranSelect';
  * dengan menu milik peran yang dipilih.
  */
 export async function PemilihPeran({ session }: { session: SessionPayload }) {
-  const daftar = await prisma.peran.findMany({
+  const daftar = await prisma.role.findMany({
     where: { key: { not: PERAN_SUPERADMIN } },
-    orderBy: { nama: 'asc' },
+    orderBy: { name: 'asc' },
   });
   const sedang = session.peranAsli ? session.peran[0] : '';
 

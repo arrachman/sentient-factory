@@ -25,8 +25,8 @@ import bcrypt from 'bcryptjs';
 async function jalankan(): Promise<void> {
   const unit = await prisma.unit.findUniqueOrThrow({ where: { key: 'SMP' } });
   const [roleSantri, roleWali] = await Promise.all([
-    prisma.peran.findUniqueOrThrow({ where: { key: 'santri' } }),
-    prisma.peran.findUniqueOrThrow({ where: { key: 'wali' } }),
+    prisma.role.findUniqueOrThrow({ where: { key: 'santri' } }),
+    prisma.role.findUniqueOrThrow({ where: { key: 'wali' } }),
   ]);
   const passwordHash = await bcrypt.hash('Nuha2026!', 12);
 
@@ -52,9 +52,9 @@ async function jalankan(): Promise<void> {
       },
       update: { username: `santri.${santri.nis}` },
     });
-    await prisma.userPeran.upsert({
-      where: { userId_peranId: { userId: userSantri.id, peranId: roleSantri.id } },
-      create: { userId: userSantri.id, peranId: roleSantri.id },
+    await prisma.userRole.upsert({
+      where: { userId_roleId: { userId: userSantri.id, roleId: roleSantri.id } },
+      create: { userId: userSantri.id, roleId: roleSantri.id },
       update: {},
     });
     akunSantriDibuat += 1;
@@ -79,9 +79,9 @@ async function jalankan(): Promise<void> {
       },
       update: { username: `wali.${santri.nis}` },
     });
-    await prisma.userPeran.upsert({
-      where: { userId_peranId: { userId: userWali.id, peranId: roleWali.id } },
-      create: { userId: userWali.id, peranId: roleWali.id },
+    await prisma.userRole.upsert({
+      where: { userId_roleId: { userId: userWali.id, roleId: roleWali.id } },
+      create: { userId: userWali.id, roleId: roleWali.id },
       update: {},
     });
     akunWaliDibuat += 1;

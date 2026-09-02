@@ -1,6 +1,6 @@
 'use client';
 
-type Opsi = { key: string; nama: string };
+type Opsi = { key: string; name: string };
 
 /** Select yang langsung mengirim form saat berganti, tanpa tombol Terapkan. */
 export function PemilihPeranSelect({ daftar, sedang }: { daftar: Opsi[]; sedang: string }) {
@@ -13,7 +13,7 @@ export function PemilihPeranSelect({ daftar, sedang }: { daftar: Opsi[]; sedang:
     >
       <option value="">Super admin (peran asli)</option>
       {daftar.map((peran) => (
-        <option key={peran.key} value={peran.key}>{peran.nama}</option>
+        <option key={peran.key} value={peran.key}>{peran.name}</option>
       ))}
     </select>
   );

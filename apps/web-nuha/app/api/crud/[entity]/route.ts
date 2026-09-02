@@ -12,7 +12,7 @@ async function authorize(entityKey: string) {
   const session = await readSession();
   const entity = getEntity(entityKey);
   if (!session || !entity) return { session: null, entity: null, denied: true };
-  const granted = entity.menu === 'dashboard' || await prisma.menuPeran.count({ where: { menu: { key: entity.menu }, peran: { key: { in: session.peran } } } });
+  const granted = entity.menu === 'dashboard' || await prisma.menuRole.count({ where: { menu: { key: entity.menu }, role: { key: { in: session.peran } } } });
   return { session, entity, denied: granted === 0 };
 }
 

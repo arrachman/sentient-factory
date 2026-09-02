@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const identifier = parsed.data.identifier.trim();
   const user = await prisma.user.findFirst({
     where: { OR: [{ email: identifier }, { username: identifier }] },
-    include: { person: true, peran: { include: { peran: true } } },
+    include: { person: true, roles: { include: { role: true } } },
   });
 
   const invalid = Response.json(
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     userId: String(user.id),
     nama: user.person.fullName,
     email: user.email,
-    peran: user.peran.map((row) => row.peran.key),
+    peran: user.roles.map((row) => row.role.key),
   });
   await recordAudit({
     aksi: 'LOGIN',
