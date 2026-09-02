@@ -4,6 +4,12 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Redirect halaman awal staf diperbaiki
+
+Pengalihan tamu dari `/` ke `/beranda` kini hanya dijalankan oleh layout staf,
+mencegah redirect paralel Next.js yang sebelumnya tampil sebagai layar kesalahan.
+Server dev di port 3226 juga dijalankan ulang dengan konfigurasi MySQL aktif.
+
 ## 2026-09-02 — Label deskripsi modal Identitas orang dihapus
 
 Teks penjelasan di bawah judul modal "Tambah/Ubah identitas orang" dihapus
