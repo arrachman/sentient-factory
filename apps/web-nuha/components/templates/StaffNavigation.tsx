@@ -35,7 +35,11 @@ export function StaffNavigation({ menus, masterGroups }: { menus: Menu[]; master
               <span className="submenu-heading-label">{group.label}</span>
               <svg className={`submenu-chevron ${isGroupOpen ? 'open' : ''}`} width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9" /></svg>
             </button>
-            {isGroupOpen && group.items.map((item) => <Link key={item.key} href={`/data/${item.key}`} className={`submenuitem ${pathname === `/data/${item.key}` ? 'active' : ''}`}>{item.label}</Link>)}
+            <div className={`submenu-items ${isGroupOpen ? 'open' : ''}`}>
+              <div className="submenu-items-inner">
+                {group.items.map((item) => <Link key={item.key} href={`/data/${item.key}`} className={`submenuitem ${pathname === `/data/${item.key}` ? 'active' : ''}`}>{item.label}</Link>)}
+              </div>
+            </div>
           </div>;
         })}
       </div>}

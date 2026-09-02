@@ -4,6 +4,16 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Sidebar: submenu Master Data bisa dibuka/tutup per grup, dianimasikan
+
+Tiap kelompok di submenu Master Data (Data Orang per Peran, Dashboard, Data
+Induk, dst.) kini punya heading yang berfungsi sebagai tombol toggle sendiri
+(`aria-expanded` + chevron berputar), independen dari grup lain. Transisi
+buka/tutup memakai animasi tinggi (`grid-template-rows` + opacity) alih-alih
+render instan, dan hover/active pada `.menuitem`/`.submenuitem` diberi
+transisi warna supaya sidebar tidak terasa kaku. Murni styling/UI, tidak ada
+perubahan data atau akses.
+
 ## 2026-09-01 — Master Data: submenu entitas sesuai akses peran
 
 Menu staf **Kelola Data** berganti nama menjadi **Master Data**. Saat menu
