@@ -6,8 +6,9 @@ kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
 ## 2026-09-02 — Jarak ikon dropdown pemilih peran diperbaiki
 
-Padding kanan dropdown "Lihat sebagai" diperbesar agar ikon panah native tidak
-terlalu mepet ke tepi. Tidak ada perubahan pada opsi atau perilaku pergantian peran.
+Panah native pada dropdown "Lihat sebagai" diganti SVG yang diposisikan 12px
+dari sisi kanan agar tidak terlalu mepet ke tepi. Tidak ada perubahan pada opsi
+atau perilaku pergantian peran.
 
 ## 2026-09-02 — Label wajib pada formulir Master Data dihapus
 
