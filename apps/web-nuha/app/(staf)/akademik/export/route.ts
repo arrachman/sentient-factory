@@ -17,15 +17,15 @@ function tanggal(nilai: Date | null): string {
   return nilai ? new Intl.DateTimeFormat('id-ID').format(nilai) : '';
 }
 
-function nomorWali(row: { wali: { hp: string | null } }): string {
-  return row.wali.hp ?? '';
+function nomorWali(row: { wali: { phone: string | null } }): string {
+  return row.wali.phone ?? '';
 }
 
 function ambilWali(
   relasi: Array<{
     utama: boolean;
     peran: string | null;
-    wali: { nama: string; nik: string | null; hp: string | null; alamat: string | null };
+    wali: { fullName: string; nik: string | null; phone: string | null; addressLine: string | null };
     hubungan: string;
     nik: string | null;
     ttl: string | null;
@@ -43,7 +43,7 @@ function dataWali(
 ): Array<string | null | undefined> {
   if (!wali) return Array(10).fill('');
   return [
-    wali.wali.nama,
+    wali.wali.fullName,
     wali.hubungan,
     wali.nik ?? wali.wali.nik,
     wali.ttl,
@@ -51,7 +51,7 @@ function dataWali(
     wali.pendidikan,
     wali.pendapatan,
     nomorWali(wali),
-    wali.wali.alamat,
+    wali.wali.addressLine,
     wali.peran,
   ];
 }
@@ -74,7 +74,7 @@ export async function GET(request: Request) {
   const siswa = await prisma.santri.findMany({
     where,
     include: {
-      orang: {
+      person: {
         include: {
           sebagaiAnak: {
             include: { wali: true },
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
       kelas: true,
       kamar: { include: { asrama: true } },
     },
-    orderBy: { orang: { nama: 'asc' } },
+    orderBy: { person: { fullName: 'asc' } },
   });
 
   const header = [
@@ -102,17 +102,17 @@ export async function GET(request: Request) {
   const csv = [
     baris(header),
     ...siswa.map((santri) => {
-      const { orang } = santri;
-      const ayah = ambilWali(orang.sebagaiAnak, 'Ayah');
-      const ibu = ambilWali(orang.sebagaiAnak, 'Ibu');
-      const wali = ambilWali(orang.sebagaiAnak, 'Wali');
+      const { person } = santri;
+      const ayah = ambilWali(person.sebagaiAnak, 'Ayah');
+      const ibu = ambilWali(person.sebagaiAnak, 'Ibu');
+      const wali = ambilWali(person.sebagaiAnak, 'Wali');
       return baris([
-        santri.nis, santri.nisn, orang.nama, orang.nik, orang.jk, orang.tmpLahir, tanggal(orang.tglLahir),
+        santri.nis, santri.nisn, person.fullName, person.nik, person.gender, person.birthPlace, tanggal(person.birthDate),
         santri.unit?.nama, santri.unit?.jenjang, santri.kelas?.nama, santri.kelas?.tingkat, santri.program, santri.tahunMasuk, santri.status,
         santri.kamar?.asrama.nama, santri.kamar?.kode,
-        orang.alamat, orang.rt, orang.rw, orang.kelurahan, orang.kecamatan, orang.kabupaten,
-        orang.desaId ? String(orang.desaId) : null, orang.region?.fullName, orang.kodePos ?? orang.region?.postalCode, orang.noKk,
-        orang.anakKe, orang.jumlahSaudara, orang.hobi, orang.citaCita, orang.asalSekolah, orang.pendidikanTerakhir, orang.hp, orang.email,
+        person.addressLine, person.neighborhoodRt, person.neighborhoodRw, person.villageName, person.districtName, person.regencyName,
+        person.regionId ? String(person.regionId) : null, person.region?.fullName, person.postalCode ?? person.region?.postalCode, person.familyCardNumber,
+        person.birthOrder, person.siblingCount, person.hobby, person.aspiration, person.previousSchool, person.highestEducation, person.phone, person.email,
         ...dataWali(ayah), ...dataWali(ibu), ...dataWali(wali),
       ]);
     }),

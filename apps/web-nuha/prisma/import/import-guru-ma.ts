@@ -135,7 +135,7 @@ function siapkanGuru(path: string): { siap: SiapGuru[]; galat: Galat[] } {
         );
       }
 
-      // `jabatan` menentukan kategori orang: filter Kategori di /data/orang
+      // `jabatan` menentukan kategori person: filter Kategori di /data/orang
       // memisah guru dari staf lewat kata "Guru" (lihat FILTER_KATEGORI_ORANG
       // di lib/crud/peran-orang.ts). Jadi siapa pun yang mengampu mapel
       // jabatannya "Guru Mapel", dan jabatan struktural dari kolom G
@@ -189,16 +189,16 @@ async function jalankan(): Promise<void> {
 
   for (const g of siap) {
     const email = `pegawai.${g.nip.toLowerCase()}@nuha.local`;
-    const orang = await prisma.orang.upsert({
+    const orang = await prisma.person.upsert({
       where: { email },
-      create: { nama: g.nama, jk: g.jk, tglLahir: g.tglLahir, tmpLahir: g.tmpLahir, email },
-      update: { nama: g.nama, jk: g.jk, tglLahir: g.tglLahir, tmpLahir: g.tmpLahir },
+      create: { fullName: g.nama, gender: g.jk, birthDate: g.tglLahir, birthPlace: g.tmpLahir, email },
+      update: { fullName: g.nama, gender: g.jk, birthDate: g.tglLahir, birthPlace: g.tmpLahir },
     });
 
     await prisma.pegawai.upsert({
       where: { nip: g.nip },
       create: {
-        orangId: orang.id,
+        personId: orang.id,
         nip: g.nip,
         unitId: unit.id,
         jabatan: g.jabatan,
@@ -209,7 +209,7 @@ async function jalankan(): Promise<void> {
         tmpTglLahir: `${g.tmpLahir}, ${g.tglLahir.toISOString().slice(0, 10)}`,
       },
       update: {
-        orangId: orang.id,
+        personId: orang.id,
         unitId: unit.id,
         jabatan: g.jabatan,
         pendidikanTerakhir: g.pendidikanTerakhir,

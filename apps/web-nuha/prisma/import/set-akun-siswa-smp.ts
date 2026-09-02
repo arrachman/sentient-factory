@@ -32,7 +32,7 @@ async function jalankan(): Promise<void> {
 
   const santriRows = await prisma.santri.findMany({
     where: { unitId: unit.id },
-    include: { orang: true },
+    include: { person: true },
   });
 
   let akunSantriDibuat = 0;
@@ -43,10 +43,10 @@ async function jalankan(): Promise<void> {
     if (!santri.nis) continue;
 
     const userSantri = await prisma.user.upsert({
-      where: { orangId: santri.orangId },
+      where: { personId: santri.personId },
       create: {
-        orangId: santri.orangId,
-        email: santri.orang.email ?? `santri.${santri.nis}@nuha.local`,
+        personId: santri.personId,
+        email: santri.person.email ?? `santri.${santri.nis}@nuha.local`,
         username: `santri.${santri.nis}`,
         passwordHash,
       },
@@ -60,7 +60,7 @@ async function jalankan(): Promise<void> {
     akunSantriDibuat += 1;
 
     const relasiWali = await prisma.relasiWali.findFirst({
-      where: { anakId: santri.orangId, peran: 'Wali' },
+      where: { anakId: santri.personId, peran: 'Wali' },
       include: { wali: true },
       orderBy: { id: 'asc' },
     });
@@ -70,9 +70,9 @@ async function jalankan(): Promise<void> {
     }
 
     const userWali = await prisma.user.upsert({
-      where: { orangId: relasiWali.waliId },
+      where: { personId: relasiWali.waliId },
       create: {
-        orangId: relasiWali.waliId,
+        personId: relasiWali.waliId,
         email: relasiWali.wali.email ?? `wali.${santri.nis}@nuha.local`,
         username: `wali.${santri.nis}`,
         passwordHash,

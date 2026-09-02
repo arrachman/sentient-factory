@@ -23,7 +23,7 @@ export async function TabTunggakan({ searchParams }: { searchParams: SearchParam
   const rows = idHalaman.length
     ? await prisma.tagihan.findMany({
       where: { id: { in: idHalaman } },
-      include: { santri: { include: { orang: true, unit: true } } },
+      include: { santri: { include: { person: true, unit: true } } },
     })
     : [];
   const posisi = new Map(idHalaman.map((id, i) => [id, i]));
@@ -49,9 +49,9 @@ export async function TabTunggakan({ searchParams }: { searchParams: SearchParam
                   background: '#FEF7F7', border: '1px solid #F0D5D5', flexWrap: 'wrap',
                 }}
               >
-                <Avatar nama={t.santri.orang.nama} size={36} />
+                <Avatar nama={t.santri.person.fullName} size={36} />
                 <div style={{ flex: 1, minWidth: 170 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{t.santri.orang.nama}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{t.santri.person.fullName}</div>
                   <div className="muted">{t.santri.unit?.nama ?? '-'} · {t.jenis}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>

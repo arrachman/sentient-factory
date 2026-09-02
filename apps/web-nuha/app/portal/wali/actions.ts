@@ -15,7 +15,7 @@ async function santriMilikWaliSesi(santriId: bigint) {
   const user = await prisma.user.findUnique({ where: { id: BigInt(session.userId) } });
   if (!user) return null;
   const relasi = await prisma.relasiWali.findFirst({
-    where: { waliId: user.orangId, anak: { santri: { id: santriId } } },
+    where: { waliId: user.personId, anak: { santri: { id: santriId } } },
     include: { anak: { include: { santri: true } } },
   });
   return relasi?.anak.santri ?? null;

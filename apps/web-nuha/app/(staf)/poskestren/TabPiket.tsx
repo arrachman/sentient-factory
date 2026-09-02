@@ -12,8 +12,8 @@ const SHIFT = '16.00–21.00';
 export async function TabPiket() {
   const santri = await prisma.santri.findMany({
     where: { status: 'Mukim', kamar: { isNot: null } },
-    include: { orang: true, kamar: { include: { asrama: true } } },
-    orderBy: { orang: { nama: 'asc' } },
+    include: { person: true, kamar: { include: { asrama: true } } },
+    orderBy: { person: { fullName: 'asc' } },
   });
 
   const perAsrama = new Map<string, typeof santri>();
@@ -25,7 +25,7 @@ export async function TabPiket() {
   const piket: Array<{ hari: string; kader: string; asrama: string }> = [];
   for (const [asrama, anggota] of perAsrama) {
     for (let i = 0; i < anggota.length; i += 2) {
-      const pasangan = anggota.slice(i, i + 2).map((s) => s.orang.nama).join(' · ');
+      const pasangan = anggota.slice(i, i + 2).map((s) => s.person.fullName).join(' · ');
       piket.push({ hari: HARI[(i / 2) % HARI.length], kader: pasangan, asrama });
     }
   }

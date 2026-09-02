@@ -7,7 +7,7 @@
  * Pengecekan DB sebelum menulis: **tidak satu pun** dari 11 NIK/NISN ini sudah
  * ada — seluruh baris berstatus baru. Meski begitu skrip tetap idempoten:
  * pencocokan `Orang` lewat NIK (identitas terkuat) lalu email sintetis berbasis
- * NISN, `Santri` lewat orangId/NISN, wali lewat NIK (atau email sintetis
+ * NISN, `Santri` lewat personId/NISN, wali lewat NIK (atau email sintetis
  * per-anak-per-peran bila NIK kosong, lihat `lib/tulis-wali.ts`).
  *
  * Catatan data sumber yang sengaja dipertahankan apa adanya:
@@ -47,7 +47,7 @@ type BarisSiswa = {
   no: number;
   nama: string;
   ttl: string;
-  jk: JenisKelamin;
+  gender: JenisKelamin;
   nik: string;
   noKk: string;
   nisn: string;
@@ -73,7 +73,7 @@ const DATA: BarisSiswa[] = [
     no: 1,
     nama: 'AHMAD SHAFLY AL KAUTSAR',
     ttl: 'MALANG, 12 AGUSTUS 2009',
-    jk: JenisKelamin.L,
+    gender: JenisKelamin.L,
     nik: '3507131208090002',
     noKk: '3507131204230001',
     nisn: '3096502331',
@@ -100,7 +100,7 @@ const DATA: BarisSiswa[] = [
     no: 2,
     nama: 'DINDA AULIA RAMADANI',
     ttl: 'PAMEKASAN, 16 AGUSTUS 2010',
-    jk: JenisKelamin.P,
+    gender: JenisKelamin.P,
     nik: '3528055608100001',
     noKk: '3528052803220007',
     nisn: '3102629196',
@@ -126,7 +126,7 @@ const DATA: BarisSiswa[] = [
     no: 3,
     nama: 'DZIHNI LAILA MAFTUHA',
     ttl: 'PASURUAN, 14 MEI 2010',
-    jk: JenisKelamin.P,
+    gender: JenisKelamin.P,
     nik: '3505105405100001',
     noKk: '3505100810200004',
     nisn: '3104598474',
@@ -155,7 +155,7 @@ const DATA: BarisSiswa[] = [
     no: 4,
     nama: 'MEUTYA SAILA IMANIA AZ ZAHRA',
     ttl: 'MALANG, 15 FEBRUARI 2010',
-    jk: JenisKelamin.P,
+    gender: JenisKelamin.P,
     nik: '3507185502100001',
     noKk: '3507182907100009',
     nisn: '0104053532',
@@ -184,7 +184,7 @@ const DATA: BarisSiswa[] = [
     no: 5,
     nama: 'MUHAMMAD ABDULLOH AZAMY',
     ttl: 'MALANG, 25 FEBRUARI 2010',
-    jk: JenisKelamin.L,
+    gender: JenisKelamin.L,
     nik: '3573042502100002',
     noKk: '3573042503100016',
     nisn: '0109784803',
@@ -214,7 +214,7 @@ const DATA: BarisSiswa[] = [
     no: 6,
     nama: 'MUHAMMAD CHOIRUL ANAM',
     ttl: 'MALANG, 08 JULI 2009',
-    jk: JenisKelamin.L,
+    gender: JenisKelamin.L,
     nik: '3573040807090006',
     noKk: '3573031606080003',
     nisn: '0096214001',
@@ -243,7 +243,7 @@ const DATA: BarisSiswa[] = [
     no: 7,
     nama: 'MUHAMMAD FAJAR PUTRA SULHARI',
     ttl: 'BATU, 11 MEI 2010',
-    jk: JenisKelamin.L,
+    gender: JenisKelamin.L,
     nik: '3579021105100002',
     noKk: '3579021104080007',
     nisn: '0109024036',
@@ -272,7 +272,7 @@ const DATA: BarisSiswa[] = [
     no: 8,
     nama: 'MUHAMMAD FARIS AUFA SYAHMI',
     ttl: 'GORONTALO, 01 OKTOBER 2009',
-    jk: JenisKelamin.L,
+    gender: JenisKelamin.L,
     nik: '7503060110090001',
     noKk: '7503061402080139',
     nisn: '3098189860',
@@ -301,7 +301,7 @@ const DATA: BarisSiswa[] = [
     no: 9,
     nama: 'MUHAMMAD IZZY FADHLU ROBBY',
     ttl: 'MALANG, 29 APRIL 2010',
-    jk: JenisKelamin.L,
+    gender: JenisKelamin.L,
     nik: '3507182904100001',
     noKk: '3507181907040434',
     nisn: '0104959701',
@@ -330,7 +330,7 @@ const DATA: BarisSiswa[] = [
     no: 10,
     nama: 'TAZKIYA NUR MADINA',
     ttl: 'NGANJUK, 12 JULI 2009',
-    jk: JenisKelamin.P,
+    gender: JenisKelamin.P,
     nik: '3518135207090001',
     noKk: '3518131008020393',
     nisn: '0092045093',
@@ -359,7 +359,7 @@ const DATA: BarisSiswa[] = [
     no: 11,
     nama: 'MUHAMMAD HAMDAN ZAINI',
     ttl: 'MALANG, 29 SEPTEMBER 2009',
-    jk: JenisKelamin.L,
+    gender: JenisKelamin.L,
     nik: '3573032909090003',
     noKk: '3573032212090019',
     nisn: '0097115212',
@@ -454,33 +454,33 @@ async function jalankan(): Promise<void> {
     const emailSintetis = `santri.${s.nisn}@nuha.local`;
     const hp = bersihkanHp(s.hp);
 
-    const adaSebelumnya = await prisma.orang.findFirst({
+    const adaSebelumnya = await prisma.person.findFirst({
       where: { OR: [{ nik: s.nik }, { email: emailSintetis }] },
-      select: { id: true, alamat: true, hp: true },
+      select: { id: true, addressLine: true, phone: true },
     });
 
     // Alamat & HP hasil pembersihan manual di DB tidak ditimpa versi ALL CAPS dari sheet.
     const isiOrang = {
-      nama,
-      jk: s.jk,
-      tglLahir: s.tglLahir,
-      tmpLahir: s.tmpLahir,
+      fullName: nama,
+      gender: s.gender,
+      birthDate: s.tglLahir,
+      birthPlace: s.tmpLahir,
       nik: s.nik,
-      noKk: s.noKk,
-      alamat: adaSebelumnya?.alamat?.trim() || s.alamat,
-      rt: s.rt,
-      rw: s.rw,
-      anakKe: s.anakKe,
-      jumlahSaudara: s.jumlahSaudara,
-      hobi: s.hobi,
-      citaCita: s.citaCita,
-      asalSekolah: s.asalSekolah,
-      hp: hp ?? bersihkanHp(adaSebelumnya?.hp),
+      familyCardNumber: s.noKk,
+      addressLine: adaSebelumnya?.addressLine?.trim() || s.alamat,
+      neighborhoodRt: s.rt,
+      neighborhoodRw: s.rw,
+      birthOrder: s.anakKe,
+      siblingCount: s.jumlahSaudara,
+      hobby: s.hobi,
+      aspiration: s.citaCita,
+      previousSchool: s.asalSekolah,
+      phone: hp ?? bersihkanHp(adaSebelumnya?.phone),
     };
 
     const orang = adaSebelumnya
-      ? await prisma.orang.update({ where: { id: adaSebelumnya.id }, data: { ...isiOrang, email: emailSintetis } })
-      : await prisma.orang.create({ data: { ...isiOrang, email: emailSintetis } });
+      ? await prisma.person.update({ where: { id: adaSebelumnya.id }, data: { ...isiOrang, email: emailSintetis } })
+      : await prisma.person.create({ data: { ...isiOrang, email: emailSintetis } });
 
     const nis = s.nis ?? buatNis(TAHUN_MASUK, KODE_UNIT, s.no);
     const isiSantri = {
@@ -488,12 +488,12 @@ async function jalankan(): Promise<void> {
       status: StatusSantri.Mukim, tahunMasuk: TAHUN_MASUK,
     };
     const santriLama = await prisma.santri.findFirst({
-      where: { OR: [{ orangId: orang.id }, { nisn: s.nisn }] },
+      where: { OR: [{ personId: orang.id }, { nisn: s.nisn }] },
       select: { id: true },
     });
     const santri = santriLama
-      ? await prisma.santri.update({ where: { id: santriLama.id }, data: { orangId: orang.id, ...isiSantri } })
-      : await prisma.santri.create({ data: { orangId: orang.id, ...isiSantri } });
+      ? await prisma.santri.update({ where: { id: santriLama.id }, data: { personId: orang.id, ...isiSantri } })
+      : await prisma.santri.create({ data: { personId: orang.id, ...isiSantri } });
 
     if (s.ayah) await tulisRelasiWali(orang.id, s.nisn, 'Ayah', { ...s.ayah, nama: judulKasus(s.ayah.nama), hp: bersihkanHp(s.ayah.hp) });
     if (s.ibu) await tulisRelasiWali(orang.id, s.nisn, 'Ibu', { ...s.ibu, nama: judulKasus(s.ibu.nama), hp: bersihkanHp(s.ibu.hp) });

@@ -26,7 +26,7 @@ export async function TabUnit() {
     prisma.unit.findMany({
       include: {
         _count: { select: { santri: true, pegawai: true, kelas: true } },
-        kepalaPegawai: { include: { orang: { select: { nama: true } } } },
+        kepalaPegawai: { include: { person: { select: { fullName: true } } } },
         region: true,
       },
       orderBy: { nama: 'asc' },
@@ -75,7 +75,7 @@ export async function TabUnit() {
                   <span className="muted" style={{ fontSize: 12 }}>{unit.key}</span>
                   <Badge status={unit.aktif ? 'Aktif' : 'Nonaktif'} />
                 </div>
-                <Baris label={unit.kepalaJabatan ?? 'Kepala unit'} nilai={unit.kepalaPegawai?.orang.nama ?? unit.kepalaNama} />
+                <Baris label={unit.kepalaJabatan ?? 'Kepala unit'} nilai={unit.kepalaPegawai?.person.fullName ?? unit.kepalaNama} />
                 <Baris label="Jenjang" nilai={unit.jenjang} />
                 <Baris label="NPSN / NSM" nilai={unit.npsn} />
                 <Baris label="Akreditasi" nilai={unit.akreditasi} />

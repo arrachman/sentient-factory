@@ -8,7 +8,7 @@ export async function TabPiket({ f }: { f: FilterPegawai }) {
   const pegawai = whereUnit(f.unit);
   const piket = await prisma.jadwalPiket.findMany({
     where: pegawai ? { pegawai } : {},
-    include: { pegawai: { include: { orang: true } } },
+    include: { pegawai: { include: { person: true } } },
     orderBy: [{ urutan: 'asc' }],
   });
 
@@ -25,7 +25,7 @@ export async function TabPiket({ f }: { f: FilterPegawai }) {
             <tr key={p.id}>
               <td>{p.hari}</td>
               <td>{p.waktuMulai}–{p.waktuSelesai}</td>
-              <td>{p.pegawai?.orang.nama ?? '-'}</td>
+              <td>{p.pegawai?.person.fullName ?? '-'}</td>
             </tr>
           ))}
         </Tabel>

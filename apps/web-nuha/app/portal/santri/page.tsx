@@ -42,9 +42,9 @@ export default async function PortalSantriPage({ searchParams }: { searchParams:
 
   const user = await prisma.user.findUnique({
     where: { id: BigInt(session.userId) },
-    include: { orang: { include: { santri: { include: { unit: true, kelas: true, kamar: { include: { asrama: true } } } } } } },
+    include: { person: { include: { santri: { include: { unit: true, kelas: true, kamar: { include: { asrama: true } } } } } } },
   });
-  const santri = user?.orang.santri;
+  const santri = user?.person.santri;
 
   if (!santri) {
     return (
@@ -57,7 +57,7 @@ export default async function PortalSantriPage({ searchParams }: { searchParams:
   const akuInfo = `${santri.unit?.nama ?? '-'} · Kelas ${santri.kelas?.nama ?? '-'}`;
 
   return (
-    <PortalFrame nama={user!.orang.nama} info={`${akuInfo} · NIS ${santri.nis}`}>
+    <PortalFrame nama={user!.person.fullName} info={`${akuInfo} · NIS ${santri.nis}`}>
       <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', padding: '16px 0 18px' }}>
         {TABS.map((t) => (
           <Link key={t.key} href={`/portal/santri${t.key === TABS[0].key ? '' : `?tab=${t.key}`}`} className={`tab ${t.key === tabAktif ? 'active' : ''}`} style={{ whiteSpace: 'nowrap' }}>
@@ -76,7 +76,7 @@ export default async function PortalSantriPage({ searchParams }: { searchParams:
       {tabAktif === 'hafalan' && <TabHafalan santri={santri} />}
       {tabAktif === 'izin' && <TabIzin santriId={santri.id} />}
       {tabAktif === 'bayar' && <TabBayar santriId={santri.id} />}
-      {tabAktif === 'kartu' && <TabKartu santri={santri} nama={user!.orang.nama} />}
+      {tabAktif === 'kartu' && <TabKartu santri={santri} nama={user!.person.fullName} />}
 
       <div style={{ marginTop: 22, textAlign: 'center', fontSize: 11.5, color: '#9CA3AF' }}>SIMTERPADU · Portal Santri diakses dari anjungan komputer pondok</div>
       <div style={{ height: 70 }} />

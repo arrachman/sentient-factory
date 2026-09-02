@@ -20,7 +20,7 @@ function ahadTerdekat(n: number) {
 export async function TabDaftar() {
   const santri = await prisma.santri.findMany({
     where: { status: 'Mukim' },
-    include: { orang: true },
+    include: { person: true },
     orderBy: { nis: 'asc' },
     take: 200,
   });
@@ -42,7 +42,7 @@ export async function TabDaftar() {
             <label htmlFor="santriId">Santri yang dikunjungi</label>
             <select id="santriId" name="santriId" required>
               <option value="">Pilih santri</option>
-              {santri.map((s) => <option key={String(s.id)} value={String(s.id)}>{s.orang.nama} · {s.nis}</option>)}
+              {santri.map((s) => <option key={String(s.id)} value={String(s.id)}>{s.person.fullName} · {s.nis}</option>)}
             </select>
           </div>
           <div className="field">

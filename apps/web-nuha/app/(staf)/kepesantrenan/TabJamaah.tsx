@@ -23,8 +23,8 @@ export async function TabJamaah({ searchParams }: { searchParams: Record<string,
   const [santri, presensiHariIni, rekapPekan] = await Promise.all([
     prisma.santri.findMany({
       where: { status: 'Mukim' },
-      include: { orang: true, kamar: { include: { asrama: true } } },
-      orderBy: { orang: { nama: 'asc' } },
+      include: { person: true, kamar: { include: { asrama: true } } },
+      orderBy: { person: { fullName: 'asc' } },
     }),
     prisma.presensi.findMany({ where: { tgl: hariIni, sesi: waktu } }),
     prisma.presensi.groupBy({
@@ -73,9 +73,9 @@ export async function TabJamaah({ searchParams }: { searchParams: Record<string,
                 const nilaiSekarang = statusHariIni.get(String(x.id)) ?? 'Hadir';
                 return (
                   <div key={String(x.id)} className="inset" style={{ display: 'flex', gap: 11, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Avatar nama={x.orang.nama} size={32} />
+                    <Avatar nama={x.person.fullName} size={32} />
                     <div style={{ flex: 1, minWidth: 130 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600 }}>{x.orang.nama}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600 }}>{x.person.fullName}</div>
                       <div className="muted" style={{ fontSize: 11.5 }}>
                         {x.kamar?.asrama.nama ?? '—'} · kamar {x.kamar?.kode ?? '—'}
                       </div>

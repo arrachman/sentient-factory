@@ -36,10 +36,10 @@ const prisma = new PrismaClient();
 
 async function main() {
   for (const { namaHapus, namaSimpan } of PASANGAN) {
-    const simpan = await prisma.orang.findFirst({ where: { nama: namaSimpan, deletedAt: null } });
+    const simpan = await prisma.person.findFirst({ where: { fullName: namaSimpan, deletedAt: null } });
     if (!simpan) throw new Error(`Orang "${namaSimpan}" tidak ditemukan — batal`);
 
-    const hapus = await prisma.orang.findFirst({ where: { nama: namaHapus, deletedAt: null } });
+    const hapus = await prisma.person.findFirst({ where: { fullName: namaHapus, deletedAt: null } });
     if (!hapus) {
       console.log(`"${namaHapus}" sudah tidak ada — penggabungan tampaknya sudah dijalankan.`);
       continue;
@@ -48,7 +48,7 @@ async function main() {
 
     // Duplikat tidak boleh membawa data akademik/keuangan. Kalau ada, berhenti:
     // penggabungannya butuh keputusan manusia, bukan cascade delete.
-    const santriHapus = await prisma.santri.findUnique({ where: { orangId: hapus.id } });
+    const santriHapus = await prisma.santri.findUnique({ where: { personId: hapus.id } });
     if (santriHapus) {
       const tanggungan = await Promise.all([
         prisma.nilai.count({ where: { santriId: santriHapus.id } }),
@@ -64,35 +64,35 @@ async function main() {
         );
       }
     }
-    const jumlahUser = await prisma.user.count({ where: { orangId: hapus.id } });
+    const jumlahUser = await prisma.user.count({ where: { personId: hapus.id } });
     if (jumlahUser > 0) throw new Error(`"${namaHapus}" punya akun user — batal, tangani manual`);
 
     // Riwayat pendidikan duplikat dipindah; bentrok (orang+unit+TA sudah ada
     // di baris yang bertahan) cukup dibuang karena isinya sama.
-    const riwayat = await prisma.riwayatPendidikan.findMany({ where: { orangId: hapus.id } });
+    const riwayat = await prisma.riwayatPendidikan.findMany({ where: { personId: hapus.id } });
     let dipindah = 0;
     for (const r of riwayat) {
       const bentrok = await prisma.riwayatPendidikan.findUnique({
         where: {
-          orangId_unitId_tahunAjaranId: {
-            orangId: simpan.id,
+          personId_unitId_tahunAjaranId: {
+            personId: simpan.id,
             unitId: r.unitId,
             tahunAjaranId: r.tahunAjaranId,
           },
         },
       });
       if (bentrok) continue;
-      await prisma.riwayatPendidikan.update({ where: { id: r.id }, data: { orangId: simpan.id } });
+      await prisma.riwayatPendidikan.update({ where: { id: r.id }, data: { personId: simpan.id } });
       dipindah += 1;
     }
 
-    await prisma.orang.delete({ where: { id: hapus.id } });
+    await prisma.person.delete({ where: { id: hapus.id } });
     await recordAudit({
       aksi: 'delete',
       entitas: 'Orang',
       entitasId: String(hapus.id),
       ringkasan: `Gabungkan duplikat "${namaHapus}" (#${hapus.id}) ke "${namaSimpan}" (#${simpan.id})`,
-      perubahan: { dari: { orangId: hapus.id, riwayatDipindah: dipindah } },
+      perubahan: { dari: { personId: hapus.id, riwayatDipindah: dipindah } },
       aktor: AKTOR_SKRIP,
     });
     console.log(
@@ -101,15 +101,15 @@ async function main() {
   }
 
   for (const { namaSimpan } of PASANGAN) {
-    const orang = await prisma.orang.findFirst({
-      where: { nama: namaSimpan, deletedAt: null },
+    const orang = await prisma.person.findFirst({
+      where: { fullName: namaSimpan, deletedAt: null },
       include: {
         santri: { include: { kelas: true, unit: true } },
         riwayatPendidikan: { include: { tahunAjaran: true } },
       },
     });
     console.log(
-      `${orang?.nama}: santri ${orang?.santri?.unit?.nama ?? '-'} ${orang?.santri?.kelas?.nama ?? '-'} ` +
+      `${orang?.fullName}: santri ${orang?.santri?.unit?.nama ?? '-'} ${orang?.santri?.kelas?.nama ?? '-'} ` +
         `(NIS ${orang?.santri?.nis ?? '-'}), riwayat: ` +
         orang?.riwayatPendidikan
           .map((r) => `${r.tahunAjaran.kode} ${r.kelasNama}`)

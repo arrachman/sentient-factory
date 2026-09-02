@@ -2,8 +2,8 @@ import type { Prisma } from '@prisma/client';
 
 /** Urutan daftar pegawai. Kunci ikut ke URL, jadi dieja eksplisit. */
 export const URUT_PEGAWAI = {
-  nama: { label: 'Nama A–Z', orderBy: { orang: { nama: 'asc' } } },
-  'nama-desc': { label: 'Nama Z–A', orderBy: { orang: { nama: 'desc' } } },
+  nama: { label: 'Nama A–Z', orderBy: { person: { fullName: 'asc' } } },
+  'nama-desc': { label: 'Nama Z–A', orderBy: { person: { fullName: 'desc' } } },
   nip: { label: 'NIP terkecil', orderBy: { nip: 'asc' } },
   'jam-desc': { label: 'Jam mengajar terbanyak', orderBy: { jamMengajar: 'desc' } },
 } as const satisfies Record<string, { label: string; orderBy: Prisma.PegawaiOrderByWithRelationInput }>;
@@ -62,11 +62,11 @@ export function wherePegawai(f: FilterPegawai): Prisma.PegawaiWhereInput {
   const unit = whereUnit(f.unit);
   if (unit) syarat.push(unit);
   if (f.status) syarat.push({ status: f.status });
-  if (f.jk) syarat.push({ orang: { jk: f.jk } });
+  if (f.jk) syarat.push({ person: { gender: f.jk } });
   if (f.q) {
     syarat.push({
       OR: [
-        { orang: { nama: { contains: f.q } } },
+        { person: { fullName: { contains: f.q } } },
         { nip: { contains: f.q } },
         { jabatan: { contains: f.q } },
         { mapelDiampu: { contains: f.q } },

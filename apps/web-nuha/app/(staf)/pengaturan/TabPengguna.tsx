@@ -13,14 +13,14 @@ export async function TabPengguna({ searchParams }: { searchParams: SearchParams
   const halaman = bacaHalaman(searchParams);
 
   const where = q
-    ? { OR: [{ email: { contains: q } }, { orang: { nama: { contains: q } } }] }
+    ? { OR: [{ email: { contains: q } }, { person: { fullName: { contains: q } } }] }
     : undefined;
 
   const [total, users] = await Promise.all([
     prisma.user.count({ where }),
     prisma.user.findMany({
       where,
-      include: { orang: true, peran: { include: { peran: true } } },
+      include: { person: true, peran: { include: { peran: true } } },
       orderBy: { email: 'asc' },
       skip: (halaman - 1) * UKURAN_HALAMAN,
       take: UKURAN_HALAMAN,
@@ -45,9 +45,9 @@ export async function TabPengguna({ searchParams }: { searchParams: SearchParams
             <tr key={String(user.id)}>
               <td>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <Avatar nama={user.orang.nama} size={30} />
+                  <Avatar nama={user.person.fullName} size={30} />
                   <div>
-                    <div style={{ fontWeight: 600 }}>{user.orang.nama}</div>
+                    <div style={{ fontWeight: 600 }}>{user.person.fullName}</div>
                     <div className="muted" style={{ fontSize: 11.5 }}>{user.email}</div>
                   </div>
                 </div>

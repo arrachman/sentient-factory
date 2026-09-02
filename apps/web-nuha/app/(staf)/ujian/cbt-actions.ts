@@ -73,13 +73,13 @@ export async function bukaBekuan(formData: FormData) {
 
   const peserta = await prisma.pesertaCbt.findUnique({
     where: { id: pesertaId },
-    include: { santri: { include: { orang: { select: { nama: true } } } } },
+    include: { santri: { include: { person: { select: { fullName: true } } } } },
   });
   if (!peserta) return;
 
   await penjagaCbt(
     'BUKA_BEKUAN_CBT',
-    `${peserta.santri.orang.nama} dibuka kembali (${peserta.pelanggaran} pelanggaran)`,
+    `${peserta.santri.person.fullName} dibuka kembali (${peserta.pelanggaran} pelanggaran)`,
     String(pesertaId),
   );
   await prisma.pesertaCbt.update({

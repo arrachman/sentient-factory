@@ -3,14 +3,14 @@ import { Kosong } from '@/components';
 
 /** Tab Wali & Keluarga: relasi wali utama santri + info akses portal wali. */
 export async function TabWali({ santriId }: { santriId: bigint }) {
-  const santri = await prisma.santri.findUnique({ where: { id: santriId }, include: { orang: true } });
+  const santri = await prisma.santri.findUnique({ where: { id: santriId }, include: { person: true } });
   if (!santri) return null;
 
   // Utamakan kontak bertanda `utama`, tapi jangan menampilkan "belum ada data"
   // saat relasinya sebenarnya ada dan hanya tidak bertanda — data impor SMP
   // pernah masuk seluruhnya dengan `utama: false`.
   const relasi = await prisma.relasiWali.findFirst({
-    where: { anakId: santri.orangId },
+    where: { anakId: santri.personId },
     include: { wali: true },
     orderBy: [{ utama: 'desc' }, { id: 'asc' }],
   });
@@ -22,10 +22,10 @@ export async function TabWali({ santriId }: { santriId: bigint }) {
         {relasi
           ? (
             <>
-              <Baris label="Nama wali" nilai={relasi.wali.nama} />
+              <Baris label="Nama wali" nilai={relasi.wali.fullName} />
               <Baris label="Hubungan" nilai={relasi.hubungan} />
               <Baris label="Pekerjaan" nilai={relasi.pekerjaan ?? '-'} />
-              <Baris label="No. HP" nilai={relasi.wali.hp ?? '-'} terakhir />
+              <Baris label="No. HP" nilai={relasi.wali.phone ?? '-'} terakhir />
             </>
           )
           : <Kosong pesan="Belum ada data wali yang tercatat untuk santri ini." />}

@@ -60,18 +60,18 @@ export async function tulisRelasiWali(
    * sebagai Ibu (kunci NIK), jenis kelaminnya harus ikut benar. Peran `Wali`
    * sendiri tidak menyiratkan jenis kelamin, jadi ia tidak menimpa apa pun.
    */
-  const updateJk = peran === 'Wali' ? {} : { jk };
+  const updateGender = peran === 'Wali' ? {} : { gender: jk };
 
   const waliOrang = nik
-    ? await prisma.orang.upsert({
+    ? await prisma.person.upsert({
         where: { nik },
-        create: { nama, jk, nik, hp: data.hp?.trim() || null },
-        update: { nama, hp: data.hp?.trim() || null, ...updateJk },
+        create: { fullName: nama, gender: jk, nik, phone: data.hp?.trim() || null },
+        update: { fullName: nama, phone: data.hp?.trim() || null, ...updateGender },
       })
-    : await prisma.orang.upsert({
+    : await prisma.person.upsert({
         where: { email: email! },
-        create: { nama, jk, email, hp: data.hp?.trim() || null },
-        update: { nama, hp: data.hp?.trim() || null, ...updateJk },
+        create: { fullName: nama, gender: jk, email, phone: data.hp?.trim() || null },
+        update: { fullName: nama, phone: data.hp?.trim() || null, ...updateGender },
       });
 
   const utama = await apakahUtama(anakOrangId, peran);

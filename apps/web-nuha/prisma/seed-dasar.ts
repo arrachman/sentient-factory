@@ -126,7 +126,7 @@ const PROFIL_YAYASAN = {
 async function tautkanKepalaUnit() {
   for (const row of UNIT_ROWS) {
     const pegawai = await prisma.pegawai.findFirst({
-      where: { orang: { nama: row.kepalaNama } },
+      where: { person: { fullName: row.kepalaNama } },
       select: { id: true },
     });
     if (!pegawai) continue;
@@ -170,14 +170,14 @@ async function seedSuperAdmin() {
     create: { key: 'superadmin', nama: 'Super Admin' },
     update: { nama: 'Super Admin' },
   });
-  const orang = await prisma.orang.upsert({
+  const orang = await prisma.person.upsert({
     where: { email: 'superadmin@nuha.pesantren.web.id' },
-    create: { nama: 'Super Admin', jk: JenisKelamin.L, email: 'superadmin@nuha.pesantren.web.id', aktif: true },
-    update: { aktif: true },
+    create: { fullName: 'Super Admin', gender: JenisKelamin.L, email: 'superadmin@nuha.pesantren.web.id', isActive: true },
+    update: { isActive: true },
   });
   const user = await prisma.user.upsert({
-    where: { orangId: orang.id },
-    create: { orangId: orang.id, email: orang.email!, username: 'superadmin', passwordHash, unitScope: 'Semua unit', aktif: true },
+    where: { personId: orang.id },
+    create: { personId: orang.id, email: orang.email!, username: 'superadmin', passwordHash, unitScope: 'Semua unit', aktif: true },
     update: { username: 'superadmin', passwordHash, aktif: true },
   });
   await prisma.userPeran.upsert({

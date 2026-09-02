@@ -107,10 +107,10 @@ const ratakanNama = (nama: string): string =>
 async function cariPegawai(unitId: number, namaResmi: string): Promise<{ id: bigint } | null> {
   const kandidat = await prisma.pegawai.findMany({
     where: { unitId },
-    select: { id: true, orang: { select: { nama: true } } },
+    select: { id: true, person: { select: { fullName: true } } },
   });
   const target = ratakanNama(namaResmi);
-  const cocok = kandidat.filter((k) => ratakanNama(k.orang.nama) === target);
+  const cocok = kandidat.filter((k) => ratakanNama(k.person.fullName) === target);
   if (cocok.length === 1) return { id: cocok[0].id };
   // Nol atau lebih dari satu kecocokan sama-sama bukan hasil yang boleh
   // ditebak. Selisih ejaan yang tidak bisa diratakan (mis. singkatan "Muh."

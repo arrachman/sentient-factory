@@ -256,16 +256,16 @@ async function jalankan(): Promise<void> {
       tahunMasuk = String(TAHUN_AJARAN_AKTIF_UNTUK_MASUK - (Number(tingkat) - 7));
     }
 
-    const orang = await prisma.orang.upsert({
+    const orang = await prisma.person.upsert({
       where: { email: `santri.${s.nisn}@nuha.local` },
       create: {
-        nama: s.nama, jk: s.jk, tglLahir: s.tglLahir, tmpLahir: s.tmpLahir, nik: s.nik, alamat: s.alamat,
-        rt: s.rt, rw: s.rw, kelurahan: s.kelurahan, kecamatan: s.kecamatan, kabupaten: s.kabupaten, hp: s.hp,
+        fullName: s.nama, gender: s.jk, birthDate: s.tglLahir, birthPlace: s.tmpLahir, nik: s.nik, addressLine: s.alamat,
+        neighborhoodRt: s.rt, neighborhoodRw: s.rw, villageName: s.kelurahan, districtName: s.kecamatan, regencyName: s.kabupaten, phone: s.hp,
         email: `santri.${s.nisn}@nuha.local`,
       },
       update: {
-        nama: s.nama, jk: s.jk, tglLahir: s.tglLahir, tmpLahir: s.tmpLahir, nik: s.nik, alamat: s.alamat,
-        rt: s.rt, rw: s.rw, kelurahan: s.kelurahan, kecamatan: s.kecamatan, kabupaten: s.kabupaten, hp: s.hp,
+        fullName: s.nama, gender: s.jk, birthDate: s.tglLahir, birthPlace: s.tmpLahir, nik: s.nik, addressLine: s.alamat,
+        neighborhoodRt: s.rt, neighborhoodRw: s.rw, villageName: s.kelurahan, districtName: s.kecamatan, regencyName: s.kabupaten, phone: s.hp,
       },
     });
 
@@ -274,8 +274,8 @@ async function jalankan(): Promise<void> {
 
     const santri = await prisma.santri.upsert({
       where: { nisn: s.nisn },
-      create: { orangId: orang.id, nis, nisn: s.nisn, unitId: unit.id, kelasId, status, tahunMasuk },
-      update: { orangId: orang.id, nis, unitId: unit.id, kelasId, status, tahunMasuk },
+      create: { personId: orang.id, nis, nisn: s.nisn, unitId: unit.id, kelasId, status, tahunMasuk },
+      update: { personId: orang.id, nis, unitId: unit.id, kelasId, status, tahunMasuk },
     });
     void santri;
 

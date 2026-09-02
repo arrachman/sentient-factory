@@ -6,7 +6,7 @@ export async function TabPresensi({ f }: { f: FilterPegawai }) {
   const pegawai = whereUnit(f.unit);
   const presensi = await prisma.presensiPegawai.findMany({
     where: pegawai ? { pegawai } : {},
-    include: { pegawai: { include: { orang: true } } },
+    include: { pegawai: { include: { person: true } } },
     orderBy: [{ tgl: 'desc' }],
     take: UKURAN_HALAMAN,
   });
@@ -23,7 +23,7 @@ export async function TabPresensi({ f }: { f: FilterPegawai }) {
           {presensi.map((p) => (
             <tr key={String(p.id)}>
               <td>{p.tgl.toLocaleDateString('id-ID')}</td>
-              <td>{p.pegawai.orang.nama}</td>
+              <td>{p.pegawai.person.fullName}</td>
               <td>{p.jamMasuk ?? '-'}</td>
               <td>{p.jamPulang ?? '-'}</td>
               <td><Badge status={p.status} /></td>

@@ -25,20 +25,20 @@ const prisma = new PrismaClient();
 async function main() {
   const simpan = await prisma.pegawai.findUnique({
     where: { nip: NIP_SIMPAN },
-    include: { orang: true },
+    include: { person: true },
   });
   if (!simpan) throw new Error(`pegawai ${NIP_SIMPAN} tidak ditemukan`);
 
   const hapus = await prisma.pegawai.findUnique({
     where: { nip: NIP_HAPUS },
-    include: { orang: true },
+    include: { person: true },
   });
 
   if (!hapus) {
     console.log(`${NIP_HAPUS} sudah tidak ada — penggabungan tampaknya sudah dijalankan.`);
   } else {
-    if (hapus.orang.nama.replace(/,.*$/, '').trim() !== 'Alfan Jamil') {
-      throw new Error(`${NIP_HAPUS} bukan Alfan Jamil melainkan "${hapus.orang.nama}" — batal`);
+    if (hapus.person.fullName.replace(/,.*$/, '').trim() !== 'Alfan Jamil') {
+      throw new Error(`${NIP_HAPUS} bukan Alfan Jamil melainkan "${hapus.person.fullName}" — batal`);
     }
 
     // Penugasan Madin menjadi baris pegawai_unit kedua pada pegawai yang bertahan.
@@ -57,20 +57,20 @@ async function main() {
     }
 
     // Gelar & panggilan hanya ada di baris Madin; nama resmi hanya di baris MA.
-    await prisma.orang.update({
-      where: { id: simpan.orangId },
+    await prisma.person.update({
+      where: { id: simpan.personId },
       data: {
-        nama: 'Alfan Jamil',
-        gelar: simpan.orang.gelar ?? hapus.orang.gelar,
-        panggilan: simpan.orang.panggilan ?? hapus.orang.panggilan,
-        namaLengkap: simpan.orang.namaLengkap ?? hapus.orang.namaLengkap,
-        hp: simpan.orang.hp ?? hapus.orang.hp,
-        nik: simpan.orang.nik ?? hapus.orang.nik,
+        fullName: 'Alfan Jamil',
+        gelar: simpan.person.gelar ?? hapus.person.gelar,
+        panggilan: simpan.person.panggilan ?? hapus.person.panggilan,
+        namaLengkap: simpan.person.namaLengkap ?? hapus.person.namaLengkap,
+        phone: simpan.person.phone ?? hapus.person.phone,
+        nik: simpan.person.nik ?? hapus.person.nik,
       },
     });
 
     // Pegawai ikut terhapus lewat cascade dari Orang.
-    await prisma.orang.delete({ where: { id: hapus.orangId } });
+    await prisma.person.delete({ where: { id: hapus.personId } });
     console.log(`Digabung: ${NIP_HAPUS} (unit ${hapus.unitId}) → ${NIP_SIMPAN}`);
   }
 
@@ -91,10 +91,10 @@ async function main() {
 
   const akhir = await prisma.pegawai.findUnique({
     where: { nip: NIP_SIMPAN },
-    include: { orang: true, unitLain: { include: { unit: true } } },
+    include: { person: true, unitLain: { include: { unit: true } } },
   });
   console.log(
-    `${akhir?.orang.nama} (${akhir?.orang.gelar ?? '-'}) bertugas di: ` +
+    `${akhir?.person.fullName} (${akhir?.person.gelar ?? '-'}) bertugas di: ` +
       akhir?.unitLain.map((u) => `${u.unit.nama}${u.utama ? '*' : ''}`).join(', '),
   );
 }

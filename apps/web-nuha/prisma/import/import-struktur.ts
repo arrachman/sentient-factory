@@ -142,8 +142,8 @@ const EJAAN_SK: Readonly<Record<string, string>> = Object.freeze({
 });
 
 async function jalankan(): Promise<void> {
-  const pegawai = await prisma.pegawai.findMany({ include: { orang: true } });
-  const kamusPegawai = new Map(pegawai.map((p) => [normalisasiNama(p.orang.nama), p]));
+  const pegawai = await prisma.pegawai.findMany({ include: { person: true } });
+  const kamusPegawai = new Map(pegawai.map((p) => [normalisasiNama(p.person.fullName), p]));
 
   let cocok = 0;
   let takCocok = 0;

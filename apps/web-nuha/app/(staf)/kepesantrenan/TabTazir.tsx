@@ -4,7 +4,7 @@ import { Kosong, Tabel } from '@/components';
 /** Akumulasi poin dihitung berjalan per santri, urut tanggal — bukan angka hardcode. */
 export async function TabTazir() {
   const tazir = await prisma.tazir.findMany({
-    include: { santri: { include: { orang: true, kamar: true } } },
+    include: { santri: { include: { person: true, kamar: true } } },
     orderBy: { tgl: 'asc' },
   });
 
@@ -31,7 +31,7 @@ export async function TabTazir() {
             <tr key={String(t.id)}>
               <td>{t.tgl.toLocaleDateString('id-ID')}</td>
               <td>
-                {t.santri.orang.nama}
+                {t.santri.person.fullName}
                 <div className="muted" style={{ fontSize: 11.5 }}>Kamar {t.santri.kamar?.kode ?? '—'}</div>
               </td>
               <td>{t.pelanggaran}</td>

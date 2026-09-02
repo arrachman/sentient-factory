@@ -118,13 +118,26 @@ async function jalankan(): Promise<void> {
       gelar: baris.gelar,
       panggilan: baris.panggilan,
       namaLengkap,
-      jk: baris.jk,
+      gender: baris.jk,
     };
 
-    const orang = await prisma.orang.upsert({
+    const orang = await prisma.person.upsert({
       where: { email },
-      create: { ...identitas, email },
-      update: identitas,
+      create: {
+        fullName: identitas.nama,
+        gelar: identitas.gelar,
+        panggilan: identitas.panggilan,
+        namaLengkap: identitas.namaLengkap,
+        gender: identitas.gender,
+        email,
+      },
+      update: {
+        fullName: identitas.nama,
+        gelar: identitas.gelar,
+        panggilan: identitas.panggilan,
+        namaLengkap: identitas.namaLengkap,
+        gender: identitas.gender,
+      },
     });
 
     const sebelum = await prisma.pegawai.findUnique({ where: { nip } });
@@ -132,11 +145,11 @@ async function jalankan(): Promise<void> {
 
     const pegawai = await prisma.pegawai.upsert({
       where: { nip },
-      create: { orangId: orang.id, nip, unitId: unit.id, jabatan, status: 'Aktif' },
+      create: { personId: orang.id, nip, unitId: unit.id, jabatan, status: 'Aktif' },
       // `jabatan`/`unitId` sengaja TIDAK ditimpa saat update: keduanya boleh
       // diubah operator lewat aplikasi (mis. dipromosikan jadi Pengasuh) dan
       // impor ulang tidak boleh mengembalikannya ke nilai awal.
-      update: { orangId: orang.id },
+      update: { personId: orang.id },
     });
 
     // Penyaring & pohon kepegawaian membaca `pegawai_unit`, jadi unit utama

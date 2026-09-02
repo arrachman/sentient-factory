@@ -50,7 +50,7 @@ export async function TabPengawasan({
   const peserta = await prisma.pesertaCbt.findMany({
     where: { sesiId: aktif.id },
     include: {
-      santri: { select: { nis: true, orang: { select: { nama: true } } } },
+      santri: { select: { nis: true, person: { select: { fullName: true } } } },
       log: { orderBy: { at: 'desc' }, take: 5 },
       _count: { select: { jawaban: true } },
     },
@@ -89,7 +89,7 @@ export async function TabPengawasan({
                 <tr key={String(p.id)}>
                   <td><code>{p.noPeserta}</code></td>
                   <td>
-                    {p.santri.orang.nama}
+                    {p.santri.person.fullName}
                     <div className="muted" style={{ fontSize: 12 }}>{p.santri.nis}</div>
                   </td>
                   <td className="num">{p._count.jawaban}</td>

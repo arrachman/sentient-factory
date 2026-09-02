@@ -7,7 +7,7 @@ export type BarisDaftar = {
   nis: string | null;
   nisn: string | null;
   status: string;
-  orang: { nama: string };
+  person: { fullName: string };
   kelas: { nama: string } | null;
   unit: { nama: string } | null;
   kelasLain?: { unit: { id: number; nama: string } | null }[];
@@ -63,10 +63,10 @@ export function DaftarSantri({
               background: aktif ? 'var(--krem-3)' : 'transparent',
             }}
           >
-            <Avatar nama={baris.orang.nama} size={30} />
+            <Avatar nama={baris.person.fullName} size={30} />
             <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1 }}>
               <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--teks-kuat)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {baris.orang.nama}
+                {baris.person.fullName}
               </div>
               <div className="muted" style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, minWidth: 0 }}>
                 <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

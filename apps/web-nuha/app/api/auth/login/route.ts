@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const identifier = parsed.data.identifier.trim();
   const user = await prisma.user.findFirst({
     where: { OR: [{ email: identifier }, { username: identifier }] },
-    include: { orang: true, peran: { include: { peran: true } } },
+    include: { person: true, peran: { include: { peran: true } } },
   });
 
   const invalid = Response.json(
@@ -52,7 +52,7 @@ export async function POST(request: Request) {
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   await createSession({
     userId: String(user.id),
-    nama: user.orang.nama,
+    nama: user.person.fullName,
     email: user.email,
     peran: user.peran.map((row) => row.peran.key),
   });
@@ -60,10 +60,10 @@ export async function POST(request: Request) {
     aksi: 'LOGIN',
     entitas: 'user',
     entitasId: String(user.id),
-    ringkasan: `${user.orang.nama} masuk`,
-    aktor: { id: String(user.id), nama: user.orang.nama },
+    ringkasan: `${user.person.fullName} masuk`,
+    aktor: { id: String(user.id), nama: user.person.fullName },
     ip,
   });
 
-  return Response.json({ success: true, data: { nama: user.orang.nama }, error: null });
+  return Response.json({ success: true, data: { nama: user.person.fullName }, error: null });
 }

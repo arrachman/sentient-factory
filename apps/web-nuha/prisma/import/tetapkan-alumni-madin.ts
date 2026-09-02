@@ -16,13 +16,13 @@ const JUMLAH_DIHARAPKAN = ORANG_ID_ALUMNI.length; // 95 nama unik dari daftar op
 const AKTOR_SKRIP = { nama: 'Penetapan alumni Madin (skrip)' };
 
 async function main(): Promise<void> {
-  const alumni = await prisma.orang.findMany({
+  const alumni = await prisma.person.findMany({
     where: {
       id: { in: ORANG_ID_ALUMNI.map(BigInt) },
       riwayatPendidikan: { some: { unitId: UNIT_MADIN_ID, status: StatusSantri.Alumni } },
     },
-    select: { id: true, nama: true, santri: { select: { id: true, status: true } } },
-    orderBy: { nama: 'asc' },
+    select: { id: true, fullName: true, santri: { select: { id: true, status: true } } },
+    orderBy: { fullName: 'asc' },
   });
 
   if (alumni.length !== JUMLAH_DIHARAPKAN) {
@@ -33,14 +33,14 @@ async function main(): Promise<void> {
   for (const orang of alumni) {
     if (orang.santri) {
       if (orang.santri.status !== StatusSantri.Alumni) {
-        throw new Error(`Validasi gagal: "${orang.nama}" sudah berstatus ${orang.santri.status}, bukan Alumni.`);
+        throw new Error(`Validasi gagal: "${orang.fullName}" sudah berstatus ${orang.santri.status}, bukan Alumni.`);
       }
       continue;
     }
 
     const santri = await prisma.santri.create({
       data: {
-        orangId: orang.id,
+        personId: orang.id,
         unitId: UNIT_MADIN_ID,
         status: StatusSantri.Alumni,
       },
@@ -51,7 +51,7 @@ async function main(): Promise<void> {
       aksi: 'create',
       entitas: 'Santri',
       entitasId: String(santri.id),
-      ringkasan: `Tetapkan "${orang.nama}" sebagai alumni Madin.`,
+      ringkasan: `Tetapkan "${orang.fullName}" sebagai alumni Madin.`,
       perubahan: { ke: { unitId: UNIT_MADIN_ID, status: StatusSantri.Alumni } },
       aktor: AKTOR_SKRIP,
     });
@@ -59,7 +59,7 @@ async function main(): Promise<void> {
 
   const total = await prisma.santri.count({
     where: {
-      orang: { riwayatPendidikan: { some: { unitId: UNIT_MADIN_ID, status: StatusSantri.Alumni } } },
+      person: { riwayatPendidikan: { some: { unitId: UNIT_MADIN_ID, status: StatusSantri.Alumni } } },
       kelasLain: { none: { unitId: UNIT_MADIN_ID } },
     },
   });

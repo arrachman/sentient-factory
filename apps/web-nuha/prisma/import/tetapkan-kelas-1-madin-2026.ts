@@ -29,7 +29,7 @@ async function main() {
   const semuaNis = [...NIS_KELAS_1, ...NIS_PULIHKAN_KELAS_2];
   const santri = await prisma.santri.findMany({
     where: { nis: { in: semuaNis } },
-    include: { orang: { select: { nama: true } } },
+    include: { person: { select: { fullName: true } } },
   });
   const santriByNis = new Map(santri.map((item) => [item.nis, item]));
   const hilang = semuaNis.filter((nis) => !santriByNis.has(nis));
@@ -39,7 +39,7 @@ async function main() {
     const targetKelas1 = NIS_KELAS_1.map((nis) => santriByNis.get(nis)!);
     const anggotaLama = await tx.santriKelas.findMany({
       where: { kelasId: kelas1.id },
-      select: { santriId: true, santri: { select: { nis: true, orang: { select: { nama: true } } } } },
+      select: { santriId: true, santri: { select: { nis: true, person: { select: { fullName: true } } } } },
     });
     const targetIds = new Set(targetKelas1.map((item) => item.id));
 
@@ -47,7 +47,7 @@ async function main() {
       await tx.santriKelas.delete({ where: { santriId_kelasId: { santriId: anggota.santriId, kelasId: kelas1.id } } });
       await recordAudit({
         aksi: 'delete', entitas: 'SantriKelas', entitasId: `${anggota.santriId}:${kelas1.id}`,
-        ringkasan: `Lepas "${anggota.santri.orang.nama}" dari Madin Kelas 1 ${tahunAjaran.kode}`,
+        ringkasan: `Lepas "${anggota.santri.person.fullName}" dari Madin Kelas 1 ${tahunAjaran.kode}`,
         perubahan: { dari: { kelasId: kelas1.id, nis: anggota.santri.nis } }, aktor: AKTOR_SKRIP,
       });
     }
@@ -69,13 +69,13 @@ async function main() {
         create: { santriId: item.id, kelasId: kelas1.id, unitId: unit.id, utama: true },
       });
       await tx.riwayatPendidikan.upsert({
-        where: { orangId_unitId_tahunAjaranId: { orangId: item.orangId, unitId: unit.id, tahunAjaranId: tahunAjaran.id } },
+        where: { personId_unitId_tahunAjaranId: { personId: item.personId, unitId: unit.id, tahunAjaranId: tahunAjaran.id } },
         update: { kelasNama: kelas1.nama, tingkat: kelas1.tingkat, status: StatusSantri.Mukim },
-        create: { orangId: item.orangId, unitId: unit.id, kelasNama: kelas1.nama, tingkat: kelas1.tingkat, tahunAjaranId: tahunAjaran.id, status: StatusSantri.Mukim },
+        create: { personId: item.personId, unitId: unit.id, kelasNama: kelas1.nama, tingkat: kelas1.tingkat, tahunAjaranId: tahunAjaran.id, status: StatusSantri.Mukim },
       });
       await recordAudit({
         aksi: 'update', entitas: 'Santri', entitasId: String(item.id),
-        ringkasan: `Pulihkan "${item.orang.nama}" sebagai santri Mukim Madin Kelas 1 ${tahunAjaran.kode}`,
+        ringkasan: `Pulihkan "${item.person.fullName}" sebagai santri Mukim Madin Kelas 1 ${tahunAjaran.kode}`,
         perubahan: { dari: { status: item.status, unitId: item.unitId, kelasId: item.kelasId }, ke: { status: StatusSantri.Mukim, unitId: unit.id, kelasId: kelas1.id } }, aktor: AKTOR_SKRIP,
       });
     }
@@ -89,13 +89,13 @@ async function main() {
         create: { santriId: item.id, kelasId: kelas2.id, unitId: unit.id, utama: true },
       });
       await tx.riwayatPendidikan.upsert({
-        where: { orangId_unitId_tahunAjaranId: { orangId: item.orangId, unitId: unit.id, tahunAjaranId: tahunAjaran.id } },
+        where: { personId_unitId_tahunAjaranId: { personId: item.personId, unitId: unit.id, tahunAjaranId: tahunAjaran.id } },
         update: { kelasNama: kelas2.nama, tingkat: kelas2.tingkat, status: StatusSantri.Mukim },
-        create: { orangId: item.orangId, unitId: unit.id, kelasNama: kelas2.nama, tingkat: kelas2.tingkat, tahunAjaranId: tahunAjaran.id, status: StatusSantri.Mukim },
+        create: { personId: item.personId, unitId: unit.id, kelasNama: kelas2.nama, tingkat: kelas2.tingkat, tahunAjaranId: tahunAjaran.id, status: StatusSantri.Mukim },
       });
       await recordAudit({
         aksi: 'update', entitas: 'Santri', entitasId: String(item.id),
-        ringkasan: `Pulihkan "${item.orang.nama}" sebagai santri Mukim Madin Kelas 2 ${tahunAjaran.kode}`,
+        ringkasan: `Pulihkan "${item.person.fullName}" sebagai santri Mukim Madin Kelas 2 ${tahunAjaran.kode}`,
         perubahan: { dari: { status: item.status, unitId: item.unitId, kelasId: item.kelasId }, ke: { status: StatusSantri.Mukim, unitId: unit.id, kelasId: kelas2.id } }, aktor: AKTOR_SKRIP,
       });
     }

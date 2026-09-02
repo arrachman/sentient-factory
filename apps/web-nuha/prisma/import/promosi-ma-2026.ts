@@ -19,7 +19,7 @@
  * ditulis terpisah — pola yang sama dipakai `import-alumni-smp-2025-2026.ts`.
  *
  * Idempoten: pencocokan lewat NIK (identitas terkuat), upsert riwayat lewat
- * kunci unik `orangId_unitId_tahunAjaranId`, dan pindah kelas yang menulis nilai
+ * kunci unik `personId_unitId_tahunAjaranId`, dan pindah kelas yang menulis nilai
  * akhir yang sama berapa kali pun dijalankan.
  *
  * Jalankan: `npm run promosi:ma-2026`
@@ -86,27 +86,27 @@ async function jalankan(): Promise<void> {
   let jumlahDipindah = 0;
 
   for (const nik of NIK_SANTRI) {
-    const orang = await prisma.orang.findUniqueOrThrow({
+    const orang = await prisma.person.findUniqueOrThrow({
       where: { nik },
-      select: { id: true, nama: true, santri: { select: { id: true, nis: true, kelasId: true } } },
+      select: { id: true, fullName: true, santri: { select: { id: true, nis: true, kelasId: true } } },
     });
     const santri = orang.santri;
     if (!santri) {
-      throw new Error(`Orang "${orang.nama}" (NIK ${nik}) belum punya baris Santri — jalankan import:siswa-ma-2025 dulu.`);
+      throw new Error(`Orang "${orang.fullName}" (NIK ${nik}) belum punya baris Santri — jalankan import:siswa-ma-2025 dulu.`);
     }
 
     const nisResmi = KOREKSI_NIS[nik];
     if (nisResmi && santri.nis !== nisResmi) {
       await prisma.santri.update({ where: { id: santri.id }, data: { nis: nisResmi } });
       jumlahNisDikoreksi += 1;
-      console.log(`  NIS ${orang.nama}: ${santri.nis ?? '(kosong)'} → ${nisResmi}`);
+      console.log(`  NIS ${orang.fullName}: ${santri.nis ?? '(kosong)'} → ${nisResmi}`);
     }
 
     // Riwayat kelas asal: naik kelas, jadi statusnya tetap Mukim (bukan Alumni).
     await prisma.riwayatPendidikan.upsert({
-      where: { orangId_unitId_tahunAjaranId: { orangId: orang.id, unitId: unit.id, tahunAjaranId: taAsal.id } },
+      where: { personId_unitId_tahunAjaranId: { personId: orang.id, unitId: unit.id, tahunAjaranId: taAsal.id } },
       create: {
-        orangId: orang.id, unitId: unit.id, kelasNama: KELAS_ASAL.nama, tingkat: KELAS_ASAL.tingkat,
+        personId: orang.id, unitId: unit.id, kelasNama: KELAS_ASAL.nama, tingkat: KELAS_ASAL.tingkat,
         tahunAjaranId: taAsal.id, status: StatusSantri.Mukim,
       },
       update: { kelasNama: KELAS_ASAL.nama, tingkat: KELAS_ASAL.tingkat, status: StatusSantri.Mukim },

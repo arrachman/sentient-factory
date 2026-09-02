@@ -14,9 +14,9 @@ async function kaitOrang(rows: Row[]): Promise<Map<string, PeranTersimpan>> {
   if (!ids.length) return new Map();
 
   const [santri, pegawai, wali, orangTua] = await Promise.all([
-    prisma.santri.findMany({ where: { orangId: { in: ids } }, select: { orangId: true, nis: true, status: true, kelas: { select: { nama: true } } } }),
-    prisma.pegawai.findMany({ where: { orangId: { in: ids } }, select: { orangId: true, nip: true, jabatan: true, tugasTambahan: true } }),
-    prisma.relasiWali.findMany({ where: { waliId: { in: ids } }, select: { waliId: true, anakId: true, hubungan: true, anak: { select: { nama: true } } } }),
+    prisma.santri.findMany({ where: { personId: { in: ids } }, select: { personId: true, nis: true, status: true, kelas: { select: { nama: true } } } }),
+    prisma.pegawai.findMany({ where: { personId: { in: ids } }, select: { personId: true, nip: true, jabatan: true, tugasTambahan: true } }),
+    prisma.relasiWali.findMany({ where: { waliId: { in: ids } }, select: { waliId: true, anakId: true, hubungan: true, anak: { select: { fullName: true } } } }),
     // Wali dari orang ini (dipakai saat identitasnya berperan santri).
     prisma.relasiWali.findMany({ where: { anakId: { in: ids } }, select: { anakId: true, waliId: true, hubungan: true, utama: true }, orderBy: [{ utama: 'desc' }, { id: 'asc' }] }),
   ]);
@@ -34,22 +34,22 @@ async function kaitOrang(rows: Row[]): Promise<Map<string, PeranTersimpan>> {
   const tandai = (orangId: bigint, peran: string) => { entri(orangId).peran.add(peran); };
 
   for (const s of santri) {
-    tambah(s.orangId, { label: 'Santri', nada: 'hijau', href: '/induk', detail: [s.nis ? `NIS ${s.nis}` : null, s.kelas?.nama, s.status].filter(Boolean).join(' · ') || 'Terdaftar' });
-    setel(s.orangId, { peranNis: s.nis ?? '', peranStatusSantri: s.status });
-    tandai(s.orangId, 'santri');
+    tambah(s.personId, { label: 'Santri', nada: 'hijau', href: '/induk', detail: [s.nis ? `NIS ${s.nis}` : null, s.kelas?.nama, s.status].filter(Boolean).join(' · ') || 'Terdaftar' });
+    setel(s.personId, { peranNis: s.nis ?? '', peranStatusSantri: s.status });
+    tandai(s.personId, 'santri');
   }
   for (const p of pegawai) {
     const detail = [`NIP ${p.nip}`, p.jabatan, p.tugasTambahan].filter(Boolean).join(' · ');
-    tambah(p.orangId, { label: 'Pegawai', nada: 'biru', href: '/kepegawaian', detail });
-    setel(p.orangId, { peranNip: p.nip, peranJabatan: p.jabatan, peranTugasTambahan: p.tugasTambahan ?? '' });
-    tandai(p.orangId, p.jabatan.includes('Guru') ? 'guru' : 'staf');
+    tambah(p.personId, { label: 'Pegawai', nada: 'biru', href: '/kepegawaian', detail });
+    setel(p.personId, { peranNip: p.nip, peranJabatan: p.jabatan, peranTugasTambahan: p.tugasTambahan ?? '' });
+    tandai(p.personId, p.jabatan.includes('Guru') ? 'guru' : 'staf');
   }
   const relasiTeks = (items: { id: bigint; hubungan: string }[]) =>
     JSON.stringify(items.map((item) => ({ id: String(item.id), hubungan: item.hubungan })));
 
   const perWali = new Map<string, { id: bigint; hubungan: string }[]>();
   for (const w of wali) {
-    tambah(w.waliId, { label: 'Wali', nada: 'kuning', href: '/data/orang#wali', detail: `${w.hubungan} dari ${w.anak.nama}` });
+    tambah(w.waliId, { label: 'Wali', nada: 'kuning', href: '/data/orang#wali', detail: `${w.hubungan} dari ${w.anak.fullName}` });
     const key = String(w.waliId);
     perWali.set(key, [...(perWali.get(key) ?? []), { id: w.anakId, hubungan: w.hubungan }]);
   }

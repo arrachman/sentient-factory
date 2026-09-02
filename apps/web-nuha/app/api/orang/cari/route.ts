@@ -22,16 +22,16 @@ export async function GET(request: Request) {
   // tanpa ini pemilih hanya menyimpan id dan tampil kosong saat dibuka lagi.
   const ids = (params.get('ids') ?? '').split(',').map((item) => item.trim()).filter((item) => /^\d+$/.test(item));
 
-  const rows = await prisma.orang.findMany({
+  const rows = await prisma.person.findMany({
     where: ids.length ? { id: { in: ids.map((item) => BigInt(item)) } } : {
       AND: [
         // `q` kosong sah: pemilih menampilkan saran awal begitu diklik.
-        ...(q ? [{ OR: [{ nama: { contains: q } }, { nik: { contains: q } }, { hp: { contains: q } }] }] : []),
+        ...(q ? [{ OR: [{ fullName: { contains: q } }, { nik: { contains: q } }, { phone: { contains: q } }] }] : []),
         ...(hanyaSantri ? [{ santri: { isNot: null } }] : []),
       ],
     },
-    select: { id: true, nama: true, hp: true, nik: true, santri: { select: { nis: true } } },
-    orderBy: { nama: 'asc' },
+    select: { id: true, fullName: true, phone: true, nik: true, santri: { select: { nis: true } } },
+    orderBy: { fullName: 'asc' },
     take: ids.length ? ids.length : BATAS,
   });
 
@@ -39,8 +39,8 @@ export async function GET(request: Request) {
     success: true,
     data: rows.map((row) => ({
       id: String(row.id),
-      nama: row.nama,
-      keterangan: [row.hp, row.nik ? `NIK ${row.nik}` : null, row.santri ? `santri ${row.santri.nis ?? ''}`.trim() : null].filter(Boolean).join(' · '),
+      nama: row.fullName,
+      keterangan: [row.phone, row.nik ? `NIK ${row.nik}` : null, row.santri ? `santri ${row.santri.nis ?? ''}`.trim() : null].filter(Boolean).join(' · '),
     })),
   });
 }

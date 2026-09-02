@@ -50,11 +50,11 @@ export async function pesertaSaya(pesertaId: bigint) {
     where: { id: pesertaId },
     include: {
       sesi: { include: { paket: true } },
-      santri: { select: { id: true, orang: { select: { user: { select: { id: true } } } } } },
+      santri: { select: { id: true, person: { select: { user: { select: { id: true } } } } } },
     },
   });
   if (!peserta) redirect('/portal/santri');
-  if (String(peserta.santri.orang.user?.id ?? '') !== String(session.userId)) redirect('/portal/santri');
+  if (String(peserta.santri.person.user?.id ?? '') !== String(session.userId)) redirect('/portal/santri');
   return { session, peserta };
 }
 

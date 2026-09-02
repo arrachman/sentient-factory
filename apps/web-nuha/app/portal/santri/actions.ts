@@ -8,8 +8,8 @@ import { readSession } from '@/lib/auth';
 export async function ajukanIzin(formData: FormData) {
   const session = await readSession();
   if (!session) throw new Error('Sesi tidak valid.');
-  const user = await prisma.user.findUnique({ where: { id: BigInt(session.userId) }, include: { orang: { include: { santri: true } } } });
-  const santri = user?.orang.santri;
+  const user = await prisma.user.findUnique({ where: { id: BigInt(session.userId) }, include: { person: { include: { santri: true } } } });
+  const santri = user?.person.santri;
   if (!santri) throw new Error('Akun ini tidak tertaut ke data santri.');
 
   const jenis = String(formData.get('jenis') ?? '').trim();

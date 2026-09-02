@@ -6,7 +6,7 @@ export async function TabJurnal({ f }: { f: FilterPegawai }) {
   const pegawai = whereUnit(f.unit);
   const jurnal = await prisma.jurnalMengajar.findMany({
     where: pegawai ? { pegawai } : {},
-    include: { pegawai: { include: { orang: true } } },
+    include: { pegawai: { include: { person: true } } },
     orderBy: [{ tgl: 'desc' }],
     take: UKURAN_HALAMAN,
   });
@@ -23,7 +23,7 @@ export async function TabJurnal({ f }: { f: FilterPegawai }) {
           {jurnal.map((j) => (
             <tr key={String(j.id)}>
               <td>{j.tgl.toLocaleDateString('id-ID')}</td>
-              <td>{j.pegawai?.orang.nama ?? '-'}</td>
+              <td>{j.pegawai?.person.fullName ?? '-'}</td>
               <td>{j.kelas ?? '-'}</td>
               <td>{j.jamKe ?? '-'}</td>
               <td>{j.materi ?? '-'}</td>

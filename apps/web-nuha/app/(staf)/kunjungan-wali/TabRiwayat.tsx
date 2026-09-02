@@ -8,9 +8,9 @@ export async function TabRiwayat({ searchParams }: { searchParams: Record<string
 
   const kunjungan = await prisma.kunjungan.findMany({
     where: q
-      ? { OR: [{ namaWali: { contains: q } }, { santri: { orang: { nama: { contains: q } } } }] }
+      ? { OR: [{ namaWali: { contains: q } }, { santri: { person: { fullName: { contains: q } } } }] }
       : undefined,
-    include: { santri: { include: { orang: true } } },
+    include: { santri: { include: { person: true } } },
     orderBy: { tgl: 'desc' },
     take: 50,
   });
@@ -33,7 +33,7 @@ export async function TabRiwayat({ searchParams }: { searchParams: Record<string
             <tr key={String(k.id)}>
               <td>{k.tgl.toLocaleDateString('id-ID')}</td>
               <td>{k.namaWali}<div className="muted">{k.hubungan ?? '-'}</div></td>
-              <td>{k.santri.orang.nama}</td>
+              <td>{k.santri.person.fullName}</td>
               <td style={{ maxWidth: 220 }}>{k.keperluan ?? '-'}</td>
               <td>{k.jamMasuk ?? '-'}</td>
               <td>{k.jamKeluar ?? '-'}</td>

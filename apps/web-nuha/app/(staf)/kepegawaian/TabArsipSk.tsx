@@ -6,7 +6,7 @@ export async function TabArsipSk({ f }: { f: FilterPegawai }) {
   const pegawai = whereUnit(f.unit);
   const arsip = await prisma.arsipSk.findMany({
     where: pegawai ? { pegawai } : {},
-    include: { pegawai: { include: { orang: true } } },
+    include: { pegawai: { include: { person: true } } },
     orderBy: [{ tgl: 'desc' }],
   });
 
@@ -25,7 +25,7 @@ export async function TabArsipSk({ f }: { f: FilterPegawai }) {
               <td>{a.judul}</td>
               <td>{a.tgl.toLocaleDateString('id-ID')}</td>
               <td>{a.jenis}</td>
-              <td>{a.pegawai?.orang.nama ?? '-'}</td>
+              <td>{a.pegawai?.person.fullName ?? '-'}</td>
               <td>
                 {a.fileUrl ? (
                   <a href={`/kepegawaian/berkas/${a.fileUrl}`} target="_blank" rel="noreferrer">

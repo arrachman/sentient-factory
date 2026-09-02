@@ -35,7 +35,7 @@ export async function TabKartu({
     }),
     prisma.pesertaCbt.findMany({
       where: { sesiId: aktif.id },
-      include: { santri: { select: { nis: true, orang: { select: { nama: true } } } } },
+      include: { santri: { select: { nis: true, person: { select: { fullName: true } } } } },
       orderBy: { noPeserta: 'asc' },
     }),
   ]);
@@ -75,7 +75,7 @@ export async function TabKartu({
                 </header>
                 <dl>
                   <div><dt>No. Peserta</dt><dd><b>{p.noPeserta}</b></dd></div>
-                  <div><dt>Nama</dt><dd>{p.santri.orang.nama}</dd></div>
+                  <div><dt>Nama</dt><dd>{p.santri.person.fullName}</dd></div>
                   <div><dt>NIS</dt><dd>{p.santri.nis}</dd></div>
                   <div><dt>Kelas</dt><dd>{sesi.kelas.nama}</dd></div>
                   <div><dt>Mata Pelajaran</dt><dd>{sesi.paket.mapel.nama}</dd></div>

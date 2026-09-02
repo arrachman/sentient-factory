@@ -7,8 +7,8 @@ const LANJUT_OPSI = ['Istirahat di kamar', 'Rawat Poskestren', 'Rujuk Puskesmas'
 export async function TabPeriksa() {
   const santri = await prisma.santri.findMany({
     where: { status: 'Mukim' },
-    include: { orang: true },
-    orderBy: { orang: { nama: 'asc' } },
+    include: { person: true },
+    orderBy: { person: { fullName: 'asc' } },
   });
 
   return (
@@ -20,7 +20,7 @@ export async function TabPeriksa() {
             <select id="santriId" name="santriId" required defaultValue="">
               <option value="" disabled>Pilih santri</option>
               {santri.map((s) => (
-                <option key={String(s.id)} value={String(s.id)}>{s.orang.nama}</option>
+                <option key={String(s.id)} value={String(s.id)}>{s.person.fullName}</option>
               ))}
             </select>
           </div>

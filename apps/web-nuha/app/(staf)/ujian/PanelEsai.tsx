@@ -15,7 +15,7 @@ export async function PanelEsai({ sesiId }: { sesiId: number }) {
     },
     include: {
       soal: { select: { pertanyaan: true, bobot: true } },
-      peserta: { include: { santri: { select: { nis: true, orang: { select: { nama: true } } } } } },
+      peserta: { include: { santri: { select: { nis: true, person: { select: { fullName: true } } } } } },
     },
     orderBy: [{ dinilaiOleh: 'asc' }, { id: 'asc' }],
     take: 50,
@@ -36,7 +36,7 @@ export async function PanelEsai({ sesiId }: { sesiId: number }) {
         {jawaban.map((j) => (
           <div key={String(j.id)} style={{ padding: '13px 15px', borderRadius: 12, border: '1px solid #F0EDE4', background: '#FAF8F3' }}>
             <div style={{ fontSize: 12, color: '#6B7280' }}>
-              {j.peserta.santri.orang.nama} · {j.peserta.santri.nis} · {j.peserta.noPeserta}
+              {j.peserta.santri.person.fullName} · {j.peserta.santri.nis} · {j.peserta.noPeserta}
             </div>
             <div style={{ fontSize: 12.5, color: '#4B5563', marginTop: 4 }}>{j.soal.pertanyaan}</div>
             <div style={{ fontSize: 13.5, color: '#1F2937', marginTop: 8, whiteSpace: 'pre-wrap' }}>{j.jawaban}</div>

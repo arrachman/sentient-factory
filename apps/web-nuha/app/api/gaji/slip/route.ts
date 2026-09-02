@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const actor = { id: session.userId, nama: session.nama };
   const ip = requestIp(request);
 
-  const pegawai = await prisma.pegawai.findUnique({ where: { id: pegawaiId }, include: { orang: true, komponen: true } });
+  const pegawai = await prisma.pegawai.findUnique({ where: { id: pegawaiId }, include: { person: true, komponen: true } });
   if (!pegawai) return Response.json({ success: false, data: null, error: { code: 'NOT_FOUND', message: 'Pegawai tidak ditemukan.' } }, { status: 404 });
 
   const existing = await prisma.slipGaji.findUnique({ where: { pegawaiId_periode: { pegawaiId, periode } } });
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   if (aksi === 'bayar') {
     if (!existing) return Response.json({ success: false, data: null, error: { code: 'NOT_FOUND', message: 'Slip belum diterbitkan.' } }, { status: 404 });
     const slip = await prisma.slipGaji.update({ where: { id: existing.id }, data: { status: 'Dibayar', dibayarAt: new Date() } });
-    await recordAudit({ aksi: 'SLIP_DIBAYAR', entitas: 'slip_gaji', entitasId: String(slip.id), ringkasan: `Slip ${periode} ${pegawai.orang.nama} dibayar`, aktor: actor, ip });
+    await recordAudit({ aksi: 'SLIP_DIBAYAR', entitas: 'slip_gaji', entitasId: String(slip.id), ringkasan: `Slip ${periode} ${pegawai.person.fullName} dibayar`, aktor: actor, ip });
     return Response.json({ success: true, data: serialize(slip), error: null });
   }
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     const slip = await prisma.slipGaji.create({
       data: { pegawaiId, periode, bruto, potongan, netto, status: 'Terbit', diterbitkanOleh: BigInt(session.userId) },
     });
-    await recordAudit({ aksi: 'SLIP_TERBIT', entitas: 'slip_gaji', entitasId: String(slip.id), ringkasan: `Slip ${periode} ${pegawai.orang.nama} diterbitkan`, perubahan: { bruto, potongan, netto }, aktor: actor, ip });
+    await recordAudit({ aksi: 'SLIP_TERBIT', entitas: 'slip_gaji', entitasId: String(slip.id), ringkasan: `Slip ${periode} ${pegawai.person.fullName} diterbitkan`, perubahan: { bruto, potongan, netto }, aktor: actor, ip });
     return Response.json({ success: true, data: serialize(slip), error: null }, { status: 201 });
   }
 
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     aksi: 'SLIP_REVISI',
     entitas: 'slip_gaji',
     entitasId: String(slip.id),
-    ringkasan: `Slip ${periode} ${pegawai.orang.nama} direvisi ke-${slip.revisi}${existing.dibayarAt ? ' setelah dibayar' : ''}`,
+    ringkasan: `Slip ${periode} ${pegawai.person.fullName} direvisi ke-${slip.revisi}${existing.dibayarAt ? ' setelah dibayar' : ''}`,
     perubahan: {
       bruto: { from: Number(existing.bruto), to: bruto },
       potongan: { from: Number(existing.potongan), to: potongan },

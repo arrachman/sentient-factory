@@ -10,7 +10,7 @@ export async function TabSlip({
   searchParams: Record<string, string | string[] | undefined>;
   periode: string;
 }) {
-  const pegawai = await prisma.pegawai.findMany({ include: { orang: true, unit: true, komponen: true }, orderBy: { nip: 'asc' } });
+  const pegawai = await prisma.pegawai.findMany({ include: { person: true, unit: true, komponen: true }, orderBy: { nip: 'asc' } });
   if (pegawai.length === 0) return <Kosong pesan="Belum ada data pegawai." />;
 
   const raw = searchParams.peg;
@@ -45,7 +45,7 @@ export async function TabSlip({
           <div className="field" style={{ flex: 1, minWidth: 220 }}>
             <label htmlFor="peg">Pilih pegawai</label>
             <select id="peg" name="peg" defaultValue={String(pilihan.id)}>
-              {pegawai.map((p) => <option key={String(p.id)} value={String(p.id)}>{p.orang.nama}</option>)}
+              {pegawai.map((p) => <option key={String(p.id)} value={String(p.id)}>{p.person.fullName}</option>)}
             </select>
           </div>
           <button className="btn" type="submit">Tampilkan slip</button>
@@ -64,9 +64,9 @@ export async function TabSlip({
           </div>
         </div>
         <div style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', paddingBottom: 16, marginBottom: 16, borderBottom: '1px dashed var(--garis)' }}>
-          <Avatar nama={pilihan.orang.nama} size={46} />
+          <Avatar nama={pilihan.person.fullName} size={46} />
           <div style={{ flex: 1, minWidth: 190 }}>
-            <div style={{ fontSize: 15, fontWeight: 700 }}>{pilihan.orang.nama}</div>
+            <div style={{ fontSize: 15, fontWeight: 700 }}>{pilihan.person.fullName}</div>
             <div className="muted">{pilihan.jabatan} · unit {pilihan.unit?.nama ?? 'Yayasan'}</div>
           </div>
           <div className="muted" style={{ textAlign: 'right' }}>

@@ -36,13 +36,13 @@ export default async function PortalWaliPage({ searchParams }: { searchParams: P
 
   const user = await prisma.user.findUnique({
     where: { id: BigInt(session.userId) },
-    include: { orang: { include: { waliDari: { include: { anak: { include: { santri: { include: { unit: true, kelas: true, kamar: { include: { asrama: true } } } } } } } } } } },
+    include: { person: { include: { waliDari: { include: { anak: { include: { santri: { include: { unit: true, kelas: true, kamar: { include: { asrama: true } } } } } } } } } } },
   });
-  const relasi = user?.orang.waliDari.filter((row) => row.anak.santri) ?? [];
+  const relasi = user?.person.waliDari.filter((row) => row.anak.santri) ?? [];
 
   if (relasi.length === 0) {
     return (
-      <PortalFrame nama={user?.orang.nama ?? session.nama}>
+      <PortalFrame nama={user?.person.fullName ?? session.nama}>
         <div className="card">Akun wali ini belum tertaut ke data santri manapun. Hubungi kantor pondok.</div>
       </PortalFrame>
     );
@@ -54,11 +54,11 @@ export default async function PortalWaliPage({ searchParams }: { searchParams: P
   const anak = relasiDipilih.anak;
 
   return (
-    <PortalFrame nama={anak.nama}>
+    <PortalFrame nama={anak.fullName}>
       <div style={{ display: 'flex', gap: 13, alignItems: 'center', marginTop: 16 }}>
-        <div style={{ width: 52, height: 52, borderRadius: 16, background: avaBg(anak.nama), color: '#FFF', display: 'grid', placeItems: 'center', fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-lora), serif', border: '2px solid rgba(232,151,58,.6)', flex: '0 0 auto' }}>{inisial(anak.nama)}</div>
+        <div style={{ width: 52, height: 52, borderRadius: 16, background: avaBg(anak.fullName), color: '#FFF', display: 'grid', placeItems: 'center', fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-lora), serif', border: '2px solid rgba(232,151,58,.6)', flex: '0 0 auto' }}>{inisial(anak.fullName)}</div>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontFamily: 'var(--font-lora), serif', fontSize: 19, fontWeight: 600, color: '#0A4A2B' }}>{anak.nama}</div>
+          <div style={{ fontFamily: 'var(--font-lora), serif', fontSize: 19, fontWeight: 600, color: '#0A4A2B' }}>{anak.fullName}</div>
           <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{santri.unit?.nama ?? '-'} {santri.kelas?.nama ?? ''} · Asrama {santri.kamar?.asrama.nama ?? '-'} {santri.kamar?.kode ?? ''}</div>
         </div>
       </div>
@@ -72,7 +72,7 @@ export default async function PortalWaliPage({ searchParams }: { searchParams: P
               className={`tab ${String(row.anak.santri!.id) === String(santri.id) ? 'active' : ''}`}
               style={{ fontSize: 12 }}
             >
-              {row.anak.nama}
+              {row.anak.fullName}
             </Link>
           ))}
         </div>

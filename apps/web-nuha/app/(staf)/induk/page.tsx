@@ -50,7 +50,7 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
       where,
       select: {
         id: true, nis: true, nisn: true, status: true,
-        orang: { select: { nama: true } },
+        person: { select: { fullName: true } },
         kelas: { select: { nama: true } },
         unit: { select: { nama: true } },
         // Penanda lembaga di daftar dibaca dari `kelasLain`, bukan kolom `unit`:
@@ -59,7 +59,7 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
         // lembaga keduanya justru di tampilan "Semua lembaga".
         kelasLain: { select: { unit: { select: { id: true, nama: true } } } },
       },
-      orderBy: { orang: { nama: 'asc' } },
+      orderBy: { person: { fullName: 'asc' } },
       skip: (halaman - 1) * UKURAN_HALAMAN,
       take: UKURAN_HALAMAN,
     }),
@@ -80,7 +80,7 @@ export default async function IndukPage({ searchParams }: { searchParams: Promis
     : daftar[0]?.id;
 
   const sel = selId
-    ? await prisma.santri.findUnique({ where: { id: selId }, include: { orang: true, unit: true } })
+    ? await prisma.santri.findUnique({ where: { id: selId }, include: { person: true, unit: true } })
     : null;
 
   return (

@@ -10,15 +10,15 @@ function statusTagihan(nominal: number, dibayar: number): string {
 
 export async function TabSpp({ anakId }: { anakId?: string }) {
   const opsiAnak = await prisma.santri.findMany({
-    include: { orang: true },
-    orderBy: { orang: { nama: 'asc' } },
+    include: { person: true },
+    orderBy: { person: { fullName: 'asc' } },
   });
   if (opsiAnak.length === 0) return <Kosong pesan="Belum ada data santri." />;
 
   const terpilih = opsiAnak.find((s) => String(s.id) === anakId) ?? opsiAnak[0];
   const anak = await prisma.santri.findUniqueOrThrow({
     where: { id: terpilih.id },
-    include: { orang: true, unit: true, kelas: true },
+    include: { person: true, unit: true, kelas: true },
   });
   const riwayat = await prisma.tagihan.findMany({
     where: { santriId: anak.id },
@@ -34,9 +34,9 @@ export async function TabSpp({ anakId }: { anakId?: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <Card>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Avatar nama={anak.orang.nama} size={52} />
+          <Avatar nama={anak.person.fullName} size={52} />
           <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{ fontFamily: 'var(--font-lora), serif', fontSize: 19, color: 'var(--hijau-gelap)', fontWeight: 600 }}>{anak.orang.nama}</div>
+            <div style={{ fontFamily: 'var(--font-lora), serif', fontSize: 19, color: 'var(--hijau-gelap)', fontWeight: 600 }}>{anak.person.fullName}</div>
             <div className="muted">{anak.unit?.nama ?? '-'} {anak.kelas?.nama ?? ''} · NIS {anak.nis} · {anak.status} · tarif {rp(tarifBerjalan)}/tagihan</div>
           </div>
           <form method="get" style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
@@ -45,7 +45,7 @@ export async function TabSpp({ anakId }: { anakId?: string }) {
               <span className="label">Pilih anak</span>
               <select className="field" name="anak" defaultValue={String(anak.id)} style={{ minWidth: 220 }}>
                 {opsiAnak.map((o) => (
-                  <option key={String(o.id)} value={String(o.id)}>{o.orang.nama}</option>
+                  <option key={String(o.id)} value={String(o.id)}>{o.person.fullName}</option>
                 ))}
               </select>
             </label>

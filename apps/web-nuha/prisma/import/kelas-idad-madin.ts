@@ -68,7 +68,7 @@ async function main() {
   const idTarget = new Set<bigint>();
 
   for (const a of ANGGOTA) {
-    const santri = await prisma.santri.findUnique({ where: { nis: a.nis }, select: { id: true, orang: { select: { nama: true } } } });
+    const santri = await prisma.santri.findUnique({ where: { nis: a.nis }, select: { id: true, person: { select: { fullName: true } } } });
     if (!santri) { hilang.push(`${a.nis} ${a.nama}`); continue; }
     idTarget.add(santri.id);
 
@@ -82,17 +82,17 @@ async function main() {
       data: { santriId: santri.id, kelasId: kelas.id, unitId: unit.id, utama: false },
     });
     tambah += 1;
-    console.log(`+ ${a.nis} ${santri.orang.nama}`);
+    console.log(`+ ${a.nis} ${santri.person.fullName}`);
   }
 
   // Lepas anggota yang tidak ada di daftar — dari kelas ini saja.
   const asing = await prisma.santriKelas.findMany({
     where: { kelasId: kelas.id, santriId: { notIn: [...idTarget] } },
-    select: { santriId: true, santri: { select: { nis: true, orang: { select: { nama: true } } } } },
+    select: { santriId: true, santri: { select: { nis: true, person: { select: { fullName: true } } } } },
   });
   for (const x of asing) {
     await prisma.santriKelas.delete({ where: { santriId_kelasId: { santriId: x.santriId, kelasId: kelas.id } } });
-    console.log(`- ${x.santri.nis} ${x.santri.orang.nama} (dilepas dari I'dad)`);
+    console.log(`- ${x.santri.nis} ${x.santri.person.fullName} (dilepas dari I'dad)`);
   }
 
   const total = await prisma.santriKelas.count({ where: { kelasId: kelas.id } });

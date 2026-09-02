@@ -12,7 +12,7 @@ import { hitungPoinSantri, TINGKAT, tingkatUntuk } from './poin';
 export async function TabGamifikasi() {
   const [santri, mapelList] = await Promise.all([
     hitungPoinSantri(),
-    prisma.mataPelajaran.findMany({ include: { nilai: { include: { santri: { include: { orang: true } } } } }, orderBy: { nama: 'asc' } }),
+    prisma.mataPelajaran.findMany({ include: { nilai: { include: { santri: { include: { person: true } } } } }, orderBy: { nama: 'asc' } }),
   ]);
   const maxPoin = santri[0]?.poin ?? 0;
 

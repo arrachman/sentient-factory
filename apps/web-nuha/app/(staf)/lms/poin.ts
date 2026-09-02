@@ -15,12 +15,12 @@ export type SantriPoin = {
 
 export async function hitungPoinSantri(): Promise<SantriPoin[]> {
   const rows = await prisma.santri.findMany({
-    include: { orang: true, kelas: true, unit: true, nilai: true },
+    include: { person: true, kelas: true, unit: true, nilai: true },
   });
   return rows
     .map((s) => ({
       id: String(s.id),
-      nama: s.orang.nama,
+      nama: s.person.fullName,
       kelas: `${s.unit?.nama ?? '-'}${s.kelas ? ' ' + s.kelas.nama : ''}`,
       poin: Math.round(s.nilai.reduce((total, n) => total + Number(n.akhir), 0)),
     }))

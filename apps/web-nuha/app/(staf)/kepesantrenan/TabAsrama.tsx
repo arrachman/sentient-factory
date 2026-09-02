@@ -6,7 +6,7 @@ export async function TabAsrama() {
   const asrama = await prisma.asrama.findMany({
     include: {
       kamar: {
-        include: { santri: { include: { orang: true } } },
+        include: { santri: { include: { person: true } } },
         orderBy: { kode: 'asc' },
       },
     },
@@ -56,7 +56,7 @@ export async function TabAsrama() {
               <div style={{ display: 'flex' }}>
                 {avatar4.map((s) => (
                   <div key={String(s.id)} style={{ marginLeft: -6 }}>
-                    <Avatar nama={s.orang.nama} size={28} />
+                    <Avatar nama={s.person.fullName} size={28} />
                   </div>
                 ))}
               </div>

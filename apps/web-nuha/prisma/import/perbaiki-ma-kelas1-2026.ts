@@ -64,7 +64,7 @@ const KOREKSI_BIODATA: Record<string, { catatan: string; data: Record<string, un
   // DB telanjur "P" — kemungkinan salah ketik impor terdahulu.
   '3573031209100001': {
     catatan: 'jenis kelamin L sesuai tabel operator & pola NIK; NO. HP kosong (nomor lama milik ayah)',
-    data: { jk: JenisKelamin.L, hp: null },
+    data: { gender: JenisKelamin.L, phone: null },
   },
   // No. 1–4 mengosongkan kolom NO. HP di tabel operator, tapi DB telanjur
   // menyimpan nomor **wali** di `Orang.hp` santri — ikut terbawa impor lama.
@@ -72,15 +72,15 @@ const KOREKSI_BIODATA: Record<string, { catatan: string; data: Record<string, un
   // memang jalur kontak notifikasi. `Orang.hp` santri dikembalikan kosong.
   '3573032507110005': {
     catatan: 'kolom NO. HP kosong di tabel operator (nomor lama milik ibu)',
-    data: { hp: null },
+    data: { phone: null },
   },
   '3573025911100005': {
     catatan: 'kolom NO. HP kosong di tabel operator (nomor lama milik ibu)',
-    data: { hp: null },
+    data: { phone: null },
   },
   '1271184502110001': {
     catatan: 'kolom NO. HP kosong di tabel operator (nomor lama milik wali)',
-    data: { hp: null },
+    data: { phone: null },
   },
 };
 
@@ -105,8 +105,8 @@ async function main() {
   let dimasukkan = 0;
   for (const nik of NIK_KELAS_1) {
     const santri = await prisma.santri.findFirst({
-      where: { orang: { nik } },
-      include: { orang: { select: { nama: true } } },
+      where: { person: { nik } },
+      include: { person: { select: { fullName: true } } },
     });
 
     if (!santri) {
@@ -138,7 +138,7 @@ async function main() {
       aksi: 'perbaiki',
       entitas: 'santri',
       entitasId: String(santri.id),
-      ringkasan: `${santri.orang.nama} ditempatkan di MA ${KELAS_MA1.nama} TA ${TA.kode}`,
+      ringkasan: `${santri.person.fullName} ditempatkan di MA ${KELAS_MA1.nama} TA ${TA.kode}`,
       perubahan: {
         dari: {
           unitId: santri.unitId,
@@ -157,13 +157,13 @@ async function main() {
     });
 
     dimasukkan += 1;
-    console.log(`  + ${santri.orang.nama} → MA ${KELAS_MA1.nama} TA ${TA.kode}`);
+    console.log(`  + ${santri.person.fullName} → MA ${KELAS_MA1.nama} TA ${TA.kode}`);
   }
 
   // ── 2. Keluarkan siapa pun di rombel yang bukan bagian tabel operator ─────
   const penyusup = await prisma.santri.findMany({
-    where: { kelasId: kelas.id, orang: { nik: { notIn: NIK_KELAS_1 } } },
-    include: { orang: { select: { nama: true, nik: true } } },
+    where: { kelasId: kelas.id, person: { nik: { notIn: NIK_KELAS_1 } } },
+    include: { person: { select: { fullName: true, nik: true } } },
   });
 
   for (const santri of penyusup) {
@@ -182,7 +182,7 @@ async function main() {
       entitas: 'santri',
       entitasId: String(santri.id),
       ringkasan:
-        `${santri.orang.nama} dikeluarkan dari MA ${KELAS_MA1.nama} TA ${TA.kode} ` +
+        `${santri.person.fullName} dikeluarkan dari MA ${KELAS_MA1.nama} TA ${TA.kode} ` +
         '— bukan bagian angkatan menurut tabel operator; kembali jadi alumni SMP tanpa kelas',
       perubahan: {
         dari: {
@@ -196,13 +196,13 @@ async function main() {
       aktor: AKTOR_SKRIP,
     });
 
-    console.log(`  - ${santri.orang.nama} (${santri.orang.nik}) → alumni SMP tanpa kelas`);
+    console.log(`  - ${santri.person.fullName} (${santri.person.nik}) → alumni SMP tanpa kelas`);
   }
 
   // ── 3. Koreksi biodata yang menyimpang dari tabel operator ───────────────
   let dikoreksi = 0;
   for (const [nik, { catatan, data }] of Object.entries(KOREKSI_BIODATA)) {
-    const orang = await prisma.orang.findUnique({ where: { nik } });
+    const orang = await prisma.person.findUnique({ where: { nik } });
     if (!orang) throw new Error(`Orang dengan NIK ${nik} tidak ditemukan.`);
 
     const record = orang as unknown as Record<string, unknown>;
@@ -210,19 +210,19 @@ async function main() {
     if (sudahBenar) continue;
 
     const sebelum = Object.fromEntries(Object.keys(data).map((kolom) => [kolom, record[kolom]]));
-    await prisma.orang.update({ where: { id: orang.id }, data });
+    await prisma.person.update({ where: { id: orang.id }, data });
 
     await recordAudit({
       aksi: 'perbaiki',
       entitas: 'orang',
       entitasId: String(orang.id),
-      ringkasan: `Biodata ${orang.nama} dikoreksi: ${catatan}`,
+      ringkasan: `Biodata ${orang.fullName} dikoreksi: ${catatan}`,
       perubahan: { dari: sebelum, ke: data },
       aktor: AKTOR_SKRIP,
     });
 
     dikoreksi += 1;
-    console.log(`  ~ ${orang.nama}: ${catatan}`);
+    console.log(`  ~ ${orang.fullName}: ${catatan}`);
   }
 
   const total = await prisma.santri.count({ where: { kelasId: kelas.id } });

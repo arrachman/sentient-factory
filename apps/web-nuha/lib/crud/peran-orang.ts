@@ -161,10 +161,10 @@ const jabatanDari = (input: Record<string, unknown>, peran: 'guru' | 'staf') =>
   teks(input, 'peranJabatan') || (peran === 'guru' ? 'Guru Mapel' : 'Staf');
 
 /** NIP wajib & unik di skema, jadi sediakan cadangan yang deterministik. */
-const nipCadangan = (orangId: string) => `NIP-${orangId.padStart(6, '0')}`;
+const nipCadangan = (personId: string) => `NIP-${personId.padStart(6, '0')}`;
 
-async function catat(orangId: string, ringkasan: string, perubahan: Record<string, unknown>, aktor: { id: string; nama: string }, aksi: 'CRUD_CREATE' | 'CRUD_UPDATE' | 'CRUD_DELETE' = 'CRUD_CREATE') {
-  await recordAudit({ aksi, entitas: 'orang_peran', entitasId: orangId, ringkasan, perubahan, aktor });
+async function catat(personId: string, ringkasan: string, perubahan: Record<string, unknown>, aktor: { id: string; nama: string }, aksi: 'CRUD_CREATE' | 'CRUD_UPDATE' | 'CRUD_DELETE' = 'CRUD_CREATE') {
+  await recordAudit({ aksi, entitas: 'orang_peran', entitasId: personId, ringkasan, perubahan, aktor });
 }
 
 type Relasi = { id: string; hubungan: string };
@@ -201,8 +201,8 @@ function bacaRelasi(input: Record<string, unknown>, key: string): Relasi[] {
 async function sambungkanWali(waliId: bigint, anakId: bigint, hubungan: string): Promise<boolean> {
   if (waliId === anakId) return false;
   const [adaWali, adaAnak] = await Promise.all([
-    prisma.orang.count({ where: { id: waliId } }),
-    prisma.orang.count({ where: { id: anakId } }),
+    prisma.person.count({ where: { id: waliId } }),
+    prisma.person.count({ where: { id: anakId } }),
   ]);
   if (!adaWali || !adaAnak) return false;
   const sudahAdaUtama = await prisma.relasiWali.count({ where: { anakId, utama: true } });
@@ -216,33 +216,33 @@ async function sambungkanWali(waliId: bigint, anakId: bigint, hubungan: string):
 
 /**
  * Buat baris peran untuk orang yang baru disimpan. Idempoten: bila orang itu
- * sudah punya baris santri/pegawai, biarkan yang lama (relasi 1-1 `orangId`).
+ * sudah punya baris santri/pegawai, biarkan yang lama (relasi 1-1 `personId`).
  */
-export async function daftarkanPeran(orangId: string, input: Record<string, unknown>, aktor: { id: string; nama: string }): Promise<void> {
+export async function daftarkanPeran(personId: string, input: Record<string, unknown>, aktor: { id: string; nama: string }): Promise<void> {
   const dipilih = bacaPeran(input);
-  const id = BigInt(orangId);
+  const id = BigInt(personId);
 
   if (dipilih.has('santri')) {
-    if (!(await prisma.santri.count({ where: { orangId: id } }))) {
+    if (!(await prisma.santri.count({ where: { personId: id } }))) {
       const nis = teks(input, 'peranNis') || null;
-      await prisma.santri.create({ data: { orangId: id, nis, status: 'Mukim' } });
-      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran: 'santri', nis }, aktor);
+      await prisma.santri.create({ data: { personId: id, nis, status: 'Mukim' } });
+      await catat(personId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran: 'santri', nis }, aktor);
     }
     // Santri boleh punya beberapa wali (ayah, ibu, wali lain).
     for (const wali of bacaRelasi(input, 'peranWali')) {
       if (await sambungkanWali(BigInt(wali.id), id, wali.hubungan)) {
-        await catat(orangId, `Menetapkan orang #${wali.id} sebagai ${wali.hubungan}`, { waliId: wali.id, hubungan: wali.hubungan }, aktor);
+        await catat(personId, `Menetapkan orang #${wali.id} sebagai ${wali.hubungan}`, { waliId: wali.id, hubungan: wali.hubungan }, aktor);
       }
     }
   }
 
   const peranPegawai = peranPegawaiDari(dipilih);
-  if (peranPegawai && !(await prisma.pegawai.count({ where: { orangId: id } }))) {
-    const nip = teks(input, 'peranNip') || nipCadangan(orangId);
+  if (peranPegawai && !(await prisma.pegawai.count({ where: { personId: id } }))) {
+    const nip = teks(input, 'peranNip') || nipCadangan(personId);
     const jabatan = jabatanDari(input, peranPegawai);
     const tugasTambahan = teks(input, 'peranTugasTambahan') || null;
-    await prisma.pegawai.create({ data: { orangId: id, nip, jabatan, tugasTambahan, status: 'Aktif' } });
-    await catat(orangId, `Mendaftarkan sebagai ${LABEL_PERAN[peranPegawai].toLowerCase()} (NIP ${nip})`, { peran: peranPegawai, nip, jabatan, tugasTambahan }, aktor);
+    await prisma.pegawai.create({ data: { personId: id, nip, jabatan, tugasTambahan, status: 'Aktif' } });
+    await catat(personId, `Mendaftarkan sebagai ${LABEL_PERAN[peranPegawai].toLowerCase()} (NIP ${nip})`, { peran: peranPegawai, nip, jabatan, tugasTambahan }, aktor);
   }
 
   // Wali tanpa santri yang dipilih tetap sah — identitasnya sudah tersimpan
@@ -251,7 +251,7 @@ export async function daftarkanPeran(orangId: string, input: Record<string, unkn
   if (dipilih.has('wali')) {
     for (const anak of bacaRelasi(input, 'peranAnak')) {
       if (await sambungkanWali(id, BigInt(anak.id), anak.hubungan)) {
-        await catat(orangId, `Mendaftarkan sebagai ${anak.hubungan} dari orang #${anak.id}`, { peran: 'wali', anakId: anak.id, hubungan: anak.hubungan }, aktor);
+        await catat(personId, `Mendaftarkan sebagai ${anak.hubungan} dari orang #${anak.id}`, { peran: 'wali', anakId: anak.id, hubungan: anak.hubungan }, aktor);
       }
     }
   }
@@ -259,7 +259,7 @@ export async function daftarkanPeran(orangId: string, input: Record<string, unkn
 
 /** Relasi yang dicabut operator ikut hilang; yang tersisa disesuaikan hubungannya. */
 async function selaraskanRelasi(
-  orangId: string,
+  personId: string,
   arah: 'wali' | 'anak',
   daftar: Relasi[],
   id: bigint,
@@ -272,12 +272,12 @@ async function selaraskanRelasi(
     const lawan = String(arah === 'wali' ? baris.waliId : baris.anakId);
     if (tetap.has(lawan)) continue;
     await prisma.relasiWali.delete({ where: { waliId_anakId: { waliId: baris.waliId, anakId: baris.anakId } } });
-    await catat(orangId, `Mencabut relasi wali dengan orang #${lawan}`, { arah, lawan }, aktor, 'CRUD_DELETE');
+    await catat(personId, `Mencabut relasi wali dengan orang #${lawan}`, { arah, lawan }, aktor, 'CRUD_DELETE');
   }
   for (const item of daftar) {
     const [waliId, anakId] = arah === 'wali' ? [BigInt(item.id), id] : [id, BigInt(item.id)];
     if (await sambungkanWali(waliId, anakId, item.hubungan)) {
-      await catat(orangId, `Menetapkan relasi ${item.hubungan} dengan orang #${item.id}`, { arah, lawan: item.id, hubungan: item.hubungan }, aktor, 'CRUD_UPDATE');
+      await catat(personId, `Menetapkan relasi ${item.hubungan} dengan orang #${item.id}`, { arah, lawan: item.id, hubungan: item.hubungan }, aktor, 'CRUD_UPDATE');
     }
   }
 }
@@ -289,41 +289,41 @@ async function selaraskanRelasi(
  * pencabutannya dilakukan sengaja lewat modul asalnya. Relasi wali, yang tidak
  * dirujuk modul lain, memang ikut dicabut sesuai isi daftar.
  */
-export async function selaraskanPeran(orangId: string, input: Record<string, unknown>, aktor: { id: string; nama: string }): Promise<void> {
+export async function selaraskanPeran(personId: string, input: Record<string, unknown>, aktor: { id: string; nama: string }): Promise<void> {
   if (!('peranOrang' in input)) return;
   const dipilih = bacaPeran(input);
-  const id = BigInt(orangId);
+  const id = BigInt(personId);
 
   if (dipilih.has('santri')) {
     const nis = teks(input, 'peranNis') || null;
-    const ada = await prisma.santri.count({ where: { orangId: id } });
+    const ada = await prisma.santri.count({ where: { personId: id } });
     if (ada) {
-      await prisma.santri.update({ where: { orangId: id }, data: { nis } });
-      await catat(orangId, `Memperbarui data santri${nis ? ` (NIS ${nis})` : ''}`, { nis }, aktor, 'CRUD_UPDATE');
+      await prisma.santri.update({ where: { personId: id }, data: { nis } });
+      await catat(personId, `Memperbarui data santri${nis ? ` (NIS ${nis})` : ''}`, { nis }, aktor, 'CRUD_UPDATE');
     } else {
-      await prisma.santri.create({ data: { orangId: id, nis, status: 'Mukim' } });
-      await catat(orangId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran: 'santri', nis }, aktor);
+      await prisma.santri.create({ data: { personId: id, nis, status: 'Mukim' } });
+      await catat(personId, `Mendaftarkan sebagai santri${nis ? ` (NIS ${nis})` : ''}`, { peran: 'santri', nis }, aktor);
     }
-    if ('peranWali' in input) await selaraskanRelasi(orangId, 'wali', bacaRelasi(input, 'peranWali'), id, aktor);
+    if ('peranWali' in input) await selaraskanRelasi(personId, 'wali', bacaRelasi(input, 'peranWali'), id, aktor);
   }
 
   const peranPegawai = peranPegawaiDari(dipilih);
   if (peranPegawai) {
     const jabatan = jabatanDari(input, peranPegawai);
-    const ada = await prisma.pegawai.findUnique({ where: { orangId: id }, select: { nip: true } });
-    const nip = teks(input, 'peranNip') || ada?.nip || nipCadangan(orangId);
+    const ada = await prisma.pegawai.findUnique({ where: { personId: id }, select: { nip: true } });
+    const nip = teks(input, 'peranNip') || ada?.nip || nipCadangan(personId);
     const tugasTambahan = teks(input, 'peranTugasTambahan') || null;
     if (ada) {
-      await prisma.pegawai.update({ where: { orangId: id }, data: { nip, jabatan, tugasTambahan } });
-      await catat(orangId, `Memperbarui data pegawai (NIP ${nip})`, { nip, jabatan, tugasTambahan }, aktor, 'CRUD_UPDATE');
+      await prisma.pegawai.update({ where: { personId: id }, data: { nip, jabatan, tugasTambahan } });
+      await catat(personId, `Memperbarui data pegawai (NIP ${nip})`, { nip, jabatan, tugasTambahan }, aktor, 'CRUD_UPDATE');
     } else {
-      await prisma.pegawai.create({ data: { orangId: id, nip, jabatan, tugasTambahan, status: 'Aktif' } });
-      await catat(orangId, `Mendaftarkan sebagai ${LABEL_PERAN[peranPegawai].toLowerCase()} (NIP ${nip})`, { peran: peranPegawai, nip, jabatan, tugasTambahan }, aktor);
+      await prisma.pegawai.create({ data: { personId: id, nip, jabatan, tugasTambahan, status: 'Aktif' } });
+      await catat(personId, `Mendaftarkan sebagai ${LABEL_PERAN[peranPegawai].toLowerCase()} (NIP ${nip})`, { peran: peranPegawai, nip, jabatan, tugasTambahan }, aktor);
     }
   }
 
   if (dipilih.has('wali') && 'peranAnak' in input) {
-    await selaraskanRelasi(orangId, 'anak', bacaRelasi(input, 'peranAnak'), id, aktor);
+    await selaraskanRelasi(personId, 'anak', bacaRelasi(input, 'peranAnak'), id, aktor);
   }
   // Peran yang tidak lagi dicentang tidak dihapus di sini — lihat catatan atas.
 }

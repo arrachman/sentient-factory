@@ -47,8 +47,8 @@ export async function TabNilai({
       kelas: {
         include: {
           santri: {
-            orderBy: { orang: { nama: 'asc' } },
-            select: { id: true, nis: true, orang: { select: { nama: true } } },
+            orderBy: { person: { fullName: 'asc' } },
+            select: { id: true, nis: true, person: { select: { fullName: true } } },
           },
         },
       },
@@ -95,7 +95,7 @@ export async function TabNilai({
                 return (
                   <tr key={String(santri.id)}>
                     <td className="muted">{santri.nis}</td>
-                    <td>{santri.orang.nama}</td>
+                    <td>{santri.person.fullName}</td>
                     <td>
                       <input
                         type="checkbox"

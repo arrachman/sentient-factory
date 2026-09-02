@@ -12,7 +12,7 @@ export async function TabDaftar({ f, halaman }: { f: FilterPegawai; halaman: num
     prisma.pegawai.count({ where }),
     prisma.pegawai.findMany({
       where,
-      include: { orang: true, unit: true },
+      include: { person: true, unit: true },
       orderBy: URUT_PEGAWAI[f.urut].orderBy,
       skip: (halaman - 1) * UKURAN_HALAMAN,
       take: UKURAN_HALAMAN,
@@ -32,7 +32,7 @@ export async function TabDaftar({ f, halaman }: { f: FilterPegawai; halaman: num
           <Tabel kolom={['Nama', 'NIP', 'Lembaga', 'Jabatan', 'Mapel diampu', 'Status', { label: 'Jam', num: true }]}>
             {baris.map((p) => (
               <tr key={String(p.id)}>
-                <td>{p.orang.nama}</td>
+                <td>{p.person.fullName}</td>
                 <td>{p.nip}</td>
                 <td>{p.unit ? p.unit.key : <span style={{ opacity: 0.6 }}>—</span>}</td>
                 <td>{p.jabatan}</td>

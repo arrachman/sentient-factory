@@ -16,9 +16,9 @@ export async function TabPayroll({
 
   const pegawai = await prisma.pegawai.findMany({
     where: q
-      ? { OR: [{ orang: { nama: { contains: q } } }, { jabatan: { contains: q } }] }
+      ? { OR: [{ person: { fullName: { contains: q } } }, { jabatan: { contains: q } }] }
       : undefined,
-    include: { orang: true, unit: true, komponen: true },
+    include: { person: true, unit: true, komponen: true },
     orderBy: { nip: 'asc' },
   });
   const slips = await prisma.slipGaji.findMany({ where: { periode, pegawaiId: { in: pegawai.map((p) => p.id) } } });
@@ -46,9 +46,9 @@ export async function TabPayroll({
               <tr key={String(p.id)}>
                 <td>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                    <Avatar nama={p.orang.nama} />
+                    <Avatar nama={p.person.fullName} />
                     <div>
-                      <div style={{ fontWeight: 600 }}>{p.orang.nama}</div>
+                      <div style={{ fontWeight: 600 }}>{p.person.fullName}</div>
                       <div className="muted">{p.nip} · {p.unit?.nama ?? 'Yayasan'}</div>
                     </div>
                   </div>

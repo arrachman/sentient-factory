@@ -14,10 +14,10 @@ const WARNA_STATUS: Record<string, string> = { Lancar: '#0F6B3D', Cicil: '#E8973
 export async function TabRekap({ q }: { q: string }) {
   const santri = await prisma.santri.findMany({
     where: q
-      ? { OR: [{ orang: { nama: { contains: q } } }, { nis: { contains: q } }] }
+      ? { OR: [{ person: { fullName: { contains: q } } }, { nis: { contains: q } }] }
       : undefined,
-    include: { orang: true, unit: true, kelas: true, tagihan: true },
-    orderBy: { orang: { nama: 'asc' } },
+    include: { person: true, unit: true, kelas: true, tagihan: true },
+    orderBy: { person: { fullName: 'asc' } },
     take: 30,
   });
 
@@ -75,9 +75,9 @@ export async function TabRekap({ q }: { q: string }) {
               <tr key={String(r.santri.id)}>
                 <td>
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                    <Avatar nama={r.santri.orang.nama} size={30} />
+                    <Avatar nama={r.santri.person.fullName} size={30} />
                     <div>
-                      <div style={{ fontWeight: 600 }}>{r.santri.orang.nama}</div>
+                      <div style={{ fontWeight: 600 }}>{r.santri.person.fullName}</div>
                       <div className="muted">NIS {r.santri.nis}</div>
                     </div>
                   </div>

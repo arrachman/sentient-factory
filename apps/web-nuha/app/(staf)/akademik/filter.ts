@@ -7,8 +7,8 @@ export type StatusPilihan = (typeof STATUS_SANTRI)[number];
 
 /** Urutan daftar santri. Kunci ikut ke URL, jadi dieja eksplisit. */
 export const URUT = {
-  nama: { label: 'Nama A–Z', orderBy: { orang: { nama: 'asc' } } },
-  'nama-desc': { label: 'Nama Z–A', orderBy: { orang: { nama: 'desc' } } },
+  nama: { label: 'Nama A–Z', orderBy: { person: { fullName: 'asc' } } },
+  'nama-desc': { label: 'Nama Z–A', orderBy: { person: { fullName: 'desc' } } },
   nis: { label: 'NIS terkecil', orderBy: { nis: 'asc' } },
   baru: { label: 'Terbaru ditambahkan', orderBy: { createdAt: 'desc' } },
 } as const satisfies Record<string, { label: string; orderBy: Prisma.SantriOrderByWithRelationInput }>;
@@ -67,14 +67,14 @@ export function whereFilter(f: FilterAkademik): Prisma.SantriWhereInput {
   else if (f.tingkat) syarat.push({ kelas: { tingkat: f.tingkat, ...(f.unit ? { unit: { key: f.unit } } : {}) } });
   else if (f.unit) syarat.push({ unit: { key: f.unit } });
   if (f.status) syarat.push({ status: f.status });
-  if (f.jk) syarat.push({ orang: { jk: f.jk } });
+  if (f.jk) syarat.push({ person: { gender: f.jk } });
   if (f.program) syarat.push({ program: f.program });
   if (f.angkatan) syarat.push({ tahunMasuk: f.angkatan });
   if (f.asramaId) syarat.push({ kamar: { asramaId: f.asramaId } });
   if (f.q) {
     syarat.push({
       OR: [
-        { orang: { nama: { contains: f.q } } },
+        { person: { fullName: { contains: f.q } } },
         { nis: { contains: f.q } },
         { nisn: { contains: f.q } },
       ],

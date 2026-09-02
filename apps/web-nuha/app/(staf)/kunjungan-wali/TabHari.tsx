@@ -11,7 +11,7 @@ export async function TabHari() {
 
   const kunjungan = await prisma.kunjungan.findMany({
     where: { tgl: { gte: awalHari, lt: akhirHari } },
-    include: { santri: { include: { orang: true } } },
+    include: { santri: { include: { person: true } } },
     orderBy: { id: 'desc' },
   });
 
@@ -28,7 +28,7 @@ export async function TabHari() {
               <Avatar nama={k.namaWali} size={34} />
               <div style={{ flex: 1, minWidth: 130 }}>
                 <div style={{ fontWeight: 600 }}>{k.namaWali}</div>
-                <div className="muted">{k.hubungan ?? '-'} dari {k.santri.orang.nama}</div>
+                <div className="muted">{k.hubungan ?? '-'} dari {k.santri.person.fullName}</div>
               </div>
               <Badge status={k.status} />
             </div>

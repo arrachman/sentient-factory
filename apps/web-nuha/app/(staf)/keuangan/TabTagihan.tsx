@@ -11,8 +11,8 @@ function statusTagihan(nominal: number, dibayar: number): string {
 export async function TabTagihan({ q }: { q: string }) {
   const [rows, tarifPerJenis] = await Promise.all([
     prisma.tagihan.findMany({
-      where: q ? { santri: { orang: { nama: { contains: q } } } } : undefined,
-      include: { santri: { include: { orang: true, unit: true } } },
+      where: q ? { santri: { person: { fullName: { contains: q } } } } : undefined,
+      include: { santri: { include: { person: true, unit: true } } },
       orderBy: { jatuhTempo: 'desc' },
       take: 30,
     }),
@@ -57,9 +57,9 @@ export async function TabTagihan({ q }: { q: string }) {
                 <tr key={String(t.id)}>
                   <td>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                      <Avatar nama={t.santri.orang.nama} size={30} />
+                      <Avatar nama={t.santri.person.fullName} size={30} />
                       <div>
-                        <div style={{ fontWeight: 600 }}>{t.santri.orang.nama}</div>
+                        <div style={{ fontWeight: 600 }}>{t.santri.person.fullName}</div>
                         <div className="muted">{t.santri.nis} · {t.santri.unit?.nama ?? '-'}</div>
                       </div>
                     </div>

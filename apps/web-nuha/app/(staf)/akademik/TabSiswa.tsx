@@ -11,7 +11,7 @@ export async function TabSiswa({ searchParams }: { searchParams: SearchParams })
     prisma.santri.count({ where }),
     prisma.santri.findMany({
       where,
-      include: { orang: true, unit: true, kelas: true, kamar: { include: { asrama: true } } },
+      include: { person: true, unit: true, kelas: true, kamar: { include: { asrama: true } } },
       orderBy: URUT[f.urut].orderBy,
       skip: (halaman - 1) * UKURAN_HALAMAN,
       take: UKURAN_HALAMAN,
@@ -48,10 +48,10 @@ export async function TabSiswa({ searchParams }: { searchParams: SearchParams })
                 <tr key={String(x.id)}>
                   <td>
                     <div style={{ display: 'flex', gap: 11, alignItems: 'center' }}>
-                      <Avatar nama={x.orang.nama} />
+                      <Avatar nama={x.person.fullName} />
                       <div>
-                        <div style={{ fontSize: 13.5, fontWeight: 600 }}>{x.orang.nama}</div>
-                        <div className="muted" style={{ fontSize: 11.5 }}>{x.orang.jk} · {x.program ?? '-'}</div>
+                        <div style={{ fontSize: 13.5, fontWeight: 600 }}>{x.person.fullName}</div>
+                        <div className="muted" style={{ fontSize: 11.5 }}>{x.person.gender} · {x.program ?? '-'}</div>
                       </div>
                     </div>
                   </td>

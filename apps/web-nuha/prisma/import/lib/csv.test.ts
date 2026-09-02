@@ -12,7 +12,7 @@ describe('parseCsv', () => {
 
   it('menangani field berkutip ganda yang mengandung koma', () => {
     const hasil = parseCsv('nip,nama\nMA-001,"Khalimatus Sa\'diyah, S.Si"');
-    expect(hasil).toEqual([{ nip: 'MA-001', nama: "Khalimatus Sa'diyah, S.Si" }]);
+    expect(hasil).toEqual([{ nip: 'MA-001', fullName: "Khalimatus Sa'diyah, S.Si" }]);
   });
 
   it('menangani escape kutip ganda ("") di dalam field berkutip', () => {

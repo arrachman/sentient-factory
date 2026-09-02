@@ -287,15 +287,15 @@ async function jalankan(): Promise<void> {
   let diproses = 0;
 
   for (const s of siap) {
-    const orangLama = await prisma.orang.findUnique({
+    const orangLama = await prisma.person.findUnique({
       where: { nik: s.nik },
-      select: { id: true, nama: true, alamat: true, rt: true, rw: true, hp: true, santri: { select: { id: true, nis: true, unitId: true } } },
+      select: { id: true, fullName: true, addressLine: true, neighborhoodRt: true, neighborhoodRw: true, phone: true, santri: { select: { id: true, nis: true, unitId: true } } },
     });
 
     // Sudah diproses gelombang 1 (data wali Ayah/Ibu-nya lebih lengkap): lewati.
     if (orangLama?.santri && orangLama.santri.unitId === unit.id) {
       dilewati += 1;
-      console.log(`  – ${orangLama.santri.nis} ${orangLama.nama} — sudah siswa MA, dilewati`);
+      console.log(`  – ${orangLama.santri.nis} ${orangLama.fullName} — sudah siswa MA, dilewati`);
       continue;
     }
 
@@ -304,22 +304,22 @@ async function jalankan(): Promise<void> {
     const hp = bersihkanHp(s.hp);
 
     const isiOrang = {
-      nama: s.nama,
-      jk: s.jk,
-      tglLahir: s.tglLahir,
-      tmpLahir: s.tmpLahir,
+      fullName: s.nama,
+      gender: s.jk,
+      birthDate: s.tglLahir,
+      birthPlace: s.tmpLahir,
       nik: s.nik,
       // Alamat/RT/RW hasil pembersihan manual di DB tidak ditimpa versi sumber.
-      alamat: orangLama?.alamat?.trim() || s.alamat,
-      rt: orangLama?.rt ?? s.rt,
-      rw: orangLama?.rw ?? s.rw,
+      addressLine: orangLama?.addressLine?.trim() || s.alamat,
+      neighborhoodRt: orangLama?.neighborhoodRt ?? s.rt,
+      neighborhoodRw: orangLama?.neighborhoodRw ?? s.rw,
       asalSekolah: ASAL_SEKOLAH,
-      hp: hp ?? bersihkanHp(orangLama?.hp ?? null),
+      phone: hp ?? bersihkanHp(orangLama?.phone ?? null),
     };
 
     const orang = orangLama
-      ? await prisma.orang.update({ where: { id: orangLama.id }, data: isiOrang })
-      : await prisma.orang.create({ data: { ...isiOrang, email: `santri.${s.nisn}@nuha.local` } });
+      ? await prisma.person.update({ where: { id: orangLama.id }, data: isiOrang })
+      : await prisma.person.create({ data: { ...isiOrang, email: `santri.${s.nisn}@nuha.local` } });
 
     const isiSantri = {
       nis: buatNis(TAHUN_MASUK, KODE_UNIT, urut),
@@ -331,7 +331,7 @@ async function jalankan(): Promise<void> {
     };
     const santri = orangLama?.santri
       ? await prisma.santri.update({ where: { id: orangLama.santri.id }, data: isiSantri })
-      : await prisma.santri.create({ data: { orangId: orang.id, ...isiSantri } });
+      : await prisma.santri.create({ data: { personId: orang.id, ...isiSantri } });
 
     // Sumber hanya punya satu kolom wali tanpa penanda ayah/ibu → peran "Wali".
     await tulisRelasiWali(orang.id, s.nisn, 'Wali', {

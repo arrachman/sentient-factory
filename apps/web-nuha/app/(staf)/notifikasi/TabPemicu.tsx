@@ -12,7 +12,7 @@ async function kontakWali(santriId: bigint, orangId: bigint, fallbackNama: strin
     include: { wali: true },
     orderBy: [{ utama: 'desc' }, { id: 'asc' }],
   });
-  if (relasi) return { nama: relasi.wali.nama, hp: relasi.wali.hp ?? fallbackHp ?? '' };
+  if (relasi) return { nama: relasi.wali.fullName, hp: relasi.wali.phone ?? fallbackHp ?? '' };
   return { nama: fallbackNama, hp: fallbackHp ?? '' };
 }
 
@@ -24,19 +24,19 @@ export async function TabPemicu() {
   const [tagihan, izin, slip] = await Promise.all([
     prisma.tagihan.findMany({
       where: { jatuhTempo: { lt: hariIni } },
-      include: { santri: { include: { orang: true } } },
+      include: { santri: { include: { person: true } } },
       orderBy: { jatuhTempo: 'asc' },
       take: 8,
     }),
     prisma.izin.findMany({
       where: { status: 'Menunggu' },
-      include: { santri: { include: { orang: true } } },
+      include: { santri: { include: { person: true } } },
       orderBy: { keluarAt: 'desc' },
       take: 8,
     }),
     prisma.slipGaji.findMany({
       where: { status: 'Terbit', dibayarAt: null },
-      include: { pegawai: { include: { orang: true } } },
+      include: { pegawai: { include: { person: true } } },
       orderBy: { createdAt: 'desc' },
       take: 8,
     }),
@@ -47,28 +47,28 @@ export async function TabPemicu() {
   for (const t of tagihan) {
     const sisa = Number(t.nominal) - Number(t.dibayar);
     if (sisa <= 0) continue;
-    const kontak = await kontakWali(t.santriId, t.santri.orangId, t.santri.orang.nama, t.santri.orang.hp);
+    const kontak = await kontakWali(t.santriId, t.santri.personId, t.santri.person.fullName, t.santri.person.phone);
     baris.push({
       kode: t.kode,
       judul: `Tagihan ${t.jenis} jatuh tempo`,
-      detail: `${t.santri.orang.nama} · periode ${t.periode} · sisa ${rupiah(sisa)}`,
+      detail: `${t.santri.person.fullName} · periode ${t.periode} · sisa ${rupiah(sisa)}`,
       target: `${kontak.nama} (wali)`,
       nomor: kontak.hp,
       tujuan: kontak.nama,
-      isi: `Assalamu'alaikum, tagihan ${t.jenis} periode ${t.periode} atas nama ${t.santri.orang.nama} sebesar ${rupiah(sisa)} telah jatuh tempo. Mohon segera dilunasi.`,
+      isi: `Assalamu'alaikum, tagihan ${t.jenis} periode ${t.periode} atas nama ${t.santri.person.fullName} sebesar ${rupiah(sisa)} telah jatuh tempo. Mohon segera dilunasi.`,
     });
   }
 
   for (const i of izin) {
-    const kontak = await kontakWali(i.santriId, i.santri.orangId, i.santri.orang.nama, i.santri.orang.hp);
+    const kontak = await kontakWali(i.santriId, i.santri.personId, i.santri.person.fullName, i.santri.person.phone);
     baris.push({
       kode: i.kode,
       judul: `Pengajuan izin ${i.jenis} menunggu verifikasi`,
-      detail: `${i.santri.orang.nama} · ${i.alasan}`,
+      detail: `${i.santri.person.fullName} · ${i.alasan}`,
       target: `${kontak.nama} (wali)`,
       nomor: kontak.hp,
       tujuan: kontak.nama,
-      isi: `Assalamu'alaikum, pengajuan izin ${i.jenis} untuk ${i.santri.orang.nama} sedang menunggu verifikasi pengasuh.`,
+      isi: `Assalamu'alaikum, pengajuan izin ${i.jenis} untuk ${i.santri.person.fullName} sedang menunggu verifikasi pengasuh.`,
     });
   }
 
@@ -76,11 +76,11 @@ export async function TabPemicu() {
     baris.push({
       kode: `SLP-${s.id}`,
       judul: 'Slip gaji baru terbit',
-      detail: `${s.pegawai.orang.nama} · periode ${s.periode} · netto ${rupiah(Number(s.netto))}`,
-      target: `${s.pegawai.orang.nama} (pegawai)`,
-      nomor: s.pegawai.orang.hp ?? '',
-      tujuan: s.pegawai.orang.nama,
-      isi: `Assalamu'alaikum, slip gaji periode ${s.periode} atas nama ${s.pegawai.orang.nama} telah terbit dengan netto ${rupiah(Number(s.netto))}.`,
+      detail: `${s.pegawai.person.fullName} · periode ${s.periode} · netto ${rupiah(Number(s.netto))}`,
+      target: `${s.pegawai.person.fullName} (pegawai)`,
+      nomor: s.pegawai.person.phone ?? '',
+      tujuan: s.pegawai.person.fullName,
+      isi: `Assalamu'alaikum, slip gaji periode ${s.periode} atas nama ${s.pegawai.person.fullName} telah terbit dengan netto ${rupiah(Number(s.netto))}.`,
     });
   }
 

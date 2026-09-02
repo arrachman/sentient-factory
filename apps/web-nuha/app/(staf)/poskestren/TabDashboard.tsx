@@ -7,7 +7,7 @@ const AMBANG_KLB = 3; // ambang KLB prototype: 3 kasus/asrama untuk diagnosis ya
 export async function TabDashboard() {
   const [semuaKunjungan, obat] = await Promise.all([
     prisma.rekamMedis.findMany({
-      include: { santri: { include: { orang: true, kamar: { include: { asrama: true } } } } },
+      include: { santri: { include: { person: true, kamar: { include: { asrama: true } } } } },
       orderBy: { tgl: 'desc' },
     }),
     prisma.obat.findMany(),
@@ -103,10 +103,10 @@ export async function TabDashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {kunjHariIni.map((k) => (
               <div key={String(k.id)} className="inset" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ width: 30, height: 30, borderRadius: '50%', background: avaBg(k.santri.orang.nama), color: '#FFF', display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 700, flex: '0 0 auto' }}>
-                  {inisial(k.santri.orang.nama)}
+                <span style={{ width: 30, height: 30, borderRadius: '50%', background: avaBg(k.santri.person.fullName), color: '#FFF', display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 700, flex: '0 0 auto' }}>
+                  {inisial(k.santri.person.fullName)}
                 </span>
-                <span style={{ fontWeight: 600, fontSize: 13 }}>{k.santri.orang.nama}</span>
+                <span style={{ fontWeight: 600, fontSize: 13 }}>{k.santri.person.fullName}</span>
                 <span className="muted">{k.jam ?? '-'} · Asrama {k.santri.kamar?.asrama.nama ?? '-'}</span>
                 <span className="badge badge-merah">{k.diagnosis ?? '-'}</span>
                 <span className="muted" style={{ width: '100%' }}>{k.keluhan} → {k.terapi ?? '-'} · <strong>{k.tindakLanjut ?? '-'}</strong></span>

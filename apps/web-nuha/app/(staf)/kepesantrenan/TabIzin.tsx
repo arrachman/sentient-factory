@@ -5,7 +5,7 @@ import { ubahStatusIzin } from './actions';
 /** Overdue = izin Disetujui, sudah lewat jadwal kembali, tapi belum ditandai Selesai. */
 export async function TabIzin() {
   const izin = await prisma.izin.findMany({
-    include: { santri: { include: { orang: true, kamar: true } } },
+    include: { santri: { include: { person: true, kamar: true } } },
     orderBy: { keluarAt: 'desc' },
   });
 
@@ -46,9 +46,9 @@ export async function TabIzin() {
               style={{ borderLeft: `4px solid ${z.overdue ? '#B91C1C' : '#0F6B3D'}`, display: 'flex', flexDirection: 'column', gap: 11 }}
             >
               <div style={{ display: 'flex', gap: 11, alignItems: 'center', flexWrap: 'wrap' }}>
-                <Avatar nama={z.santri.orang.nama} size={34} />
+                <Avatar nama={z.santri.person.fullName} size={34} />
                 <div style={{ flex: 1, minWidth: 130 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{z.santri.orang.nama}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{z.santri.person.fullName}</div>
                   <div className="muted" style={{ fontSize: 11.5 }}>{z.kode} · kamar {z.santri.kamar?.kode ?? '—'}</div>
                 </div>
                 <span className={`badge ${kelasStatus(z.status)}`}>{z.status}</span>

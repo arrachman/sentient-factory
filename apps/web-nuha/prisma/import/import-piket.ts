@@ -79,8 +79,8 @@ const EJAAN_FOTO: Readonly<Record<string, string>> = Object.freeze({
 type Galat = { baris: number; pesan: string };
 
 async function jalankan(): Promise<void> {
-  const pegawai = await prisma.pegawai.findMany({ include: { orang: true } });
-  const kamusPegawai = new Map(pegawai.map((p) => [normalisasiNama(p.orang.nama), p]));
+  const pegawai = await prisma.pegawai.findMany({ include: { person: true } });
+  const kamusPegawai = new Map(pegawai.map((p) => [normalisasiNama(p.person.fullName), p]));
 
   const siap: { baris: BarisPiket; pegawaiId: bigint }[] = [];
   const galat: Galat[] = [];

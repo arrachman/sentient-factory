@@ -16,17 +16,17 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
   const santri = await prisma.santri.findUnique({
     where: { id: santriId },
     include: {
-      orang: { include: { riwayatPendidikan: { include: { unit: true, tahunAjaran: true }, orderBy: { tahunAjaran: { kode: 'desc' } } }, region: true } },
+      person: { include: { riwayatPendidikan: { include: { unit: true, tahunAjaran: true }, orderBy: { tahunAjaran: { kode: 'desc' } } }, region: true } },
       unit: true, kelas: true, kamar: { include: { asrama: true } },
     },
   });
   if (!santri) return null;
 
-  const alamatTampil = santri.orang.region
-    ? [santri.orang.alamat, santri.orang.region.fullName ?? `${santri.orang.region.typeLabel ?? ''} ${santri.orang.region.name}`.trim()]
+  const alamatTampil = santri.person.region
+    ? [santri.person.addressLine, santri.person.region.fullName ?? `${santri.person.region.typeLabel ?? ''} ${santri.person.region.name}`.trim()]
         .filter(Boolean)
         .join(', ')
-    : santri.orang.alamat ?? '-';
+    : santri.person.addressLine ?? '-';
 
   const jumlahRekamMedis = await prisma.rekamMedis.count({ where: { santriId } });
   const mukim = santri.status === 'Mukim';
@@ -35,18 +35,18 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
     <div className="grid g2">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
         <h3 className="card-judul" style={{ marginBottom: 0 }}>Identitas</h3>
-        <Baris label="Nama lengkap" nilai={santri.orang.nama} />
-        <Baris label="Tanggal lahir" nilai={formatTgl(santri.orang.tglLahir)} />
-        <Baris label="Tempat lahir" nilai={santri.orang.tmpLahir ?? '-'} />
-        <Baris label="Jenis kelamin" nilai={santri.orang.jk === 'L' ? 'Putra' : 'Putri'} />
-        <Baris label="NIK" nilai={santri.orang.nik ?? '-'} />
-        <Baris label="No. KK" nilai={santri.orang.noKk ?? '-'} />
+        <Baris label="Nama lengkap" nilai={santri.person.fullName} />
+        <Baris label="Tanggal lahir" nilai={formatTgl(santri.person.birthDate)} />
+        <Baris label="Tempat lahir" nilai={santri.person.birthPlace ?? '-'} />
+        <Baris label="Jenis kelamin" nilai={santri.person.gender === 'L' ? 'Putra' : 'Putri'} />
+        <Baris label="NIK" nilai={santri.person.nik ?? '-'} />
+        <Baris label="No. KK" nilai={santri.person.familyCardNumber ?? '-'} />
         <Baris label="Alamat" nilai={alamatTampil} />
-        <Baris label="Anak ke" nilai={formatAnakKe(santri.orang.anakKe, santri.orang.jumlahSaudara)} />
-        <Baris label="Hobi" nilai={santri.orang.hobi ?? '-'} />
-        <Baris label="Cita-cita" nilai={santri.orang.citaCita ?? '-'} />
-        <Baris label="No. HP" nilai={santri.orang.hp ?? '-'} />
-        <Baris label="Asal sekolah" nilai={santri.orang.asalSekolah ?? '-'} />
+        <Baris label="Anak ke" nilai={formatAnakKe(santri.person.birthOrder, santri.person.siblingCount)} />
+        <Baris label="Hobi" nilai={santri.person.hobby ?? '-'} />
+        <Baris label="Cita-cita" nilai={santri.person.aspiration ?? '-'} />
+        <Baris label="No. HP" nilai={santri.person.phone ?? '-'} />
+        <Baris label="Asal sekolah" nilai={santri.person.previousSchool ?? '-'} />
         <Baris label="Tahun masuk" nilai={santri.tahunMasuk ?? '-'} terakhir />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
@@ -65,7 +65,7 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
             </div>
           </div>
         )}
-        {santri.orang.riwayatPendidikan.map((riwayat) => (
+        {santri.person.riwayatPendidikan.map((riwayat) => (
           <div key={String(riwayat.id)} className="inset" style={{ background: '#F5F8FF', border: '1px solid #CBD9F5' }}>
             <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1E40AF' }}>Riwayat pendidikan</div>
             <div className="muted" style={{ marginTop: 3 }}>

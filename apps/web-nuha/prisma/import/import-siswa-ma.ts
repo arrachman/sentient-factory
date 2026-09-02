@@ -189,25 +189,25 @@ async function jalankan(): Promise<void> {
     let urut = 0;
     for (const s of siap) {
       urut += 1;
-      const orang = await prisma.orang.upsert({
+      const orang = await prisma.person.upsert({
         where: { email: `santri.${s.nisn}@nuha.local` },
         create: {
-          nama: s.nama, jk: s.jk, tglLahir: s.tglLahir, tmpLahir: s.tmpLahir, nik: s.nik, noKk: s.noKk,
-          alamat: s.alamat, anakKe: s.anakKe, jumlahSaudara: s.jumlahSaudara, hobi: s.hobi, citaCita: s.citaCita,
-          hp: s.hp, asalSekolah: s.asalSekolah, email: `santri.${s.nisn}@nuha.local`,
+          fullName: s.nama, gender: s.jk, birthDate: s.tglLahir, birthPlace: s.tmpLahir, nik: s.nik, familyCardNumber: s.noKk,
+          addressLine: s.alamat, birthOrder: s.anakKe, siblingCount: s.jumlahSaudara, hobby: s.hobi, aspiration: s.citaCita,
+          phone: s.hp, previousSchool: s.asalSekolah, email: `santri.${s.nisn}@nuha.local`,
         },
         update: {
-          nama: s.nama, jk: s.jk, tglLahir: s.tglLahir, tmpLahir: s.tmpLahir, nik: s.nik, noKk: s.noKk,
-          alamat: s.alamat, anakKe: s.anakKe, jumlahSaudara: s.jumlahSaudara, hobi: s.hobi, citaCita: s.citaCita,
-          hp: s.hp, asalSekolah: s.asalSekolah,
+          fullName: s.nama, gender: s.jk, birthDate: s.tglLahir, birthPlace: s.tmpLahir, nik: s.nik, familyCardNumber: s.noKk,
+          addressLine: s.alamat, birthOrder: s.anakKe, siblingCount: s.jumlahSaudara, hobby: s.hobi, aspiration: s.citaCita,
+          phone: s.hp, previousSchool: s.asalSekolah,
         },
       });
 
       const nis = buatNis(tahunMasuk, KODE_UNIT, urut);
       const santri = await prisma.santri.upsert({
         where: { nisn: s.nisn },
-        create: { orangId: orang.id, nis, nisn: s.nisn, unitId: unit.id, kelasId, status: StatusSantri.Mukim, tahunMasuk },
-        update: { orangId: orang.id, nis, unitId: unit.id, kelasId, tahunMasuk },
+        create: { personId: orang.id, nis, nisn: s.nisn, unitId: unit.id, kelasId, status: StatusSantri.Mukim, tahunMasuk },
+        update: { personId: orang.id, nis, unitId: unit.id, kelasId, tahunMasuk },
       });
 
       const w = s.wali?.row ?? {};

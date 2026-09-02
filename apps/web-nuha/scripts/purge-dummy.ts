@@ -49,11 +49,11 @@ async function main() {
     }
 
     // Sisakan hanya akun super admin; user & orang lain ikut terhapus.
-    const superadmin = await prisma.orang.findUnique({ where: { email: SUPERADMIN_EMAIL } });
+    const superadmin = await prisma.person.findUnique({ where: { email: SUPERADMIN_EMAIL } });
     if (!superadmin) throw new Error(`Akun ${SUPERADMIN_EMAIL} tidak ditemukan — pembersihan dibatalkan agar tidak ada DB tanpa admin.`);
 
-    const dihapusUser = await prisma.user.deleteMany({ where: { orangId: { not: superadmin.id } } });
-    const dihapusOrang = await prisma.orang.deleteMany({ where: { id: { not: superadmin.id } } });
+    const dihapusUser = await prisma.user.deleteMany({ where: { personId: { not: superadmin.id } } });
+    const dihapusOrang = await prisma.person.deleteMany({ where: { id: { not: superadmin.id } } });
     console.log(`user dihapus: ${dihapusUser.count}, orang dihapus: ${dihapusOrang.count}`);
   } finally {
     await prisma.$executeRawUnsafe('SET FOREIGN_KEY_CHECKS = 1');

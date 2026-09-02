@@ -27,7 +27,7 @@
  * NIK/NISN/TTL/alamat/wali belum diserahkan, jadi kolom itu dibiarkan kosong
  * untuk orang baru dan biodata pegawai yang sudah ada tidak ditimpa.
  *
- * Pencocokan idempoten: nama persis untuk orang baru, dan `orangId` tetap
+ * Pencocokan idempoten: nama persis untuk orang baru, dan `personId` tetap
  * untuk tiga pegawai. Dijalankan berapa kali pun hasil akhirnya sama.
  *
  * Jalankan: `npm run import:santri-madin-6-2026`
@@ -86,7 +86,7 @@ async function main() {
 
   // Pastikan tiga orang yang diklaim sudah ada memang ada, sebelum menulis apa pun.
   for (const s of DAFTAR.filter((x) => x.orangIdExisting)) {
-    const ada = await prisma.orang.findUnique({ where: { id: s.orangIdExisting! } });
+    const ada = await prisma.person.findUnique({ where: { id: s.orangIdExisting! } });
     if (!ada) {
       throw new Error(`Baris ${s.no}: Orang #${s.orangIdExisting} ("${s.nama}") tidak ditemukan`);
     }
@@ -116,23 +116,23 @@ async function main() {
 
     // 1. Orang: pakai yang sudah ada bila ditandai, else cocokkan nama, else buat.
     let orang = s.orangIdExisting
-      ? await prisma.orang.findUniqueOrThrow({ where: { id: s.orangIdExisting } })
-      : await prisma.orang.findFirst({ where: { nama: s.nama, deletedAt: null } });
+      ? await prisma.person.findUniqueOrThrow({ where: { id: s.orangIdExisting } })
+      : await prisma.person.findFirst({ where: { fullName: s.nama, deletedAt: null } });
 
     if (!orang) {
-      orang = await prisma.orang.create({ data: { nama: s.nama, jk: s.jk } });
+      orang = await prisma.person.create({ data: { fullName: s.nama, gender: s.jk } });
       await recordAudit({
         aksi: 'create',
         entitas: 'Orang',
         entitasId: String(orang.id),
         ringkasan: `Tambah orang baru "${s.nama}" untuk santri Madin Kelas 6`,
-        perubahan: { ke: { nama: s.nama, jk: s.jk } },
+        perubahan: { ke: { fullName: s.nama, gender: s.jk } },
         aktor: AKTOR_SKRIP,
       });
     }
 
-    // 2. Santri: satu Orang = paling banyak satu Santri (orangId unique).
-    const santriLama = await prisma.santri.findUnique({ where: { orangId: orang.id } });
+    // 2. Santri: satu Orang = paling banyak satu Santri (personId unique).
+    const santriLama = await prisma.santri.findUnique({ where: { personId: orang.id } });
     const dataSantri = {
       nis,
       unitId: unit.id,
@@ -142,13 +142,13 @@ async function main() {
     };
 
     if (santriLama) {
-      await prisma.santri.update({ where: { orangId: orang.id }, data: dataSantri });
-      hasil.push(`  ${nis}  ${orang.nama}  (perbarui penempatan)`);
+      await prisma.santri.update({ where: { personId: orang.id }, data: dataSantri });
+      hasil.push(`  ${nis}  ${orang.fullName}  (perbarui penempatan)`);
       await recordAudit({
         aksi: 'update',
         entitas: 'Santri',
         entitasId: String(santriLama.id),
-        ringkasan: `Tempatkan "${orang.nama}" di Madin ${KELAS_MADIN_6.nama} ${tahunAjaran.kode}`,
+        ringkasan: `Tempatkan "${orang.fullName}" di Madin ${KELAS_MADIN_6.nama} ${tahunAjaran.kode}`,
         perubahan: {
           dari: {
             nis: santriLama.nis,
@@ -161,13 +161,13 @@ async function main() {
         aktor: AKTOR_SKRIP,
       });
     } else {
-      const dibuat = await prisma.santri.create({ data: { orangId: orang.id, ...dataSantri } });
-      hasil.push(`  ${nis}  ${orang.nama}  (santri baru)`);
+      const dibuat = await prisma.santri.create({ data: { personId: orang.id, ...dataSantri } });
+      hasil.push(`  ${nis}  ${orang.fullName}  (santri baru)`);
       await recordAudit({
         aksi: 'create',
         entitas: 'Santri',
         entitasId: String(dibuat.id),
-        ringkasan: `Daftarkan "${orang.nama}" sebagai santri Madin ${KELAS_MADIN_6.nama} ${tahunAjaran.kode}`,
+        ringkasan: `Daftarkan "${orang.fullName}" sebagai santri Madin ${KELAS_MADIN_6.nama} ${tahunAjaran.kode}`,
         perubahan: { ke: dataSantri },
         aktor: AKTOR_SKRIP,
       });
@@ -176,8 +176,8 @@ async function main() {
     // 3. Jejak jenjang per tahun ajaran.
     await prisma.riwayatPendidikan.upsert({
       where: {
-        orangId_unitId_tahunAjaranId: {
-          orangId: orang.id,
+        personId_unitId_tahunAjaranId: {
+          personId: orang.id,
           unitId: unit.id,
           tahunAjaranId: tahunAjaran.id,
         },
@@ -188,7 +188,7 @@ async function main() {
         status: StatusSantri.Mukim,
       },
       create: {
-        orangId: orang.id,
+        personId: orang.id,
         unitId: unit.id,
         kelasNama: KELAS_MADIN_6.nama,
         tingkat: KELAS_MADIN_6.tingkat,

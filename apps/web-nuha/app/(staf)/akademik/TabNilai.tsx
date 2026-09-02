@@ -24,7 +24,7 @@ export async function TabNilai({ searchParams }: { searchParams: Params }) {
   const mapel = mapelOpts.find((m) => m.id === mapelId);
 
   const siswa = kelasId
-    ? await prisma.santri.findMany({ where: { kelasId }, include: { orang: true }, orderBy: { orang: { nama: 'asc' } } })
+    ? await prisma.santri.findMany({ where: { kelasId }, include: { person: true }, orderBy: { person: { fullName: 'asc' } } })
     : [];
   const nilaiAda = kelasId && mapelId
     ? await prisma.nilai.findMany({ where: { mapelId, periode, santri: { kelasId } } })
@@ -89,7 +89,7 @@ export async function TabNilai({ searchParams }: { searchParams: Params }) {
                     <tr key={String(s.id)}>
                       <td>
                         <input type="hidden" name="santriId" value={String(s.id)} />
-                        {s.orang.nama}
+                        {s.person.fullName}
                       </td>
                       <td className="num"><input type="number" min={0} max={100} name={`tugas-${s.id}`} defaultValue={n ? Number(n.tugas) : 0} style={{ width: 64 }} /></td>
                       <td className="num"><input type="number" min={0} max={100} name={`uts-${s.id}`} defaultValue={n ? Number(n.uts) : 0} style={{ width: 64 }} /></td>

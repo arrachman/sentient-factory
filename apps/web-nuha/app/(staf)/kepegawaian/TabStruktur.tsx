@@ -10,7 +10,7 @@ export async function TabStruktur({ f }: { f: FilterPegawai }) {
   const lingkup = f.unit && f.unit !== TANPA_LEMBAGA ? f.unit : undefined;
   const baris = await prisma.jabatanStruktural.findMany({
     where: lingkup ? { lingkup } : {},
-    include: { pegawai: { include: { orang: true } } },
+    include: { pegawai: { include: { person: true } } },
     orderBy: [{ lingkup: 'asc' }, { skNomor: 'asc' }, { urutan: 'asc' }],
   });
 
@@ -39,7 +39,7 @@ export async function TabStruktur({ f }: { f: FilterPegawai }) {
                   <td>{b.namaMentah}</td>
                   <td>
                     {b.pegawai ? (
-                      <span className="badge badge-hijau">{b.pegawai.orang.nama}</span>
+                      <span className="badge badge-hijau">{b.pegawai.person.fullName}</span>
                     ) : (
                       <span className="badge badge-netral">belum terhubung</span>
                     )}

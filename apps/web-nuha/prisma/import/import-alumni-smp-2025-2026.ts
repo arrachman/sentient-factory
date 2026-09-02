@@ -99,26 +99,26 @@ async function jalankan(): Promise<void> {
   console.log(`Menulis ${DATA.length} riwayat kelulusan SMP kelas ${NAMA_KELAS} (TA ${KODE_TA} ${SEMESTER_TA})...`);
 
   for (const s of DATA) {
-    const orang = await prisma.orang.findUniqueOrThrow({
+    const orang = await prisma.person.findUniqueOrThrow({
       where: { nik: s.nik },
-      select: { id: true, hp: true, alamat: true },
+      select: { id: true, phone: true, addressLine: true },
     });
     const { tempat, tanggal } = parseTtl(s.ttl, `TTL ${s.nama}`);
 
-    await prisma.orang.update({
+    await prisma.person.update({
       where: { id: orang.id },
       data: {
-        nama: s.nama,
-        jk: s.jk,
-        tmpLahir: tempat,
-        tglLahir: tanggal,
-        alamat: atau(s.alamat, orang.alamat),
-        rt: s.rt.trim() || null,
-        rw: s.rw.trim() || null,
-        kelurahan: s.kelurahan,
-        kecamatan: s.kecamatan,
-        kabupaten: s.kabupaten,
-        hp: atau(s.hp, orang.hp),
+        fullName: s.nama,
+        gender: s.jk,
+        birthPlace: tempat,
+        birthDate: tanggal,
+        addressLine: atau(s.alamat, orang.addressLine),
+        neighborhoodRt: s.rt.trim() || null,
+        neighborhoodRw: s.rw.trim() || null,
+        villageName: s.kelurahan,
+        districtName: s.kecamatan,
+        regencyName: s.kabupaten,
+        phone: atau(s.hp, orang.phone),
       },
     });
 
@@ -134,9 +134,9 @@ async function jalankan(): Promise<void> {
     });
 
     await prisma.riwayatPendidikan.upsert({
-      where: { orangId_unitId_tahunAjaranId: { orangId: orang.id, unitId: unit.id, tahunAjaranId: tahunAjaran.id } },
+      where: { personId_unitId_tahunAjaranId: { personId: orang.id, unitId: unit.id, tahunAjaranId: tahunAjaran.id } },
       create: {
-        orangId: orang.id, unitId: unit.id, kelasNama: NAMA_KELAS, tingkat: TINGKAT_KELAS,
+        personId: orang.id, unitId: unit.id, kelasNama: NAMA_KELAS, tingkat: TINGKAT_KELAS,
         tahunAjaranId: tahunAjaran.id, status: StatusSantri.Alumni,
       },
       update: { kelasNama: NAMA_KELAS, tingkat: TINGKAT_KELAS, status: StatusSantri.Alumni },

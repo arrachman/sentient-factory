@@ -2,7 +2,7 @@
 // Yayasan Pendidikan Islam Nurul Huda Mergosono
 //
 // Prinsip inti: SATU IDENTITAS, BANYAK PERAN.
-// Seorang santri pondok yang juga siswa SMP adalah satu record `Orang`
+// Seorang santri pondok yang juga siswa SMP adalah satu record `Person`
 // dengan beberapa baris peran (Santri, Siswa, Pegawai, Wali), bukan
 // beberapa record terpisah per unit.
 
@@ -60,43 +60,43 @@ model Country {
 }
 
 model Region {
-  id           BigInt       @id @default(autoincrement())
-  countryId    Int          @map("country_id")
-  parentId     BigInt?      @map("parent_id")
+  id           BigInt      @id @default(autoincrement())
+  countryId    Int         @map("country_id")
+  parentId     BigInt?     @map("parent_id")
   level        RegionLevel
-  code         String       @db.VarChar(20)
-  name         String       @db.VarChar(120)
-  typeLabel    String?      @map("type_label") @db.VarChar(30)
-  provinceId   BigInt?      @map("province_id")
-  cityId       BigInt?      @map("city_id")
-  districtId   BigInt?      @map("district_id")
-  depth        Int          @default(1)
-  fullName     String?      @map("full_name") @db.VarChar(400)
-  postalCode   String?      @map("postal_code") @db.Char(5)
-  latitude     Decimal?     @db.Decimal(10, 7)
-  longitude    Decimal?     @db.Decimal(10, 7)
-  areaKm2      Decimal?     @map("area_km2") @db.Decimal(12, 4)
+  code         String      @db.VarChar(20)
+  name         String      @db.VarChar(120)
+  typeLabel    String?     @map("type_label") @db.VarChar(30)
+  provinceId   BigInt?     @map("province_id")
+  cityId       BigInt?     @map("city_id")
+  districtId   BigInt?     @map("district_id")
+  depth        Int         @default(1)
+  fullName     String?     @map("full_name") @db.VarChar(400)
+  postalCode   String?     @map("postal_code") @db.Char(5)
+  latitude     Decimal?    @db.Decimal(10, 7)
+  longitude    Decimal?    @db.Decimal(10, 7)
+  areaKm2      Decimal?    @map("area_km2") @db.Decimal(12, 4)
   population   Int?
-  isActive     Boolean      @default(true) @map("is_active")
-  replacedById BigInt?      @map("replaced_by_id")
-  createdAt    DateTime?    @default(now()) @map("created_at")
-  updatedAt    DateTime?    @updatedAt @map("updated_at")
+  isActive     Boolean     @default(true) @map("is_active")
+  replacedById BigInt?     @map("replaced_by_id")
+  createdAt    DateTime?   @default(now()) @map("created_at")
+  updatedAt    DateTime?   @updatedAt @map("updated_at")
 
-  country          Country              @relation(fields: [countryId], references: [id])
-  parent           Region?              @relation("RegionParent", fields: [parentId], references: [id], onDelete: Cascade)
-  children         Region[]             @relation("RegionParent")
-  province         Region?              @relation("RegionProvince", fields: [provinceId], references: [id], onDelete: SetNull)
-  provinceRegions  Region[]             @relation("RegionProvince")
-  city             Region?              @relation("RegionCity", fields: [cityId], references: [id], onDelete: SetNull)
-  cityRegions      Region[]             @relation("RegionCity")
-  district         Region?              @relation("RegionDistrict", fields: [districtId], references: [id], onDelete: SetNull)
-  districtRegions  Region[]             @relation("RegionDistrict")
-  replacedBy       Region?              @relation("RegionReplacement", fields: [replacedById], references: [id], onDelete: SetNull)
-  replacedRegions  Region[]             @relation("RegionReplacement")
-  aliases          RegionAlias[]
-  people           Orang[]              @relation("PersonRegion")
-  unitLocations    Unit[]               @relation("UnitRegion")
-  institutionLocations ProfilLembaga[]  @relation("InstitutionProfileRegion")
+  country              Country         @relation(fields: [countryId], references: [id])
+  parent               Region?         @relation("RegionParent", fields: [parentId], references: [id], onDelete: Cascade)
+  children             Region[]        @relation("RegionParent")
+  province             Region?         @relation("RegionProvince", fields: [provinceId], references: [id], onDelete: SetNull)
+  provinceRegions      Region[]        @relation("RegionProvince")
+  city                 Region?         @relation("RegionCity", fields: [cityId], references: [id], onDelete: SetNull)
+  cityRegions          Region[]        @relation("RegionCity")
+  district             Region?         @relation("RegionDistrict", fields: [districtId], references: [id], onDelete: SetNull)
+  districtRegions      Region[]        @relation("RegionDistrict")
+  replacedBy           Region?         @relation("RegionReplacement", fields: [replacedById], references: [id], onDelete: SetNull)
+  replacedRegions      Region[]        @relation("RegionReplacement")
+  aliases              RegionAlias[]
+  people               Person[]        @relation("PersonRegion")
+  unitLocations        Unit[]          @relation("UnitRegion")
+  institutionLocations ProfilLembaga[] @relation("InstitutionProfileRegion")
 
   @@unique([countryId, code])
   @@index([parentId, level, isActive])
@@ -112,7 +112,7 @@ model RegionAlias {
   alias    String          @db.VarChar(120)
   type     RegionAliasType
 
-  region   Region          @relation(fields: [regionId], references: [id], onDelete: Cascade)
+  region Region @relation(fields: [regionId], references: [id], onDelete: Cascade)
 
   @@unique([regionId, alias])
   @@index([alias])
@@ -130,65 +130,65 @@ model ForeignAddress {
   postalCode   String? @map("postal_code") @db.VarChar(20)
   isCurrent    Boolean @default(true) @map("is_current")
 
-  person       Orang   @relation(fields: [personId], references: [id], onDelete: Cascade)
-  country      Country @relation(fields: [countryId], references: [id])
+  person  Person  @relation(fields: [personId], references: [id], onDelete: Cascade)
+  country Country @relation(fields: [countryId], references: [id])
 
   @@index([countryId])
   @@map("foreign_addresses")
 }
 
-model Orang {
-  id            BigInt       @id @default(autoincrement())
-  nik           String?      @unique @db.VarChar(32)
+model Person {
+  id               BigInt       @id @default(autoincrement())
+  nik              String?      @unique @db.VarChar(32)
   /// Nama tampilan sehari-hari (tanpa gelar). Tetap kolom utama yang dipakai
   /// seluruh UI & pencocokan jadwal guru — jangan ganti jadi nama lengkap.
-  nama          String       @db.VarChar(160)
+  fullName         String       @db.VarChar(160)
   /// Gelar/sapaan kehormatan yang mendahului nama: "KH.", "Nyai Hj.", "Gus",
   /// "Ning", "Ustadz", "Ustadzah". Dipisah supaya bisa dirender/difilter
   /// tanpa mengurai string nama.
-  gelar         String?      @db.VarChar(60)
+  gelar            String?      @db.VarChar(60)
   /// Nama panggilan akrab (mis. "Gus Alfan") untuk sapaan di UI/WA.
-  panggilan     String?      @db.VarChar(80)
+  panggilan        String?      @db.VarChar(80)
   /// Nama lengkap resmi termasuk gelar depan & belakang, sesuai dokumen.
-  namaLengkap   String?      @map("nama_lengkap") @db.VarChar(255)
-  jk            JenisKelamin
-  tglLahir      DateTime?    @map("tgl_lahir") @db.Date
-  tmpLahir      String?      @map("tmp_lahir") @db.VarChar(120)
-  alamat        String?      @db.VarChar(255)
-  rt            String?      @db.VarChar(8)
-  rw            String?      @db.VarChar(8)
-  kelurahan     String?      @db.VarChar(120)
-  kecamatan     String?      @db.VarChar(120)
-  kabupaten     String?      @db.VarChar(120)
-  desaId        BigInt?      @map("desa_id")
-  kodePos       String?      @map("kode_pos") @db.Char(5)
-  noKk          String?      @map("no_kk") @db.VarChar(32)
-  anakKe        Int?         @map("anak_ke")
-  jumlahSaudara Int?         @map("jumlah_saudara")
-  hobi          String?      @db.VarChar(255)
-  citaCita      String?      @map("cita_cita") @db.VarChar(160)
-  asalSekolah   String?      @map("asal_sekolah") @db.VarChar(160)
-  pendidikanTerakhir String? @map("pendidikan_terakhir") @db.VarChar(80)
-  hp            String?      @db.VarChar(32)
-  email         String?      @unique @db.VarChar(160)
-  fotoUrl       String?      @map("foto_url") @db.VarChar(255)
-  aktif         Boolean      @default(true)
-  deletedAt     DateTime?    @map("deleted_at")
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
+  namaLengkap      String?      @map("nama_lengkap") @db.VarChar(255)
+  gender           JenisKelamin
+  birthDate        DateTime?    @map("birth_date") @db.Date
+  birthPlace       String?      @map("birth_place") @db.VarChar(120)
+  addressLine      String?      @db.VarChar(255)
+  neighborhoodRt   String?      @db.VarChar(8)
+  neighborhoodRw   String?      @db.VarChar(8)
+  villageName      String?      @db.VarChar(120)
+  districtName     String?      @db.VarChar(120)
+  regencyName      String?      @db.VarChar(120)
+  regionId         BigInt?      @map("region_id")
+  postalCode       String?      @map("postal_code") @db.Char(5)
+  familyCardNumber String?      @map("family_card_number") @db.VarChar(32)
+  birthOrder       Int?         @map("birth_order")
+  siblingCount     Int?         @map("sibling_count")
+  hobby            String?      @db.VarChar(255)
+  aspiration       String?      @map("aspiration") @db.VarChar(160)
+  previousSchool   String?      @map("previous_school") @db.VarChar(160)
+  highestEducation String?      @map("highest_education") @db.VarChar(80)
+  phone            String?      @db.VarChar(32)
+  email            String?      @unique @db.VarChar(160)
+  photoUrl         String?      @map("photo_url") @db.VarChar(255)
+  isActive         Boolean      @default(true)
+  deletedAt        DateTime?    @map("deleted_at")
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
 
-  user        User?
-  santri      Santri?
+  user              User?
+  santri            Santri?
   riwayatPendidikan RiwayatPendidikan[]
-  pegawai     Pegawai?
-  waliDari    RelasiWali[] @relation("WaliOrang")
-  sebagaiAnak RelasiWali[] @relation("AnakOrang")
-  region           Region?          @relation("PersonRegion", fields: [desaId], references: [id], onDelete: SetNull)
-  foreignAddress   ForeignAddress?
+  pegawai           Pegawai?
+  waliDari          RelasiWali[]        @relation("WaliOrang")
+  sebagaiAnak       RelasiWali[]        @relation("AnakOrang")
+  region            Region?             @relation("PersonRegion", fields: [regionId], references: [id], onDelete: SetNull)
+  foreignAddress    ForeignAddress?
 
-  @@index([nama])
-  @@index([desaId])
-  @@map("orang")
+  @@index([fullName])
+  @@index([regionId])
+  @@map("people")
 }
 
 model Peran {
@@ -205,7 +205,7 @@ model Peran {
 
 model User {
   id           BigInt    @id @default(autoincrement())
-  orangId      BigInt    @unique @map("orang_id")
+  personId     BigInt    @unique @map("person_id")
   email        String    @unique @db.VarChar(160)
   username     String?   @unique @db.VarChar(64)
   passwordHash String    @map("password_hash") @db.VarChar(255)
@@ -215,8 +215,8 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  orang Orang       @relation(fields: [orangId], references: [id], onDelete: Cascade)
-  peran UserPeran[]
+  person Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
+  peran  UserPeran[]
 
   @@map("user")
 }
@@ -269,8 +269,8 @@ model RelasiWali {
   /// "Ayah"/"Ibu"/"Wali" — sheet DATA WALI MURID memisahkan 3 blok NIK per peran.
   peran      String? @db.VarChar(16)
 
-  wali Orang @relation("WaliOrang", fields: [waliId], references: [id], onDelete: Cascade)
-  anak Orang @relation("AnakOrang", fields: [anakId], references: [id], onDelete: Cascade)
+  wali Person @relation("WaliOrang", fields: [waliId], references: [id], onDelete: Cascade)
+  anak Person @relation("AnakOrang", fields: [anakId], references: [id], onDelete: Cascade)
 
   @@unique([waliId, anakId])
   @@map("relasi_wali")
@@ -292,41 +292,41 @@ model Unit {
   aktif     Boolean @default(true)
 
   /// Nama resmi lengkap untuk kop surat & halaman publik ("SMP Nurul Huda Mergosono").
-  namaResmi     String? @map("nama_resmi") @db.VarChar(200)
+  namaResmi       String?  @map("nama_resmi") @db.VarChar(200)
   /// Jenjang/klasifikasi: "SMP", "MA", "Pesantren", "Layanan Kesehatan".
-  jenjang       String? @db.VarChar(48)
+  jenjang         String?  @db.VarChar(48)
   /// NPSN (sekolah) atau NSM/nomor statistik pesantren.
-  npsn          String? @db.VarChar(32)
-  akreditasi    String? @db.VarChar(8)
-  tahunBerdiri  Int?    @map("tahun_berdiri")
+  npsn            String?  @db.VarChar(32)
+  akreditasi      String?  @db.VarChar(8)
+  tahunBerdiri    Int?     @map("tahun_berdiri")
   /// Path logo relatif terhadap `public/` (mis. `/assets/logo-nuha.webp`).
-  logoPath      String? @map("logo_path") @db.VarChar(255)
-  alamat        String? @db.VarChar(255)
-  desaId        BigInt? @map("desa_id")
-  latitude      Decimal? @db.Decimal(10, 7)
-  longitude     Decimal? @db.Decimal(10, 7)
-  telepon       String? @db.VarChar(32)
-  email         String? @db.VarChar(160)
-  website       String? @db.VarChar(160)
+  logoPath        String?  @map("logo_path") @db.VarChar(255)
+  alamat          String?  @db.VarChar(255)
+  desaId          BigInt?  @map("desa_id")
+  latitude        Decimal? @db.Decimal(10, 7)
+  longitude       Decimal? @db.Decimal(10, 7)
+  telepon         String?  @db.VarChar(32)
+  email           String?  @db.VarChar(160)
+  website         String?  @db.VarChar(160)
   /// Nama kepala unit. Dipertahankan sebagai teks karena pegawai bisa belum
   /// terdaftar; `kepalaPegawaiId` adalah sumber kebenaran bila terisi.
-  kepalaNama      String? @map("kepala_nama") @db.VarChar(160)
+  kepalaNama      String?  @map("kepala_nama") @db.VarChar(160)
   /// Sebutan jabatan kepala unit ("Kepala Sekolah", "Kepala Madrasah", "Pengasuh").
-  kepalaJabatan   String? @map("kepala_jabatan") @db.VarChar(120)
-  kepalaPegawaiId BigInt? @map("kepala_pegawai_id")
-  visi          String? @db.Text
-  misi          String? @db.Text
+  kepalaJabatan   String?  @map("kepala_jabatan") @db.VarChar(120)
+  kepalaPegawaiId BigInt?  @map("kepala_pegawai_id")
+  visi            String?  @db.Text
+  misi            String?  @db.Text
 
-  kelas         Kelas[]
-  santri        Santri[]
-  santriKelas   SantriKelas[]
+  kelas             Kelas[]
+  santri            Santri[]
+  santriKelas       SantriKelas[]
   riwayatPendidikan RiwayatPendidikan[]
-  pegawai       Pegawai[]  @relation("PegawaiUnit")
-  pegawaiUnit   PegawaiUnit[]
-  jadwal        JadwalPelajaran[]
-  ujian         Ujian[]
-  kepalaPegawai Pegawai?   @relation("UnitKepala", fields: [kepalaPegawaiId], references: [id])
-  region        Region?    @relation("UnitRegion", fields: [desaId], references: [id], onDelete: SetNull)
+  pegawai           Pegawai[]           @relation("PegawaiUnit")
+  pegawaiUnit       PegawaiUnit[]
+  jadwal            JadwalPelajaran[]
+  ujian             Ujian[]
+  kepalaPegawai     Pegawai?            @relation("UnitKepala", fields: [kepalaPegawaiId], references: [id])
+  region            Region?             @relation("UnitRegion", fields: [desaId], references: [id], onDelete: SetNull)
 
   @@index([desaId])
   @@map("unit")
@@ -335,28 +335,28 @@ model Unit {
 /// Profil yayasan induk — satu baris (`key = "yayasan"`), memuat identitas yang
 /// dipakai lintas modul: kop slip gaji, footer publik, rekening resmi, pengasuh.
 model ProfilLembaga {
-  id            Int     @id @default(autoincrement())
-  key           String  @unique @db.VarChar(24)
-  nama          String  @db.VarChar(200)
-  namaArab      String? @map("nama_arab") @db.VarChar(160)
-  singkatan     String? @db.VarChar(48)
-  logoPath      String? @map("logo_path") @db.VarChar(255)
-  alamat        String? @db.VarChar(255)
-  desaId        BigInt? @map("desa_id")
-  latitude      Decimal? @db.Decimal(10, 7)
-  longitude     Decimal? @db.Decimal(10, 7)
-  telepon       String? @db.VarChar(32)
-  email         String? @db.VarChar(160)
-  website       String? @db.VarChar(160)
-  tahunBerdiri  Int?    @map("tahun_berdiri")
+  id           Int      @id @default(autoincrement())
+  key          String   @unique @db.VarChar(24)
+  nama         String   @db.VarChar(200)
+  namaArab     String?  @map("nama_arab") @db.VarChar(160)
+  singkatan    String?  @db.VarChar(48)
+  logoPath     String?  @map("logo_path") @db.VarChar(255)
+  alamat       String?  @db.VarChar(255)
+  desaId       BigInt?  @map("desa_id")
+  latitude     Decimal? @db.Decimal(10, 7)
+  longitude    Decimal? @db.Decimal(10, 7)
+  telepon      String?  @db.VarChar(32)
+  email        String?  @db.VarChar(160)
+  website      String?  @db.VarChar(160)
+  tahunBerdiri Int?     @map("tahun_berdiri")
   /// Nomor akta/badan hukum yayasan.
-  aktaNotaris   String? @map("akta_notaris") @db.VarChar(160)
-  ketuaNama     String? @map("ketua_nama") @db.VarChar(160)
-  pengasuhNama  String? @map("pengasuh_nama") @db.VarChar(160)
+  aktaNotaris  String?  @map("akta_notaris") @db.VarChar(160)
+  ketuaNama    String?  @map("ketua_nama") @db.VarChar(160)
+  pengasuhNama String?  @map("pengasuh_nama") @db.VarChar(160)
   /// Rekening resmi untuk pembayaran wali ("BSI 7011-2345-6789 a.n. ...").
-  rekening      String? @db.VarChar(160)
-  visi          String? @db.Text
-  misi          String? @db.Text
+  rekening     String?  @db.VarChar(160)
+  visi         String?  @db.Text
+  misi         String?  @db.Text
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -398,8 +398,8 @@ model TahunAjaran {
   semester String  @db.VarChar(8)
   aktif    Boolean @default(false)
 
-  kelas    Kelas[]
-  bebanJam BebanJam[]
+  kelas             Kelas[]
+  bebanJam          BebanJam[]
   riwayatPendidikan RiwayatPendidikan[]
 
   @@unique([kode, semester])
@@ -432,7 +432,7 @@ model Kamar {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Santri & pegawai (peran dari Orang)
+// Santri & pegawai (peran dari Person)
 // ─────────────────────────────────────────────────────────────
 
 enum StatusSantri {
@@ -443,7 +443,7 @@ enum StatusSantri {
 
 model Santri {
   id         BigInt       @id @default(autoincrement())
-  orangId    BigInt       @unique @map("orang_id")
+  personId   BigInt       @unique @map("person_id")
   /// Sebagian data client hanya punya NISN, belum punya NIS. NIS dibuat
   /// deterministik oleh importir; NISN tetap sumber kebenaran identitas.
   nis        String?      @unique @db.VarChar(32)
@@ -457,10 +457,10 @@ model Santri {
   createdAt  DateTime     @default(now()) @map("created_at")
   updatedAt  DateTime     @updatedAt @map("updated_at")
 
-  orang Orang  @relation(fields: [orangId], references: [id], onDelete: Cascade)
-  unit  Unit?  @relation(fields: [unitId], references: [id])
-  kelas Kelas? @relation(fields: [kelasId], references: [id])
-  kamar Kamar? @relation(fields: [kamarId], references: [id])
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+  unit   Unit?  @relation(fields: [unitId], references: [id])
+  kelas  Kelas? @relation(fields: [kelasId], references: [id])
+  kamar  Kamar? @relation(fields: [kamarId], references: [id])
 
   hafalan         Hafalan[]
   tazir           Tazir[]
@@ -487,12 +487,12 @@ model Santri {
 /// mana saja" — dipakai pohon induk, penyaring unit/kelas, dan presensi.
 /// Baris dengan `utama = true` harus konsisten dengan kolom lama.
 model SantriKelas {
-  santriId BigInt   @map("santri_id")
-  kelasId  Int      @map("kelas_id")
+  santriId  BigInt   @map("santri_id")
+  kelasId   Int      @map("kelas_id")
   /// Disalin dari `Kelas.unitId` saat penulisan supaya penyaring per-unit tidak
   /// perlu join ke `kelas`; wajib sama dengan unit kelasnya.
-  unitId   Int      @map("unit_id")
-  utama    Boolean  @default(false)
+  unitId    Int      @map("unit_id")
+  utama     Boolean  @default(false)
   createdAt DateTime @default(now()) @map("created_at")
 
   santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
@@ -505,26 +505,26 @@ model SantriKelas {
   @@map("santri_kelas")
 }
 
-/// Jenjang yang pernah/sedang dijalani seorang `Orang` (SD → SMP → MA, dst),
+/// Jenjang yang pernah/sedang dijalani seorang `Person` (SD → SMP → MA, dst),
 /// TERPISAH dari `Santri.status/unitId/kelasId` yang hanya menyimpan jenjang
 /// AKTIF saat ini. Perlu supaya lulus SMP bisa dicatat tanpa menimpa status
-/// aktif MA santri yang sama (satu Orang hanya boleh punya satu baris Santri).
+/// aktif MA santri yang sama (satu Person hanya boleh punya satu baris Santri).
 model RiwayatPendidikan {
-  id            BigInt   @id @default(autoincrement())
-  orangId       BigInt   @map("orang_id")
-  unitId        Int      @map("unit_id")
-  kelasNama     String   @map("kelas_nama") @db.VarChar(32)
-  tingkat       String   @db.VarChar(16)
-  tahunAjaranId Int      @map("tahun_ajaran_id")
+  id            BigInt       @id @default(autoincrement())
+  personId      BigInt       @map("person_id")
+  unitId        Int          @map("unit_id")
+  kelasNama     String       @map("kelas_nama") @db.VarChar(32)
+  tingkat       String       @db.VarChar(16)
+  tahunAjaranId Int          @map("tahun_ajaran_id")
   status        StatusSantri @default(Alumni)
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
 
-  orang       Orang       @relation(fields: [orangId], references: [id], onDelete: Cascade)
+  person      Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
   unit        Unit        @relation(fields: [unitId], references: [id])
   tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id])
 
-  @@unique([orangId, unitId, tahunAjaranId])
+  @@unique([personId, unitId, tahunAjaranId])
   @@map("riwayat_pendidikan")
 }
 
@@ -551,7 +551,7 @@ model ProfilKesehatan {
 
 model Pegawai {
   id                 BigInt   @id @default(autoincrement())
-  orangId            BigInt   @unique @map("orang_id")
+  personId           BigInt   @unique @map("person_id")
   nip                String   @unique @db.VarChar(32)
   unitId             Int?     @map("unit_id")
   jabatan            String   @db.VarChar(120)
@@ -565,20 +565,20 @@ model Pegawai {
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 
-  orang      Orang             @relation(fields: [orangId], references: [id], onDelete: Cascade)
-  unit       Unit?             @relation("PegawaiUnit", fields: [unitId], references: [id])
-  unitDipimpin Unit[]          @relation("UnitKepala")
-  komponen   KomponenGaji?
-  slip       SlipGaji[]
-  kelasWali  Kelas[]
-  jadwalAmpu JadwalPelajaran[]
-  jadwalPiket     JadwalPiket[]
-  jurnalMengajar  JurnalMengajar[]
-  presensi        PresensiPegawai[]
-  bebanJam        BebanJam[]
-  arsipSk         ArsipSk[]
+  person            Person              @relation(fields: [personId], references: [id], onDelete: Cascade)
+  unit              Unit?               @relation("PegawaiUnit", fields: [unitId], references: [id])
+  unitDipimpin      Unit[]              @relation("UnitKepala")
+  komponen          KomponenGaji?
+  slip              SlipGaji[]
+  kelasWali         Kelas[]
+  jadwalAmpu        JadwalPelajaran[]
+  jadwalPiket       JadwalPiket[]
+  jurnalMengajar    JurnalMengajar[]
+  presensi          PresensiPegawai[]
+  bebanJam          BebanJam[]
+  arsipSk           ArsipSk[]
   jabatanStruktural JabatanStruktural[]
-  unitLain        PegawaiUnit[]
+  unitLain          PegawaiUnit[]
 
   @@map("pegawai")
 }
@@ -616,23 +616,23 @@ model PegawaiUnit {
 /// menjabat lebih dari satu jabatan (contoh: Waka Sarpras + Kepala Lab),
 /// jadi kunci unik berbasis (skNomor, urutan), bukan pegawaiId tunggal.
 model JabatanStruktural {
-  id             BigInt    @id @default(autoincrement())
-  skNomor        String    @map("sk_nomor") @db.VarChar(64)
-  urutan         Int       @default(0)
-  jabatan        String    @db.VarChar(160)
+  id             BigInt   @id @default(autoincrement())
+  skNomor        String   @map("sk_nomor") @db.VarChar(64)
+  urutan         Int      @default(0)
+  jabatan        String   @db.VarChar(160)
   /// Lingkup SK: "MA" atau "Pondok" (asrama putra), dst.
-  lingkup        String    @db.VarChar(32)
+  lingkup        String   @db.VarChar(32)
   /// Sub-kelompok (mis. "Div. Keamanan") — NULL bila belum dikonfirmasi client
   /// atau memang tidak berdivisi (Lurah/Sekretaris/Keuangan).
-  divisi         String?   @db.VarChar(120)
-  periodeMulai   DateTime  @map("periode_mulai") @db.Date
-  periodeSelesai DateTime  @map("periode_selesai") @db.Date
-  pegawaiId      BigInt?   @map("pegawai_id")
+  divisi         String?  @db.VarChar(120)
+  periodeMulai   DateTime @map("periode_mulai") @db.Date
+  periodeSelesai DateTime @map("periode_selesai") @db.Date
+  pegawaiId      BigInt?  @map("pegawai_id")
   /// Nama persis seperti tertulis di SK — dipertahankan walau pegawaiId sudah cocok,
   /// untuk audit trail sumber data.
-  namaMentah     String    @map("nama_mentah") @db.VarChar(160)
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  namaMentah     String   @map("nama_mentah") @db.VarChar(160)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   pegawai Pegawai? @relation(fields: [pegawaiId], references: [id])
 
@@ -904,8 +904,8 @@ model JadwalPelajaran {
   /// tercampur dan kartu "Kelas Saya" tak bisa dikelompokkan per unit.
   unitId    Int?    @map("unit_id")
 
-  unit    Unit?    @relation(fields: [unitId], references: [id])
-  pegawai Pegawai? @relation(fields: [pegawaiId], references: [id])
+  unit    Unit?            @relation(fields: [unitId], references: [id])
+  pegawai Pegawai?         @relation(fields: [pegawaiId], references: [id])
   jurnal  JurnalMengajar[]
 
   @@unique([hari, jamKe, kelas])
@@ -1350,13 +1350,13 @@ model JadwalNotifikasi {
 /// kirim) supaya H-1 dan H-0 tidak bentrok kunci meski keduanya mengirim
 /// pada tanggal kirim yang berbeda tapi merujuk piket hari yang sama.
 model AntreanNotifikasi {
-  id            BigInt    @id @default(autoincrement())
-  kodeTemplate  String    @map("kode_template") @db.VarChar(32)
-  tujuanId      String    @map("tujuan_id") @db.VarChar(64)
-  tanggalJadwal DateTime  @map("tanggal_jadwal") @db.Date
-  status        String    @default("Terkirim") @db.VarChar(24)
-  logWaId       BigInt?   @map("log_wa_id")
-  createdAt     DateTime  @default(now()) @map("created_at")
+  id            BigInt   @id @default(autoincrement())
+  kodeTemplate  String   @map("kode_template") @db.VarChar(32)
+  tujuanId      String   @map("tujuan_id") @db.VarChar(64)
+  tanggalJadwal DateTime @map("tanggal_jadwal") @db.Date
+  status        String   @default("Terkirim") @db.VarChar(24)
+  logWaId       BigInt?  @map("log_wa_id")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   @@unique([kodeTemplate, tujuanId, tanggalJadwal])
   @@index([tanggalJadwal])

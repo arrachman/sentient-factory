@@ -16,13 +16,13 @@ export async function TabRapor({ searchParams }: { searchParams: Params }) {
     ? await prisma.santri.findMany({
         where: { kelasId },
         include: {
-          orang: true,
+          person: true,
           nilai: true,
           hafalan: true,
           tazir: true,
           presensi: true,
         },
-        orderBy: { orang: { nama: 'asc' } },
+        orderBy: { person: { fullName: 'asc' } },
       })
     : [];
 
@@ -70,7 +70,7 @@ export async function TabRapor({ searchParams }: { searchParams: Params }) {
                 const persenHadir = s.presensi.length === 0 ? null : (hadir / s.presensi.length) * 100;
                 return (
                   <tr key={String(s.id)}>
-                    <td>{s.orang.nama}</td>
+                    <td>{s.person.fullName}</td>
                     <td className="num">{rataNilai === null ? '-' : rataNilai.toFixed(1)}</td>
                     <td className="num">{s.hafalan.length}</td>
                     <td className="num">{poinTazir}</td>

@@ -4,6 +4,20 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Rename teknis Orang ke Person (Fase 2)
+
+Model Prisma `Orang` dan tabel fisik `orang` kini menjadi `Person`/`people`.
+Kolom identitas teknis dipindahkan ke kosakata Inggris, termasuk
+`nama→fullName`, `jk→gender`, `tgl_lahir→birth_date`, `desa_id→region_id`,
+dan `orang_id→person_id` pada `user`, `santri`, `pegawai`, serta
+`riwayat_pendidikan`. Relasi wali/anak tetap mempertahankan arti domainnya,
+tetapi FK-nya sekarang menunjuk ke `people`.
+
+Migrasi `20260902150000_rename_orang_to_people` ditulis sebagai rename
+non-destruktif dengan `CHANGE`, `RENAME INDEX`, `RENAME TABLE`, dan FK yang
+dibangun ulang. Data Super Admin serta relasi `user.personId` diverifikasi
+setelah penerapan; Prisma migration status dan typecheck TypeScript bersih.
+
 ## 2026-09-02 — Rename teknis domain wilayah/negara ke Bahasa Inggris (Fase 1)
 
 Tahap pertama dari rename teknis penuh (model Prisma + tabel/kolom fisik MySQL)

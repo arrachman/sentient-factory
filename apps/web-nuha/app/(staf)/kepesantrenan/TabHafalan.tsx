@@ -8,14 +8,14 @@ export async function TabHafalan() {
     prisma.santri.findMany({
       where: { program: 'Tahfidz' },
       include: {
-        orang: true,
+        person: true,
         kelas: true,
         kamar: { include: { asrama: true } },
         hafalan: { orderBy: { tgl: 'desc' } },
       },
     }),
     prisma.hafalan.findMany({
-      include: { santri: { include: { orang: true } } },
+      include: { santri: { include: { person: true } } },
       orderBy: { tgl: 'desc' },
       take: 12,
     }),
@@ -38,10 +38,10 @@ export async function TabHafalan() {
               const pct = Math.round((jumlah / maxJumlah) * 100);
               return (
                 <div key={String(x.id)} style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <Avatar nama={x.orang.nama} size={32} />
+                  <Avatar nama={x.person.fullName} size={32} />
                   <div style={{ flex: 1, minWidth: 170 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 13, fontWeight: 600 }}>{x.orang.nama}</span>
+                      <span style={{ fontSize: 13, fontWeight: 600 }}>{x.person.fullName}</span>
                       <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--hijau)' }}>{jumlah} setoran</span>
                     </div>
                     <div style={{ marginTop: 6 }}><ProgressBar pct={pct} /></div>
@@ -66,7 +66,7 @@ export async function TabHafalan() {
             {setoranTerbaru.map((k) => (
               <div key={String(k.id)} className="inset">
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 600 }}>{k.santri.orang.nama}</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 600 }}>{k.santri.person.fullName}</span>
                   <span className="muted" style={{ fontSize: 11.5 }}>{k.tgl.toLocaleDateString('id-ID')}</span>
                 </div>
                 <div style={{ fontSize: 12.5, marginTop: 3 }}>{k.surat} ayat {k.ayat} · {k.jenis}</div>

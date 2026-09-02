@@ -52,7 +52,7 @@ export function bacaFilter(sp: Record<string, string | string[] | undefined>): F
  * Kepindahan antar-lembaga tetap terbaca alumni (lulus SMP → mukim di MA:
  * rombel SMP-nya sudah tidak ada), jadi perilaku lama untuk SMP tidak berubah. */
 const alumniDiUnit = (unitId: number): Prisma.SantriWhereInput => ({
-  orang: { riwayatPendidikan: { some: { status: 'Alumni', unitId } } },
+  person: { riwayatPendidikan: { some: { status: 'Alumni', unitId } } },
   kelasLain: { none: { unitId } },
 });
 
@@ -72,7 +72,7 @@ export function whereFilter(f: FilterInduk, opsi: { unitIds?: number[] } = {}): 
     syarat.push(
       unitAlumni ? alumniDiUnit(unitAlumni)
         : opsi.unitIds?.length ? { OR: opsi.unitIds.map(alumniDiUnit) }
-          : { orang: { riwayatPendidikan: { some: { status: 'Alumni' } } } },
+          : { person: { riwayatPendidikan: { some: { status: 'Alumni' } } } },
     );
   } else {
     // Unit/kelas dijawab dari `SantriKelas`, bukan kolom `santri.unitId/kelasId`:
@@ -85,11 +85,11 @@ export function whereFilter(f: FilterInduk, opsi: { unitIds?: number[] } = {}): 
     syarat.push({ status: f.status ?? STATUS_AKTIF });
   }
   if (f.angkatan) syarat.push({ tahunMasuk: f.angkatan });
-  if (f.jk) syarat.push({ orang: { jk: f.jk } });
+  if (f.jk) syarat.push({ person: { gender: f.jk } });
   if (f.q) {
     syarat.push({
       OR: [
-        { orang: { nama: { contains: f.q } } },
+        { person: { fullName: { contains: f.q } } },
         { nis: { contains: f.q } },
         { nisn: { contains: f.q } },
       ],

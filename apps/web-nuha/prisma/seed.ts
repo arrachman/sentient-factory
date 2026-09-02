@@ -115,14 +115,14 @@ async function seedSuperAdmin(passwordHashBawaan: string) {
     update: { nama: 'Super Admin' },
   });
 
-  const orang = await prisma.orang.upsert({
+  const orang = await prisma.person.upsert({
     where: { email: 'superadmin@nuha.pesantren.web.id' },
-    create: { nama: 'Super Admin', jk: JenisKelamin.L, email: 'superadmin@nuha.pesantren.web.id', aktif: true },
-    update: { aktif: true },
+    create: { fullName: 'Super Admin', gender: JenisKelamin.L, email: 'superadmin@nuha.pesantren.web.id', isActive: true },
+    update: { isActive: true },
   });
   const user = await prisma.user.upsert({
-    where: { orangId: orang.id },
-    create: { orangId: orang.id, email: orang.email!, username: 'superadmin', passwordHash, unitScope: 'Semua unit', aktif: true },
+    where: { personId: orang.id },
+    create: { personId: orang.id, email: orang.email!, username: 'superadmin', passwordHash, unitScope: 'Semua unit', aktif: true },
     update: { username: 'superadmin', passwordHash, aktif: true },
   });
   await prisma.userPeran.upsert({
@@ -163,14 +163,14 @@ async function seedGuru(passwordHash: string) {
     // Pengasuh yang juga mengajar). Pakai email khusus guru agar akunnya
     // terpisah dan peran aslinya tidak tertimpa.
     const email = `guru.${kunciPeran(nama)}@nuha.local`;
-    const orang = await prisma.orang.upsert({
+    const orang = await prisma.person.upsert({
       where: { email },
-      create: { nama, jk: nama.startsWith('Bu ') ? JenisKelamin.P : JenisKelamin.L, email, aktif: true },
-      update: { nama, aktif: true },
+      create: { fullName: nama, gender: nama.startsWith('Bu ') ? JenisKelamin.P : JenisKelamin.L, email, isActive: true },
+      update: { fullName: nama, isActive: true },
     });
     const user = await prisma.user.upsert({
-      where: { orangId: orang.id },
-      create: { orangId: orang.id, email, username: `guru.${index + 1}`, passwordHash, unitScope: 'Unit mengajar', aktif: true },
+      where: { personId: orang.id },
+      create: { personId: orang.id, email, username: `guru.${index + 1}`, passwordHash, unitScope: 'Unit mengajar', aktif: true },
       update: { username: `guru.${index + 1}`, passwordHash, aktif: true },
     });
     await prisma.userPeran.upsert({
@@ -404,11 +404,11 @@ async function seedPortalAccess() {
   await seedGuru(passwordHash);
   await seedUjian();
 
-  const santriRows = await prisma.santri.findMany({ include: { orang: true } });
+  const santriRows = await prisma.santri.findMany({ include: { person: true } });
   for (const santri of santriRows) {
     const user = await prisma.user.upsert({
-      where: { orangId: santri.orangId },
-      create: { orangId: santri.orangId, email: santri.orang.email ?? `santri.${santri.nis}@nuha.local`, username: `santri.${santri.nis}`, passwordHash },
+      where: { personId: santri.personId },
+      create: { personId: santri.personId, email: santri.person.email ?? `santri.${santri.nis}@nuha.local`, username: `santri.${santri.nis}`, passwordHash },
       update: { username: `santri.${santri.nis}` },
     });
     await prisma.userPeran.upsert({ where: { userId_peranId: { userId: user.id, peranId: roleSantri.id } }, create: { userId: user.id, peranId: roleSantri.id }, update: {} });
@@ -431,8 +431,8 @@ async function seedPortalAccess() {
     if (sudahPunyaAkun.has(nis)) continue;
     sudahPunyaAkun.add(nis);
     const user = await prisma.user.upsert({
-      where: { orangId: relasi.waliId },
-      create: { orangId: relasi.waliId, email: relasi.wali.email ?? `wali.${nis}@nuha.local`, username: `wali.${nis}`, passwordHash },
+      where: { personId: relasi.waliId },
+      create: { personId: relasi.waliId, email: relasi.wali.email ?? `wali.${nis}@nuha.local`, username: `wali.${nis}`, passwordHash },
       update: { username: `wali.${nis}` },
     });
     await prisma.userPeran.upsert({ where: { userId_peranId: { userId: user.id, peranId: roleWali.id } }, create: { userId: user.id, peranId: roleWali.id }, update: {} });
@@ -602,21 +602,21 @@ async function main() {
     }) : null;
     const asrama = asramaByName.get(String(row.asrama));
     const kamar = asrama ? await prisma.kamar.findUnique({ where: { asramaId_kode: { asramaId: asrama.id, kode: String(row.kamar) } } }) : null;
-    const orang = await prisma.orang.upsert({
+    const orang = await prisma.person.upsert({
       where: { email: `santri.${String(row.nis)}@nuha.local` },
-      create: { nama: String(row.nama), jk: gender(row.jk), email: `santri.${String(row.nis)}@nuha.local`, alamat: String(row.alamat), hp: String(row.hpWali) },
-      update: { nama: String(row.nama), alamat: String(row.alamat), hp: String(row.hpWali) },
+      create: { fullName: String(row.nama), gender: gender(row.jk), email: `santri.${String(row.nis)}@nuha.local`, addressLine: String(row.alamat), phone: String(row.hpWali) },
+      update: { fullName: String(row.nama), addressLine: String(row.alamat), phone: String(row.hpWali) },
     });
     const santri = await prisma.santri.upsert({
-      where: { orangId: orang.id },
-      create: { orangId: orang.id, nis: String(row.nis), nisn: String(row.nisn), unitId: unit?.id, kelasId: kelas?.id, kamarId: kamar?.id, status: StatusSantri.Mukim, program: String(row.program), tahunMasuk: String(row.masuk) },
+      where: { personId: orang.id },
+      create: { personId: orang.id, nis: String(row.nis), nisn: String(row.nisn), unitId: unit?.id, kelasId: kelas?.id, kamarId: kamar?.id, status: StatusSantri.Mukim, program: String(row.program), tahunMasuk: String(row.masuk) },
       update: { unitId: unit?.id, kelasId: kelas?.id, kamarId: kamar?.id, program: String(row.program) },
     });
     santriByName.set(String(row.nama), santri);
-    const wali = await prisma.orang.upsert({
+    const wali = await prisma.person.upsert({
       where: { email: `wali.${String(row.nis)}@nuha.local` },
-      create: { nama: String(row.wali), jk: JenisKelamin.L, hp: String(row.hpWali), email: `wali.${String(row.nis)}@nuha.local` },
-      update: { hp: String(row.hpWali) },
+      create: { fullName: String(row.wali), gender: JenisKelamin.L, phone: String(row.hpWali), email: `wali.${String(row.nis)}@nuha.local` },
+      update: { phone: String(row.hpWali) },
     });
     await prisma.relasiWali.upsert({ where: { waliId_anakId: { waliId: wali.id, anakId: orang.id } }, create: { waliId: wali.id, anakId: orang.id, hubungan: 'Orang Tua', pekerjaan: String(row.pekerjaan) }, update: {} });
   }
@@ -627,8 +627,8 @@ async function main() {
     // otomatis memperoleh hak akses tertinggi.
     const role = roles.find((item) => item.nama === row.peran || String(row.peran).startsWith(item.nama))
       ?? await perolehPeran(String(row.peran));
-    const orang = await prisma.orang.upsert({ where: { email: String(row.email) }, create: { nama: String(row.nama), jk: JenisKelamin.L, email: String(row.email), aktif: Boolean(row.aktif) }, update: { nama: String(row.nama), aktif: Boolean(row.aktif) } });
-    const user = await prisma.user.upsert({ where: { orangId: orang.id }, create: { orangId: orang.id, email: String(row.email), passwordHash, unitScope: String(row.unit), aktif: Boolean(row.aktif) }, update: { passwordHash, aktif: Boolean(row.aktif) } });
+    const orang = await prisma.person.upsert({ where: { email: String(row.email) }, create: { fullName: String(row.nama), gender: JenisKelamin.L, email: String(row.email), isActive: Boolean(row.aktif) }, update: { fullName: String(row.nama), isActive: Boolean(row.aktif) } });
+    const user = await prisma.user.upsert({ where: { personId: orang.id }, create: { personId: orang.id, email: String(row.email), passwordHash, unitScope: String(row.unit), aktif: Boolean(row.aktif) }, update: { passwordHash, aktif: Boolean(row.aktif) } });
     await prisma.userPeran.upsert({ where: { userId_peranId: { userId: user.id, peranId: role.id } }, create: { userId: user.id, peranId: role.id }, update: {} });
   }
 
@@ -642,8 +642,8 @@ async function main() {
 
   for (const row of source.pegawai) {
     const unit = unitByKey.get(String(row.unit));
-    const orang = await prisma.orang.upsert({ where: { email: `pegawai.${String(row.nip)}@nuha.local` }, create: { nama: String(row.nama), jk: JenisKelamin.L, email: `pegawai.${String(row.nip)}@nuha.local` }, update: { nama: String(row.nama) } });
-    const pegawai = await prisma.pegawai.upsert({ where: { orangId: orang.id }, create: { orangId: orang.id, nip: String(row.nip), unitId: unit?.id, jabatan: String(row.jabatan), status: String(row.status), rekening: String(row.rek) }, update: { jabatan: String(row.jabatan), status: String(row.status), rekening: String(row.rek) } });
+    const orang = await prisma.person.upsert({ where: { email: `pegawai.${String(row.nip)}@nuha.local` }, create: { fullName: String(row.nama), gender: JenisKelamin.L, email: `pegawai.${String(row.nip)}@nuha.local` }, update: { fullName: String(row.nama) } });
+    const pegawai = await prisma.pegawai.upsert({ where: { personId: orang.id }, create: { personId: orang.id, nip: String(row.nip), unitId: unit?.id, jabatan: String(row.jabatan), status: String(row.status), rekening: String(row.rek) }, update: { jabatan: String(row.jabatan), status: String(row.status), rekening: String(row.rek) } });
     await prisma.komponenGaji.upsert({ where: { pegawaiId: pegawai.id }, create: { pegawaiId: pegawai.id, pokok: Number(row.pokok), tunjJab: Number(row.tunjJab), tunjKel: Number(row.tunjKel), jamMengajar: Number(row.jam), tarifJam: Number(row.tarifJam), transport: Number(row.transport), bpjs: Number(row.bpjs), koperasi: Number(row.koperasi), pph: Number(row.pph) }, update: {} });
   }
 
