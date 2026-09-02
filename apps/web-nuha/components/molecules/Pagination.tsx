@@ -6,7 +6,8 @@ type Props = {
   total: number;
   jumlahBaris: number;
   ukuranHalaman: number;
-  buatHref: (halaman: number) => string;
+  buatHref?: (halaman: number) => string;
+  onPageChange?: (halaman: number) => void;
   /** Kontrol tambahan di sisi kanan, mis. pemilih baris per halaman. */
   ekstra?: ReactNode;
 };
@@ -31,10 +32,10 @@ function nomorHalaman(halaman: number, totalHalaman: number): number[] {
   return Array.from({ length: banyak }, (_, i) => mulai + i);
 }
 
-type TombolProps = { label: string; judul: string; tujuan: number; aktif: boolean; buatHref: (halaman: number) => string };
+type TombolProps = { label: string; judul: string; tujuan: number; aktif: boolean; buatHref?: (halaman: number) => string; onPageChange?: (halaman: number) => void };
 
 /** Satu tombol navigasi; jadi <span> non-klik saat sudah di ujung. */
-function TombolNav({ label, judul, tujuan, aktif, buatHref }: TombolProps) {
+function TombolNav({ label, judul, tujuan, aktif, buatHref, onPageChange }: TombolProps) {
   if (!aktif) {
     return (
       <span className="btn-sekunder" aria-disabled="true" title={judul} style={{ ...GAYA_TOMBOL, opacity: 0.45, cursor: 'default' }}>
@@ -42,15 +43,14 @@ function TombolNav({ label, judul, tujuan, aktif, buatHref }: TombolProps) {
       </span>
     );
   }
-  return (
-    <a className="btn-sekunder" href={buatHref(tujuan)} title={judul} aria-label={judul} style={GAYA_TOMBOL}>
-      {label}
-    </a>
-  );
+  if (onPageChange) {
+    return <button className="btn-sekunder" type="button" onClick={() => onPageChange(tujuan)} title={judul} aria-label={judul} style={GAYA_TOMBOL}>{label}</button>;
+  }
+  return <a className="btn-sekunder" href={buatHref!(tujuan)} title={judul} aria-label={judul} style={GAYA_TOMBOL}>{label}</a>;
 }
 
 /** Footer pager: "Menampilkan X–Y dari Z" + navigasi awal/sebelumnya/berikutnya/akhir. Dipakai bersama util `bacaHalaman`. */
-export function Pagination({ halaman, totalHalaman, total, jumlahBaris, ukuranHalaman, buatHref, ekstra }: Props) {
+export function Pagination({ halaman, totalHalaman, total, jumlahBaris, ukuranHalaman, buatHref, onPageChange, ekstra }: Props) {
   const awal = jumlahBaris === 0 ? 0 : (halaman - 1) * ukuranHalaman + 1;
   const akhir = (halaman - 1) * ukuranHalaman + jumlahBaris;
   const adaSebelum = halaman > 1;
@@ -64,21 +64,20 @@ export function Pagination({ halaman, totalHalaman, total, jumlahBaris, ukuranHa
         {ekstra}
         {totalHalaman > 1 && (
           <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <TombolNav label="«" judul="Halaman pertama" tujuan={1} aktif={adaSebelum} buatHref={buatHref} />
-            <TombolNav label="‹" judul="Halaman sebelumnya" tujuan={halaman - 1} aktif={adaSebelum} buatHref={buatHref} />
+            <TombolNav label="«" judul="Halaman pertama" tujuan={1} aktif={adaSebelum} buatHref={buatHref} onPageChange={onPageChange} />
+            <TombolNav label="‹" judul="Halaman sebelumnya" tujuan={halaman - 1} aktif={adaSebelum} buatHref={buatHref} onPageChange={onPageChange} />
             {nomorHalaman(halaman, totalHalaman).map((p) => (p === halaman
               ? (
                 <span key={p} aria-current="page" aria-label={`Halaman ${p}, halaman ini`} className="btn-sekunder active" style={GAYA_TOMBOL}>
                   {p}
                 </span>
               )
-              : (
-                <a key={p} href={buatHref(p)} aria-label={`Halaman ${p}`} className="btn-sekunder" style={GAYA_TOMBOL}>
-                  {p}
-                </a>
-              )))}
-            <TombolNav label="›" judul="Halaman berikutnya" tujuan={halaman + 1} aktif={adaSesudah} buatHref={buatHref} />
-            <TombolNav label="»" judul="Halaman terakhir" tujuan={totalHalaman} aktif={adaSesudah} buatHref={buatHref} />
+              : onPageChange
+                ? <button key={p} type="button" onClick={() => onPageChange(p)} aria-label={`Halaman ${p}`} className="btn-sekunder" style={GAYA_TOMBOL}>{p}</button>
+                : <a key={p} href={buatHref!(p)} aria-label={`Halaman ${p}`} className="btn-sekunder" style={GAYA_TOMBOL}>{p}</a>
+            ))}
+            <TombolNav label="›" judul="Halaman berikutnya" tujuan={halaman + 1} aktif={adaSesudah} buatHref={buatHref} onPageChange={onPageChange} />
+            <TombolNav label="»" judul="Halaman terakhir" tujuan={totalHalaman} aktif={adaSesudah} buatHref={buatHref} onPageChange={onPageChange} />
           </div>
         )}
       </div>

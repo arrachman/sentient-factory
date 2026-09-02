@@ -4,6 +4,18 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Pagination Master Data tidak lagi reload seluruh halaman
+
+Klik nomor halaman atau ubah "baris per halaman" pada `/data/<entity>` (mis.
+staf-orang) sebelumnya memakai `<a href>`/navigasi penuh, sehingga filter dan
+komponen pagination ikut ter-reload bersama tabel. Endpoint `GET
+/api/crud/[entity]` sekarang menerima `halaman`, `limit`, dan filter query
+untuk mengembalikan `{ rows, total }` terpaginasi; tabel dan pager dibungkus
+komponen klien baru `CrudList` (`components/organisms/CrudList.tsx`) yang
+mem-fetch data dan memperbarui URL lewat `history.pushState` tanpa navigasi.
+`FilterBar` tidak berubah (tetap submit GET) — hanya perubahan halaman/limit
+yang kini parsial. Murni perbaikan UX, tidak ada perubahan data atau akses.
+
 ## 2026-09-02 — Halaman entitas Master Data: hapus tautan "Kembali ke Master Data", rapatkan gap
 
 Halaman `/data/<entity>` (dipakai semua entitas Master Data, mis. mapel,

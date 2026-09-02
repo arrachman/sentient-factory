@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import type { ClientEntity, ClientField, Column, Keterkaitan, Row } from '@/lib/crud/types';
 import { InputField } from '@/components/molecules/InputField';
 
@@ -81,6 +81,7 @@ function nilaiPemicu(fields: ClientField[], dipilih: Record<string, string>, row
 
 export function CrudPanel({ entity, rows: initialRows }: { entity: ClientEntity; rows: Row[] }) {
   const [rows, setRows] = useState<Row[]>(initialRows);
+  useEffect(() => setRows(initialRows), [initialRows]);
   const [editing, setEditing] = useState<Row | null>(null);
   const [pilihan, setPilihan] = useState<Record<string, string>>({});
   const [open, setOpen] = useState(false);

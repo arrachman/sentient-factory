@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 import { requirePage } from '@/lib/access';
-import { CrudPanel } from '@/components/CrudPanel';
-import { Pagination, LimitPicker, FilterBar, bacaHalaman, bacaLimit, satu, filterQuery } from '@/components';
+import { CrudList, FilterBar, bacaHalaman, bacaLimit, satu } from '@/components';
 import { getEntity } from '@/lib/crud/registry';
 import { listRows, countRows, toClientEntity } from '@/lib/crud/engine';
 import { RingkasanSantri } from '../ringkasan-santri';
@@ -31,20 +30,17 @@ export default async function EntityPage({ params, searchParams }: { params: Pro
     countRows(entity, filters),
     toClientEntity(entity),
   ]);
-  const totalHalaman = Math.max(1, Math.ceil(total / limit));
-  const fq = filterQuery(filters);
   return <>
     {key === 'santri' && <RingkasanSantri filters={filters} />}
     <FilterBar entity={clientEntity} hrefBase={`/data/${key}`} filters={filters} limit={limit} />
-    <CrudPanel entity={clientEntity} rows={rows} />
-    <Pagination
-      halaman={halaman}
-      totalHalaman={totalHalaman}
-      total={total}
-      jumlahBaris={rows.length}
-      ukuranHalaman={limit}
-      buatHref={(p) => `/data/${key}?halaman=${p}&limit=${limit}${fq}`}
-      ekstra={<LimitPicker limit={limit} hrefBase={`/data/${key}`} query={fq} />}
+    <CrudList
+      entity={clientEntity}
+      initialRows={rows}
+      initialHalaman={halaman}
+      initialLimit={limit}
+      initialTotal={total}
+      filters={filters}
+      hrefBase={`/data/${key}`}
     />
   </>;
 }

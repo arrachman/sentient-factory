@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { readSession } from '@/lib/auth';
 import { recordAudit, requestIp } from '@/lib/audit';
-import { castId, coerce, delegateFor, listRows, serialize } from '@/lib/crud/engine';
+import { castId, coerce, countRows, delegateFor, listRows, serialize } from '@/lib/crud/engine';
 import { getEntity } from '@/lib/crud/registry';
 
 const idSchema = z.string().regex(/^\d+$/);
@@ -19,11 +19,32 @@ function responseError(message: string, status: number) {
   return Response.json({ success: false, data: null, error: { code: status === 403 ? 'FORBIDDEN' : 'VALIDATION_ERROR', message } }, { status });
 }
 
-export async function GET(_request: Request, context: { params: Promise<{ entity: string }> }) {
+export async function GET(request: Request, context: { params: Promise<{ entity: string }> }) {
   const { entity: key } = await context.params;
   const auth = await authorize(key);
   if (auth.denied || !auth.entity) return responseError('Tidak berwenang.', auth.entity ? 403 : 404);
-  return Response.json({ success: true, data: await listRows(auth.entity), error: null });
+
+  const url = new URL(request.url);
+  if (!url.searchParams.has('halaman') && !url.searchParams.has('limit')) {
+    return Response.json({ success: true, data: await listRows(auth.entity), error: null });
+  }
+
+  const halaman = Math.max(1, z.coerce.number().int().catch(1).parse(url.searchParams.get('halaman')));
+  const requestedLimit = z.coerce.number().int().catch(10).parse(url.searchParams.get('limit'));
+  const limit = [10, 25, 50, 100].includes(requestedLimit) ? requestedLimit : 10;
+  const filters: Record<string, string> = {};
+  const q = url.searchParams.get('q');
+  if (q) filters.q = q;
+  for (const field of auth.entity.fields) {
+    const value = url.searchParams.get(field.name) ?? field.filterDefault;
+    if (value) filters[field.name] = value;
+  }
+
+  const [rows, total] = await Promise.all([
+    listRows(auth.entity, halaman, limit, filters),
+    countRows(auth.entity, filters),
+  ]);
+  return Response.json({ success: true, data: { rows, total }, error: null });
 }
 
 export async function POST(request: Request, context: { params: Promise<{ entity: string }> }) {
