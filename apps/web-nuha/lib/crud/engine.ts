@@ -117,6 +117,14 @@ function convert(field: Field, raw: unknown, errors: string[]): unknown {
       if (field.options && bagian.some((item) => !field.options!.includes(item))) errors.push(`${field.label} tidak valid.`);
       return bagian.join(',');
     }
+    case 'wilayah': {
+      const value = String(raw).trim();
+      if (!/^\d+$/.test(value)) {
+        errors.push(`${field.label} harus dipilih dari daftar desa yang tersedia.`);
+        return null;
+      }
+      return BigInt(value);
+    }
     default:
       return String(raw);
   }

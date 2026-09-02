@@ -16,11 +16,17 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
   const santri = await prisma.santri.findUnique({
     where: { id: santriId },
     include: {
-      orang: { include: { riwayatPendidikan: { include: { unit: true, tahunAjaran: true }, orderBy: { tahunAjaran: { kode: 'desc' } } } } },
+      orang: { include: { riwayatPendidikan: { include: { unit: true, tahunAjaran: true }, orderBy: { tahunAjaran: { kode: 'desc' } } }, desa: true } },
       unit: true, kelas: true, kamar: { include: { asrama: true } },
     },
   });
   if (!santri) return null;
+
+  const alamatTampil = santri.orang.desa
+    ? [santri.orang.alamat, `${santri.orang.desa.labelTipe ?? ''} ${santri.orang.desa.nama}`.trim(), santri.orang.desa.namaLengkap]
+        .filter(Boolean)
+        .join(', ')
+    : santri.orang.alamat ?? '-';
 
   const jumlahRekamMedis = await prisma.rekamMedis.count({ where: { santriId } });
   const mukim = santri.status === 'Mukim';
@@ -35,7 +41,7 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
         <Baris label="Jenis kelamin" nilai={santri.orang.jk === 'L' ? 'Putra' : 'Putri'} />
         <Baris label="NIK" nilai={santri.orang.nik ?? '-'} />
         <Baris label="No. KK" nilai={santri.orang.noKk ?? '-'} />
-        <Baris label="Alamat" nilai={santri.orang.alamat ?? '-'} />
+        <Baris label="Alamat" nilai={alamatTampil} />
         <Baris label="Anak ke" nilai={formatAnakKe(santri.orang.anakKe, santri.orang.jumlahSaudara)} />
         <Baris label="Hobi" nilai={santri.orang.hobi ?? '-'} />
         <Baris label="Cita-cita" nilai={santri.orang.citaCita ?? '-'} />

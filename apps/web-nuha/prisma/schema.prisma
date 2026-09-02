@@ -25,6 +25,118 @@ enum JenisKelamin {
   P
 }
 
+enum TingkatWilayah {
+  Provinsi
+  Kota
+  Kecamatan
+  Desa
+}
+
+enum JenisAliasWilayah {
+  NamaLama
+  EjaanLain
+  Singkatan
+  BahasaLokal
+}
+
+model Negara {
+  id           Int      @id @default(autoincrement())
+  iso2         String   @unique @db.Char(2)
+  iso3         String   @unique @db.Char(3)
+  kodeNumerik  String?  @map("kode_numerik") @db.Char(3)
+  nama         String   @db.VarChar(100)
+  namaLokal    String?  @map("nama_lokal") @db.VarChar(100)
+  kodeTelepon  String?  @map("kode_telepon") @db.VarChar(8)
+  kodeMataUang String?  @map("kode_mata_uang") @db.Char(3)
+  aktif        Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  wilayah          Wilayah[]
+  alamatLuarNegeri AlamatLuarNegeri[]
+
+  @@index([nama])
+  @@map("negara")
+}
+
+model Wilayah {
+  id              BigInt          @id @default(autoincrement())
+  negaraId        Int             @map("negara_id")
+  indukId         BigInt?         @map("induk_id")
+  tingkat         TingkatWilayah
+  kode            String          @db.VarChar(20)
+  nama            String          @db.VarChar(120)
+  labelTipe       String?         @map("label_tipe") @db.VarChar(30)
+  provinsiId      BigInt?         @map("provinsi_id")
+  kotaId          BigInt?         @map("kota_id")
+  kecamatanId     BigInt?         @map("kecamatan_id")
+  kedalaman       Int             @default(1)
+  namaLengkap     String?         @map("nama_lengkap") @db.VarChar(400)
+  kodePos         String?         @map("kode_pos") @db.Char(5)
+  latitude        Decimal?        @db.Decimal(10, 7)
+  longitude       Decimal?        @db.Decimal(10, 7)
+  luasKm2         Decimal?        @map("luas_km2") @db.Decimal(12, 4)
+  populasi        Int?
+  aktif           Boolean         @default(true)
+  digantiDenganId BigInt?         @map("diganti_dengan_id")
+  createdAt       DateTime?       @default(now()) @map("created_at")
+  updatedAt       DateTime?       @updatedAt @map("updated_at")
+
+  negara           Negara          @relation(fields: [negaraId], references: [id])
+  induk            Wilayah?        @relation("WilayahInduk", fields: [indukId], references: [id], onDelete: Cascade)
+  anak             Wilayah[]       @relation("WilayahInduk")
+  provinsi         Wilayah?        @relation("WilayahProvinsi", fields: [provinsiId], references: [id], onDelete: SetNull)
+  wilayahProvinsi  Wilayah[]       @relation("WilayahProvinsi")
+  kota             Wilayah?        @relation("WilayahKota", fields: [kotaId], references: [id], onDelete: SetNull)
+  wilayahKota      Wilayah[]       @relation("WilayahKota")
+  kecamatan        Wilayah?        @relation("WilayahKecamatan", fields: [kecamatanId], references: [id], onDelete: SetNull)
+  wilayahKecamatan Wilayah[]       @relation("WilayahKecamatan")
+  digantiDengan    Wilayah?        @relation("WilayahPengganti", fields: [digantiDenganId], references: [id], onDelete: SetNull)
+  wilayahLama      Wilayah[]       @relation("WilayahPengganti")
+  alias            AliasWilayah[]
+  orangDesa        Orang[]         @relation("OrangDesa")
+  unitDesa         Unit[]          @relation("UnitDesa")
+  lembagaDesa      ProfilLembaga[] @relation("LembagaDesa")
+
+  @@unique([negaraId, kode])
+  @@index([indukId, tingkat, aktif])
+  @@index([tingkat, aktif])
+  @@index([provinsiId, kotaId, kecamatanId])
+  @@index([kodePos])
+  @@map("wilayah")
+}
+
+model AliasWilayah {
+  id        BigInt            @id @default(autoincrement())
+  wilayahId BigInt            @map("wilayah_id")
+  alias     String            @db.VarChar(120)
+  jenis     JenisAliasWilayah
+
+  wilayah   Wilayah           @relation(fields: [wilayahId], references: [id], onDelete: Cascade)
+
+  @@unique([wilayahId, alias])
+  @@index([alias])
+  @@map("alias_wilayah")
+}
+
+model AlamatLuarNegeri {
+  id           BigInt  @id @default(autoincrement())
+  orangId      BigInt  @unique @map("orang_id")
+  negaraId     Int     @map("negara_id")
+  alamatBaris1 String  @map("alamat_baris_1") @db.VarChar(255)
+  alamatBaris2 String? @map("alamat_baris_2") @db.VarChar(255)
+  kota         String? @db.VarChar(120)
+  negaraBagian String? @map("negara_bagian") @db.VarChar(120)
+  kodePos      String? @map("kode_pos") @db.VarChar(20)
+  aktif        Boolean @default(true)
+
+  orang        Orang  @relation(fields: [orangId], references: [id], onDelete: Cascade)
+  negara       Negara @relation(fields: [negaraId], references: [id])
+
+  @@index([negaraId])
+  @@map("alamat_luar_negeri")
+}
+
 model Orang {
   id            BigInt       @id @default(autoincrement())
   nik           String?      @unique @db.VarChar(32)
@@ -48,6 +160,8 @@ model Orang {
   kelurahan     String?      @db.VarChar(120)
   kecamatan     String?      @db.VarChar(120)
   kabupaten     String?      @db.VarChar(120)
+  desaId        BigInt?      @map("desa_id")
+  kodePos       String?      @map("kode_pos") @db.Char(5)
   noKk          String?      @map("no_kk") @db.VarChar(32)
   anakKe        Int?         @map("anak_ke")
   jumlahSaudara Int?         @map("jumlah_saudara")
@@ -69,8 +183,11 @@ model Orang {
   pegawai     Pegawai?
   waliDari    RelasiWali[] @relation("WaliOrang")
   sebagaiAnak RelasiWali[] @relation("AnakOrang")
+  desa             Wilayah?          @relation("OrangDesa", fields: [desaId], references: [id], onDelete: SetNull)
+  alamatLuarNegeri AlamatLuarNegeri?
 
   @@index([nama])
+  @@index([desaId])
   @@map("orang")
 }
 
@@ -185,6 +302,9 @@ model Unit {
   /// Path logo relatif terhadap `public/` (mis. `/assets/logo-nuha.webp`).
   logoPath      String? @map("logo_path") @db.VarChar(255)
   alamat        String? @db.VarChar(255)
+  desaId        BigInt? @map("desa_id")
+  latitude      Decimal? @db.Decimal(10, 7)
+  longitude     Decimal? @db.Decimal(10, 7)
   telepon       String? @db.VarChar(32)
   email         String? @db.VarChar(160)
   website       String? @db.VarChar(160)
@@ -206,7 +326,9 @@ model Unit {
   jadwal        JadwalPelajaran[]
   ujian         Ujian[]
   kepalaPegawai Pegawai?   @relation("UnitKepala", fields: [kepalaPegawaiId], references: [id])
+  desa          Wilayah?   @relation("UnitDesa", fields: [desaId], references: [id], onDelete: SetNull)
 
+  @@index([desaId])
   @@map("unit")
 }
 
@@ -220,6 +342,9 @@ model ProfilLembaga {
   singkatan     String? @db.VarChar(48)
   logoPath      String? @map("logo_path") @db.VarChar(255)
   alamat        String? @db.VarChar(255)
+  desaId        BigInt? @map("desa_id")
+  latitude      Decimal? @db.Decimal(10, 7)
+  longitude     Decimal? @db.Decimal(10, 7)
   telepon       String? @db.VarChar(32)
   email         String? @db.VarChar(160)
   website       String? @db.VarChar(160)
@@ -235,7 +360,9 @@ model ProfilLembaga {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+  desa      Wilayah? @relation("LembagaDesa", fields: [desaId], references: [id], onDelete: SetNull)
 
+  @@index([desaId])
   @@map("profil_lembaga")
 }
 

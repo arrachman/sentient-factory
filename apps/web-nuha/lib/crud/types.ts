@@ -2,7 +2,7 @@
  * One description of an entity drives its API validation, its table, and its
  * form. Adding a module means adding a registry entry, not another CRUD route.
  */
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'datetime' | 'select' | 'pilihan-banyak' | 'boolean' | 'orang-banyak';
+export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'datetime' | 'select' | 'pilihan-banyak' | 'boolean' | 'orang-banyak' | 'wilayah';
 
 /** Options pulled from another table; `label` may walk relations, e.g. `orang.nama`. */
 export type FieldRef = {

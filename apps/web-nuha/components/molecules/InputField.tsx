@@ -3,6 +3,7 @@
 import type { ClientField, Row } from '@/lib/crud/types';
 import { IkonOpsi } from '@/components/atoms/IkonOpsi';
 import { PemilihBanyakOrang } from '@/components/molecules/PemilihBanyakOrang';
+import { PemilihWilayah } from '@/components/molecules/PemilihWilayah';
 
 const nilaiAwal = (field: ClientField, row?: Row) => {
   const raw = row?.[field.name];
@@ -33,6 +34,10 @@ export function InputField({ field, id, row, onPilih }: Props) {
       hanyaSantri={field.hanyaSantri}
       nilaiAwal={nilai || undefined}
     />;
+  }
+
+  if (field.type === 'wilayah') {
+    return <PemilihWilayah name={field.name} label={field.label} id={id} hint={field.hint} placeholder={field.placeholder} nilaiAwal={nilai || undefined} />;
   }
 
   if (field.type === 'pilihan-banyak' && field.options) {

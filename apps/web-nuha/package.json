@@ -17,6 +17,7 @@
     "db:seed:demo": "tsx prisma/seed.ts",
     "db:purge-dummy": "tsx scripts/purge-dummy.ts",
     "db:studio": "prisma studio",
+    "import:wilayah": "tsx prisma/import/import-wilayah.ts",
     "import:keuangan": "tsx prisma/import/keuangan.ts",
     "import:guru-ma": "tsx prisma/import/import-guru-ma.ts",
     "import:asatidz": "tsx prisma/import/import-asatidz.ts",

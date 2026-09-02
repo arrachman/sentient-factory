@@ -22,6 +22,8 @@ export const FIELD_ORANG_DASAR: Field[] = [
   { ...text('rw', 'RW', false), group: 'Alamat', tersembunyi: true, placeholder: 'RW' },
   { ...text('kelurahan', 'Kelurahan / desa', false), group: 'Alamat', placeholder: 'Mergosono' },
   { ...text('kecamatan', 'Kecamatan', false), group: 'Alamat', placeholder: 'Kedungkandang' },
+  { name: 'desaId', label: 'Desa / kelurahan', type: 'wilayah', group: 'Alamat', span: 3, hint: 'Pilih desa atau kelurahan aktif agar kecamatan, kota, dan provinsi tersimpan konsisten.' },
+  { ...text('kodePos', 'Kode pos', false), group: 'Alamat', hint: 'Kosongkan untuk memakai kode pos bawaan wilayah.', placeholder: '65141' },
   { ...text('kabupaten', 'Kota / kabupaten', false), group: 'Alamat', span: 2, placeholder: 'Kota Malang' },
   { ...number('anakKe', 'Anak ke-'), group: 'Data pribadi', placeholder: '2' },
   { ...number('jumlahSaudara', 'Jumlah saudara kandung'), group: 'Data pribadi', placeholder: '3' },

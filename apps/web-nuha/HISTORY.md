@@ -4,6 +4,29 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Fondasi skema wilayah/alamat ternormalisasi
+
+Menambah model `Negara`, `Wilayah` (hirarki provinsi→kota→kecamatan→desa
+dengan pintasan leluhur `provinsiId`/`kotaId`/`kecamatanId` dan riwayat lewat
+`aktif`/`digantiDenganId`), `AliasWilayah`, dan `AlamatLuarNegeri` (satu-satu
+per orang). `Orang`, `Unit`, dan `ProfilLembaga` mendapat `desaId` opsional
+(FK ke `wilayah`, harus desa/kelurahan aktif — divalidasi server via
+`lib/wilayah.ts`) plus `latitude`/`longitude` pada Unit & ProfilLembaga.
+Kolom alamat teks lama (`alamat`, `rt`, `rw`, `kelurahan`, `kecamatan`,
+`kabupaten`) dipertahankan sebagai data historis/fallback — tidak dihapus.
+
+Migrasi `20260902104633_normalized_region_address` bersifat aditif saja.
+Form identitas orang, Unit, dan Profil yayasan kini punya pemilih desa
+(`PemilihWilayah`, autocomplete terproteksi sesi via `/api/wilayah/cari`).
+Tab Biodata santri menampilkan alamat dari desa terpilih bila ada, dengan
+alamat teks lama sebagai fallback.
+
+**Belum selesai (sengaja ditunda untuk konfirmasi)**: importer dataset resmi
+kode wilayah Kepmendagri 2025 belum dijalankan — tabel `wilayah` masih kosong
+sampai data diimpor lewat proses terkontrol terpisah. Pendaftar PPDB belum
+memiliki `desaId` (masih alamat teks bebas) karena perlu keputusan skema
+tersendiri. Backfill alamat teks lama `Orang` ke `desaId` belum dibuat.
+
 ## 2026-09-02 — Redirect halaman awal staf diperbaiki
 
 Pengalihan tamu dari `/` ke `/beranda` kini hanya dijalankan oleh layout staf,

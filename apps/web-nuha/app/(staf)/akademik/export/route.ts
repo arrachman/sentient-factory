@@ -80,6 +80,7 @@ export async function GET(request: Request) {
             include: { wali: true },
             orderBy: [{ utama: 'desc' }, { peran: 'asc' }],
           },
+          desa: true,
         },
       },
       unit: true,
@@ -92,7 +93,7 @@ export async function GET(request: Request) {
   const header = [
     'NIS', 'NISN', 'Nama', 'NIK', 'Jenis Kelamin', 'Tempat Lahir', 'Tanggal Lahir',
     'Unit', 'Jenjang', 'Kelas', 'Tingkat', 'Program', 'Tahun Masuk', 'Status', 'Asrama', 'Kamar',
-    'Alamat', 'RT', 'RW', 'Kelurahan/Desa', 'Kecamatan', 'Kabupaten/Kota', 'No. KK',
+    'Alamat', 'RT', 'RW', 'Kelurahan/Desa', 'Kecamatan', 'Kabupaten/Kota', 'Desa ID', 'Wilayah lengkap', 'Kode pos', 'No. KK',
     'Anak Ke', 'Jumlah Saudara', 'Hobi', 'Cita-cita', 'Asal Sekolah', 'Pendidikan Terakhir', 'No. HP', 'Email',
     'Nama Ayah', 'Hubungan Ayah', 'NIK Ayah', 'TTL Ayah', 'Pekerjaan Ayah', 'Pendidikan Ayah', 'Pendapatan Ayah', 'HP Ayah', 'Alamat Ayah', 'Peran Ayah',
     'Nama Ibu', 'Hubungan Ibu', 'NIK Ibu', 'TTL Ibu', 'Pekerjaan Ibu', 'Pendidikan Ibu', 'Pendapatan Ibu', 'HP Ibu', 'Alamat Ibu', 'Peran Ibu',
@@ -109,7 +110,8 @@ export async function GET(request: Request) {
         santri.nis, santri.nisn, orang.nama, orang.nik, orang.jk, orang.tmpLahir, tanggal(orang.tglLahir),
         santri.unit?.nama, santri.unit?.jenjang, santri.kelas?.nama, santri.kelas?.tingkat, santri.program, santri.tahunMasuk, santri.status,
         santri.kamar?.asrama.nama, santri.kamar?.kode,
-        orang.alamat, orang.rt, orang.rw, orang.kelurahan, orang.kecamatan, orang.kabupaten, orang.noKk,
+        orang.alamat, orang.rt, orang.rw, orang.kelurahan, orang.kecamatan, orang.kabupaten,
+        orang.desaId ? String(orang.desaId) : null, orang.desa?.namaLengkap, orang.kodePos ?? orang.desa?.kodePos, orang.noKk,
         orang.anakKe, orang.jumlahSaudara, orang.hobi, orang.citaCita, orang.asalSekolah, orang.pendidikanTerakhir, orang.hp, orang.email,
         ...dataWali(ayah), ...dataWali(ibu), ...dataWali(wali),
       ]);

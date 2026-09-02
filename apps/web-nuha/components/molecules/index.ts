@@ -10,4 +10,5 @@ export * from './Tabel';
 export * from './TabLembaga';
 export * from './Tabs';
 export * from './PemilihBanyakOrang';
+export * from './PemilihWilayah';
 export * from './PenyaringOtomatis';
