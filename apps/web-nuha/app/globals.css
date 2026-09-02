@@ -193,7 +193,7 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
 .modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
 .modal-head h3 { margin: 0; }
 /* Aksi form modal: menempel di bawah, dipisah garis dari field terakhir. */
-.modal-aksi { display: flex; gap: 8px; align-items: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--garis); }
+.modal-aksi { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--garis); }
 
 /* Badge — pasangan warna semantik prototype */
 .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }

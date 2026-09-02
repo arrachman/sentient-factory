@@ -4,6 +4,11 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Tombol aksi modal master data dipindah ke kanan
+
+Tombol "Batal" dan "Simpan" pada footer modal form (mis. `/data/*`) kini rata
+kanan, bukan rata kiri — urutan dan gaya tombol tidak berubah.
+
 ## 2026-09-02 — Gap kartu daftar data dihapus
 
 Kartu daftar CRUD tidak lagi memberi margin atas tambahan setelah panel filter.
