@@ -4,6 +4,18 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Filter Master Data juga tidak reload seluruh halaman
+
+Lanjutan dari perbaikan pagination di bawah: mengetik di kotak cari atau
+mengubah dropdown filter pada `/data/<entity>` sebelumnya tetap submit GET
+biasa (navigasi penuh). `FilterBar` sekarang menerima `onFilterChange` opsional
+— bila diisi, submit form di-preventDefault dan filternya dikirim ke `CrudList`
+alih-alih navigasi. `CrudList` kini merender `FilterBar` sendiri dan menyimpan
+`filters` sebagai state, jadi ubah filter memicu fetch parsial yang sama
+dengan pagination (balik ke halaman 1). Tombol Reset juga direset lewat
+`form.reset()` + callback, bukan tautan navigasi. Murni perbaikan UX, tidak
+ada perubahan data atau akses.
+
 ## 2026-09-02 — Pagination Master Data tidak lagi reload seluruh halaman
 
 Klik nomor halaman atau ubah "baris per halaman" pada `/data/<entity>` (mis.

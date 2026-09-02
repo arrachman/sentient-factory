@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { FormEvent, MouseEvent, useEffect, useRef } from 'react';
 import type { ClientEntity } from '@/lib/crud/types';
 import { SEMUA } from '@/lib/crud/filter-nilai';
 
@@ -9,13 +9,16 @@ const JEDA_CARI_MS = 400;
 
 type Props = {
   entity: ClientEntity;
-  hrefBase: string;
+  hrefBase?: string;
   filters: Record<string, string>;
   limit: number;
+  /** Bila diisi, filter dikirim lewat callback (tanpa reload halaman) alih-alih submit GET biasa. */
+  onFilterChange?: (filters: Record<string, string>) => void;
 };
 
-/** Form GET server-side: cari teks bebas + dropdown per kolom select/vlookup. */
-export function FilterBar({ entity, hrefBase, filters, limit }: Props) {
+/** Bilah filter: cari teks bebas + dropdown per kolom select/vlookup. Submit GET biasa
+ * kecuali `onFilterChange` diberikan, lalu filter dikirim lewat fetch tanpa reload. */
+export function FilterBar({ entity, hrefBase, filters, limit, onFilterChange }: Props) {
   const filterableFields = entity.fields.filter((field) => (
     // Filter turunan relasi tidak punya kolom di tabel, tapi tetap boleh difilter.
     field.filterWhere
@@ -41,8 +44,23 @@ export function FilterBar({ entity, hrefBase, filters, limit }: Props) {
     timerRef.current = setTimeout(kirim, JEDA_CARI_MS);
   };
 
+  const submit = (event: FormEvent<HTMLFormElement>) => {
+    if (!onFilterChange) return;
+    event.preventDefault();
+    const values = Object.fromEntries(new FormData(event.currentTarget).entries()) as Record<string, string>;
+    delete values.limit;
+    onFilterChange(values);
+  };
+
+  const reset = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!onFilterChange) return;
+    event.preventDefault();
+    formRef.current?.reset();
+    onFilterChange({});
+  };
+
   return (
-    <form ref={formRef} method="get" action={hrefBase} className="card bilah-filter">
+    <form ref={formRef} method="get" action={hrefBase} onSubmit={submit} className="card bilah-filter">
       <input type="hidden" name="limit" value={limit} />
       <div className="bilah-filter-kolom" style={{ flex: '1 1 260px', maxWidth: 420 }}>
         <label htmlFor="filter-q">Cari</label>
@@ -62,7 +80,7 @@ export function FilterBar({ entity, hrefBase, filters, limit }: Props) {
         <button className="btn" type="submit" title="Filter" aria-label="Filter" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 38, padding: 0 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" /></svg>
         </button>
-        {adaFilterAktif && <a className="btn btn-sekunder" href={`${hrefBase}?limit=${limit}`}>Reset</a>}
+        {adaFilterAktif && <a className="btn btn-sekunder" href={`${hrefBase}?limit=${limit}`} onClick={reset}>Reset</a>}
       </div>
     </form>
   );

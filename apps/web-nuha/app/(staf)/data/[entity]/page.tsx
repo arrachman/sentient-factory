@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { requirePage } from '@/lib/access';
-import { CrudList, FilterBar, bacaHalaman, bacaLimit, satu } from '@/components';
+import { CrudList, bacaHalaman, bacaLimit, satu } from '@/components';
 import { getEntity } from '@/lib/crud/registry';
 import { listRows, countRows, toClientEntity } from '@/lib/crud/engine';
 import { RingkasanSantri } from '../ringkasan-santri';
@@ -32,14 +32,13 @@ export default async function EntityPage({ params, searchParams }: { params: Pro
   ]);
   return <>
     {key === 'santri' && <RingkasanSantri filters={filters} />}
-    <FilterBar entity={clientEntity} hrefBase={`/data/${key}`} filters={filters} limit={limit} />
     <CrudList
       entity={clientEntity}
       initialRows={rows}
       initialHalaman={halaman}
       initialLimit={limit}
       initialTotal={total}
-      filters={filters}
+      initialFilters={filters}
       hrefBase={`/data/${key}`}
     />
   </>;

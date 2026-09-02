@@ -2,10 +2,8 @@
 
 import { useState } from 'react';
 import { CrudPanel } from '@/components/CrudPanel';
-import { LimitPicker, Pagination } from '@/components';
+import { FilterBar, LimitPicker, Pagination } from '@/components';
 import type { ClientEntity, Row } from '@/lib/crud/types';
-
-const LIMIT_OPTIONS = [10, 25, 50, 100];
 
 type Props = {
   entity: ClientEntity;
@@ -13,7 +11,7 @@ type Props = {
   initialHalaman: number;
   initialLimit: number;
   initialTotal: number;
-  filters: Record<string, string>;
+  initialFilters: Record<string, string>;
   hrefBase: string;
 };
 
@@ -24,19 +22,23 @@ const queryFor = (halaman: number, limit: number, filters: Record<string, string
   return query.toString();
 };
 
-export function CrudList({ entity, initialRows, initialHalaman, initialLimit, initialTotal, filters, hrefBase }: Props) {
+/** Filter, tabel, dan pagination sebuah entitas: klik pager, ganti limit, atau
+ * ubah filter hanya mem-fetch ulang daftarnya lewat `/api/crud/[entity]`
+ * (bukan navigasi App Router), jadi filter dan pager sendiri tidak ikut reload. */
+export function CrudList({ entity, initialRows, initialHalaman, initialLimit, initialTotal, initialFilters, hrefBase }: Props) {
   const [rows, setRows] = useState(initialRows);
   const [halaman, setHalaman] = useState(initialHalaman);
   const [limit, setLimit] = useState(initialLimit);
   const [total, setTotal] = useState(initialTotal);
+  const [filters, setFilters] = useState(initialFilters);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  const pindahHalaman = async (nextHalaman: number, nextLimit = limit) => {
-    if (loading || (nextHalaman === halaman && nextLimit === limit)) return;
+  const muat = async (nextHalaman: number, nextLimit: number, nextFilters: Record<string, string>) => {
+    if (loading) return;
     setLoading(true);
     setMessage('');
-    const query = queryFor(nextHalaman, nextLimit, filters);
+    const query = queryFor(nextHalaman, nextLimit, nextFilters);
     try {
       const response = await fetch(`/api/crud/${entity.key}?${query}`);
       const result = await response.json() as ListResponse;
@@ -45,6 +47,7 @@ export function CrudList({ entity, initialRows, initialHalaman, initialLimit, in
       setTotal(result.data.total);
       setHalaman(nextHalaman);
       setLimit(nextLimit);
+      setFilters(nextFilters);
       window.history.pushState(null, '', `${hrefBase}?${query}`);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Gagal memuat daftar.');
@@ -54,17 +57,20 @@ export function CrudList({ entity, initialRows, initialHalaman, initialLimit, in
   };
 
   const totalHalaman = Math.max(1, Math.ceil(total / limit));
-  return <div aria-busy={loading}>
-    {message && <p className="muted" role="status" style={{ marginBottom: 8 }}>{message}</p>}
-    <CrudPanel entity={entity} rows={rows} />
-    <Pagination
-      halaman={halaman}
-      totalHalaman={totalHalaman}
-      total={total}
-      jumlahBaris={rows.length}
-      ukuranHalaman={limit}
-      onPageChange={(nextHalaman) => void pindahHalaman(nextHalaman)}
-      ekstra={<LimitPicker limit={limit} onLimitChange={(nextLimit) => void pindahHalaman(1, nextLimit)} />}
-    />
-  </div>;
+  return <>
+    <FilterBar entity={entity} hrefBase={hrefBase} filters={filters} limit={limit} onFilterChange={(nextFilters) => void muat(1, limit, nextFilters)} />
+    <div aria-busy={loading}>
+      {message && <p className="muted" role="status" style={{ marginBottom: 8 }}>{message}</p>}
+      <CrudPanel entity={entity} rows={rows} />
+      <Pagination
+        halaman={halaman}
+        totalHalaman={totalHalaman}
+        total={total}
+        jumlahBaris={rows.length}
+        ukuranHalaman={limit}
+        onPageChange={(nextHalaman) => void muat(nextHalaman, limit, filters)}
+        ekstra={<LimitPicker limit={limit} onLimitChange={(nextLimit) => void muat(1, nextLimit, filters)} />}
+      />
+    </div>
+  </>;
 }
