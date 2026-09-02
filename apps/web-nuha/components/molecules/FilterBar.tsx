@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, MouseEvent, useEffect, useRef } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import type { ClientEntity } from '@/lib/crud/types';
 import { SEMUA } from '@/lib/crud/filter-nilai';
 
@@ -31,57 +31,79 @@ export function FilterBar({ entity, hrefBase, filters, limit, onFilterChange }: 
 
   const formRef = useRef<HTMLFormElement>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [nilai, setNilai] = useState<Record<string, string>>(filters);
+
+  useEffect(() => setNilai(filters), [filters]);
 
   // Bersihkan timer debounce saat komponen dilepas agar tidak submit form yatim.
   useEffect(() => () => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
 
-  const kirim = () => formRef.current?.requestSubmit();
+  const kirim = (nextNilai: Record<string, string>) => {
+    if (onFilterChange) {
+      onFilterChange(nextNilai);
+      return;
+    }
+    formRef.current?.requestSubmit();
+  };
 
-  const kirimTertunda = () => {
+  const ubahTeks = (nama: string, nilaiBaru: string) => {
+    const nextNilai = { ...nilai, [nama]: nilaiBaru };
+    setNilai(nextNilai);
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(kirim, JEDA_CARI_MS);
+    timerRef.current = setTimeout(() => kirim(nextNilai), JEDA_CARI_MS);
+  };
+
+  const ubahPilihan = (nama: string, nilaiBaru: string) => {
+    const nextNilai = { ...nilai, [nama]: nilaiBaru };
+    setNilai(nextNilai);
+    kirim(nextNilai);
+  };
+
+  const hapusNilai = (nama: string, nilaiKosong: string) => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const nextNilai = { ...nilai, [nama]: nilaiKosong };
+    setNilai(nextNilai);
+    kirim(nextNilai);
   };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     if (!onFilterChange) return;
     event.preventDefault();
-    const values = Object.fromEntries(new FormData(event.currentTarget).entries()) as Record<string, string>;
-    delete values.limit;
-    onFilterChange(values);
-  };
-
-  const reset = (event: MouseEvent<HTMLAnchorElement>) => {
-    if (!onFilterChange) return;
-    event.preventDefault();
-    formRef.current?.reset();
-    onFilterChange({});
   };
 
   return (
     <form ref={formRef} method="get" action={hrefBase} onSubmit={submit} className="card bilah-filter">
       <input type="hidden" name="limit" value={limit} />
-      <div className="bilah-filter-kolom" style={{ flex: '1 1 260px', maxWidth: 420 }}>
+      <div className="bilah-filter-kolom" style={{ flex: '1 1 260px', maxWidth: 420, position: 'relative' }}>
         <label htmlFor="filter-q">Cari</label>
-        <input id="filter-q" type="text" name="q" defaultValue={filters.q ?? ''} placeholder="Cari nama, kode, atau kata kunci…" onChange={kirimTertunda} />
+        <input id="filter-q" type="text" name="q" value={nilai.q ?? ''} placeholder="Cari nama, kode, atau kata kunci…" onChange={(event) => ubahTeks('q', event.target.value)} />
+        {Boolean(nilai.q) && (
+          <button type="button" className="bilah-filter-hapus" title="Hapus pencarian" aria-label="Hapus pencarian" onClick={() => hapusNilai('q', '')}>×</button>
+        )}
       </div>
       {filterableFields.map((field) => {
         const options = field.refOptions ?? (field.options ?? []).map((option) => ({ id: option, label: field.optionLabels?.[option] ?? option }));
-        return <div className="bilah-filter-kolom" key={field.name} style={{ flex: '0 1 190px' }}>
+        const nilaiKosong = field.filterDefault ? SEMUA : '';
+        const nilaiSaatIni = nilai[field.name] ?? field.filterDefault ?? '';
+        const adaNilai = nilaiSaatIni !== nilaiKosong;
+        return <div className="bilah-filter-kolom" key={field.name} style={{ flex: '0 1 190px', position: 'relative' }}>
           <label htmlFor={`filter-${field.name}`}>{field.label}</label>
-          <select id={`filter-${field.name}`} name={field.name} defaultValue={filters[field.name] ?? field.filterDefault ?? ''} onChange={kirim}>
-            <option value={field.filterDefault ? SEMUA : ''}>Semua</option>
+          <select id={`filter-${field.name}`} name={field.name} value={nilaiSaatIni} onChange={(event) => ubahPilihan(field.name, event.target.value)}>
+            <option value={nilaiKosong}>Semua</option>
             {options.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
+          {adaNilai && (
+            <button type="button" className="bilah-filter-hapus" title={`Hapus filter ${field.label}`} aria-label={`Hapus filter ${field.label}`} onClick={() => hapusNilai(field.name, nilaiKosong)}>×</button>
+          )}
         </div>;
       })}
-      <div className="bilah-filter-aksi">
-        <button className="btn" type="submit" title="Filter" aria-label="Filter" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 38, padding: 0 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z" /></svg>
-        </button>
-        {adaFilterAktif && <a className="btn btn-sekunder" href={`${hrefBase}?limit=${limit}`} onClick={reset}>Reset</a>}
-      </div>
+      {adaFilterAktif && (
+        <div className="bilah-filter-aksi">
+          <a className="btn btn-sekunder" href={`${hrefBase}?limit=${limit}`} onClick={(event) => { event.preventDefault(); setNilai({}); kirim({}); }}>Reset</a>
+        </div>
+      )}
     </form>
   );
 }

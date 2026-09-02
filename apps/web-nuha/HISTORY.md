@@ -4,6 +4,15 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Filter Master Data dapat dihapus per-kolom
+
+Tombol Filter eksplisit pada `/data/<entity>` dihapus karena pencarian dan
+pilihan dropdown sudah menerapkan filter saat nilainya berubah. Setiap input
+filter yang aktif sekarang memiliki tombol hapus (`×`); mengosongkan dropdown
+berfilter bawaan mengirim `Semua` agar nilai bawaan benar-benar dibatalkan.
+Semua tindakan tetap memperbarui daftar saja lewat fetch parsial, tanpa
+navigasi halaman atau perubahan data dan akses.
+
 ## 2026-09-02 — Filter Master Data juga tidak reload seluruh halaman
 
 Lanjutan dari perbaikan pagination di bawah: mengetik di kotak cari atau

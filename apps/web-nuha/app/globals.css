@@ -333,6 +333,11 @@ td.num { font-weight: 700; color: var(--hijau-gelap); }
 }
 .bilah-filter-kolom input::placeholder { color: var(--teks-samar); }
 .bilah-filter-kolom input:focus-visible, .bilah-filter-kolom select:focus-visible { outline: 2px solid var(--hijau-muda); outline-offset: 1px; border-color: var(--hijau-muda); background: #fff; }
+.bilah-filter-kolom:has(.bilah-filter-hapus) input,
+.bilah-filter-kolom:has(.bilah-filter-hapus) select { padding-right: 36px; }
+.bilah-filter-hapus { position: absolute; right: 7px; bottom: 7px; width: 24px; height: 24px; border: 0; border-radius: 50%; background: transparent; color: var(--teks-lembut); cursor: pointer; font-size: 18px; line-height: 1; }
+.bilah-filter-hapus:hover { background: var(--krem-3); color: var(--teks); }
+.bilah-filter-hapus:focus-visible { outline: 2px solid var(--hijau-muda); outline-offset: 1px; }
 .bilah-filter-aksi { display: flex; gap: 8px; margin-left: auto; }
 .bilah-filter-aksi .btn { height: 38px; padding: 0 18px; display: inline-flex; align-items: center; text-decoration: none; }
 
