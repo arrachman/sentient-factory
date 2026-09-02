@@ -23,7 +23,7 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
   if (!santri) return null;
 
   const alamatTampil = santri.orang.desa
-    ? [santri.orang.alamat, `${santri.orang.desa.labelTipe ?? ''} ${santri.orang.desa.nama}`.trim(), santri.orang.desa.namaLengkap]
+    ? [santri.orang.alamat, santri.orang.desa.namaLengkap ?? `${santri.orang.desa.labelTipe ?? ''} ${santri.orang.desa.nama}`.trim()]
         .filter(Boolean)
         .join(', ')
     : santri.orang.alamat ?? '-';
