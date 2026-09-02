@@ -15,7 +15,6 @@ export async function POST(request: Request) {
   const session = await readSession();
   if (!session) return Response.json({ success: false, data: null, error: { code: 'UNAUTHORIZED', message: 'Sesi wajib diisi.' } }, { status: 401 });
 
-  // Authority is data-driven: whoever the menu grants may manage slips, no hardcoded role list.
   const granted = await prisma.menuRole.count({ where: { menu: { key: 'gaji' }, role: { key: { in: session.peran } } } });
   if (!granted) return Response.json({ success: false, data: null, error: { code: 'FORBIDDEN', message: 'Tidak berwenang mengatur slip gaji.' } }, { status: 403 });
 
@@ -30,42 +29,44 @@ export async function POST(request: Request) {
   const pegawai = await prisma.pegawai.findUnique({ where: { id: pegawaiId }, include: { person: true, komponen: true } });
   if (!pegawai) return Response.json({ success: false, data: null, error: { code: 'NOT_FOUND', message: 'Pegawai tidak ditemukan.' } }, { status: 404 });
 
-  const existing = await prisma.slipGaji.findUnique({ where: { pegawaiId_periode: { pegawaiId, periode } } });
+  const existing = await prisma.payrollSlip.findUnique({ where: { pegawaiId_periode: { pegawaiId, periode } } });
 
   if (aksi === 'bayar') {
     if (!existing) return Response.json({ success: false, data: null, error: { code: 'NOT_FOUND', message: 'Slip belum diterbitkan.' } }, { status: 404 });
-    const slip = await prisma.slipGaji.update({ where: { id: existing.id }, data: { status: 'Dibayar', dibayarAt: new Date() } });
+    const slip = await prisma.payrollSlip.update({ where: { id: existing.id }, data: { status: 'Dibayar', paidAt: new Date() } });
     await recordAudit({ aksi: 'SLIP_DIBAYAR', entitas: 'slip_gaji', entitasId: String(slip.id), ringkasan: `Slip ${periode} ${pegawai.person.fullName} dibayar`, aktor: actor, ip });
     return Response.json({ success: true, data: serialize(slip), error: null });
   }
 
   const { bruto, potongan, netto } = hitungGaji(pegawai.komponen);
+  const grossAmount = bruto;
+  const deduction = potongan;
+  const netAmount = netto;
 
   if (aksi === 'terbitkan') {
     if (existing) return Response.json({ success: false, data: null, error: { code: 'CONFLICT', message: 'Slip periode ini sudah ada — gunakan revisi.' } }, { status: 409 });
-    const slip = await prisma.slipGaji.create({
-      data: { pegawaiId, periode, bruto, potongan, netto, status: 'Terbit', diterbitkanOleh: BigInt(session.userId) },
+    const slip = await prisma.payrollSlip.create({
+      data: { pegawaiId, periode, grossAmount, deduction, netAmount, status: 'Terbit', issuedBy: BigInt(session.userId) },
     });
-    await recordAudit({ aksi: 'SLIP_TERBIT', entitas: 'slip_gaji', entitasId: String(slip.id), ringkasan: `Slip ${periode} ${pegawai.person.fullName} diterbitkan`, perubahan: { bruto, potongan, netto }, aktor: actor, ip });
+    await recordAudit({ aksi: 'SLIP_TERBIT', entitas: 'slip_gaji', entitasId: String(slip.id), ringkasan: `Slip ${periode} ${pegawai.person.fullName} diterbitkan`, perubahan: { grossAmount, deduction, netAmount }, aktor: actor, ip });
     return Response.json({ success: true, data: serialize(slip), error: null }, { status: 201 });
   }
 
-  // Revision stays allowed after payment; the audit diff is what keeps it accountable.
   if (!existing) return Response.json({ success: false, data: null, error: { code: 'NOT_FOUND', message: 'Slip belum diterbitkan.' } }, { status: 404 });
-  const slip = await prisma.slipGaji.update({
+  const slip = await prisma.payrollSlip.update({
     where: { id: existing.id },
-    data: { bruto, potongan, netto, revisi: existing.revisi + 1, status: 'Revisi', catatanRevisi: parsed.data.catatan, diterbitkanOleh: BigInt(session.userId) },
+    data: { grossAmount, deduction, netAmount, revisionCount: existing.revisionCount + 1, status: 'Revisi', revisionNote: parsed.data.catatan, issuedBy: BigInt(session.userId) },
   });
   await recordAudit({
     aksi: 'SLIP_REVISI',
     entitas: 'slip_gaji',
     entitasId: String(slip.id),
-    ringkasan: `Slip ${periode} ${pegawai.person.fullName} direvisi ke-${slip.revisi}${existing.dibayarAt ? ' setelah dibayar' : ''}`,
+    ringkasan: `Slip ${periode} ${pegawai.person.fullName} direvisi ke-${slip.revisionCount}${existing.paidAt ? ' setelah dibayar' : ''}`,
     perubahan: {
-      bruto: { from: Number(existing.bruto), to: bruto },
-      potongan: { from: Number(existing.potongan), to: potongan },
-      netto: { from: Number(existing.netto), to: netto },
-      sudahDibayar: Boolean(existing.dibayarAt),
+      grossAmount: { from: Number(existing.grossAmount), to: grossAmount },
+      deduction: { from: Number(existing.deduction), to: deduction },
+      netAmount: { from: Number(existing.netAmount), to: netAmount },
+      sudahDibayar: Boolean(existing.paidAt),
       catatan: parsed.data.catatan ?? null,
     },
     aktor: actor,
@@ -74,16 +75,16 @@ export async function POST(request: Request) {
   return Response.json({ success: true, data: serialize(slip), error: null });
 }
 
-function serialize(slip: { id: bigint; pegawaiId: bigint; periode: string; bruto: unknown; potongan: unknown; netto: unknown; status: string; revisi: number; dibayarAt: Date | null }) {
+function serialize(slip: { id: bigint; pegawaiId: bigint; periode: string; grossAmount: unknown; deduction: unknown; netAmount: unknown; status: string; revisionCount: number; paidAt: Date | null }) {
   return {
     id: String(slip.id),
     pegawaiId: String(slip.pegawaiId),
-    periode: slip.periode,
-    bruto: Number(slip.bruto),
-    potongan: Number(slip.potongan),
-    netto: Number(slip.netto),
+    period: slip.periode,
+    grossAmount: Number(slip.grossAmount),
+    deduction: Number(slip.deduction),
+    netAmount: Number(slip.netAmount),
     status: slip.status,
-    revisi: slip.revisi,
-    dibayarAt: slip.dibayarAt,
+    revisionCount: slip.revisionCount,
+    paidAt: slip.paidAt,
   };
 }

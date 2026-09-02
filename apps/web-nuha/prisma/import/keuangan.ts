@@ -1,17 +1,17 @@
 /**
- * Importir CSV keuangan: tagihan SPP, pembayaran, komponen gaji, transaksi
- * kas. Dijalankan lewat `npm run import:keuangan -- --tagihan <path>
- * --pembayaran <path> --gaji <path> --kas <path>` (semua flag opsional,
+ * Importir CSV keuangan: invoices SPP, payments, komponen gaji, transaksi
+ * kas. Dijalankan lewat `npm run import:keuangan -- --invoices <path>
+ * --payments <path> --gaji <path> --kas <path>` (semua flag opsional,
  * hanya berkas yang diberikan yang diproses).
  *
  * Prinsip:
  * - Validasi SELURUH baris dari SELURUH berkas dulu, kumpulkan semua galat.
  *   Kalau ada satu saja galat, TIDAK ADA yang ditulis ke DB dan proses
  *   keluar dengan exit code 1.
- * - Idempoten: upsert berbasis kode unik (Tagihan.kode, TransaksiKas.kode)
- *   atau kombinasi tagihan+tgl+nominal+ref untuk Pembayaran.
- * - `Tagihan.dibayar` selalu dihitung ulang dari SUM(Pembayaran), kolom
- *   `dibayar` di CSV tagihan hanya dipakai sebagai nilai awal saat insert.
+ * - Idempoten: upsert berbasis code unik (Invoice.code, CashTransaction.code)
+ *   atau kombinasi invoices+date+amount+reference untuk Payment.
+ * - `Invoice.paidAmount` selalu dihitung ulang dari SUM(Payment), kolom
+ *   `paidAmount` di CSV invoices hanya dipakai sebagai nilai awal saat insert.
  */
 import { prisma } from '@/lib/prisma';
 import { recordAudit } from '@/lib/audit';
@@ -52,37 +52,37 @@ const validasiHeader = (baris: Record<string, string>[], header: string[], berka
   }
 };
 
-type SiapTagihan = { kode: string; nisnClean: string; santriId: bigint; jenis: string; periode: string; nominal: number; dibayarAwal: number; jatuhTempo: Date };
+type SiapInvoice = { code: string; nisnClean: string; santriId: bigint; type: string; period: string; amount: number; dibayarAwal: number; dueDate: Date };
 
-/** Validasi + siapkan baris tagihan. Mengumpulkan galat, tidak melempar. */
-async function siapkanTagihan(baris: Record<string, string>[], berkas: string, galat: Galat[]): Promise<SiapTagihan[]> {
+/** Validasi + siapkan baris invoices. Mengumpulkan galat, tidak melempar. */
+async function siapkanInvoice(baris: Record<string, string>[], berkas: string, galat: Galat[]): Promise<SiapInvoice[]> {
   validasiHeader(baris, HEADER_TAGIHAN, berkas, galat);
-  const hasil: SiapTagihan[] = [];
+  const hasil: SiapInvoice[] = [];
   const kodeTerlihat = new Set<string>();
 
   for (const [idx, row] of baris.entries()) {
     const noBaris = idx + 2; // +1 header, +1 basis-1
     try {
-      const kode = row.kode?.trim();
-      if (!kode) throw new Error('kode tagihan kosong');
-      if (kodeTerlihat.has(kode)) throw new Error(`kode "${kode}" duplikat di dalam berkas`);
-      kodeTerlihat.add(kode);
+      const code = row.kode?.trim();
+      if (!code) throw new Error('kode tagihan kosong');
+      if (kodeTerlihat.has(code)) throw new Error(`code "${code}" duplikat di dalam berkas`);
+      kodeTerlihat.add(code);
 
       const nisn = row.nisn?.trim();
       if (!nisn) throw new Error('nisn kosong');
       const santri = await prisma.santri.findUnique({ where: { nisn }, select: { id: true } });
       if (!santri) throw new Error(`nisn "${nisn}" tidak ditemukan di data santri`);
 
-      const jenis = row.jenis?.trim();
-      if (!jenis) throw new Error('jenis tagihan kosong');
-      const periode = row.periode?.trim();
-      if (!periode) throw new Error('periode kosong');
+      const type = row.jenis?.trim();
+      if (!type) throw new Error('jenis tagihan kosong');
+      const period = row.periode?.trim();
+      if (!period) throw new Error('periode kosong');
 
-      const nominal = keAngka(row.nominal, 'nominal');
+      const amount = keAngka(row.nominal, 'nominal');
       const dibayarAwal = keAngka(row.dibayar, 'dibayar');
-      const jatuhTempo = keTanggal(row.jatuh_tempo, 'jatuh_tempo');
+      const dueDate = keTanggal(row.jatuh_tempo, 'jatuh_tempo');
 
-      hasil.push({ kode, nisnClean: nisn, santriId: santri.id, jenis, periode, nominal, dibayarAwal, jatuhTempo });
+      hasil.push({ code, nisnClean: nisn, santriId: santri.id, type, period, amount, dibayarAwal, dueDate });
     } catch (error) {
       galat.push({ berkas, baris: noBaris, pesan: error instanceof Error ? error.message : String(error) });
     }
@@ -90,29 +90,29 @@ async function siapkanTagihan(baris: Record<string, string>[], berkas: string, g
   return hasil;
 }
 
-type SiapPembayaran = { kodeTagihan: string; tgl: Date; nominal: number; metode: string; ref: string | null };
+type SiapPayment = { kodeInvoice: string; date: Date; amount: number; method: string; reference: string | null };
 
-async function siapkanPembayaran(baris: Record<string, string>[], berkas: string, galat: Galat[], kodeTagihanValid: Set<string>): Promise<SiapPembayaran[]> {
+async function siapkanPayment(baris: Record<string, string>[], berkas: string, galat: Galat[], kodeInvoiceValid: Set<string>): Promise<SiapPayment[]> {
   validasiHeader(baris, HEADER_PEMBAYARAN, berkas, galat);
-  const hasil: SiapPembayaran[] = [];
+  const hasil: SiapPayment[] = [];
 
   for (const [idx, row] of baris.entries()) {
     const noBaris = idx + 2;
     try {
-      const kodeTagihan = row.kode_tagihan?.trim();
-      if (!kodeTagihan) throw new Error('kode_tagihan kosong');
+      const kodeInvoice = row.kode_tagihan?.trim();
+      if (!kodeInvoice) throw new Error('kode_tagihan kosong');
 
-      const tersediaDiDb = kodeTagihanValid.has(kodeTagihan)
-        || (await prisma.tagihan.findUnique({ where: { kode: kodeTagihan }, select: { id: true } })) !== null;
-      if (!tersediaDiDb) throw new Error(`kode_tagihan "${kodeTagihan}" tidak ditemukan (tidak ada di DB maupun berkas tagihan yang diimpor bersamaan)`);
+      const tersediaDiDb = kodeInvoiceValid.has(kodeInvoice)
+        || (await prisma.invoice.findUnique({ where: { code: kodeInvoice }, select: { id: true } })) !== null;
+      if (!tersediaDiDb) throw new Error(`kode_tagihan "${kodeInvoice}" tidak ditemukan (tidak ada di DB maupun berkas invoices yang diimpor bersamaan)`);
 
-      const tgl = keTanggal(row.tgl, 'tgl');
-      const nominal = keAngka(row.nominal, 'nominal');
-      const metode = row.metode?.trim();
-      if (!metode) throw new Error('metode kosong');
-      const ref = row.ref?.trim() || null;
+      const date = keTanggal(row.tgl, 'tgl');
+      const amount = keAngka(row.nominal, 'nominal');
+      const method = row.metode?.trim();
+      if (!method) throw new Error('metode kosong');
+      const reference = row.ref?.trim() || null;
 
-      hasil.push({ kodeTagihan, tgl, nominal, metode, ref });
+      hasil.push({ kodeInvoice, date, amount, method, reference });
     } catch (error) {
       galat.push({ berkas, baris: noBaris, pesan: error instanceof Error ? error.message : String(error) });
     }
@@ -121,8 +121,8 @@ async function siapkanPembayaran(baris: Record<string, string>[], berkas: string
 }
 
 type SiapGaji = {
-  pegawaiId: bigint; nip: string; pokok: number; tunjJab: number; tunjKel: number;
-  jamMengajar: number; tarifJam: number; transport: number; bpjs: number; koperasi: number; pph: number;
+  pegawaiId: bigint; nip: string; baseSalary: number; positionAllowance: number; familyAllowance: number;
+  teachingHours: number; hourlyRate: number; transport: number; bpjs: number; cooperative: number; incomeTax: number;
 };
 
 async function siapkanGaji(baris: Record<string, string>[], berkas: string, galat: Galat[]): Promise<SiapGaji[]> {
@@ -141,17 +141,17 @@ async function siapkanGaji(baris: Record<string, string>[], berkas: string, gala
       const pegawai = await prisma.pegawai.findUnique({ where: { nip }, select: { id: true } });
       if (!pegawai) throw new Error(`nip "${nip}" tidak ditemukan di data pegawai`);
 
-      const pokok = keAngka(row.pokok, 'pokok');
-      const tunjJab = keAngka(row.tunj_jab, 'tunj_jab');
-      const tunjKel = keAngka(row.tunj_kel, 'tunj_kel');
-      const jamMengajar = keAngka(row.jam_mengajar, 'jam_mengajar');
-      const tarifJam = keAngka(row.tarif_jam, 'tarif_jam');
+      const baseSalary = keAngka(row.pokok, 'pokok');
+      const positionAllowance = keAngka(row.tunj_jab, 'tunj_jab');
+      const familyAllowance = keAngka(row.tunj_kel, 'tunj_kel');
+      const teachingHours = keAngka(row.jam_mengajar, 'jam_mengajar');
+      const hourlyRate = keAngka(row.tarif_jam, 'tarif_jam');
       const transport = keAngka(row.transport, 'transport');
       const bpjs = keAngka(row.bpjs, 'bpjs');
-      const koperasi = keAngka(row.koperasi, 'koperasi');
-      const pph = keAngka(row.pph, 'pph');
+      const cooperative = keAngka(row.koperasi, 'koperasi');
+      const incomeTax = keAngka(row.pph, 'pph');
 
-      hasil.push({ pegawaiId: pegawai.id, nip, pokok, tunjJab, tunjKel, jamMengajar, tarifJam, transport, bpjs, koperasi, pph });
+      hasil.push({ pegawaiId: pegawai.id, nip, baseSalary, positionAllowance, familyAllowance, teachingHours, hourlyRate, transport, bpjs, cooperative, incomeTax });
     } catch (error) {
       galat.push({ berkas, baris: noBaris, pesan: error instanceof Error ? error.message : String(error) });
     }
@@ -159,7 +159,7 @@ async function siapkanGaji(baris: Record<string, string>[], berkas: string, gala
   return hasil;
 }
 
-type SiapKas = { kode: string; tgl: Date; uraian: string; kategori: string; metode: string; arah: 'Masuk' | 'Keluar'; nominal: number };
+type SiapKas = { code: string; date: Date; description: string; category: string; method: string; direction: 'Inbound' | 'Outbound'; amount: number };
 
 async function siapkanKas(baris: Record<string, string>[], berkas: string, galat: Galat[]): Promise<SiapKas[]> {
   validasiHeader(baris, HEADER_KAS, berkas, galat);
@@ -169,22 +169,22 @@ async function siapkanKas(baris: Record<string, string>[], berkas: string, galat
   for (const [idx, row] of baris.entries()) {
     const noBaris = idx + 2;
     try {
-      const kode = row.kode?.trim();
-      if (!kode) throw new Error('kode kas kosong');
-      if (kodeTerlihat.has(kode)) throw new Error(`kode "${kode}" duplikat di dalam berkas`);
-      kodeTerlihat.add(kode);
+      const code = row.kode?.trim();
+      if (!code) throw new Error('kode kas kosong');
+      if (kodeTerlihat.has(code)) throw new Error(`kode "${code}" duplikat di dalam berkas`);
+      kodeTerlihat.add(code);
 
-      const tgl = keTanggal(row.tgl, 'tgl');
-      const uraian = row.uraian?.trim();
-      if (!uraian) throw new Error('uraian kosong');
-      const kategori = row.kategori?.trim();
-      if (!kategori) throw new Error('kategori kosong');
-      const metode = row.metode?.trim();
-      if (!metode) throw new Error('metode kosong');
-      const arah = keArahKas(row.arah, 'arah');
-      const nominal = keAngka(row.nominal, 'nominal');
+      const date = keTanggal(row.tgl, 'tgl');
+      const description = row.uraian?.trim();
+      if (!description) throw new Error('uraian kosong');
+      const category = row.kategori?.trim();
+      if (!category) throw new Error('kategori kosong');
+      const method = row.metode?.trim();
+      if (!method) throw new Error('metode kosong');
+      const direction: 'Inbound' | 'Outbound' = keArahKas(row.arah, 'arah') === 'Masuk' ? 'Inbound' : 'Outbound';
+      const amount = keAngka(row.nominal, 'nominal');
 
-      hasil.push({ kode, tgl, uraian, kategori, metode, arah, nominal });
+      hasil.push({ code, date, description, category, method, direction, amount });
     } catch (error) {
       galat.push({ berkas, baris: noBaris, pesan: error instanceof Error ? error.message : String(error) });
     }
@@ -202,30 +202,30 @@ async function jalankan(): Promise<void> {
   const argumen = bacaArgumen(process.argv.slice(2));
   const galat: Galat[] = [];
 
-  const pathTagihan = argumen.tagihan;
-  const pathPembayaran = argumen.pembayaran;
+  const pathInvoice = argumen.invoices;
+  const pathPayment = argumen.payments;
   const pathGaji = argumen.gaji;
   const pathKas = argumen.kas;
 
-  if (!pathTagihan && !pathPembayaran && !pathGaji && !pathKas) {
-    console.error('Tidak ada berkas diberikan. Pakai --tagihan/--pembayaran/--gaji/--kas <path>.');
+  if (!pathInvoice && !pathPayment && !pathGaji && !pathKas) {
+    console.error('Tidak ada berkas diberikan. Pakai --invoices/--payments/--gaji/--kas <path>.');
     process.exitCode = 1;
     return;
   }
 
-  const dataTagihan = pathTagihan ? bacaCsv(pathTagihan) : [];
-  const dataPembayaran = pathPembayaran ? bacaCsv(pathPembayaran) : [];
+  const dataInvoice = pathInvoice ? bacaCsv(pathInvoice) : [];
+  const dataPayment = pathPayment ? bacaCsv(pathPayment) : [];
   const dataGaji = pathGaji ? bacaCsv(pathGaji) : [];
   const dataKas = pathKas ? bacaCsv(pathKas) : [];
 
-  const siapTagihan = pathTagihan ? await siapkanTagihan(dataTagihan, pathTagihan, galat) : [];
-  const kodeTagihanValid = new Set(siapTagihan.map((t) => t.kode));
-  const siapPembayaran = pathPembayaran ? await siapkanPembayaran(dataPembayaran, pathPembayaran, galat, kodeTagihanValid) : [];
+  const siapInvoice = pathInvoice ? await siapkanInvoice(dataInvoice, pathInvoice, galat) : [];
+  const kodeInvoiceValid = new Set(siapInvoice.map((t) => t.code));
+  const siapPayment = pathPayment ? await siapkanPayment(dataPayment, pathPayment, galat, kodeInvoiceValid) : [];
   const siapGaji = pathGaji ? await siapkanGaji(dataGaji, pathGaji, galat) : [];
   const siapKas = pathKas ? await siapkanKas(dataKas, pathKas, galat) : [];
 
-  // Duplikat kode tagihan lintas file tidak relevan; tapi duplikat kode
-  // tagihan vs kode kas (beda tabel) tidak masalah karena unique per model.
+  // Duplikat code invoices lintas file tidak relevan; tapi duplikat code
+  // invoices vs code kas (beda tabel) tidak masalah karena unique per model.
 
   if (galat.length > 0) {
     console.error(`Ditemukan ${galat.length} galat validasi. Tidak ada data yang ditulis ke DB.\n`);
@@ -240,107 +240,107 @@ async function jalankan(): Promise<void> {
   console.log('Validasi lolos. Menulis ke database...');
 
   const tagihanIdByKode = new Map<string, bigint>();
-  for (const t of siapTagihan) {
-    const tagihan = await prisma.tagihan.upsert({
-      where: { kode: t.kode },
+  for (const t of siapInvoice) {
+    const invoices = await prisma.invoice.upsert({
+      where: { code: t.code },
       create: {
-        kode: t.kode,
+        code: t.code,
         santriId: t.santriId,
-        jenis: t.jenis,
-        periode: t.periode,
-        nominal: t.nominal,
-        dibayar: t.dibayarAwal,
-        jatuhTempo: t.jatuhTempo,
+        type: t.type,
+        period: t.period,
+        amount: t.amount,
+        paidAmount: t.dibayarAwal,
+        dueDate: t.dueDate,
       },
       update: {
         santriId: t.santriId,
-        jenis: t.jenis,
-        periode: t.periode,
-        nominal: t.nominal,
-        jatuhTempo: t.jatuhTempo,
+        type: t.type,
+        period: t.period,
+        amount: t.amount,
+        dueDate: t.dueDate,
       },
     });
-    tagihanIdByKode.set(t.kode, tagihan.id);
+    tagihanIdByKode.set(t.code, invoices.id);
   }
-  if (siapTagihan.length > 0) {
-    console.log(`Tagihan: ${siapTagihan.length} baris di-upsert.`);
-    await tulisAudit('import', 'Tagihan', 'batch', `Impor CSV: ${siapTagihan.length} tagihan (${pathTagihan}).`);
+  if (siapInvoice.length > 0) {
+    console.log(`Invoice: ${siapInvoice.length} baris di-upsert.`);
+    await tulisAudit('import', 'Invoice', 'batch', `Impor CSV: ${siapInvoice.length} invoices (${pathInvoice}).`);
   }
 
   const tagihanTerdampak = new Set<bigint>();
-  for (const p of siapPembayaran) {
-    const tagihanId = tagihanIdByKode.get(p.kodeTagihan)
-      ?? (await prisma.tagihan.findUniqueOrThrow({ where: { kode: p.kodeTagihan }, select: { id: true } })).id;
+  for (const p of siapPayment) {
+    const invoiceId = tagihanIdByKode.get(p.kodeInvoice)
+      ?? (await prisma.invoice.findUniqueOrThrow({ where: { code: p.kodeInvoice }, select: { id: true } })).id;
 
-    // Idempoten: kombinasi tagihan+tgl+nominal+metode+ref dianggap identitas
-    // pembayaran karena tabel ini tidak punya kolom kode unik sendiri.
-    const existing = await prisma.pembayaran.findFirst({
-      where: { tagihanId, tgl: p.tgl, nominal: p.nominal, metode: p.metode, ref: p.ref },
+    // Idempoten: kombinasi invoices+date+amount+method+reference dianggap identitas
+    // payments karena tabel ini tidak punya kolom code unik sendiri.
+    const existing = await prisma.payment.findFirst({
+      where: { invoiceId, date: p.date, amount: p.amount, method: p.method, reference: p.reference },
       select: { id: true },
     });
     if (!existing) {
-      await prisma.pembayaran.create({
-        data: { tagihanId, tgl: p.tgl, nominal: p.nominal, metode: p.metode, ref: p.ref },
+      await prisma.payment.create({
+        data: { invoiceId, date: p.date, amount: p.amount, method: p.method, reference: p.reference },
       });
     }
-    tagihanTerdampak.add(tagihanId);
+    tagihanTerdampak.add(invoiceId);
   }
 
-  for (const tagihanId of tagihanTerdampak) {
-    const agregat = await prisma.pembayaran.aggregate({ where: { tagihanId }, _sum: { nominal: true } });
-    await prisma.tagihan.update({
-      where: { id: tagihanId },
-      data: { dibayar: agregat._sum.nominal ?? 0 },
+  for (const invoiceId of tagihanTerdampak) {
+    const agregat = await prisma.payment.aggregate({ where: { invoiceId }, _sum: { amount: true } });
+    await prisma.invoice.update({
+      where: { id: invoiceId },
+      data: { paidAmount: agregat._sum.amount ?? 0 },
     });
   }
-  if (siapPembayaran.length > 0) {
-    console.log(`Pembayaran: ${siapPembayaran.length} baris diproses, ${tagihanTerdampak.size} tagihan dihitung ulang.`);
-    await tulisAudit('import', 'Pembayaran', 'batch', `Impor CSV: ${siapPembayaran.length} pembayaran (${pathPembayaran}), ${tagihanTerdampak.size} tagihan dihitung ulang.`);
+  if (siapPayment.length > 0) {
+    console.log(`Payment: ${siapPayment.length} baris diproses, ${tagihanTerdampak.size} invoices dihitung ulang.`);
+    await tulisAudit('import', 'Payment', 'batch', `Impor CSV: ${siapPayment.length} payments (${pathPayment}), ${tagihanTerdampak.size} invoices dihitung ulang.`);
   }
 
   for (const g of siapGaji) {
-    await prisma.komponenGaji.upsert({
+    await prisma.salaryComponent.upsert({
       where: { pegawaiId: g.pegawaiId },
       create: {
         pegawaiId: g.pegawaiId,
-        pokok: g.pokok,
-        tunjJab: g.tunjJab,
-        tunjKel: g.tunjKel,
-        jamMengajar: g.jamMengajar,
-        tarifJam: g.tarifJam,
+        baseSalary: g.baseSalary,
+        positionAllowance: g.positionAllowance,
+        familyAllowance: g.familyAllowance,
+        teachingHours: g.teachingHours,
+        hourlyRate: g.hourlyRate,
         transport: g.transport,
         bpjs: g.bpjs,
-        koperasi: g.koperasi,
-        pph: g.pph,
+        cooperative: g.cooperative,
+        incomeTax: g.incomeTax,
       },
       update: {
-        pokok: g.pokok,
-        tunjJab: g.tunjJab,
-        tunjKel: g.tunjKel,
-        jamMengajar: g.jamMengajar,
-        tarifJam: g.tarifJam,
+        baseSalary: g.baseSalary,
+        positionAllowance: g.positionAllowance,
+        familyAllowance: g.familyAllowance,
+        teachingHours: g.teachingHours,
+        hourlyRate: g.hourlyRate,
         transport: g.transport,
         bpjs: g.bpjs,
-        koperasi: g.koperasi,
-        pph: g.pph,
+        cooperative: g.cooperative,
+        incomeTax: g.incomeTax,
       },
     });
   }
   if (siapGaji.length > 0) {
-    console.log(`KomponenGaji: ${siapGaji.length} baris di-upsert.`);
-    await tulisAudit('import', 'KomponenGaji', 'batch', `Impor CSV: ${siapGaji.length} komponen gaji (${pathGaji}).`);
+    console.log(`SalaryComponent: ${siapGaji.length} baris di-upsert.`);
+    await tulisAudit('import', 'SalaryComponent', 'batch', `Impor CSV: ${siapGaji.length} komponen gaji (${pathGaji}).`);
   }
 
   for (const k of siapKas) {
-    await prisma.transaksiKas.upsert({
-      where: { kode: k.kode },
-      create: { kode: k.kode, tgl: k.tgl, uraian: k.uraian, kategori: k.kategori, metode: k.metode, arah: k.arah, nominal: k.nominal },
-      update: { tgl: k.tgl, uraian: k.uraian, kategori: k.kategori, metode: k.metode, arah: k.arah, nominal: k.nominal },
+    await prisma.cashTransaction.upsert({
+      where: { code: k.code },
+      create: { code: k.code, date: k.date, description: k.description, category: k.category, method: k.method, direction: k.direction, amount: k.amount },
+      update: { date: k.date, description: k.description, category: k.category, method: k.method, direction: k.direction, amount: k.amount },
     });
   }
   if (siapKas.length > 0) {
-    console.log(`TransaksiKas: ${siapKas.length} baris di-upsert.`);
-    await tulisAudit('import', 'TransaksiKas', 'batch', `Impor CSV: ${siapKas.length} transaksi kas (${pathKas}).`);
+    console.log(`CashTransaction: ${siapKas.length} baris di-upsert.`);
+    await tulisAudit('import', 'CashTransaction', 'batch', `Impor CSV: ${siapKas.length} transaksi kas (${pathKas}).`);
   }
 
   console.log('Selesai.');

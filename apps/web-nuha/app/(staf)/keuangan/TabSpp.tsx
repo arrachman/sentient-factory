@@ -1,10 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { Card, Avatar, Tabel, Badge, Kosong, rp } from '@/components';
 
-/** Status tagihan diturunkan dari rasio dibayar/nominal — sama seperti TabTagihan. */
-function statusTagihan(nominal: number, dibayar: number): string {
-  if (dibayar <= 0) return 'Belum bayar';
-  if (dibayar >= nominal) return 'Lunas';
+/** Status invoices diturunkan dari rasio paidAmount/amount — sama seperti TabInvoice. */
+function statusInvoice(amount: number, paidAmount: number): string {
+  if (paidAmount <= 0) return 'Belum bayar';
+  if (paidAmount >= amount) return 'Lunas';
   return 'Sebagian';
 }
 
@@ -20,15 +20,15 @@ export async function TabSpp({ anakId }: { anakId?: string }) {
     where: { id: terpilih.id },
     include: { person: true, unit: true, kelas: true },
   });
-  const riwayat = await prisma.tagihan.findMany({
+  const riwayat = await prisma.invoice.findMany({
     where: { santriId: anak.id },
-    include: { pembayaran: { orderBy: { tgl: 'desc' } } },
-    orderBy: { jatuhTempo: 'desc' },
+    include: { payments: { orderBy: { date: 'desc' } } },
+    orderBy: { dueDate: 'desc' },
   });
 
-  const lunasN = riwayat.filter((t) => Number(t.dibayar) >= Number(t.nominal)).length;
-  const totalBayar = riwayat.reduce((sum, t) => sum + Number(t.dibayar), 0);
-  const tarifBerjalan = riwayat.length > 0 ? Number(riwayat[0].nominal) : 0;
+  const lunasN = riwayat.filter((t) => Number(t.paidAmount) >= Number(t.amount)).length;
+  const totalBayar = riwayat.reduce((sum, t) => sum + Number(t.paidAmount), 0);
+  const tarifBerjalan = riwayat.length > 0 ? Number(riwayat[0].amount) : 0;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -37,7 +37,7 @@ export async function TabSpp({ anakId }: { anakId?: string }) {
           <Avatar nama={anak.person.fullName} size={52} />
           <div style={{ flex: 1, minWidth: 200 }}>
             <div style={{ fontFamily: 'var(--font-lora), serif', fontSize: 19, color: 'var(--hijau-gelap)', fontWeight: 600 }}>{anak.person.fullName}</div>
-            <div className="muted">{anak.unit?.nama ?? '-'} {anak.kelas?.nama ?? ''} · NIS {anak.nis} · {anak.status} · tarif {rp(tarifBerjalan)}/tagihan</div>
+            <div className="muted">{anak.unit?.nama ?? '-'} {anak.kelas?.nama ?? ''} · NIS {anak.nis} · {anak.status} · tarif {rp(tarifBerjalan)}/invoices</div>
           </div>
           <form method="get" style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
             <input type="hidden" name="tab" value="spp" />
@@ -56,7 +56,7 @@ export async function TabSpp({ anakId }: { anakId?: string }) {
 
       <section className="grid g3">
         <div className="card">
-          <div className="label">Tagihan lunas</div>
+          <div className="label">Invoice lunas</div>
           <div className="angka" style={{ color: '#0F6B3D' }}>{lunasN} / {riwayat.length}</div>
         </div>
         <div className="card">
@@ -69,25 +69,25 @@ export async function TabSpp({ anakId }: { anakId?: string }) {
         </div>
       </section>
 
-      <Card judul="Riwayat tagihan &amp; pembayaran" sub="Seluruh tagihan santri ini yang tercatat di sistem.">
+      <Card judul="Riwayat invoices &amp; payments" sub="Seluruh invoices santri ini yang tercatat di sistem.">
         {riwayat.length === 0 ? (
-          <Kosong pesan="Belum ada tagihan tercatat untuk santri ini." />
+          <Kosong pesan="Belum ada invoices tercatat untuk santri ini." />
         ) : (
-          <Tabel kolom={['Periode', { label: 'Tagihan', num: true }, { label: 'Dibayar', num: true }, { label: 'Sisa', num: true }, 'Tgl bayar terakhir', 'Metode', 'Status']}>
+          <Tabel kolom={['Periode', { label: 'Invoice', num: true }, { label: 'Dibayar', num: true }, { label: 'Sisa', num: true }, 'Tgl bayar terakhir', 'Metode', 'Status']}>
             {riwayat.map((t) => {
-              const nominal = Number(t.nominal);
-              const dibayar = Number(t.dibayar);
-              const sisa = Math.max(0, nominal - dibayar);
-              const bayarTerakhir = t.pembayaran[0];
+              const amount = Number(t.amount);
+              const paidAmount = Number(t.paidAmount);
+              const sisa = Math.max(0, amount - paidAmount);
+              const bayarTerakhir = t.payments[0];
               return (
                 <tr key={String(t.id)}>
-                  <td style={{ fontWeight: 600 }}>{t.periode}</td>
-                  <td className="num">{rp(nominal)}</td>
-                  <td className="num" style={{ color: '#0F6B3D' }}>{rp(dibayar)}</td>
+                  <td style={{ fontWeight: 600 }}>{t.period}</td>
+                  <td className="num">{rp(amount)}</td>
+                  <td className="num" style={{ color: '#0F6B3D' }}>{rp(paidAmount)}</td>
                   <td className="num" style={{ color: sisa > 0 ? '#B91C1C' : undefined }}>{rp(sisa)}</td>
-                  <td>{bayarTerakhir ? bayarTerakhir.tgl.toLocaleDateString('id-ID', { dateStyle: 'medium' }) : '—'}</td>
-                  <td>{bayarTerakhir?.metode ?? '—'}</td>
-                  <td><Badge status={statusTagihan(nominal, dibayar)} /></td>
+                  <td>{bayarTerakhir ? bayarTerakhir.date.toLocaleDateString('id-ID', { dateStyle: 'medium' }) : '—'}</td>
+                  <td>{bayarTerakhir?.method ?? '—'}</td>
+                  <td><Badge status={statusInvoice(amount, paidAmount)} /></td>
                 </tr>
               );
             })}

@@ -48,25 +48,25 @@ export async function ajukanKunjunganWali(formData: FormData) {
   revalidatePath('/portal/wali');
 }
 
-/** Wali mengonfirmasi pembayaran atas satu tagihan anaknya. Nominal ditambahkan ke Tagihan.dibayar. */
+/** Wali mengonfirmasi payments atas satu invoices anaknya. Nominal ditambahkan ke Invoice.paidAmount. */
 export async function konfirmasiPembayaranWali(formData: FormData) {
   const santriId = BigInt(String(formData.get('santriId')));
   const santri = await santriMilikWaliSesi(santriId);
   if (!santri) throw new Error('Santri bukan anak dari akun wali ini.');
 
-  const tagihanId = BigInt(String(formData.get('tagihanId')));
-  const nominal = Number(formData.get('nominal') ?? 0);
-  const metode = String(formData.get('metode') ?? 'Transfer bank');
+  const invoiceId = BigInt(String(formData.get('invoiceId')));
+  const amount = Number(formData.get('amount') ?? 0);
+  const method = String(formData.get('method') ?? 'Transfer bank');
   const bukti = String(formData.get('bukti') ?? '').trim();
-  if (!(nominal > 0)) return;
+  if (!(amount > 0)) return;
 
-  // Tagihan yang dibayar wajib milik santri yang sama — cegah wali membayar tagihan santri lain.
-  const tagihan = await prisma.tagihan.findFirst({ where: { id: tagihanId, santriId: santri.id } });
-  if (!tagihan) throw new Error('Tagihan tidak ditemukan untuk santri ini.');
+  // Invoice yang paidAmount wajib milik santri yang sama — cegah wali membayar invoices santri lain.
+  const invoice = await prisma.invoice.findFirst({ where: { id: invoiceId, santriId: santri.id } });
+  if (!invoice) throw new Error('Tagihan tidak ditemukan untuk santri ini.');
 
   await prisma.$transaction([
-    prisma.pembayaran.create({ data: { tagihanId: tagihan.id, tgl: new Date(), nominal, metode, ref: bukti || null } }),
-    prisma.tagihan.update({ where: { id: tagihan.id }, data: { dibayar: { increment: nominal } } }),
+    prisma.payment.create({ data: { invoiceId: invoice.id, date: new Date(), amount, method, reference: bukti || null } }),
+    prisma.invoice.update({ where: { id: invoice.id }, data: { paidAmount: { increment: amount } } }),
   ]);
 
   revalidatePath('/portal/wali');

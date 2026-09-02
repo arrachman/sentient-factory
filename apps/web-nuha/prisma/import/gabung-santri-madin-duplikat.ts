@@ -13,7 +13,7 @@
  * dipertahankan; `riwayat_pendidikan` milik duplikat dipindah ke sana, lalu
  * `Orang` duplikat dihapus (Santri-nya ikut lewat cascade).
  *
- * Aman: duplikat hanya punya baris riwayat — tidak ada nilai, tagihan,
+ * Aman: duplikat hanya punya baris riwayat — tidak ada nilai, invoices,
  * presensi, hafalan, atau user yang menempel (sudah dicek sebelum ditulis, dan
  * dicek ulang oleh skrip ini sebelum menghapus).
  *
@@ -54,7 +54,7 @@ async function main() {
         prisma.nilai.count({ where: { santriId: santriHapus.id } }),
         prisma.nilaiUjian.count({ where: { santriId: santriHapus.id } }),
         prisma.presensi.count({ where: { santriId: santriHapus.id } }),
-        prisma.tagihan.count({ where: { santriId: santriHapus.id } }),
+        prisma.invoice.count({ where: { santriId: santriHapus.id } }),
         prisma.hafalan.count({ where: { santriId: santriHapus.id } }),
       ]);
       const total = tanggungan.reduce((a, b) => a + b, 0);

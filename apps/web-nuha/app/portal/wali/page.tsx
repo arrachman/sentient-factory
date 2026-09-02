@@ -6,7 +6,7 @@ import { avaBg, inisial } from '@/components';
 import { TabRingkasan } from './tabs/TabRingkasan';
 import { TabHafalan } from './tabs/TabHafalan';
 import { TabKesehatan } from './tabs/TabKesehatan';
-import { TabTagihan } from './tabs/TabTagihan';
+import { TabInvoice } from './tabs/TabTagihan';
 import { TabBayar } from './tabs/TabBayar';
 import { TabRiwayat } from './tabs/TabRiwayat';
 import { TabKunjungan } from './tabs/TabKunjungan';
@@ -95,7 +95,7 @@ export default async function PortalWaliPage({ searchParams }: { searchParams: P
         {tabAktif === 'ringkasan' && <TabRingkasan santriId={santri.id} program={santri.program} />}
         {tabAktif === 'hafalan' && <TabHafalan santriId={santri.id} program={santri.program} />}
         {tabAktif === 'kesehatan' && <TabKesehatan santriId={santri.id} />}
-        {tabAktif === 'tagihan' && <TabTagihan santriId={santri.id} />}
+        {tabAktif === 'tagihan' && <TabInvoice santriId={santri.id} />}
         {tabAktif === 'bayar' && <TabBayar santriId={santri.id} />}
         {tabAktif === 'riwayat' && <TabRiwayat santriId={santri.id} />}
         {tabAktif === 'kunjungan' && <TabKunjungan santriId={santri.id} namaWaliDefault={session.nama} hubungan={relasiDipilih.hubungan} />}

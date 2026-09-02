@@ -1,32 +1,32 @@
 import { prisma } from '@/lib/prisma';
 import { Card, Avatar, Tabel, Badge, Kosong, rp } from '@/components';
 
-/** Status tagihan diturunkan dari rasio dibayar/nominal — bukan kolom terpisah. */
-function statusTagihan(nominal: number, dibayar: number): string {
-  if (dibayar <= 0) return 'Belum bayar';
-  if (dibayar >= nominal) return 'Lunas';
+/** Status invoices diturunkan dari rasio paidAmount/amount — bukan kolom terpisah. */
+function statusInvoice(amount: number, paidAmount: number): string {
+  if (paidAmount <= 0) return 'Belum bayar';
+  if (paidAmount >= amount) return 'Lunas';
   return 'Sebagian';
 }
 
-export async function TabTagihan({ q }: { q: string }) {
+export async function TabInvoice({ q }: { q: string }) {
   const [rows, tarifPerJenis] = await Promise.all([
-    prisma.tagihan.findMany({
+    prisma.invoice.findMany({
       where: q ? { santri: { person: { fullName: { contains: q } } } } : undefined,
       include: { santri: { include: { person: true, unit: true } } },
-      orderBy: { jatuhTempo: 'desc' },
+      orderBy: { dueDate: 'desc' },
       take: 30,
     }),
-    // Nominal berlaku per jenis diambil dari tagihan dengan periode terbaru untuk jenis tsb.
-    prisma.tagihan.groupBy({ by: ['jenis'], _max: { periode: true, jatuhTempo: true }, orderBy: { jenis: 'asc' } }),
+    // Nominal berlaku per jenis diambil dari tagihan dengan periode terbaru untuk jenis tersebut.
+    prisma.invoice.groupBy({ by: ['type'], _max: { period: true, dueDate: true }, orderBy: { type: 'asc' } }),
   ]);
 
   const tarif = await Promise.all(
     tarifPerJenis.map(async (t) => {
-      const contoh = await prisma.tagihan.findFirst({
-        where: { jenis: t.jenis, periode: t._max.periode ?? undefined },
-        orderBy: { jatuhTempo: 'desc' },
+      const contoh = await prisma.invoice.findFirst({
+        where: { type: t.type, period: t._max.period ?? undefined },
+        orderBy: { dueDate: 'desc' },
       });
-      return { item: t.jenis, ket: `periode ${t._max.periode ?? '-'}`, n: rp(Number(contoh?.nominal ?? 0)) };
+      return { item: t.type, ket: `periode ${t._max.period ?? '-'}`, n: rp(Number(contoh?.amount ?? 0)) };
     }),
   );
 
@@ -34,7 +34,7 @@ export async function TabTagihan({ q }: { q: string }) {
     <div className="grid g2" style={{ gridTemplateColumns: '1fr 300px', alignItems: 'start' }}>
       <Card judul="Tagihan santri" sub={q ? `Pencarian: "${q}"` : 'Seluruh tagihan, diurutkan dari jatuh tempo terbaru.'}>
         <form method="get" style={{ marginBottom: 14, display: 'flex', gap: 8 }}>
-          <input type="hidden" name="tab" value="tagihan" />
+          <input type="hidden" name="tab" value="invoices" />
           <input
             className="field"
             name="q"
@@ -45,14 +45,14 @@ export async function TabTagihan({ q }: { q: string }) {
           <button type="submit" className="btn">Cari</button>
         </form>
         {rows.length === 0 ? (
-          <Kosong pesan="Tidak ada tagihan yang cocok dengan pencarian." />
+          <Kosong pesan="Tidak ada invoices yang cocok dengan pencarian." />
         ) : (
           <Tabel kolom={['Santri', 'Komponen', { label: 'Tagihan', num: true }, { label: 'Sisa', num: true }, 'Status']}>
             {rows.map((t) => {
-              const nominal = Number(t.nominal);
-              const dibayar = Number(t.dibayar);
-              const sisa = Math.max(0, nominal - dibayar);
-              const status = statusTagihan(nominal, dibayar);
+              const amount = Number(t.amount);
+              const paidAmount = Number(t.paidAmount);
+              const sisa = Math.max(0, amount - paidAmount);
+              const status = statusInvoice(amount, paidAmount);
               return (
                 <tr key={String(t.id)}>
                   <td>
@@ -65,10 +65,10 @@ export async function TabTagihan({ q }: { q: string }) {
                     </div>
                   </td>
                   <td>
-                    {t.jenis}
-                    <div className="muted">jatuh tempo {t.jatuhTempo.toLocaleDateString('id-ID', { dateStyle: 'medium' })}</div>
+                    {t.type}
+                    <div className="muted">jatuh tempo {t.dueDate.toLocaleDateString('id-ID', { dateStyle: 'medium' })}</div>
                   </td>
-                  <td className="num">{rp(nominal)}</td>
+                  <td className="num">{rp(amount)}</td>
                   <td className="num" style={{ color: sisa > 0 ? '#B91C1C' : undefined, fontWeight: 700 }}>{rp(sisa)}</td>
                   <td><Badge status={status} /></td>
                 </tr>

@@ -18,22 +18,22 @@ export async function TabSlip({
   const pilihan = pegawai.find((p) => String(p.id) === pegId) ?? pegawai[0];
   const komponen = pilihan.komponen;
   const h = hitungGaji(komponen);
-  const slip = await prisma.slipGaji.findUnique({ where: { pegawaiId_periode: { pegawaiId: pilihan.id, periode } } });
+  const slip = await prisma.payrollSlip.findUnique({ where: { pegawaiId_periode: { pegawaiId: pilihan.id, periode } } });
 
   const penerimaan = komponen
     ? [
-        { label: 'Gaji pokok', v: Number(komponen.pokok) },
-        { label: 'Tunjangan jabatan', v: Number(komponen.tunjJab) },
-        { label: 'Tunjangan keluarga', v: Number(komponen.tunjKel) },
-        { label: `Jam mengajar (${komponen.jamMengajar} jam)`, v: komponen.jamMengajar * Number(komponen.tarifJam) },
+        { label: 'Gaji pokok', v: Number(komponen.baseSalary) },
+        { label: 'Tunjangan jabatan', v: Number(komponen.positionAllowance) },
+        { label: 'Tunjangan keluarga', v: Number(komponen.familyAllowance) },
+        { label: `Jam mengajar (${komponen.teachingHours} jam)`, v: komponen.teachingHours * Number(komponen.hourlyRate) },
         { label: 'Transport', v: Number(komponen.transport) },
       ]
     : [];
-  const potongan = komponen
+  const deduction = komponen
     ? [
         { label: 'BPJS', v: Number(komponen.bpjs) },
-        { label: 'Koperasi', v: Number(komponen.koperasi) },
-        { label: 'PPh 21', v: Number(komponen.pph) },
+        { label: 'Koperasi', v: Number(komponen.cooperative) },
+        { label: 'PPh 21', v: Number(komponen.incomeTax) },
       ]
     : [];
 
@@ -88,7 +88,7 @@ export async function TabSlip({
           </div>
           <div>
             <p className="label" style={{ color: '#B91C1C', marginBottom: 10 }}>B. Potongan</p>
-            {potongan.map((x) => (
+            {deduction.map((x) => (
               <div key={x.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12.5, padding: '7px 0', borderBottom: '1px solid var(--krem-3)' }}>
                 <span className="muted">{x.label}</span><span style={{ fontWeight: 600 }}>{rupiah(x.v)}</span>
               </div>

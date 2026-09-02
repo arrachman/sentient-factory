@@ -1,14 +1,14 @@
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 import { JudulHalaman, StatCard, rp, Tabs, tabAktif, type TabDef } from '@/components';
-import { TabTagihan } from './TabTagihan';
+import { TabInvoice } from './TabTagihan';
 import { TabSpp } from './TabSpp';
 import { TabRekap } from './TabRekap';
 import { TabTunggakan } from './TabTunggakan';
 import { TabTransaksi } from './TabTransaksi';
 
 const TABS: TabDef[] = [
-  { key: 'tagihan', label: 'Tagihan' },
+  { key: 'invoices', label: 'Invoice' },
   { key: 'spp', label: 'Riwayat SPP per Anak' },
   { key: 'rekap', label: 'Rekap Nama Santri' },
   { key: 'tunggakan', label: 'Tunggakan' },
@@ -17,17 +17,17 @@ const TABS: TabDef[] = [
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
-/** KPI ringkas di puncak modul — ditarik dari Tagihan + TransaksiKas, bukan angka tetap. */
+/** KPI ringkas di puncak modul — ditarik dari Invoice + CashTransaction, bukan angka tetap. */
 async function ambilKartu() {
   const [totals, kas] = await Promise.all([
-    prisma.tagihan.aggregate({ _sum: { nominal: true, dibayar: true } }),
-    prisma.transaksiKas.groupBy({ by: ['arah'], _sum: { nominal: true } }),
+    prisma.invoice.aggregate({ _sum: { amount: true, paidAmount: true } }),
+    prisma.cashTransaction.groupBy({ by: ['direction'], _sum: { amount: true } }),
   ]);
-  const totalTagihan = Number(totals._sum.nominal ?? 0);
-  const totalBayar = Number(totals._sum.dibayar ?? 0);
-  const masuk = Number(kas.find((k) => k.arah === 'Masuk')?._sum.nominal ?? 0);
-  const keluar = Number(kas.find((k) => k.arah === 'Keluar')?._sum.nominal ?? 0);
-  return { totalTagihan, totalBayar, tunggakan: totalTagihan - totalBayar, saldoKas: masuk - keluar };
+  const totalInvoice = Number(totals._sum.amount ?? 0);
+  const totalBayar = Number(totals._sum.paidAmount ?? 0);
+  const masuk = Number(kas.find((k) => k.direction === 'Inbound')?._sum.amount ?? 0);
+  const keluar = Number(kas.find((k) => k.direction === 'Outbound')?._sum.amount ?? 0);
+  return { totalInvoice, totalBayar, tunggakan: totalInvoice - totalBayar, saldoKas: masuk - keluar };
 }
 
 export default async function KeuanganPage({ searchParams }: { searchParams: SearchParams }) {
@@ -44,7 +44,7 @@ export default async function KeuanganPage({ searchParams }: { searchParams: Sea
       />
 
       <section className="grid g4">
-        <StatCard label="Total tagihan" nilai={rp(kartu.totalTagihan)} />
+        <StatCard label="Total tagihan" nilai={rp(kartu.totalInvoice)} />
         <StatCard label="Sudah dibayar" nilai={rp(kartu.totalBayar)} warna="#0F6B3D" />
         <StatCard label="Tunggakan" nilai={rp(kartu.tunggakan)} warna="#B91C1C" />
         <StatCard label="Saldo kas yayasan" nilai={rp(kartu.saldoKas)} warna="#1D4ED8" />
@@ -52,7 +52,7 @@ export default async function KeuanganPage({ searchParams }: { searchParams: Sea
 
       <Tabs tabs={TABS} aktif={aktif} basePath="/keuangan" />
 
-      {aktif === 'tagihan' && <TabTagihan q={typeof sp.q === 'string' ? sp.q : ''} />}
+      {aktif === 'invoices' && <TabInvoice q={typeof sp.q === 'string' ? sp.q : ''} />}
       {aktif === 'spp' && <TabSpp anakId={typeof sp.anak === 'string' ? sp.anak : undefined} />}
       {aktif === 'rekap' && <TabRekap q={typeof sp.q === 'string' ? sp.q : ''} />}
       {aktif === 'tunggakan' && <TabTunggakan searchParams={sp} />}

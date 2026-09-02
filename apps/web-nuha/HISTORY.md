@@ -4,6 +4,18 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Rename teknis keuangan dan penggajian ke Bahasa Inggris
+
+Model Prisma dan tabel fisik finance kini memakai `SalaryComponent`, `PayrollSlip`,
+`Invoice`, `Payment`, dan `CashTransaction`. Kolom teknis seperti nominal,
+tanggal, dan komponen gaji juga memakai nama Inggris; nilai arah kas dipetakan
+dari CSV `Masuk`/`Keluar` ke enum `Inbound`/`Outbound` saat disimpan.
+
+Migrasi `20260902180000_rename_finance_payroll_to_english` memakai rename
+non-destruktif tabel, kolom, indeks, dan foreign key. Payload API payroll,
+header CSV, audit, dan teks UI tetap berbahasa Indonesia; tabel hasil migrasi,
+Prisma migration status, dan typecheck TypeScript telah diverifikasi.
+
 ## 2026-09-02 — Rename teknis auth/RBAC ke Bahasa Inggris (Fase 3)
 
 Model dan tabel otorisasi kini memakai kosakata Inggris: `Peran→Role`

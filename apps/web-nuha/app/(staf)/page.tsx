@@ -7,27 +7,27 @@ const WARNA_UNIT = ['#0F6B3D', '#E8973A', '#1D4ED8', '#7C3AED', '#0891B2', '#BE1
 export default async function DashboardPage() {
   const session = await requirePage('dashboard');
 
-  const [santri, mukim, alumni, pegawai, pendaftar, tagihan, unit, kas, agenda, pengumuman] =
+  const [santri, mukim, alumni, pegawai, pendaftar, invoices, unit, kas, agenda, pengumuman] =
     await Promise.all([
       prisma.santri.count({ where: { status: 'Mukim' } }),
       prisma.santri.count({ where: { status: 'Mukim' } }),
       prisma.santri.count({ where: { status: 'Alumni' } }),
       prisma.pegawai.count({ where: { status: { notIn: ['Nonaktif', 'Keluar', 'Pensiun'] } } }),
       prisma.pendaftar.count({ where: { status: { in: ['Baru', 'Verifikasi', 'Seleksi'] } } }),
-      prisma.tagihan.aggregate({ _sum: { nominal: true, dibayar: true } }),
+      prisma.invoice.aggregate({ _sum: { amount: true, paidAmount: true } }),
       prisma.unit.findMany({ where: { aktif: true }, orderBy: { id: 'asc' }, include: { _count: { select: { santri: true } } } }),
-      prisma.transaksiKas.groupBy({ by: ['arah'], _sum: { nominal: true } }),
+      prisma.cashTransaction.groupBy({ by: ['direction'], _sum: { amount: true } }),
       prisma.agenda.findMany({ orderBy: { tgl: 'asc' }, take: 5 }),
       prisma.pengumuman.findMany({ orderBy: { tgl: 'desc' }, take: 5 }),
     ]);
 
-  const totalTagihan = Number(tagihan._sum.nominal ?? 0);
-  const totalDibayar = Number(tagihan._sum.dibayar ?? 0);
-  const tunggakan = totalTagihan - totalDibayar;
-  const pctTertagih = totalTagihan > 0 ? Math.round((totalDibayar / totalTagihan) * 100) : 0;
+  const totalInvoice = Number(invoices._sum.amount ?? 0);
+  const totalDibayar = Number(invoices._sum.paidAmount ?? 0);
+  const tunggakan = totalInvoice - totalDibayar;
+  const pctTertagih = totalInvoice > 0 ? Math.round((totalDibayar / totalInvoice) * 100) : 0;
 
-  const masuk = Number(kas.find((k) => k.arah === 'Masuk')?._sum.nominal ?? 0);
-  const keluar = Number(kas.find((k) => k.arah === 'Keluar')?._sum.nominal ?? 0);
+  const masuk = Number(kas.find((k) => k.direction === 'Inbound')?._sum.amount ?? 0);
+  const keluar = Number(kas.find((k) => k.direction === 'Outbound')?._sum.amount ?? 0);
 
   // Tren dibangun dari tahun masuk yang tercatat — bukan angka konstan.
   const perTahun = await prisma.santri.groupBy({
@@ -76,7 +76,7 @@ export default async function DashboardPage() {
         <Card judul="Sebaran santri per unit">
           {batang.length > 0 ? <ChartBatang data={batang} /> : <Kosong />}
         </Card>
-        <Card judul="Ringkasan keuangan" sub="Akumulasi kas dan tagihan berjalan">
+        <Card judul="Ringkasan keuangan" sub="Akumulasi kas dan invoices berjalan">
           <div className="grid g2">
             <div className="inset">
               <div className="label">Kas masuk</div>
@@ -87,18 +87,18 @@ export default async function DashboardPage() {
               <div className="angka-sm" style={{ color: '#B91C1C' }}>{rp(keluar)}</div>
             </div>
             <div className="inset">
-              <div className="label">Total tagihan</div>
-              <div className="angka-sm">{rp(totalTagihan)}</div>
+              <div className="label">Total invoices</div>
+              <div className="angka-sm">{rp(totalInvoice)}</div>
             </div>
             <div className="inset">
-              <div className="label">Sudah dibayar</div>
+              <div className="label">Sudah paidAmount</div>
               <div className="angka-sm" style={{ color: 'var(--hijau)' }}>{rp(totalDibayar)}</div>
             </div>
           </div>
           <div className="bar" style={{ marginTop: 14 }}>
             <span style={{ width: `${pctTertagih}%` }} />
           </div>
-          <p className="muted" style={{ marginTop: 6 }}>{pctTertagih}% dari total tagihan sudah tertagih.</p>
+          <p className="muted" style={{ marginTop: 6 }}>{pctTertagih}% dari total invoices sudah tertagih.</p>
         </Card>
       </section>
 

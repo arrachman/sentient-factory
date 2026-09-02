@@ -466,7 +466,7 @@ model Santri {
   tazir           Tazir[]
   izin            Izin[]
   presensi        Presensi[]
-  tagihan         Tagihan[]
+  invoices        Invoice[]
   rekamMedis      RekamMedis[]
   nilai           Nilai[]
   kunjungan       Kunjungan[]
@@ -568,8 +568,8 @@ model Pegawai {
   person            Person              @relation(fields: [personId], references: [id], onDelete: Cascade)
   unit              Unit?               @relation("PegawaiUnit", fields: [unitId], references: [id])
   unitDipimpin      Unit[]              @relation("UnitKepala")
-  komponen          KomponenGaji?
-  slip              SlipGaji[]
+  komponen          SalaryComponent?
+  slip              PayrollSlip[]
   kelasWali         Kelas[]
   jadwalAmpu        JadwalPelajaran[]
   jadwalPiket       JadwalPiket[]
@@ -641,43 +641,43 @@ model JabatanStruktural {
   @@map("jabatan_struktural")
 }
 
-model KomponenGaji {
-  pegawaiId   BigInt  @id @map("pegawai_id")
-  pokok       Decimal @default(0) @db.Decimal(14, 2)
-  tunjJab     Decimal @default(0) @map("tunj_jab") @db.Decimal(14, 2)
-  tunjKel     Decimal @default(0) @map("tunj_kel") @db.Decimal(14, 2)
-  jamMengajar Int     @default(0) @map("jam_mengajar")
-  tarifJam    Decimal @default(0) @map("tarif_jam") @db.Decimal(14, 2)
-  transport   Decimal @default(0) @db.Decimal(14, 2)
-  bpjs        Decimal @default(0) @db.Decimal(14, 2)
-  koperasi    Decimal @default(0) @db.Decimal(14, 2)
-  pph         Decimal @default(0) @db.Decimal(14, 2)
+model SalaryComponent {
+  pegawaiId         BigInt  @id @map("pegawai_id")
+  baseSalary        Decimal @default(0) @map("base_salary") @db.Decimal(14, 2)
+  positionAllowance Decimal @default(0) @map("position_allowance") @db.Decimal(14, 2)
+  familyAllowance   Decimal @default(0) @map("family_allowance") @db.Decimal(14, 2)
+  teachingHours     Int     @default(0) @map("teaching_hours")
+  hourlyRate        Decimal @default(0) @map("hourly_rate") @db.Decimal(14, 2)
+  transport         Decimal @default(0) @db.Decimal(14, 2)
+  bpjs              Decimal @default(0) @db.Decimal(14, 2)
+  cooperative       Decimal @default(0) @db.Decimal(14, 2)
+  incomeTax         Decimal @default(0) @map("income_tax") @db.Decimal(14, 2)
 
   pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
 
-  @@map("komponen_gaji")
+  @@map("salary_components")
 }
 
-model SlipGaji {
-  id              BigInt    @id @default(autoincrement())
-  pegawaiId       BigInt    @map("pegawai_id")
-  periode         String    @db.VarChar(16)
-  bruto           Decimal   @db.Decimal(14, 2)
-  potongan        Decimal   @db.Decimal(14, 2)
-  netto           Decimal   @db.Decimal(14, 2)
-  dibayarAt       DateTime? @map("dibayar_at")
+model PayrollSlip {
+  id            BigInt    @id @default(autoincrement())
+  pegawaiId     BigInt    @map("pegawai_id")
+  periode       String    @db.VarChar(16)
+  grossAmount   Decimal   @map("gross_amount") @db.Decimal(14, 2)
+  deduction     Decimal   @db.Decimal(14, 2)
+  netAmount     Decimal   @map("net_amount") @db.Decimal(14, 2)
+  paidAt        DateTime? @map("paid_at")
   // Revisi setelah pembayaran diizinkan; jejaknya disimpan di sini dan di audit_log.
-  status          String    @default("Draft") @db.VarChar(16)
-  revisi          Int       @default(0)
-  diterbitkanOleh BigInt?   @map("diterbitkan_oleh")
-  catatanRevisi   String?   @map("catatan_revisi") @db.VarChar(255)
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  status        String    @default("Draft") @db.VarChar(16)
+  revisionCount Int       @default(0) @map("revision_count")
+  issuedBy      BigInt?   @map("issued_by")
+  revisionNote  String?   @map("revision_note") @db.VarChar(255)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
 
   @@unique([pegawaiId, periode])
-  @@map("slip_gaji")
+  @@map("payroll_slips")
 }
 
 /// Jejak audit append-only: siapa melakukan apa, kapan, dan nilai apa yang berubah.
@@ -1170,54 +1170,54 @@ model Obat {
 // Keuangan
 // ─────────────────────────────────────────────────────────────
 
-model Tagihan {
+model Invoice {
   id         BigInt   @id @default(autoincrement())
-  kode       String   @unique @db.VarChar(24)
+  code       String   @unique @map("code") @db.VarChar(24)
   santriId   BigInt   @map("santri_id")
-  jenis      String   @db.VarChar(120)
-  periode    String   @db.VarChar(24)
-  nominal    Decimal  @db.Decimal(14, 2)
-  dibayar    Decimal  @default(0) @db.Decimal(14, 2)
-  jatuhTempo DateTime @map("jatuh_tempo") @db.Date
+  type       String   @map("type") @db.VarChar(120)
+  period     String   @map("period") @db.VarChar(24)
+  amount     Decimal  @map("amount") @db.Decimal(14, 2)
+  paidAmount Decimal  @default(0) @map("paid_amount") @db.Decimal(14, 2)
+  dueDate    DateTime @map("due_date") @db.Date
   createdAt  DateTime @default(now()) @map("created_at")
 
-  santri     Santri       @relation(fields: [santriId], references: [id], onDelete: Cascade)
-  pembayaran Pembayaran[]
+  santri   Santri    @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  payments Payment[]
 
-  @@index([periode])
-  @@map("tagihan")
+  @@index([period])
+  @@map("invoices")
 }
 
-model Pembayaran {
+model Payment {
   id        BigInt   @id @default(autoincrement())
-  tagihanId BigInt   @map("tagihan_id")
-  tgl       DateTime @db.Date
-  nominal   Decimal  @db.Decimal(14, 2)
-  metode    String   @db.VarChar(64)
-  ref       String?  @db.VarChar(64)
+  invoiceId BigInt   @map("invoice_id")
+  date      DateTime @map("date") @db.Date
+  amount    Decimal  @map("amount") @db.Decimal(14, 2)
+  method    String   @map("method") @db.VarChar(64)
+  reference String?  @map("reference") @db.VarChar(64)
 
-  tagihan Tagihan @relation(fields: [tagihanId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
-  @@map("pembayaran")
+  @@map("payments")
 }
 
-enum ArahKas {
-  Masuk
-  Keluar
+enum CashDirection {
+  Inbound
+  Outbound
 }
 
-model TransaksiKas {
-  id       BigInt   @id @default(autoincrement())
-  kode     String   @unique @db.VarChar(24)
-  tgl      DateTime @db.Date
-  uraian   String   @db.VarChar(255)
-  kategori String   @db.VarChar(64)
-  metode   String   @db.VarChar(64)
-  arah     ArahKas
-  nominal  Decimal  @db.Decimal(14, 2)
+model CashTransaction {
+  id          BigInt        @id @default(autoincrement())
+  code        String        @unique @map("code") @db.VarChar(24)
+  date        DateTime      @map("date") @db.Date
+  description String        @map("description") @db.VarChar(255)
+  category    String        @map("category") @db.VarChar(64)
+  method      String        @map("method") @db.VarChar(64)
+  direction   CashDirection @map("direction")
+  amount      Decimal       @map("amount") @db.Decimal(14, 2)
 
-  @@index([tgl])
-  @@map("transaksi_kas")
+  @@index([date])
+  @@map("cash_transactions")
 }
 
 // ─────────────────────────────────────────────────────────────

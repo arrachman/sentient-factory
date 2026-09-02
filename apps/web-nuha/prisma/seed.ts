@@ -44,7 +44,7 @@ const perolehPeran = (nama: string) => {
 const KELAS_JADWAL_PROTOTYPE = '8B';
 
 /**
- * Menggantikan periode hardcode di app/kurikulum/kelas-guru.ts. Idempoten:
+ * Menggantikan period hardcode di app/kurikulum/kelas-guru.ts. Idempoten:
  * dipanggil berkali-kali dari fungsi seed berbeda; daftar 2024/2025 s.d.
  * tahun pelajaran berjalan (Gasal + Genap) ada di prisma/tahun-ajaran.ts.
  */
@@ -93,7 +93,7 @@ async function seedAcademicContent() {
   if (await prisma.materiLms.count() === 0) {
     for (const row of source.lmsMateri) { const course = courseByName.get(String(row.kursus)); if (course) await prisma.materiLms.create({ data: { kursusId: course.id, judul: String(row.judul), tipe: String(row.tipe), status: String(row.status), tgl: parseDate(row.tgl) } }); }
   }
-  for (const row of source.lmsTugas) { const course = courseByName.get(String(row.kursus)); if (course) await prisma.tugasLms.upsert({ where: { kode: String(row.id) }, create: { kode: String(row.id), kursusId: course.id, judul: String(row.judul), deadline: parseDate(row.deadline), status: String(row.status) }, update: { status: String(row.status) } }); }
+  for (const row of source.lmsTugas) { const course = courseByName.get(String(row.kursus)); if (course) await prisma.tugasLms.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), kursusId: course.id, judul: String(row.judul), deadline: parseDate(row.deadline), status: String(row.status) }, update: { status: String(row.status) } }); }
 }
 
 /**
@@ -310,14 +310,14 @@ async function seedUjian() {
     const singkat = unit.nama.startsWith('SMP') ? 'SMP' : 'MA';
 
     for (const gelombang of [
-      { jenis: 'UTS', nama: 'Ujian Tengah Semester Gasal', mulai: '2026-09-21', selesai: '2026-09-26', status: 'Selesai' },
-      { jenis: 'UAS', nama: 'Ujian Akhir Semester Gasal', mulai: '2026-12-07', selesai: '2026-12-12', status: 'Berjalan' },
+      { type: 'UTS', nama: 'Ujian Tengah Semester Gasal', mulai: '2026-09-21', selesai: '2026-09-26', status: 'Selesai' },
+      { type: 'UAS', nama: 'Ujian Akhir Semester Gasal', mulai: '2026-12-07', selesai: '2026-12-12', status: 'Berjalan' },
     ]) {
-      const kode = `UJI-${singkat}-${gelombang.jenis}-2026G`;
+      const kode = `UJI-${singkat}-${gelombang.type}-2026G`;
       const ujian = await prisma.ujian.upsert({
         where: { kode },
         create: {
-          kode, nama: `${gelombang.nama} — ${singkat}`, jenis: gelombang.jenis, unitId: unit.id,
+          kode, nama: `${gelombang.nama} — ${singkat}`, jenis: gelombang.type, unitId: unit.id,
           tahunAjaran: '2026/2027', semester: 'Gasal',
           mulai: new Date(gelombang.mulai), selesai: new Date(gelombang.selesai), status: gelombang.status,
         },
@@ -446,9 +446,9 @@ async function seedPortalAccess() {
  * basis data yang sudah berisi pengguna.
  */
 /**
- * Fase 7 — job penjadwal notifikasi WA. `kodeTemplate` di sini adalah kode
+ * Fase 7 — job penjadwal notifikasi WA. `kodeTemplate` di sini adalah code
  * JOB (lihat komentar model `JadwalNotifikasi` di schema.prisma), bukan
- * selalu sama dengan `TemplateWa.kode` — WA-GUR-04 punya dua job (H-1, H-0)
+ * selalu sama dengan `TemplateWa.code` — WA-GUR-04 punya dua job (H-1, H-0)
  * yang sama-sama mengirim template WA-GUR-04. Dipanggil dari
  * `seedOperational()` (bukan hanya jalur seed awal) supaya database yang
  * sudah berisi pengguna tetap dapat job barunya saat migrasi berjalan.
@@ -644,10 +644,10 @@ async function main() {
     const unit = unitByKey.get(String(row.unit));
     const orang = await prisma.person.upsert({ where: { email: `pegawai.${String(row.nip)}@nuha.local` }, create: { fullName: String(row.nama), gender: JenisKelamin.L, email: `pegawai.${String(row.nip)}@nuha.local` }, update: { fullName: String(row.nama) } });
     const pegawai = await prisma.pegawai.upsert({ where: { personId: orang.id }, create: { personId: orang.id, nip: String(row.nip), unitId: unit?.id, jabatan: String(row.jabatan), status: String(row.status), rekening: String(row.rek) }, update: { jabatan: String(row.jabatan), status: String(row.status), rekening: String(row.rek) } });
-    await prisma.komponenGaji.upsert({ where: { pegawaiId: pegawai.id }, create: { pegawaiId: pegawai.id, pokok: Number(row.pokok), tunjJab: Number(row.tunjJab), tunjKel: Number(row.tunjKel), jamMengajar: Number(row.jam), tarifJam: Number(row.tarifJam), transport: Number(row.transport), bpjs: Number(row.bpjs), koperasi: Number(row.koperasi), pph: Number(row.pph) }, update: {} });
+    await prisma.salaryComponent.upsert({ where: { pegawaiId: pegawai.id }, create: { pegawaiId: pegawai.id, baseSalary: Number(row.baseSalary), positionAllowance: Number(row.positionAllowance), familyAllowance: Number(row.familyAllowance), teachingHours: Number(row.jam), hourlyRate: Number(row.hourlyRate), transport: Number(row.transport), bpjs: Number(row.bpjs), cooperative: Number(row.cooperative), incomeTax: Number(row.incomeTax) }, update: {} });
   }
 
-  for (const row of source.pendaftar) await prisma.pendaftar.upsert({ where: { noReg: String(row.noReg) }, create: { noReg: String(row.noReg), nama: String(row.nama), pilihan: String(row.pilihan), asalSekolah: String(row.asal), tglDaftar: parseDate(row.tgl), nilai: Number(row.nilai), status: pendaftarStatus(row.status) }, update: { status: pendaftarStatus(row.status), nilai: Number(row.nilai) } });
+  for (const row of source.pendaftar) await prisma.pendaftar.upsert({ where: { noReg: String(row.noReg) }, create: { noReg: String(row.noReg), nama: String(row.nama), pilihan: String(row.pilihan), asalSekolah: String(row.asal), tglDaftar: parseDate(row.date), nilai: Number(row.nilai), status: pendaftarStatus(row.status) }, update: { status: pendaftarStatus(row.status), nilai: Number(row.nilai) } });
   for (const row of source.obat) await prisma.obat.upsert({ where: { nama: String(row.nama) }, create: { nama: String(row.nama), satuan: String(row.satuan), kategori: String(row.kategori), stok: Number(row.stok), stokMin: Number(row.min), kadaluarsa: String(row.exp) }, update: { stok: Number(row.stok) } });
   for (const [index, row] of source.kegiatanHarian.entries()) await prisma.kegiatanHarian.upsert({ where: { id: index + 1 }, create: { id: index + 1, jam: String(row.jam), nama: String(row.nama), ket: String(row.ket), urutan: index }, update: { nama: String(row.nama) } });
   for (const row of source.halaqah) await prisma.halaqah.create({ data: { nama: String(row.nama), ustadz: String(row.ustadz), waktu: String(row.waktu), tempat: String(row.tempat), jenjang: String(row.jenjang), anggota: Number(row.anggota) } }).catch(() => undefined);
@@ -669,7 +669,7 @@ async function main() {
   }
   for (const row of source.izinList) {
     const santri = findSantri(row.santri);
-    if (santri) await prisma.izin.upsert({ where: { kode: String(row.id) }, create: { kode: String(row.id), santriId: santri.id, jenis: String(row.alasan).split('—')[0].trim(), alasan: String(row.alasan), penjemput: String(row.penjemput), keluarAt: parseDate(row.keluar), kembaliAt: parseDate(row.kembali), status: ['Menunggu', 'Disetujui', 'Ditolak', 'Selesai'].includes(String(row.status)) ? (String(row.status) as never) : 'Menunggu' }, update: {} });
+    if (santri) await prisma.izin.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), santriId: santri.id, jenis: String(row.alasan).split('—')[0].trim(), alasan: String(row.alasan), penjemput: String(row.penjemput), keluarAt: parseDate(row.keluar), kembaliAt: parseDate(row.kembali), status: ['Menunggu', 'Disetujui', 'Ditolak', 'Selesai'].includes(String(row.status)) ? (String(row.status) as never) : 'Menunggu' }, update: {} });
   }
   for (const row of source.kunjungan) {
     const santri = findSantri(row.santri);
@@ -682,11 +682,11 @@ async function main() {
   for (const row of source.tagihanRows) {
     const santri = findSantri(row.santri);
     if (!santri) continue;
-    const tagihan = await prisma.tagihan.upsert({ where: { kode: String(row.id) }, create: { kode: String(row.id), santriId: santri.id, jenis: String(row.jenis), periode: String(row.periode), nominal: Number(row.nominal), dibayar: Number(row.bayar), jatuhTempo: parseDate(row.jatuh) }, update: { dibayar: Number(row.bayar) } });
-    if (Number(row.bayar) > 0) await prisma.pembayaran.create({ data: { tagihanId: tagihan.id, tgl: parseDate(row.jatuh), nominal: Number(row.bayar), metode: 'Transfer BSI' } }).catch(() => undefined);
+    const invoices = await prisma.invoice.upsert({ where: { code: String(row.id) }, create: { code: String(row.id), santriId: santri.id, type: String(row.type), period: String(row.period), amount: Number(row.amount), paidAmount: Number(row.bayar), dueDate: parseDate(row.jatuh) }, update: { paidAmount: Number(row.bayar) } });
+    if (Number(row.bayar) > 0) await prisma.payment.create({ data: { invoiceId: invoices.id, date: parseDate(row.jatuh), amount: Number(row.bayar), method: 'Transfer BSI' } }).catch(() => undefined);
   }
   for (const row of source.transaksi) {
-    await prisma.transaksiKas.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), tgl: parseDate(row.tgl), uraian: String(row.uraian), kategori: String(row.kategori), metode: String(row.metode), arah: Number(row.nominal) >= 0 ? 'Masuk' : 'Keluar', nominal: Math.abs(Number(row.nominal)) }, update: {} });
+    await prisma.cashTransaction.upsert({ where: { code: String(row.code) }, create: { code: String(row.code), date: parseDate(row.date), description: String(row.description), category: String(row.category), method: String(row.method), direction: Number(row.amount) >= 0 ? 'Inbound' : 'Outbound', amount: Math.abs(Number(row.amount)) }, update: {} });
   }
 
   // Run again now that santri and wali rows exist on a fresh database.

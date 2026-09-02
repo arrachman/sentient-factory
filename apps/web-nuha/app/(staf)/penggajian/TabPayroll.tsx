@@ -3,7 +3,7 @@ import { Card, Tabel, Kosong, Avatar } from '@/components';
 import { hitungGaji, rupiah } from '@/lib/gaji';
 import { SlipActions } from '@/components/SlipActions';
 
-/** Daftar payroll periode berjalan: pencarian nama/jabatan lewat query ?q=. */
+/** Daftar payroll period berjalan: pencarian nama/jabatan lewat query ?q=. */
 export async function TabPayroll({
   searchParams,
   periode,
@@ -21,7 +21,7 @@ export async function TabPayroll({
     include: { person: true, unit: true, komponen: true },
     orderBy: { nip: 'asc' },
   });
-  const slips = await prisma.slipGaji.findMany({ where: { periode, pegawaiId: { in: pegawai.map((p) => p.id) } } });
+  const slips = await prisma.payrollSlip.findMany({ where: { periode, pegawaiId: { in: pegawai.map((p) => p.id) } } });
   const slipByPegawai = new Map(slips.map((s) => [String(s.pegawaiId), s]));
 
   return (
@@ -59,7 +59,7 @@ export async function TabPayroll({
                 <td className="num" style={{ color: '#B91C1C' }}>{rupiah(h.potongan)}</td>
                 <td className="num" style={{ fontWeight: 700 }}>{rupiah(h.netto)}</td>
                 <td>
-                  {slip && <div className="muted" style={{ marginBottom: 6 }}><span className="badge badge-hijau">{slip.status}</span> · revisi {slip.revisi}</div>}
+                  {slip && <div className="muted" style={{ marginBottom: 6 }}><span className="badge badge-hijau">{slip.status}</span> · revisi {slip.revisionCount}</div>}
                   <SlipActions pegawaiId={String(p.id)} periode={periode} status={slip?.status} />
                 </td>
               </tr>

@@ -4,11 +4,11 @@ import { Card, ProgressBar, Kosong } from '@/components';
 
 const WARNA_UNIT = ['#0F6B3D', '#1D4ED8', '#E8973A', '#7C2D12', '#5B21B6', '#9A3412'];
 
-/** Rekap beban gaji per unit + ringkasan status slip periode berjalan. */
+/** Rekap beban gaji per unit + ringkasan status slip period berjalan. */
 export async function TabRekap({ periode }: { periode: string }) {
   const [pegawai, slips] = await Promise.all([
     prisma.pegawai.findMany({ include: { unit: true, komponen: true } }),
-    prisma.slipGaji.findMany({ where: { periode } }),
+    prisma.payrollSlip.findMany({ where: { periode } }),
   ]);
 
   const perUnit = new Map<string, { n: number; total: number }>();

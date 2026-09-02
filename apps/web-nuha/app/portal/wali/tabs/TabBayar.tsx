@@ -7,10 +7,10 @@ const METODE_OPTS = ['Transfer bank', 'QRIS', 'Tunai di kantor'];
 
 export async function TabBayar({ santriId }: { santriId: bigint }) {
   const [belumLunas, riwayat] = await Promise.all([
-    prisma.tagihan.findMany({ where: { santriId }, orderBy: { jatuhTempo: 'asc' } }),
-    prisma.pembayaran.findMany({ where: { tagihan: { santriId } }, orderBy: { tgl: 'desc' }, take: 5, include: { tagihan: true } }),
+    prisma.invoice.findMany({ where: { santriId }, orderBy: { dueDate: 'asc' } }),
+    prisma.payment.findMany({ where: { invoice: { santriId } }, orderBy: { date: 'desc' }, take: 5, include: { invoice: true } }),
   ]);
-  const belumLunasFiltered = belumLunas.filter((t) => Number(t.dibayar) < Number(t.nominal));
+  const belumLunasFiltered = belumLunas.filter((t) => Number(t.paidAmount) < Number(t.amount));
 
   return (
     <>
@@ -20,10 +20,10 @@ export async function TabBayar({ santriId }: { santriId: bigint }) {
         {belumLunasFiltered.map((t) => (
           <div key={String(t.id)} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center', padding: '11px 12px', borderRadius: 11, background: '#FAF8F3', border: '1px solid #F0EDE4', flexWrap: 'wrap', marginBottom: 8 }}>
             <div style={{ flex: 1, minWidth: 130 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1F2937' }}>{t.jenis} · {t.periode}</div>
-              <div style={{ fontSize: 12, color: '#0A4A2B', fontWeight: 700, marginTop: 2 }}>Sisa {rupiah(Number(t.nominal) - Number(t.dibayar))}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: '#1F2937' }}>{t.type} · {t.period}</div>
+              <div style={{ fontSize: 12, color: '#0A4A2B', fontWeight: 700, marginTop: 2 }}>Sisa {rupiah(Number(t.amount) - Number(t.paidAmount))}</div>
             </div>
-            <Badge status={Number(t.dibayar) > 0 ? 'Sebagian' : 'Belum bayar'} />
+            <Badge status={Number(t.paidAmount) > 0 ? 'Sebagian' : 'Belum bayar'} />
           </div>
         ))}
       </div>
@@ -34,19 +34,19 @@ export async function TabBayar({ santriId }: { santriId: bigint }) {
           <input type="hidden" name="santriId" value={String(santriId)} />
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Tagihan yang dibayar</span>
-            <select name="tagihanId" required style={{ padding: '11px 12px', borderRadius: 10, border: '1px solid #E8E3D9', background: '#FFF', fontSize: 13 }}>
+            <select name="invoiceId" required style={{ padding: '11px 12px', borderRadius: 10, border: '1px solid #E8E3D9', background: '#FFF', fontSize: 13 }}>
               {belumLunasFiltered.map((t) => (
-                <option key={String(t.id)} value={String(t.id)}>{t.jenis} · {t.periode} · sisa {rupiah(Number(t.nominal) - Number(t.dibayar))}</option>
+                <option key={String(t.id)} value={String(t.id)}>{t.type} · {t.period} · sisa {rupiah(Number(t.amount) - Number(t.paidAmount))}</option>
               ))}
             </select>
           </label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Nominal (Rp)</span>
-            <input type="number" name="nominal" min={1} required placeholder="1350000" style={{ padding: '11px 12px', borderRadius: 10, border: '1px solid #E8E3D9', background: '#FAF8F3', fontSize: 13 }} />
+            <input type="number" name="amount" min={1} required placeholder="1350000" style={{ padding: '11px 12px', borderRadius: 10, border: '1px solid #E8E3D9', background: '#FAF8F3', fontSize: 13 }} />
           </label>
           <label style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>Metode pembayaran</span>
-            <select name="metode" style={{ padding: '11px 12px', borderRadius: 10, border: '1px solid #E8E3D9', background: '#FFF', fontSize: 13 }}>
+            <select name="method" style={{ padding: '11px 12px', borderRadius: 10, border: '1px solid #E8E3D9', background: '#FFF', fontSize: 13 }}>
               {METODE_OPTS.map((m) => <option key={m} value={m}>{m}</option>)}
             </select>
           </label>
@@ -68,11 +68,11 @@ export async function TabBayar({ santriId }: { santriId: bigint }) {
           {riwayat.map((b) => (
             <div key={String(b.id)} style={{ padding: '12px 13px', borderRadius: 11, background: '#F1F7F3', border: '1px solid #D7E9DE', marginBottom: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#0A4A2B' }}>{rupiah(Number(b.nominal))}</span>
-                <span style={{ fontSize: 11.5, color: '#6B7280' }}>{b.ref ?? '-'}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: '#0A4A2B' }}>{rupiah(Number(b.amount))}</span>
+                <span style={{ fontSize: 11.5, color: '#6B7280' }}>{b.reference ?? '-'}</span>
               </div>
-              <div style={{ fontSize: 12, color: '#4B5563', marginTop: 3 }}>{b.tagihan.jenis} · {b.tagihan.periode}</div>
-              <div style={{ fontSize: 11.5, color: '#6B7280', marginTop: 3 }}>{b.metode} · {b.tgl.toLocaleDateString('id-ID')}</div>
+              <div style={{ fontSize: 12, color: '#4B5563', marginTop: 3 }}>{b.invoice.type} · {b.invoice.period}</div>
+              <div style={{ fontSize: 11.5, color: '#6B7280', marginTop: 3 }}>{b.method} · {b.date.toLocaleDateString('id-ID')}</div>
             </div>
           ))}
         </div>

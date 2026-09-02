@@ -1,10 +1,10 @@
 import { prisma } from '@/lib/prisma';
 import { Card, Avatar, Tabel, Badge, ProgressBar, Kosong, rp } from '@/components';
 
-/** Ketaatan pembayaran per santri diringkas dari seluruh tagihannya. */
-function statusKetaatan(nominal: number, dibayar: number): string {
-  if (nominal <= 0) return 'Lancar';
-  const rasio = dibayar / nominal;
+/** Ketaatan payments per santri diringkas dari seluruh tagihannya. */
+function statusKetaatan(amount: number, paidAmount: number): string {
+  if (amount <= 0) return 'Lancar';
+  const rasio = paidAmount / amount;
   if (rasio >= 1) return 'Lancar';
   if (rasio > 0) return 'Cicil';
   return 'Menunggak';
@@ -16,22 +16,22 @@ export async function TabRekap({ q }: { q: string }) {
     where: q
       ? { OR: [{ person: { fullName: { contains: q } } }, { nis: { contains: q } }] }
       : undefined,
-    include: { person: true, unit: true, kelas: true, tagihan: true },
+    include: { person: true, unit: true, kelas: true, invoices: true },
     orderBy: { person: { fullName: 'asc' } },
     take: 30,
   });
 
   const rekap = santri.map((s) => {
-    const totalNominal = s.tagihan.reduce((sum, t) => sum + Number(t.nominal), 0);
-    const totalDibayar = s.tagihan.reduce((sum, t) => sum + Number(t.dibayar), 0);
+    const totalNominal = s.invoices.reduce((sum, t) => sum + Number(t.amount), 0);
+    const totalDibayar = s.invoices.reduce((sum, t) => sum + Number(t.paidAmount), 0);
     const sisa = Math.max(0, totalNominal - totalDibayar);
-    const lunasCount = s.tagihan.filter((t) => Number(t.dibayar) >= Number(t.nominal)).length;
+    const lunasCount = s.invoices.filter((t) => Number(t.paidAmount) >= Number(t.amount)).length;
     return {
       santri: s,
       status: statusKetaatan(totalNominal, totalDibayar),
       pct: totalNominal > 0 ? Math.round((totalDibayar / totalNominal) * 100) : 100,
       lunasCount,
-      totalTagihan: s.tagihan.length,
+      totalInvoice: s.invoices.length,
       totalNominal,
       sisa,
     };
@@ -45,7 +45,7 @@ export async function TabRekap({ q }: { q: string }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <section className="grid g3">
         <div className="card">
-          <div className="label">Pembayaran lancar</div>
+          <div className="label">Payment lancar</div>
           <div className="angka" style={{ color: '#0F6B3D' }}>{lancar}</div>
         </div>
         <div className="card">
@@ -59,8 +59,8 @@ export async function TabRekap({ q }: { q: string }) {
       </section>
 
       <Card
-        judul="Rekap nama santri &amp; ketaatan pembayaran"
-        sub="Persentase dihitung dari total dibayar dibagi total tagihan tiap santri."
+        judul="Rekap nama santri &amp; ketaatan payments"
+        sub="Persentase dihitung dari total paidAmount dibagi total invoices tiap santri."
       >
         <form method="get" style={{ marginBottom: 14, display: 'flex', gap: 8 }}>
           <input type="hidden" name="tab" value="rekap" />
@@ -70,7 +70,7 @@ export async function TabRekap({ q }: { q: string }) {
         {rekap.length === 0 ? (
           <Kosong pesan="Tidak ada santri yang cocok dengan pencarian." />
         ) : (
-          <Tabel kolom={['Nama santri', 'Unit / Kelas', 'Ketaatan', { label: 'Tagihan', num: true }, { label: 'Sisa', num: true }, 'Status']}>
+          <Tabel kolom={['Nama santri', 'Unit / Kelas', 'Ketaatan', { label: 'Invoice', num: true }, { label: 'Sisa', num: true }, 'Status']}>
             {rekap.map((r) => (
               <tr key={String(r.santri.id)}>
                 <td>
@@ -86,7 +86,7 @@ export async function TabRekap({ q }: { q: string }) {
                 <td>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                     <div style={{ width: 100 }}><ProgressBar pct={r.pct} warna={WARNA_STATUS[r.status]} /></div>
-                    <span className="muted">{r.lunasCount}/{r.totalTagihan}</span>
+                    <span className="muted">{r.lunasCount}/{r.totalInvoice}</span>
                   </div>
                 </td>
                 <td className="num">{rp(r.totalNominal)}</td>

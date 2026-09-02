@@ -7,21 +7,21 @@ function hrefTunggakan(params: Record<string, string>) {
   return `/keuangan?${qs.toString()}`;
 }
 
-/** "Belum lunas" bergantung pada perbandingan dua kolom (dibayar < nominal), Prisma
+/** "Belum lunas" bergantung pada perbandingan dua kolom (paidAmount < amount), Prisma
  * where tidak bisa bandingkan kolom langsung — ambil id yang cocok lewat raw query,
  * lalu potong per halaman sebelum findMany+include supaya tidak menarik semua baris. */
 export async function TabTunggakan({ searchParams }: { searchParams: SearchParams }) {
   const halaman = bacaHalaman(searchParams);
 
   const idRows = await prisma.$queryRaw<{ id: bigint }[]>`
-    SELECT id FROM tagihan WHERE dibayar < nominal ORDER BY jatuh_tempo ASC
+    SELECT id FROM invoices WHERE paidAmount < amount ORDER BY jatuh_tempo ASC
   `;
   const total = idRows.length;
   const idHalaman = idRows.slice((halaman - 1) * UKURAN_HALAMAN, halaman * UKURAN_HALAMAN).map((r) => r.id);
   const totalHalaman = Math.max(1, Math.ceil(total / UKURAN_HALAMAN));
 
   const rows = idHalaman.length
-    ? await prisma.tagihan.findMany({
+    ? await prisma.invoice.findMany({
       where: { id: { in: idHalaman } },
       include: { santri: { include: { person: true, unit: true } } },
     })
@@ -39,8 +39,8 @@ export async function TabTunggakan({ searchParams }: { searchParams: SearchParam
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {tunggakan.map((t) => {
-            const sisa = Number(t.nominal) - Number(t.dibayar);
-            const status = Number(t.dibayar) > 0 ? 'Sebagian' : 'Belum bayar';
+            const sisa = Number(t.amount) - Number(t.paidAmount);
+            const status = Number(t.paidAmount) > 0 ? 'Sebagian' : 'Belum bayar';
             return (
               <div
                 key={String(t.id)}
@@ -52,7 +52,7 @@ export async function TabTunggakan({ searchParams }: { searchParams: SearchParam
                 <Avatar nama={t.santri.person.fullName} size={36} />
                 <div style={{ flex: 1, minWidth: 170 }}>
                   <div style={{ fontSize: 13.5, fontWeight: 600 }}>{t.santri.person.fullName}</div>
-                  <div className="muted">{t.santri.unit?.nama ?? '-'} · {t.jenis}</div>
+                  <div className="muted">{t.santri.unit?.nama ?? '-'} · {t.type}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <div className="muted">Kurang</div>
