@@ -44,9 +44,9 @@ function TombolNav({ label, judul, tujuan, aktif, buatHref, onPageChange }: Tomb
     );
   }
   if (onPageChange) {
-    return <button className="btn-sekunder" type="button" onClick={() => onPageChange(tujuan)} title={judul} aria-label={judul} style={GAYA_TOMBOL}>{label}</button>;
+    return <button className="btn-sekunder" type="button" onClick={() => onPageChange(tujuan)} title={judul} aria-label={judul} style={{ ...GAYA_TOMBOL, cursor: 'pointer' }}>{label}</button>;
   }
-  return <a className="btn-sekunder" href={buatHref!(tujuan)} title={judul} aria-label={judul} style={GAYA_TOMBOL}>{label}</a>;
+  return <a className="btn-sekunder" href={buatHref!(tujuan)} title={judul} aria-label={judul} style={{ ...GAYA_TOMBOL, cursor: 'pointer' }}>{label}</a>;
 }
 
 /** Footer pager: "Menampilkan X–Y dari Z" + navigasi awal/sebelumnya/berikutnya/akhir. Dipakai bersama util `bacaHalaman`. */
@@ -73,8 +73,8 @@ export function Pagination({ halaman, totalHalaman, total, jumlahBaris, ukuranHa
                 </span>
               )
               : onPageChange
-                ? <button key={p} type="button" onClick={() => onPageChange(p)} aria-label={`Halaman ${p}`} className="btn-sekunder" style={GAYA_TOMBOL}>{p}</button>
-                : <a key={p} href={buatHref!(p)} aria-label={`Halaman ${p}`} className="btn-sekunder" style={GAYA_TOMBOL}>{p}</a>
+                ? <button key={p} type="button" onClick={() => onPageChange(p)} aria-label={`Halaman ${p}`} className="btn-sekunder" style={{ ...GAYA_TOMBOL, cursor: 'pointer' }}>{p}</button>
+                : <a key={p} href={buatHref!(p)} aria-label={`Halaman ${p}`} className="btn-sekunder" style={{ ...GAYA_TOMBOL, cursor: 'pointer' }}>{p}</a>
             ))}
             <TombolNav label="›" judul="Halaman berikutnya" tujuan={halaman + 1} aktif={adaSesudah} buatHref={buatHref} onPageChange={onPageChange} />
             <TombolNav label="»" judul="Halaman terakhir" tujuan={totalHalaman} aktif={adaSesudah} buatHref={buatHref} onPageChange={onPageChange} />
