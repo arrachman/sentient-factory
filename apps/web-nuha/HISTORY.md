@@ -4,6 +4,11 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Gap kartu daftar data dihapus
+
+Kartu daftar CRUD tidak lagi memberi margin atas tambahan setelah panel filter.
+Tampilan `/data/santri-orang` kini tidak memiliki jarak vertikal ganda di atas kartu.
+
 ## 2026-09-02 — Pemilih peran langsung diterapkan saat dipilih
 
 Tombol Terapkan di samping dropdown "Lihat sebagai" dihapus. Memilih peran

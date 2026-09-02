@@ -149,7 +149,7 @@ export function CrudPanel({ entity, rows: initialRows }: { entity: ClientEntity;
     await send(editing ? 'PATCH' : 'POST', payload);
   }
 
-  return <div className="card" style={{ marginTop: 10 }}>
+  return <div className="card">
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
       <h3 className="card-judul" style={{ margin: 0 }}>{entity.label}</h3>
       <button className="btn" type="button" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 38, padding: 0 }} onClick={() => { setEditing(null); setPilihan({}); setDibuka(new Set()); setOpen(!open); setMessage(''); }} data-testid={`tambah-${entity.key}`} aria-label={open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`} title={open && !editing ? 'Tutup form' : `Tambah ${entity.label.toLowerCase()}`}><IkonTambah /></button>
