@@ -24,7 +24,7 @@ export async function daftarMaster(peran: string[]): Promise<{ persona: Kelompok
   const kunciPersona = new Set(PERSONA.map((item) => item.key));
   const persona: KelompokMaster = {
     menuKey: 'induk',
-    label: 'Data orang per peran',
+    label: 'Data per peran',
     icon: menuInfo.get('induk')?.icon ?? null,
     items: PERSONA.filter((item) => semua.some((entity) => entity.key === item.key)).map((item) => ({ key: item.key, label: item.label, ringkas: item.ringkas })),
   };

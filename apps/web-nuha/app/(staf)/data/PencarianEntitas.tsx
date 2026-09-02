@@ -49,7 +49,7 @@ export function PencarianEntitas({ persona, kelompok }: { persona: (Persona & { 
         <div className="card" style={{ marginTop: 16 }}>
           <h4 style={{ margin: '0 0 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
             <IkonMenu menuKey="induk" path={personaTersaring[0].icon} size={18} />
-            Data orang per peran
+            Data per peran
           </h4>
           <p className="muted" style={{ margin: '0 0 12px', fontSize: 12.5 }}>Pintasan satu-layar: identitas dan baris perannya dibuat sekaligus, tanpa perlu menyalin ID Orang antar menu.</p>
           <div className="grid g2">
