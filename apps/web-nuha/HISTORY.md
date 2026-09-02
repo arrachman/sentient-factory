@@ -4,6 +4,13 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Tombol formulir Master Data lebih jelas
+
+Aksi pada modal tambah dan ubah Master Data kini memakai tombol teks **Batal**
+dan **Simpan** alih-alih ikon saja. Operator dapat mengenali aksi form tanpa
+mengandalkan tooltip atau memahami arti ikon; perilaku simpan dan pembatalan
+tidak berubah.
+
 ## 2026-09-02 — Filter Master Data dapat dihapus per-kolom
 
 Tombol Filter eksplisit pada `/data/<entity>` dihapus karena pencarian dan
