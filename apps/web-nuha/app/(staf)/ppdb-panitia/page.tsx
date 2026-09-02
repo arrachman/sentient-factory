@@ -20,16 +20,16 @@ export default async function PpdbPanitiaPage({
   const sp = await searchParams;
   const aktif = tabAktif(TABS, sp.tab);
 
-  const perStatus = await prisma.pendaftar.groupBy({ by: ['status'], _count: { _all: true } });
+  const perStatus = await prisma.applicant.groupBy({ by: ['status'], _count: { _all: true } });
   const jumlah = (status: string) => perStatus.find((r) => r.status === status)?._count._all ?? 0;
   const total = perStatus.reduce((sum, r) => sum + r._count._all, 0);
 
   const STAT = [
     { label: 'Total pendaftar', n: total, c: '#0A4A2B' },
-    { label: 'Menunggu verifikasi', n: jumlah('Baru') + jumlah('Verifikasi'), c: '#92400E' },
-    { label: 'Dalam seleksi', n: jumlah('Seleksi'), c: '#1E40AF' },
-    { label: 'Lulus', n: jumlah('Lulus'), c: '#0F6B3D' },
-    { label: 'Daftar ulang', n: jumlah('DaftarUlang'), c: '#0A4A2B' },
+    { label: 'Menunggu verifikasi', n: jumlah('New') + jumlah('Verification'), c: '#92400E' },
+    { label: 'Dalam seleksi', n: jumlah('Selection'), c: '#1E40AF' },
+    { label: 'Lulus', n: jumlah('Passed'), c: '#0F6B3D' },
+    { label: 'Daftar ulang', n: jumlah('Reenrollment'), c: '#0A4A2B' },
   ];
 
   return (

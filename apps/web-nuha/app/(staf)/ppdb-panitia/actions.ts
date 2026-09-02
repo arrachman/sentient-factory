@@ -10,15 +10,15 @@ export async function ubahStatusSeleksi(formData: FormData) {
   const session = await readSession();
   const id = BigInt(String(formData.get('id')));
   const aksi = String(formData.get('aksi'));
-  const status = aksi === 'lulus' ? 'Lulus' : aksi === 'tolak' ? 'TidakLulus' : null;
+  const status = aksi === 'lulus' ? 'Passed' : aksi === 'tolak' ? 'Failed' : null;
   if (!status) return;
 
-  const pendaftar = await prisma.pendaftar.update({ where: { id }, data: { status } });
+  const pendaftar = await prisma.applicant.update({ where: { id }, data: { status } });
   await recordAudit({
     aksi: aksi === 'lulus' ? 'PPDB_LULUSKAN' : 'PPDB_TOLAK',
     entitas: 'pendaftar',
     entitasId: String(id),
-    ringkasan: `${pendaftar.nama} (${pendaftar.noReg}) ditetapkan ${status}`,
+    ringkasan: `${pendaftar.fullName} (${pendaftar.registrationNumber}) ditetapkan ${status}`,
     aktor: session ? { id: session.userId, nama: session.nama } : null,
   });
 

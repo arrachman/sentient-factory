@@ -13,14 +13,14 @@ export async function TabPendaftar({ searchParams }: { searchParams: SearchParam
   const q = satu(searchParams.q);
   const halaman = bacaHalaman(searchParams);
   const where = q
-    ? { OR: [{ nama: { contains: q } }, { noReg: { contains: q } }] }
+    ? { OR: [{ fullName: { contains: q } }, { registrationNumber: { contains: q } }] }
     : undefined;
 
   const [total, pendaftar] = await Promise.all([
-    prisma.pendaftar.count({ where }),
-    prisma.pendaftar.findMany({
+    prisma.applicant.count({ where }),
+    prisma.applicant.findMany({
       where,
-      orderBy: { tglDaftar: 'desc' },
+      orderBy: { registeredAt: 'desc' },
       skip: (halaman - 1) * UKURAN_HALAMAN,
       take: UKURAN_HALAMAN,
     }),
@@ -44,16 +44,16 @@ export async function TabPendaftar({ searchParams }: { searchParams: SearchParam
             <tr key={String(p.id)}>
               <td>
                 <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                  <Avatar nama={p.nama} size={30} />
+                  <Avatar nama={p.fullName} size={30} />
                   <div>
-                    <div style={{ fontWeight: 600 }}>{p.nama}</div>
-                    <div className="muted" style={{ fontSize: 11.5 }}>{p.noReg} · {p.tglDaftar.toLocaleDateString('id-ID')}</div>
+                    <div style={{ fontWeight: 600 }}>{p.fullName}</div>
+                    <div className="muted" style={{ fontSize: 11.5 }}>{p.registrationNumber} · {p.registeredAt.toLocaleDateString('id-ID')}</div>
                   </div>
                 </div>
               </td>
-              <td>{p.pilihan}</td>
-              <td>{p.asalSekolah ?? '-'}</td>
-              <td className="num" style={{ fontWeight: 700 }}>{p.nilai ? Number(p.nilai).toFixed(1) : '-'}</td>
+              <td>{p.choice}</td>
+              <td>{p.previousSchool ?? '-'}</td>
+              <td className="num" style={{ fontWeight: 700 }}>{p.score ? Number(p.score).toFixed(1) : '-'}</td>
               <td><Badge status={p.status} /></td>
             </tr>
           ))}

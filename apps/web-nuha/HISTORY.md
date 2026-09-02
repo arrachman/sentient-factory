@@ -4,6 +4,22 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Rename teknis PPDB ke Bahasa Inggris
+
+Model Prisma dan tabel fisik PPDB kini memakai `Applicant`/`applicants` dan
+`ApplicantDocument`/`applicant_documents` (sebelumnya `Pendaftar`/`pendaftar` dan
+`BerkasPendaftar`/`berkas_pendaftar`). Kolom teknis (`registrationNumber`,
+`fullName`, `gender`, `choice`, `previousSchool`, `guardianPhone`,
+`registeredAt`, `score`) dan enum status (`New`, `Verification`, `Selection`,
+`Passed`, `Failed`, `Reenrollment`) juga memakai nama Inggris.
+
+Migrasi `20260902200000_rename_ppdb_to_english` mengonversi nilai enum status
+lama ke Inggris sebelum rename kolom/tabel/index, lalu membangun ulang foreign
+key `applicant_documents → applicants`. Form pendaftaran publik, halaman cek
+status (`?noReg=`), payload API `/api/ppdb`, dan teks UI panitia tetap
+berbahasa Indonesia. `npx tsc --noEmit` dan `prisma migrate status` bersih
+setelah penerapan.
+
 ## 2026-09-02 — Rename teknis keuangan dan penggajian ke Bahasa Inggris
 
 Model Prisma dan tabel fisik finance kini memakai `SalaryComponent`, `PayrollSlip`,

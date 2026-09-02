@@ -13,7 +13,7 @@ export default async function DashboardPage() {
       prisma.santri.count({ where: { status: 'Mukim' } }),
       prisma.santri.count({ where: { status: 'Alumni' } }),
       prisma.pegawai.count({ where: { status: { notIn: ['Nonaktif', 'Keluar', 'Pensiun'] } } }),
-      prisma.pendaftar.count({ where: { status: { in: ['Baru', 'Verifikasi', 'Seleksi'] } } }),
+      prisma.applicant.count({ where: { status: { in: ['New', 'Verification', 'Selection'] } } }),
       prisma.invoice.aggregate({ _sum: { amount: true, paidAmount: true } }),
       prisma.unit.findMany({ where: { aktif: true }, orderBy: { id: 'asc' }, include: { _count: { select: { santri: true } } } }),
       prisma.cashTransaction.groupBy({ by: ['direction'], _sum: { amount: true } }),

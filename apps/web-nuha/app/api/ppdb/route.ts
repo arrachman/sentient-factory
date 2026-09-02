@@ -15,10 +15,26 @@ export async function GET() {
   if (!session) {
     return Response.json({ success: false, data: null, error: { code: 'UNAUTHORIZED', message: 'Perlu masuk.' } }, { status: 401 });
   }
-  const rows = await prisma.pendaftar.findMany({ orderBy: { tglDaftar: 'desc' } });
+  const rows = await prisma.applicant.findMany({ orderBy: { registeredAt: 'desc' } });
   // MySQL IDs are Prisma BigInt values, which JSON.stringify cannot serialize.
   const data = rows.map((row) => ({ ...row, id: String(row.id) }));
-  return Response.json({ success: true, data, error: null });
+  return Response.json({
+    success: true,
+    data: rows.map((row) => ({
+      ...row,
+      id: String(row.id),
+      noReg: row.registrationNumber,
+      nama: row.fullName,
+      jk: row.gender,
+      pilihan: row.choice,
+      asalSekolah: row.previousSchool,
+      hpWali: row.guardianPhone,
+      tglDaftar: row.registeredAt,
+      nilai: row.score,
+      status: row.status,
+    })),
+    error: null,
+  });
 }
 
 export async function POST(request: Request) {
@@ -28,12 +44,21 @@ export async function POST(request: Request) {
   }
 
   const year = new Date().getFullYear();
-  const total = await prisma.pendaftar.count();
-  const noReg = `PPDB-${year}-${String(total + 1).padStart(5, '0')}`;
+  const total = await prisma.applicant.count();
+  const registrationNumber = `PPDB-${year}-${String(total + 1).padStart(5, '0')}`;
 
-  const pendaftar = await prisma.pendaftar.create({
-    data: { ...parsed.data, noReg, tglDaftar: new Date(), status: 'Baru' },
+  const pendaftar = await prisma.applicant.create({
+    data: {
+      registrationNumber,
+      fullName: parsed.data.nama,
+      gender: parsed.data.jk,
+      choice: parsed.data.pilihan,
+      previousSchool: parsed.data.asalSekolah,
+      guardianPhone: parsed.data.hpWali,
+      registeredAt: new Date(),
+      status: 'New',
+    },
   });
 
-  return Response.json({ success: true, data: { noReg: pendaftar.noReg }, error: null }, { status: 201 });
+  return Response.json({ success: true, data: { noReg: pendaftar.registrationNumber }, error: null }, { status: 201 });
 }

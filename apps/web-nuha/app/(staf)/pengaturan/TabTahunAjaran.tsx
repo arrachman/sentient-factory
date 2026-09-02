@@ -11,7 +11,7 @@ export async function TabTahunAjaran() {
   const tahunAjaran = `${tahunMulai}/${tahunMulai + 1}`;
   const semester = bulan >= 7 ? 'Gasal' : 'Genap';
 
-  const aktifPpdb = await prisma.pendaftar.count({ where: { status: { in: ['Baru', 'Verifikasi', 'Seleksi'] } } });
+  const aktifPpdb = await prisma.applicant.count({ where: { status: { in: ['New', 'Verification', 'Selection'] } } });
   const periodePpdb = aktifPpdb > 0 ? `Dibuka · ${aktifPpdb} pendaftar dalam proses` : 'Ditutup sementara';
 
   const KARTU = [

@@ -1,4 +1,4 @@
-import type { StatusPendaftar } from '@prisma/client';
+import type { ApplicantStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { Avatar, Badge, Kosong, Pagination, UKURAN_HALAMAN, bacaHalaman, type SearchParams } from '@/components';
 
@@ -11,13 +11,13 @@ function hrefKelulusan(params: Record<string, string>) {
 /** Pengumuman kelulusan: pendaftar yang sudah lulus, tidak lulus, atau daftar ulang. */
 export async function TabKelulusan({ searchParams }: { searchParams: SearchParams }) {
   const halaman = bacaHalaman(searchParams);
-  const where = { status: { in: ['Lulus', 'TidakLulus', 'DaftarUlang'] as StatusPendaftar[] } };
+  const where = { status: { in: ['Passed', 'Failed', 'Reenrollment'] as ApplicantStatus[] } };
 
   const [total, pendaftar] = await Promise.all([
-    prisma.pendaftar.count({ where }),
-    prisma.pendaftar.findMany({
+    prisma.applicant.count({ where }),
+    prisma.applicant.findMany({
       where,
-      orderBy: { nama: 'asc' },
+      orderBy: { fullName: 'asc' },
       skip: (halaman - 1) * UKURAN_HALAMAN,
       take: UKURAN_HALAMAN,
     }),
@@ -36,10 +36,10 @@ export async function TabKelulusan({ searchParams }: { searchParams: SearchParam
         <div className="grid g2">
           {pendaftar.map((p) => (
             <div key={String(p.id)} className="inset" style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Avatar nama={p.nama} size={34} />
+              <Avatar nama={p.fullName} size={34} />
               <div style={{ flex: 1, minWidth: 150 }}>
-                <div style={{ fontWeight: 600 }}>{p.nama}</div>
-                <div className="muted" style={{ fontSize: 11.5 }}>{p.noReg} · {p.pilihan}</div>
+                <div style={{ fontWeight: 600 }}>{p.fullName}</div>
+                <div className="muted" style={{ fontSize: 11.5 }}>{p.registrationNumber} · {p.choice}</div>
               </div>
               <Badge status={p.status} />
             </div>

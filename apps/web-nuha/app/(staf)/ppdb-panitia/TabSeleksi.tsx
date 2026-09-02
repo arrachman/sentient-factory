@@ -1,4 +1,4 @@
-import type { StatusPendaftar } from '@prisma/client';
+import type { ApplicantStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { Avatar, Badge, Kosong, Pagination, UKURAN_HALAMAN, bacaHalaman, type SearchParams } from '@/components';
 import { ubahStatusSeleksi } from './actions';
@@ -12,13 +12,13 @@ function hrefSeleksi(params: Record<string, string>) {
 /** Pendaftar yang masih perlu diverifikasi/diseleksi, dengan aksi keputusan. */
 export async function TabSeleksi({ searchParams }: { searchParams: SearchParams }) {
   const halaman = bacaHalaman(searchParams);
-  const where = { status: { in: ['Baru', 'Verifikasi', 'Seleksi'] as StatusPendaftar[] } };
+  const where = { status: { in: ['New', 'Verification', 'Selection'] as ApplicantStatus[] } };
 
   const [total, pendaftar] = await Promise.all([
-    prisma.pendaftar.count({ where }),
-    prisma.pendaftar.findMany({
+    prisma.applicant.count({ where }),
+    prisma.applicant.findMany({
       where,
-      orderBy: { tglDaftar: 'asc' },
+      orderBy: { registeredAt: 'asc' },
       skip: (halaman - 1) * UKURAN_HALAMAN,
       take: UKURAN_HALAMAN,
     }),
@@ -37,11 +37,11 @@ export async function TabSeleksi({ searchParams }: { searchParams: SearchParams 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {pendaftar.map((p) => (
             <div key={String(p.id)} className="inset" style={{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}>
-              <Avatar nama={p.nama} size={36} />
+              <Avatar nama={p.fullName} size={36} />
               <div style={{ flex: 1, minWidth: 180 }}>
-                <div style={{ fontWeight: 600 }}>{p.nama}</div>
+                <div style={{ fontWeight: 600 }}>{p.fullName}</div>
                 <div className="muted" style={{ fontSize: 11.5 }}>
-                  {p.noReg} · {p.pilihan} · nilai {p.nilai ? Number(p.nilai).toFixed(1) : '-'}
+                  {p.registrationNumber} · {p.choice} · nilai {p.score ? Number(p.score).toFixed(1) : '-'}
                 </div>
               </div>
               <Badge status={p.status} />

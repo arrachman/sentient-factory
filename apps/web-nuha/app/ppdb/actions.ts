@@ -65,9 +65,9 @@ function susunPilihan(data: PayloadDaftarPpdb): string {
 
 /**
  * Tulis pendaftaran baru + berkasnya. Nomor registrasi berurutan per tahun
- * (`PPDB-<tahun>-NNNN`) diturunkan dari noReg terakhir di dalam transaksi;
+ * (`PPDB-<tahun>-NNNN`) diturunkan dari registrationNumber terakhir di dalam transaksi;
  * kalau ada tabrakan (dua pendaftar submit bersamaan) constraint unik pada
- * `noReg` akan menolak insert dan kita coba lagi dengan angka berikutnya.
+ * `registrationNumber` akan menolak insert dan kita coba lagi dengan angka berikutnya.
  */
 export async function daftarPpdb(data: PayloadDaftarPpdb): Promise<HasilDaftarPpdb> {
   const errors = validasi(data);
@@ -79,43 +79,43 @@ export async function daftarPpdb(data: PayloadDaftarPpdb): Promise<HasilDaftarPp
 
   const berkasBaris = [...BERKAS_WAJIB, ...BERKAS_OPSIONAL]
     .filter((nama) => data.berkas[nama])
-    .map((nama) => ({ nama, wajib: BERKAS_WAJIB.includes(nama), terverifikasi: false }));
+    .map((nama) => ({ name: nama, required: BERKAS_WAJIB.includes(nama), verified: false }));
 
   const MAKS_PERCOBAAN = 5;
   for (let percobaan = 0; percobaan < MAKS_PERCOBAAN; percobaan++) {
     try {
-      const noReg = await prisma.$transaction(async (tx) => {
-        const terakhir = await tx.pendaftar.findFirst({
-          where: { noReg: { startsWith: prefix } },
+      const registrationNumber = await prisma.$transaction(async (tx) => {
+        const terakhir = await tx.applicant.findFirst({
+          where: { registrationNumber: { startsWith: prefix } },
           orderBy: { id: 'desc' },
-          select: { noReg: true },
+          select: { registrationNumber: true },
         });
-        const nomorTerakhir = terakhir ? Number(terakhir.noReg.slice(prefix.length)) || 0 : 0;
+        const nomorTerakhir = terakhir ? Number(terakhir.registrationNumber.slice(prefix.length)) || 0 : 0;
         const nomorBaru = String(nomorTerakhir + 1).padStart(4, '0');
-        const noRegBaru = `${prefix}${nomorBaru}`;
+        const registrationNumberBaru = `${prefix}${nomorBaru}`;
 
-        await tx.pendaftar.create({
+        await tx.applicant.create({
           data: {
-            noReg: noRegBaru,
-            nama: data.nama.trim(),
-            jk: data.jk === 'P' ? 'P' : 'L',
-            pilihan,
-            asalSekolah: data.asalSekolah.trim(),
-            hpWali: data.hp.trim(),
-            tglDaftar: new Date(),
-            status: 'Baru',
-            berkas: { create: berkasBaris },
+            registrationNumber: registrationNumberBaru,
+            fullName: data.nama.trim(),
+            gender: data.jk === 'P' ? 'P' : 'L',
+            choice: pilihan,
+            previousSchool: data.asalSekolah.trim(),
+            guardianPhone: data.hp.trim(),
+            registeredAt: new Date(),
+            status: 'New',
+            documents: { create: berkasBaris },
           },
         });
 
-        return noRegBaru;
+        return registrationNumberBaru;
       });
 
-      return { ok: true, noReg };
+      return { ok: true, noReg: registrationNumber };
     } catch (err) {
       const konflikUnik = err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002';
       if (!konflikUnik || percobaan === MAKS_PERCOBAAN - 1) throw err;
-      // noReg sudah dipakai pendaftar lain yang submit di waktu bersamaan — ulangi dengan nomor berikutnya.
+      // registrationNumber sudah dipakai pendaftar lain yang submit di waktu bersamaan — ulangi dengan nomor berikutnya.
     }
   }
 

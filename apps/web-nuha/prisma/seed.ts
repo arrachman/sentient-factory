@@ -1,4 +1,4 @@
-import { PrismaClient, JenisKelamin, StatusPendaftar, StatusSantri } from '@prisma/client';
+import { PrismaClient, JenisKelamin, ApplicantStatus, StatusSantri } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import data from './proto-data.json';
 import { seedCbt } from './seed-cbt';
@@ -51,9 +51,9 @@ const KELAS_JADWAL_PROTOTYPE = '8B';
 const seedTahunAjaran = () => seedTahunAjaranRows(prisma);
 
 const gender = (value: unknown): JenisKelamin => String(value) === 'P' ? JenisKelamin.P : JenisKelamin.L;
-const pendaftarStatus = (value: unknown): StatusPendaftar => {
-  const statuses: Record<string, StatusPendaftar> = { Baru: 'Baru', Verifikasi: 'Verifikasi', Seleksi: 'Seleksi', Lulus: 'Lulus', 'Tidak Lulus': 'TidakLulus', 'Daftar Ulang': 'DaftarUlang' };
-  return statuses[String(value)] ?? 'Baru';
+const pendaftarStatus = (value: unknown): ApplicantStatus => {
+  const statuses: Record<string, ApplicantStatus> = { Baru: 'New', Verifikasi: 'Verification', Seleksi: 'Selection', Lulus: 'Passed', 'Tidak Lulus': 'Failed', 'Daftar Ulang': 'Reenrollment' };
+  return statuses[String(value)] ?? 'New';
 };
 
 async function seedAcademicContent() {
@@ -526,17 +526,17 @@ async function seedOperational() {
     }
   }
 
-  if (await prisma.berkasPendaftar.count() === 0) {
-    const wajib = ['Akta Kelahiran', 'Kartu Keluarga', 'Ijazah / SKL'];
+  if (await prisma.applicantDocument.count() === 0) {
+    const required = ['Akta Kelahiran', 'Kartu Keluarga', 'Ijazah / SKL'];
     const opsional = ['Kartu Indonesia Pintar', 'Surat Keterangan Sehat'];
-    for (const p of await prisma.pendaftar.findMany({ orderBy: { id: 'asc' } })) {
-      const lengkap = p.status !== 'Baru';
-      for (const nama of wajib) {
-        await prisma.berkasPendaftar.create({ data: { pendaftarId: p.id, nama, wajib: true, terverifikasi: lengkap } }).catch(() => undefined);
+    for (const p of await prisma.applicant.findMany({ orderBy: { id: 'asc' } })) {
+      const lengkap = p.status !== 'New';
+      for (const nama of required) {
+        await prisma.applicantDocument.create({ data: { applicantId: p.id, name: nama, required: true, verified: lengkap } }).catch(() => undefined);
       }
       if (lengkap) {
         for (const nama of opsional.slice(0, Number(p.id) % 2 + 1)) {
-          await prisma.berkasPendaftar.create({ data: { pendaftarId: p.id, nama, wajib: false, terverifikasi: true } }).catch(() => undefined);
+          await prisma.applicantDocument.create({ data: { applicantId: p.id, name: nama, required: false, verified: true } }).catch(() => undefined);
         }
       }
     }
@@ -647,7 +647,7 @@ async function main() {
     await prisma.salaryComponent.upsert({ where: { pegawaiId: pegawai.id }, create: { pegawaiId: pegawai.id, baseSalary: Number(row.baseSalary), positionAllowance: Number(row.positionAllowance), familyAllowance: Number(row.familyAllowance), teachingHours: Number(row.jam), hourlyRate: Number(row.hourlyRate), transport: Number(row.transport), bpjs: Number(row.bpjs), cooperative: Number(row.cooperative), incomeTax: Number(row.incomeTax) }, update: {} });
   }
 
-  for (const row of source.pendaftar) await prisma.pendaftar.upsert({ where: { noReg: String(row.noReg) }, create: { noReg: String(row.noReg), nama: String(row.nama), pilihan: String(row.pilihan), asalSekolah: String(row.asal), tglDaftar: parseDate(row.date), nilai: Number(row.nilai), status: pendaftarStatus(row.status) }, update: { status: pendaftarStatus(row.status), nilai: Number(row.nilai) } });
+  for (const row of source.pendaftar) await prisma.applicant.upsert({ where: { registrationNumber: String(row.noReg) }, create: { registrationNumber: String(row.noReg), fullName: String(row.nama), choice: String(row.pilihan), previousSchool: String(row.asal), registeredAt: parseDate(row.date), score: Number(row.nilai), status: pendaftarStatus(row.status) }, update: { status: pendaftarStatus(row.status), score: Number(row.nilai) } });
   for (const row of source.obat) await prisma.obat.upsert({ where: { nama: String(row.nama) }, create: { nama: String(row.nama), satuan: String(row.satuan), kategori: String(row.kategori), stok: Number(row.stok), stokMin: Number(row.min), kadaluarsa: String(row.exp) }, update: { stok: Number(row.stok) } });
   for (const [index, row] of source.kegiatanHarian.entries()) await prisma.kegiatanHarian.upsert({ where: { id: index + 1 }, create: { id: index + 1, jam: String(row.jam), nama: String(row.nama), ket: String(row.ket), urutan: index }, update: { nama: String(row.nama) } });
   for (const row of source.halaqah) await prisma.halaqah.create({ data: { nama: String(row.nama), ustadz: String(row.ustadz), waktu: String(row.waktu), tempat: String(row.tempat), jenjang: String(row.jenjang), anggota: Number(row.anggota) } }).catch(() => undefined);

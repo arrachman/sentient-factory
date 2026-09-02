@@ -5,20 +5,20 @@ import { inisial } from '@/components';
 type Tahap = { judul: string; ket: string; status: 'selesai' | 'gagal' | 'menunggu' };
 
 const LABEL_STATUS: Record<string, string> = {
-  Baru: 'Baru', Verifikasi: 'Verifikasi', Seleksi: 'Seleksi',
-  Lulus: 'Lulus', TidakLulus: 'Tidak Lulus', DaftarUlang: 'Daftar Ulang',
+  New: 'Baru', Verification: 'Verifikasi', Selection: 'Seleksi',
+  Passed: 'Lulus', Failed: 'Tidak Lulus', Reenrollment: 'Daftar Ulang',
 };
 
 const KELAS_BADGE: Record<string, string> = {
-  Lulus: 'badge-hijau', DaftarUlang: 'badge-hijau', TidakLulus: 'badge-merah', Seleksi: 'badge-biru',
+  Passed: 'badge-hijau', Reenrollment: 'badge-hijau', Failed: 'badge-merah', Selection: 'badge-biru',
 };
 
 /** Empat tahap tetap, persis prototype — tahap terakhir bercabang Lulus/Tidak Lulus. */
-function timelineUntuk(status: string, tglDaftar: Date): Tahap[] {
-  const urutan = ['Baru', 'Verifikasi', 'Seleksi', 'Lulus'];
-  const gagal = status === 'TidakLulus';
-  const idx = gagal || status === 'DaftarUlang' ? 3 : urutan.indexOf(status);
-  const tgl = tglDaftar.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+function timelineUntuk(status: string, registeredAt: Date): Tahap[] {
+  const urutan = ['New', 'Verification', 'Selection', 'Passed'];
+  const gagal = status === 'Failed';
+  const idx = gagal || status === 'Reenrollment' ? 3 : urutan.indexOf(status);
+  const tgl = registeredAt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 
   const langkah = [
     { judul: 'Formulir diterima', ket: `${tgl} · berkas masuk sistem` },
@@ -41,7 +41,7 @@ export default async function CekStatusPage({ searchParams }: { searchParams: Pr
   const qRaw = params.noReg;
   const q = (Array.isArray(qRaw) ? qRaw[0] : qRaw ?? '').trim();
 
-  const pendaftar = q ? await prisma.pendaftar.findFirst({ where: { noReg: q.toUpperCase() } }) : null;
+  const pendaftar = q ? await prisma.applicant.findFirst({ where: { registrationNumber: q.toUpperCase() } }) : null;
   const tidakDitemukan = q.length > 0 && !pendaftar;
 
   return (
@@ -71,17 +71,17 @@ export default async function CekStatusPage({ searchParams }: { searchParams: Pr
           <div style={{ marginTop: 22 }}>
             <div style={{ display: 'flex', gap: 16, alignItems: 'center', paddingBottom: 18, borderBottom: '1px solid #F0EDE4', flexWrap: 'wrap' }}>
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#F1F5F1', color: '#0F6B3D', display: 'grid', placeItems: 'center', fontWeight: 700 }}>
-                {inisial(pendaftar.nama)}
+                {inisial(pendaftar.fullName)}
               </div>
               <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 20, fontWeight: 600, color: '#0A4A2B' }}>{pendaftar.nama}</div>
-                <div style={{ fontSize: 13, color: '#6B7280' }}>{pendaftar.noReg} · {pendaftar.pilihan} · asal {pendaftar.asalSekolah ?? '—'}</div>
+                <div style={{ fontSize: 20, fontWeight: 600, color: '#0A4A2B' }}>{pendaftar.fullName}</div>
+                <div style={{ fontSize: 13, color: '#6B7280' }}>{pendaftar.registrationNumber} · {pendaftar.choice} · asal {pendaftar.previousSchool ?? '—'}</div>
               </div>
               <span className={`badge ${KELAS_BADGE[pendaftar.status] ?? 'badge-kuning'}`}>{LABEL_STATUS[pendaftar.status] ?? pendaftar.status}</span>
             </div>
 
             <div style={{ paddingTop: 20 }}>
-              {timelineUntuk(pendaftar.status, pendaftar.tglDaftar).map((t, i, arr) => (
+              {timelineUntuk(pendaftar.status, pendaftar.registeredAt).map((t, i, arr) => (
                 <div key={t.judul} style={{ display: 'flex', gap: 16 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: '0 0 22px' }}>
                     <div style={{
