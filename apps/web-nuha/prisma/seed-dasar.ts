@@ -209,10 +209,10 @@ async function main() {
     update: { aktif: row.aktif },
   })));
   for (const row of source.waCases) {
-    await prisma.templateWa.upsert({
-      where: { kode: String(row.kode) },
-      create: { kode: String(row.kode), role: String(row.role), judul: String(row.judul), pemicu: String(row.pemicu), waktu: String(row.waktu), isi: String(row.isi), aktif: Boolean(row.aktif) },
-      update: { judul: String(row.judul), isi: String(row.isi) },
+    await prisma.waTemplate.upsert({
+      where: { code: String(row.kode) },
+      create: { code: String(row.kode), role: String(row.role), title: String(row.judul), trigger: String(row.pemicu), schedule: String(row.waktu), content: String(row.isi), isActive: Boolean(row.aktif) },
+      update: { title: String(row.judul), content: String(row.isi) },
     });
   }
   await seedSuperAdmin();

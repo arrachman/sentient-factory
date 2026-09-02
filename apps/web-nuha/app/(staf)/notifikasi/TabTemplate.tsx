@@ -7,11 +7,11 @@ export async function TabTemplate({ searchParams }: { searchParams: Record<strin
   const raw = searchParams.q;
   const q = (Array.isArray(raw) ? raw[0] : raw)?.trim() ?? '';
 
-  const templates = await prisma.templateWa.findMany({
+  const templates = await prisma.waTemplate.findMany({
     where: q
-      ? { OR: [{ judul: { contains: q } }, { pemicu: { contains: q } }] }
+      ? { OR: [{ title: { contains: q } }, { trigger: { contains: q } }] }
       : undefined,
-    orderBy: { kode: 'asc' },
+    orderBy: { code: 'asc' },
   });
 
   return (
@@ -31,18 +31,18 @@ export async function TabTemplate({ searchParams }: { searchParams: Record<strin
             <div key={t.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
               <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 <span className="badge badge-biru">{t.role}</span>
-                <span className="muted" style={{ fontSize: 11 }}>{t.kode}</span>
+                <span className="muted" style={{ fontSize: 11 }}>{t.code}</span>
                 <div style={{ flex: 1 }} />
                 <form action={toggleTemplateWa}>
                   <input type="hidden" name="id" value={t.id} />
-                  <button className={`btn ${t.aktif ? '' : 'btn-sekunder'}`} type="submit">{t.aktif ? 'Aktif' : 'Nonaktif'}</button>
+                  <button className={`btn ${t.isActive ? '' : 'btn-sekunder'}`} type="submit">{t.isActive ? 'Aktif' : 'Nonaktif'}</button>
                 </form>
               </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700 }}>{t.judul}</div>
-                <div className="muted" style={{ marginTop: 3 }}>Pemicu: {t.pemicu}{t.waktu ? ` · ${t.waktu}` : ''}</div>
+                <div style={{ fontSize: 14, fontWeight: 700 }}>{t.title}</div>
+                <div className="muted" style={{ marginTop: 3 }}>Pemicu: {t.trigger}{t.schedule ? ` · ${t.schedule}` : ''}</div>
               </div>
-              <div className="inset" style={{ fontSize: 12.5, lineHeight: 1.6 }}>{t.isi}</div>
+              <div className="inset" style={{ fontSize: 12.5, lineHeight: 1.6 }}>{t.content}</div>
             </div>
           ))}
         </section>

@@ -460,9 +460,9 @@ async function seedPenjadwalNotifikasi() {
     { kodeTemplate: 'WA-GUR-05', cron: '30 6 * * *' }, // rekap ngajar: tiap hari 06.30 WIB
   ];
   for (const job of jobPenjadwal) {
-    await prisma.jadwalNotifikasi.upsert({
-      where: { kodeTemplate: job.kodeTemplate },
-      create: { kodeTemplate: job.kodeTemplate, cron: job.cron, aktif: true },
+    await prisma.notificationSchedule.upsert({
+      where: { templateCode: job.kodeTemplate },
+      create: { templateCode: job.kodeTemplate, cron: job.cron, isActive: true },
       update: { cron: job.cron },
     });
   }
@@ -473,10 +473,10 @@ async function seedOperational() {
   const mapelList = await prisma.mataPelajaran.findMany({ orderBy: { id: 'asc' } });
 
   for (const row of source.waCases) {
-    await prisma.templateWa.upsert({
-      where: { kode: String(row.kode) },
-      create: { kode: String(row.kode), role: String(row.role), judul: String(row.judul), pemicu: String(row.pemicu), waktu: String(row.waktu), isi: String(row.isi), aktif: Boolean(row.aktif) },
-      update: { aktif: Boolean(row.aktif) },
+    await prisma.waTemplate.upsert({
+      where: { code: String(row.kode) },
+      create: { code: String(row.kode), role: String(row.role), title: String(row.judul), trigger: String(row.pemicu), schedule: String(row.waktu), content: String(row.isi), isActive: Boolean(row.aktif) },
+      update: { isActive: Boolean(row.aktif) },
     });
   }
   await seedPenjadwalNotifikasi();
@@ -653,7 +653,7 @@ async function main() {
   for (const row of source.halaqah) await prisma.halaqah.create({ data: { nama: String(row.nama), ustadz: String(row.ustadz), waktu: String(row.waktu), tempat: String(row.tempat), jenjang: String(row.jenjang), anggota: Number(row.anggota) } }).catch(() => undefined);
   for (const row of source.pengumumanSantri) await prisma.announcement.create({ data: { date: parseDate(row.tgl), title: String(row.judul), content: String(row.isi), target: 'Santri' } }).catch(() => undefined);
   for (const row of source.agenda) await prisma.agenda.create({ data: { date: parseDate(row.tgl), time: jamSingkat(row.jam), title: String(row.judul), unit: String(row.unit) } }).catch(() => undefined);
-  for (const row of source.waCases) await prisma.templateWa.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), role: String(row.role), judul: String(row.judul), pemicu: String(row.pemicu), waktu: String(row.waktu), isi: String(row.isi), aktif: Boolean(row.aktif) }, update: { aktif: Boolean(row.aktif) } });
+  for (const row of source.waCases) await prisma.waTemplate.upsert({ where: { code: String(row.kode) }, create: { code: String(row.kode), role: String(row.role), title: String(row.judul), trigger: String(row.pemicu), schedule: String(row.waktu), content: String(row.isi), isActive: Boolean(row.aktif) }, update: { isActive: Boolean(row.aktif) } });
   await seedPenjadwalNotifikasi();
 
   // Transactional records — only for santri that resolved by name.

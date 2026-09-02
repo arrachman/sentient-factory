@@ -4,6 +4,29 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Rename teknis notifikasi WhatsApp ke Bahasa Inggris
+
+Model Prisma `TemplateWa`, `LogWa`, `JadwalNotifikasi`, `AntreanNotifikasi` kini
+menjadi `WaTemplate`/`wa_templates`, `WaLog`/`wa_logs`,
+`NotificationSchedule`/`notification_schedules`,
+`NotificationQueue`/`notification_queue`. Kolom teknis diterjemahkan: `kode→code`,
+`judul→title`, `pemicu→trigger`, `waktu→schedule`, `isi→content`, `aktif→isActive`
+(template); `tujuan→recipient`, `nomor→phone`, `isi→content`, `waktu→sentAt`
+(log); `kodeTemplate→templateCode`, `aktif→isActive`, `terakhirJalan→lastRunAt`
+(jadwal); `kodeTemplate→templateCode`, `tujuanId→recipientId`,
+`tanggalJadwal→scheduledDate`, `logWaId→waLogId` (antrean). Kunci rute CRUD
+(`template-wa`), form uji kirim, payload `FormData`/`/api/wa/kirim`
+(`templateKode`, `nomor`, `tujuan`, `isi`), dan label UI tetap berbahasa
+Indonesia sebagai kontrak presentasi.
+
+Migrasi `20260902220000_rename_wa_notification_to_english` memakai
+`CHANGE COLUMN`, `RENAME TABLE`, `RENAME INDEX`, dan drop/rebuild foreign key
+`wa_logs.template_id → wa_templates.id` secara non-destruktif. Konsumen yang
+diperbarui: `TabLog.tsx`, `TabTemplate.tsx`, `actions.ts`, halaman notifikasi,
+`/api/wa/kirim/route.ts`, `lib/wa.ts`, `lib/penjadwal/jalankan.ts`,
+`lib/crud/registry.ts`, `prisma/seed-dasar.ts`, `prisma/seed.ts`. `npx tsc
+--noEmit` dan `prisma migrate status` bersih.
+
 ## 2026-09-02 — Rename teknis Pengumuman/Agenda ke Bahasa Inggris
 
 Model Prisma `Pengumuman` dan tabel fisik `pengumuman` kini menjadi

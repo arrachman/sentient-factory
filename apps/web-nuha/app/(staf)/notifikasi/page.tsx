@@ -27,11 +27,11 @@ export default async function NotifikasiPage({
   const aktif = tabAktif(TABS, sp.tab);
 
   const [templates, logN, roles] = await Promise.all([
-    prisma.templateWa.findMany(),
-    prisma.logWa.count(),
-    prisma.templateWa.findMany({ select: { role: true }, distinct: ['role'] }),
+    prisma.waTemplate.findMany(),
+    prisma.waLog.count(),
+    prisma.waTemplate.findMany({ select: { role: true }, distinct: ['role'] }),
   ]);
-  const aktifN = templates.filter((t) => t.aktif).length;
+  const aktifN = templates.filter((t) => t.isActive).length;
 
   return (
     <>

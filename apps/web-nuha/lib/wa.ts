@@ -82,8 +82,8 @@ export async function kirimWa(params: SendWaParams) {
     }
   }
 
-  const entry = await prisma.logWa.create({
-    data: { templateId: params.templateId, tujuan: params.tujuan, nomor, isi: params.isi, status, messageId, error },
+  const entry = await prisma.waLog.create({
+    data: { templateId: params.templateId, recipient: params.tujuan, phone: nomor, content: params.isi, status, messageId, error },
   });
   await recordAudit({
     aksi: 'KIRIM_WA',

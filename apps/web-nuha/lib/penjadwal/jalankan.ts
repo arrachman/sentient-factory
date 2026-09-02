@@ -37,8 +37,8 @@ async function antreDanKirim(params: {
 }): Promise<'terkirim' | 'dilewati-tanpa-hp' | 'sudah-ada'> {
   let baris;
   try {
-    baris = await prisma.antreanNotifikasi.create({
-      data: { kodeTemplate: params.kodeJob, tujuanId: params.tujuanId, tanggalJadwal: new Date(`${params.tanggalJadwal}T00:00:00.000Z`) },
+    baris = await prisma.notificationQueue.create({
+      data: { templateCode: params.kodeJob, recipientId: params.tujuanId, scheduledDate: new Date(`${params.tanggalJadwal}T00:00:00.000Z`) },
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') return 'sudah-ada';
@@ -46,25 +46,25 @@ async function antreDanKirim(params: {
   }
 
   if (!params.nomorHp) {
-    await prisma.antreanNotifikasi.update({ where: { id: baris.id }, data: { status: 'DilewatiTanpaHp' } });
+    await prisma.notificationQueue.update({ where: { id: baris.id }, data: { status: 'DilewatiTanpaHp' } });
     return 'dilewati-tanpa-hp';
   }
 
-  const template = await prisma.templateWa.findUnique({ where: { kode: params.templateKode } });
+  const template = await prisma.waTemplate.findUnique({ where: { code: params.templateKode } });
   if (!template) {
     log('error', `Template WA "${params.templateKode}" tidak ditemukan — pesan penjadwal dibatalkan`, { kodeJob: params.kodeJob });
-    await prisma.antreanNotifikasi.update({ where: { id: baris.id }, data: { status: 'GagalTemplateHilang' } });
+    await prisma.notificationQueue.update({ where: { id: baris.id }, data: { status: 'GagalTemplateHilang' } });
     return 'dilewati-tanpa-hp';
   }
 
   const hasil = await kirimWa({
     nomor: params.nomorHp,
     tujuan: params.tujuanLabel,
-    isi: renderTemplate(template.isi, params.nilai),
+    isi: renderTemplate(template.content, params.nilai),
     templateId: template.id,
     actor: AKTOR_CRON,
   });
-  await prisma.antreanNotifikasi.update({ where: { id: baris.id }, data: { status: hasil.entry.status, logWaId: hasil.entry.id } });
+  await prisma.notificationQueue.update({ where: { id: baris.id }, data: { status: hasil.entry.status, waLogId: hasil.entry.id } });
   return 'terkirim';
 }
 
@@ -202,15 +202,15 @@ async function jalankanSatuJob(kodeJob: string): Promise<HasilJob> {
 /** Satu "tick": cek seluruh job aktif, jalankan yang cron-nya cocok waktu WIB sekarang. */
 export async function jalankanTick(): Promise<RingkasanTick> {
   const waktu = sekarangWib();
-  const jobs = await prisma.jadwalNotifikasi.findMany({ where: { aktif: true } });
+  const jobs = await prisma.notificationSchedule.findMany({ where: { isActive: true } });
   const ringkasan: RingkasanTick = { waktu, jobs: [] };
 
   for (const job of jobs) {
     if (!cocokkanCron(job.cron, waktu)) continue;
-    const hasil = await jalankanSatuJob(job.kodeTemplate);
-    await prisma.jadwalNotifikasi.update({ where: { id: job.id }, data: { terakhirJalan: new Date() } });
-    ringkasan.jobs.push({ kodeTemplate: job.kodeTemplate, ...hasil });
-    log('info', `Job ${job.kodeTemplate} selesai`, { ...hasil });
+    const hasil = await jalankanSatuJob(job.templateCode);
+    await prisma.notificationSchedule.update({ where: { id: job.id }, data: { lastRunAt: new Date() } });
+    ringkasan.jobs.push({ kodeTemplate: job.templateCode, ...hasil });
+    log('info', `Job ${job.templateCode} selesai`, { ...hasil });
   }
 
   return ringkasan;

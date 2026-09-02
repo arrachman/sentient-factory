@@ -1290,36 +1290,36 @@ model Kunjungan {
 // Notifikasi WhatsApp
 // ─────────────────────────────────────────────────────────────
 
-model TemplateWa {
-  id     Int     @id @default(autoincrement())
-  kode   String  @unique @db.VarChar(24)
-  role   String  @db.VarChar(64)
-  judul  String  @db.VarChar(160)
-  pemicu String  @db.VarChar(255)
-  waktu  String? @db.VarChar(120)
-  isi    String  @db.Text
-  aktif  Boolean @default(true)
+model WaTemplate {
+  id       Int     @id @default(autoincrement())
+  code     String  @unique @db.VarChar(24)
+  role     String  @db.VarChar(64)
+  title    String  @db.VarChar(160)
+  trigger  String  @db.VarChar(255)
+  schedule String? @db.VarChar(120)
+  content  String  @db.Text
+  isActive Boolean @default(true) @map("is_active")
 
-  log LogWa[]
+  logs WaLog[]
 
-  @@map("template_wa")
+  @@map("wa_templates")
 }
 
-model LogWa {
+model WaLog {
   id         BigInt   @id @default(autoincrement())
   templateId Int?     @map("template_id")
-  tujuan     String   @db.VarChar(160)
-  nomor      String   @db.VarChar(32)
-  isi        String   @db.Text
+  recipient  String   @db.VarChar(160)
+  phone      String   @db.VarChar(32)
+  content    String   @db.Text
   status     String   @default("Terkirim") @db.VarChar(24)
   messageId  String?  @map("message_id") @db.VarChar(96)
   error      String?  @db.VarChar(255)
-  waktu      DateTime @default(now())
+  sentAt     DateTime @default(now()) @map("sent_at")
 
-  template TemplateWa? @relation(fields: [templateId], references: [id])
+  template WaTemplate? @relation(fields: [templateId], references: [id])
 
-  @@index([waktu])
-  @@map("log_wa")
+  @@index([sentAt])
+  @@map("wa_logs")
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1332,35 +1332,31 @@ model LogWa {
 /// H-0 45 menit sebelum shift, keduanya dinamis per baris `JadwalPiket`)
 /// sehingga dipecah jadi dua job (`WA-GUR-04-H1`, `WA-GUR-04-H0`) yang
 /// keduanya mengirim template `WA-GUR-04` yang sama. Lihat `lib/penjadwal/`.
-model JadwalNotifikasi {
-  id            Int       @id @default(autoincrement())
-  kodeTemplate  String    @unique @map("kode_template") @db.VarChar(32)
-  cron          String    @db.VarChar(32)
-  aktif         Boolean   @default(true)
-  terakhirJalan DateTime? @map("terakhir_jalan")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+model NotificationSchedule {
+  id           Int       @id @default(autoincrement())
+  templateCode String    @unique @map("template_code") @db.VarChar(32)
+  cron         String    @db.VarChar(32)
+  isActive     Boolean   @default(true) @map("is_active")
+  lastRunAt    DateTime? @map("last_run_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  @@map("jadwal_notifikasi")
+  @@map("notification_schedules")
 }
 
-/// Antrean idempoten. `tujuanId` mengidentifikasi penerima DALAM job (mis.
-/// `"<pegawaiId>:H1"` untuk piket H-1, `"<pegawaiId>"` untuk rekap ngajar).
-/// `tanggalJadwal` adalah tanggal peristiwa yang diberitahukan (bukan tanggal
-/// kirim) supaya H-1 dan H-0 tidak bentrok kunci meski keduanya mengirim
-/// pada tanggal kirim yang berbeda tapi merujuk piket hari yang sama.
-model AntreanNotifikasi {
+/// Idempotent queue. `recipientId` identifies the recipient within a job.
+model NotificationQueue {
   id            BigInt   @id @default(autoincrement())
-  kodeTemplate  String   @map("kode_template") @db.VarChar(32)
-  tujuanId      String   @map("tujuan_id") @db.VarChar(64)
-  tanggalJadwal DateTime @map("tanggal_jadwal") @db.Date
+  templateCode  String   @map("template_code") @db.VarChar(32)
+  recipientId   String   @map("recipient_id") @db.VarChar(64)
+  scheduledDate DateTime @map("scheduled_date") @db.Date
   status        String   @default("Terkirim") @db.VarChar(24)
-  logWaId       BigInt?  @map("log_wa_id")
+  waLogId       BigInt?  @map("wa_log_id")
   createdAt     DateTime @default(now()) @map("created_at")
 
-  @@unique([kodeTemplate, tujuanId, tanggalJadwal])
-  @@index([tanggalJadwal])
-  @@map("antrean_notifikasi")
+  @@unique([templateCode, recipientId, scheduledDate])
+  @@index([scheduledDate])
+  @@map("notification_queue")
 }
 
 // ─────────────────────────────────────────────────────────────

@@ -49,9 +49,9 @@ export async function putuskanPerangkatWa(formData: FormData) {
 /** Aktif/nonaktifkan template — menghentikan/melanjutkan pengiriman otomatisnya. */
 export async function toggleTemplateWa(formData: FormData) {
   const id = Number(formData.get('id'));
-  const template = await prisma.templateWa.findUnique({ where: { id } });
+  const template = await prisma.waTemplate.findUnique({ where: { id } });
   if (!template) return;
-  await prisma.templateWa.update({ where: { id }, data: { aktif: !template.aktif } });
+  await prisma.waTemplate.update({ where: { id }, data: { isActive: !template.isActive } });
   revalidatePath('/notifikasi');
 }
 
@@ -65,8 +65,8 @@ export async function kirimPemicu(formData: FormData) {
   const tujuan = String(formData.get('tujuan') ?? '');
   if (!nomor || !tujuan) return;
 
-  const template = templateKode ? await prisma.templateWa.findUnique({ where: { kode: templateKode } }) : null;
-  const isiMentah = template?.isi ?? String(formData.get('isi') ?? '');
+  const template = templateKode ? await prisma.waTemplate.findUnique({ where: { code: templateKode } }) : null;
+  const isiMentah = template?.content ?? String(formData.get('isi') ?? '');
   if (!isiMentah) return;
 
   const values: Record<string, string> = {};

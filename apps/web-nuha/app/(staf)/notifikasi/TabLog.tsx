@@ -8,19 +8,19 @@ export async function TabLog({ searchParams }: { searchParams: Record<string, st
   const role = (Array.isArray(raw) ? raw[0] : raw) ?? '';
 
   const [templates, roles, logs] = await Promise.all([
-    prisma.templateWa.findMany({ orderBy: { kode: 'asc' } }),
-    prisma.templateWa.findMany({ select: { role: true }, distinct: ['role'] }),
-    prisma.logWa.findMany({
+    prisma.waTemplate.findMany({ orderBy: { code: 'asc' } }),
+    prisma.waTemplate.findMany({ select: { role: true }, distinct: ['role'] }),
+    prisma.waLog.findMany({
       where: role ? { template: { role } } : undefined,
       include: { template: true },
-      orderBy: { waktu: 'desc' },
+      orderBy: { sentAt: 'desc' },
       take: 30,
     }),
   ]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <WaTestForm templates={templates.filter((t) => t.aktif).map((t) => ({ kode: t.kode, judul: t.judul }))} />
+      <WaTestForm templates={templates.filter((t) => t.isActive).map((t) => ({ kode: t.code, judul: t.title }))} />
       <Card judul={`Log pengiriman ${role ? `— filter peran: ${role}` : ''}`} sub="Pesan yang Anda kirim dari tab &ldquo;Pemicu Otomatis&rdquo; akan muncul di baris teratas.">
         <form method="get" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
           <input type="hidden" name="tab" value="log" />
@@ -36,10 +36,10 @@ export async function TabLog({ searchParams }: { searchParams: Record<string, st
           <Tabel kolom={['Waktu', 'Peran', 'Penerima', 'Isi pesan', 'Status']}>
             {logs.map((l) => (
               <tr key={String(l.id)}>
-                <td>{l.waktu.toLocaleString('id-ID')}<div className="muted">{l.template?.kode ?? '-'}</div></td>
+                <td>{l.sentAt.toLocaleString('id-ID')}<div className="muted">{l.template?.code ?? '-'}</div></td>
                 <td>{l.template?.role ?? '-'}</td>
-                <td>{l.tujuan}<div className="muted">{l.nomor}</div></td>
-                <td style={{ maxWidth: 380 }}>{l.isi}</td>
+                <td>{l.recipient}<div className="muted">{l.phone}</div></td>
+                <td style={{ maxWidth: 380 }}>{l.content}</td>
                 <td><Badge status={l.status} /></td>
               </tr>
             ))}
