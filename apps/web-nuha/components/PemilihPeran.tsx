@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/prisma';
 import { gantiPeran } from '@/lib/samaran';
 import { PERAN_SUPERADMIN, type SessionPayload } from '@/lib/auth';
+import { PemilihPeranSelect } from '@/components/PemilihPeranSelect';
 
 /**
- * Pemilih peran untuk super admin. Submit biasa lewat Server Action, tanpa
- * 'use client': memilih opsi mengirim form dan halaman dirender ulang dengan
- * menu milik peran yang dipilih.
+ * Pemilih peran untuk super admin. Server Action dikirim otomatis saat
+ * dropdown berganti (lihat PemilihPeranSelect); halaman dirender ulang
+ * dengan menu milik peran yang dipilih.
  */
 export async function PemilihPeran({ session }: { session: SessionPayload }) {
   const daftar = await prisma.peran.findMany({
@@ -17,13 +18,7 @@ export async function PemilihPeran({ session }: { session: SessionPayload }) {
   return (
     <form action={gantiPeran} className="samaran">
       <label htmlFor="samaran-peran" className="label" style={{ margin: 0 }}>Lihat sebagai</label>
-      <select id="samaran-peran" name="peran" defaultValue={sedang}>
-        <option value="">Super admin (peran asli)</option>
-        {daftar.map((peran) => (
-          <option key={peran.key} value={peran.key}>{peran.nama}</option>
-        ))}
-      </select>
-      <button type="submit" className="btn-sekunder">Terapkan</button>
+      <PemilihPeranSelect daftar={daftar} sedang={sedang} />
     </form>
   );
 }

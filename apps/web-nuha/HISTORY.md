@@ -4,6 +4,12 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Pemilih peran langsung diterapkan saat dipilih
+
+Tombol Terapkan di samping dropdown "Lihat sebagai" dihapus. Memilih peran
+langsung memperbarui sesi, mencatat audit, dan kembali ke beranda dengan menu
+sesuai peran yang dipilih.
+
 ## 2026-09-02 — Jarak ikon dropdown pemilih peran diperbaiki
 
 Panah native pada dropdown "Lihat sebagai" diganti SVG yang diposisikan 12px
