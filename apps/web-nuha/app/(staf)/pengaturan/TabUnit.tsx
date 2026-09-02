@@ -14,20 +14,20 @@ function Baris({ label, nilai }: { label: string; nilai?: string | number | null
 }
 
 /** Alamat detail + nama lengkap desa terpilih; jatuh ke alamat teks bila desa belum dipilih. */
-function alamatTampil(alamat: string | null, desa: { labelTipe: string | null; nama: string; namaLengkap: string | null } | null): string | null {
-  if (!desa) return alamat;
-  return [alamat, desa.namaLengkap ?? `${desa.labelTipe ?? ''} ${desa.nama}`.trim()].filter(Boolean).join(', ');
+function alamatTampil(alamat: string | null, region: { typeLabel: string | null; name: string; fullName: string | null } | null): string | null {
+  if (!region) return alamat;
+  return [alamat, region.fullName ?? `${region.typeLabel ?? ''} ${region.name}`.trim()].filter(Boolean).join(', ');
 }
 
 /** Profil yayasan induk beserta kartu profil tiap unit di bawahnya. */
 export async function TabUnit() {
   const [yayasan, units] = await Promise.all([
-    prisma.profilLembaga.findUnique({ where: { key: 'yayasan' }, include: { desa: true } }),
+    prisma.profilLembaga.findUnique({ where: { key: 'yayasan' }, include: { region: true } }),
     prisma.unit.findMany({
       include: {
         _count: { select: { santri: true, pegawai: true, kelas: true } },
         kepalaPegawai: { include: { orang: { select: { nama: true } } } },
-        desa: true,
+        region: true,
       },
       orderBy: { nama: 'asc' },
     }),
@@ -49,7 +49,7 @@ export async function TabUnit() {
               <Baris label="Pengasuh" nilai={yayasan.pengasuhNama} />
               <Baris label="Berdiri" nilai={yayasan.tahunBerdiri} />
               <Baris label="Akta" nilai={yayasan.aktaNotaris} />
-              <Baris label="Alamat" nilai={alamatTampil(yayasan.alamat, yayasan.desa)} />
+              <Baris label="Alamat" nilai={alamatTampil(yayasan.alamat, yayasan.region)} />
               <Baris label="Telepon" nilai={yayasan.telepon} />
               <Baris label="Email" nilai={yayasan.email} />
               <Baris label="Rekening" nilai={yayasan.rekening} />
@@ -80,7 +80,7 @@ export async function TabUnit() {
                 <Baris label="NPSN / NSM" nilai={unit.npsn} />
                 <Baris label="Akreditasi" nilai={unit.akreditasi} />
                 <Baris label="Berdiri" nilai={unit.tahunBerdiri} />
-                <Baris label="Alamat" nilai={alamatTampil(unit.alamat, unit.desa)} />
+                <Baris label="Alamat" nilai={alamatTampil(unit.alamat, unit.region)} />
                 <Baris label="Telepon" nilai={unit.telepon} />
                 <Baris label="Email" nilai={unit.email} />
                 <Baris label="Deskripsi" nilai={unit.deskripsi} />

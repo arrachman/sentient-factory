@@ -4,6 +4,34 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Rename teknis domain wilayah/negara ke Bahasa Inggris (Fase 1)
+
+Tahap pertama dari rename teknis penuh (model Prisma + tabel/kolom fisik MySQL)
+mengikuti kosakata `temp/schema.sql`: `Negara→Country` (`negara→countries`),
+`Wilayah→Region` (`wilayah→regions`), `AliasWilayah→RegionAlias`
+(`alias_wilayah→region_aliases`), `AlamatLuarNegeri→ForeignAddress`
+(`alamat_luar_negeri→foreign_addresses`). Enum `TingkatWilayah→RegionLevel`
+(`Provinsi/Kota/Kecamatan/Desa`→`Province/City/District/Village`) dan
+`JenisAliasWilayah→RegionAliasType`
+(`NamaLama/EjaanLain/Singkatan/BahasaLokal`→`FormerName/AlternateSpelling/Abbreviation/LocalLanguage`).
+
+Migrasi `20260902121216_english_rename_reference_domain` ditulis manual
+(bukan draft otomatis Prisma yang destruktif) memakai `RENAME TABLE`,
+`ALTER TABLE ... CHANGE COLUMN`, `RENAME INDEX`, dan
+`DROP/ADD FOREIGN KEY` — data dipertahankan (keempat tabel referensi masih
+kosong saat migrasi dijalankan, jadi tidak ada risiko konversi nilai enum).
+Konsumen teknis disesuaikan: `lib/wilayah.ts` (`parseIdWilayah→parseRegionId`,
+`validasiDesaAktif→validateActiveVillage`), `prisma/wilayah-path.ts`
+(`bangunUlangJalurWilayah→rebuildRegionPaths`), `prisma/import/import-wilayah.ts`,
+`app/api/wilayah/cari/route.ts`, tab Biodata santri, tab Unit/Profil yayasan,
+ekspor data akademik, dan validasi CRUD `desaId`.
+
+**Sengaja tidak berubah**: rute publik `/api/wilayah/cari`, field relasi
+`desaId` pada `Orang`/`Unit`/`ProfilLembaga` (menunggu Fase 2 rename
+`Orang→Person`), teks/label berbahasa Indonesia yang tampil ke pengguna.
+Rename model `Orang`, lalu ~80 model domain lain, disusul sweep global untuk
+identifier/string tersisa, adalah pekerjaan lanjutan (task berjalan).
+
 ## 2026-09-02 — Fondasi skema wilayah/alamat ternormalisasi
 
 Menambah model `Negara`, `Wilayah` (hirarki provinsi→kota→kecamatan→desa

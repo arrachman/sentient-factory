@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { readSession } from '@/lib/auth';
 
-const BATAS = 10;
+const LIMIT = 10;
 
 export async function GET(request: Request) {
   const session = await readSession();
@@ -13,31 +13,31 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const q = params.get('q')?.trim() ?? '';
   const ids = (params.get('ids') ?? '').split(',').map((item) => item.trim()).filter((item) => /^\d+$/.test(item));
-  const rows = await prisma.wilayah.findMany({
+  const rows = await prisma.region.findMany({
     where: ids.length ? { id: { in: ids.map((item) => BigInt(item)) } } : {
-      aktif: true,
-      tingkat: 'Desa',
+      isActive: true,
+      level: 'Village',
       ...(q ? {
         OR: [
-          { nama: { contains: q } },
-          { namaLengkap: { contains: q } },
-          { alias: { some: { alias: { contains: q } } } },
+          { name: { contains: q } },
+          { fullName: { contains: q } },
+          { aliases: { some: { alias: { contains: q } } } },
         ],
       } : {}),
     },
-    select: { id: true, nama: true, labelTipe: true, namaLengkap: true, kodePos: true, aktif: true, tingkat: true },
-    orderBy: { nama: 'asc' },
-    take: ids.length ? ids.length : BATAS,
+    select: { id: true, name: true, typeLabel: true, fullName: true, postalCode: true, isActive: true, level: true },
+    orderBy: { name: 'asc' },
+    take: ids.length ? ids.length : LIMIT,
   });
 
   return NextResponse.json({
     success: true,
     data: rows
-      .filter((row) => ids.length || (row.aktif && row.tingkat === 'Desa'))
+      .filter((row) => ids.length || (row.isActive && row.level === 'Village'))
       .map((row) => ({
         id: String(row.id),
-        nama: `${row.labelTipe ?? ''} ${row.nama}`.trim(),
-        keterangan: [row.namaLengkap, row.kodePos ? `Kode pos ${row.kodePos}` : null].filter(Boolean).join(' · '),
+        nama: `${row.typeLabel ?? ''} ${row.name}`.trim(),
+        keterangan: [row.fullName, row.postalCode ? `Kode pos ${row.postalCode}` : null].filter(Boolean).join(' · '),
       })),
   });
 }

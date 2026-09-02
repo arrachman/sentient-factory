@@ -80,7 +80,7 @@ export async function GET(request: Request) {
             include: { wali: true },
             orderBy: [{ utama: 'desc' }, { peran: 'asc' }],
           },
-          desa: true,
+          region: true,
         },
       },
       unit: true,
@@ -111,7 +111,7 @@ export async function GET(request: Request) {
         santri.unit?.nama, santri.unit?.jenjang, santri.kelas?.nama, santri.kelas?.tingkat, santri.program, santri.tahunMasuk, santri.status,
         santri.kamar?.asrama.nama, santri.kamar?.kode,
         orang.alamat, orang.rt, orang.rw, orang.kelurahan, orang.kecamatan, orang.kabupaten,
-        orang.desaId ? String(orang.desaId) : null, orang.desa?.namaLengkap, orang.kodePos ?? orang.desa?.kodePos, orang.noKk,
+        orang.desaId ? String(orang.desaId) : null, orang.region?.fullName, orang.kodePos ?? orang.region?.postalCode, orang.noKk,
         orang.anakKe, orang.jumlahSaudara, orang.hobi, orang.citaCita, orang.asalSekolah, orang.pendidikanTerakhir, orang.hp, orang.email,
         ...dataWali(ayah), ...dataWali(ibu), ...dataWali(wali),
       ]);

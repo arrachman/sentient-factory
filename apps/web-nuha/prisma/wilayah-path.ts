@@ -6,51 +6,51 @@ import type { PrismaClient } from '@prisma/client';
  * kolom ini tidak boleh diisi manual karena mengganti pola 4x self-join per baris
  * jadi filter langsung.
  */
-export async function bangunUlangJalurWilayah(prisma: PrismaClient, negaraId: number): Promise<void> {
-  const semua = await prisma.wilayah.findMany({
-    where: { negaraId },
-    select: { id: true, indukId: true, tingkat: true, nama: true, labelTipe: true },
+export async function rebuildRegionPaths(prisma: PrismaClient, countryId: number): Promise<void> {
+  const allRegions = await prisma.region.findMany({
+    where: { countryId },
+    select: { id: true, parentId: true, level: true, name: true, typeLabel: true },
   });
-  const provinsi = new Map<bigint, { provinsiId: bigint; kotaId: null; kecamatanId: null; kedalaman: number; namaLengkap: string }>();
-  const kota = new Map<bigint, { provinsiId: bigint; kotaId: bigint; kecamatanId: null; kedalaman: number; namaLengkap: string }>();
-  const kecamatan = new Map<bigint, { provinsiId: bigint; kotaId: bigint; kecamatanId: bigint; kedalaman: number; namaLengkap: string }>();
+  const provinces = new Map<bigint, { provinceId: bigint; cityId: null; districtId: null; depth: number; fullName: string }>();
+  const cities = new Map<bigint, { provinceId: bigint; cityId: bigint; districtId: null; depth: number; fullName: string }>();
+  const districts = new Map<bigint, { provinceId: bigint; cityId: bigint; districtId: bigint; depth: number; fullName: string }>();
 
-  for (const w of semua) {
-    if (w.tingkat === 'Provinsi') provinsi.set(w.id, { provinsiId: w.id, kotaId: null, kecamatanId: null, kedalaman: 1, namaLengkap: w.nama });
+  for (const region of allRegions) {
+    if (region.level === 'Province') provinces.set(region.id, { provinceId: region.id, cityId: null, districtId: null, depth: 1, fullName: region.name });
   }
-  for (const w of semua) {
-    if (w.tingkat !== 'Kota' || !w.indukId) continue;
-    const induk = provinsi.get(w.indukId);
-    if (!induk) continue;
-    kota.set(w.id, { provinsiId: induk.provinsiId, kotaId: w.id, kecamatanId: null, kedalaman: 2, namaLengkap: `${w.labelTipe ?? ''} ${w.nama}, ${induk.namaLengkap}`.trim() });
+  for (const region of allRegions) {
+    if (region.level !== 'City' || !region.parentId) continue;
+    const parent = provinces.get(region.parentId);
+    if (!parent) continue;
+    cities.set(region.id, { provinceId: parent.provinceId, cityId: region.id, districtId: null, depth: 2, fullName: `${region.typeLabel ?? ''} ${region.name}, ${parent.fullName}`.trim() });
   }
-  for (const w of semua) {
-    if (w.tingkat !== 'Kecamatan' || !w.indukId) continue;
-    const induk = kota.get(w.indukId);
-    if (!induk) continue;
-    kecamatan.set(w.id, { provinsiId: induk.provinsiId, kotaId: induk.kotaId, kecamatanId: w.id, kedalaman: 3, namaLengkap: `${w.nama}, ${induk.namaLengkap}` });
+  for (const region of allRegions) {
+    if (region.level !== 'District' || !region.parentId) continue;
+    const parent = cities.get(region.parentId);
+    if (!parent) continue;
+    districts.set(region.id, { provinceId: parent.provinceId, cityId: parent.cityId, districtId: region.id, depth: 3, fullName: `${region.name}, ${parent.fullName}` });
   }
 
-  const pembaruan: { id: bigint; data: Record<string, unknown> }[] = [];
-  for (const w of semua) {
-    if (w.tingkat === 'Provinsi') {
-      const jalur = provinsi.get(w.id)!;
-      pembaruan.push({ id: w.id, data: { provinsiId: jalur.provinsiId, kotaId: null, kecamatanId: null, kedalaman: jalur.kedalaman, namaLengkap: jalur.namaLengkap } });
-    } else if (w.tingkat === 'Kota') {
-      const jalur = kota.get(w.id);
-      if (jalur) pembaruan.push({ id: w.id, data: { provinsiId: jalur.provinsiId, kotaId: jalur.kotaId, kecamatanId: null, kedalaman: jalur.kedalaman, namaLengkap: jalur.namaLengkap } });
-    } else if (w.tingkat === 'Kecamatan') {
-      const jalur = kecamatan.get(w.id);
-      if (jalur) pembaruan.push({ id: w.id, data: { provinsiId: jalur.provinsiId, kotaId: jalur.kotaId, kecamatanId: jalur.kecamatanId, kedalaman: jalur.kedalaman, namaLengkap: jalur.namaLengkap } });
-    } else if (w.tingkat === 'Desa' && w.indukId) {
-      const induk = kecamatan.get(w.indukId);
-      if (!induk) continue;
-      const namaLengkap = `${w.labelTipe ?? ''} ${w.nama}, ${induk.namaLengkap}`.trim();
-      pembaruan.push({ id: w.id, data: { provinsiId: induk.provinsiId, kotaId: induk.kotaId, kecamatanId: induk.kecamatanId, kedalaman: 4, namaLengkap } });
+  const updates: { id: bigint; data: Record<string, unknown> }[] = [];
+  for (const region of allRegions) {
+    if (region.level === 'Province') {
+      const path = provinces.get(region.id)!;
+      updates.push({ id: region.id, data: { provinceId: path.provinceId, cityId: null, districtId: null, depth: path.depth, fullName: path.fullName } });
+    } else if (region.level === 'City') {
+      const path = cities.get(region.id);
+      if (path) updates.push({ id: region.id, data: { provinceId: path.provinceId, cityId: path.cityId, districtId: null, depth: path.depth, fullName: path.fullName } });
+    } else if (region.level === 'District') {
+      const path = districts.get(region.id);
+      if (path) updates.push({ id: region.id, data: { provinceId: path.provinceId, cityId: path.cityId, districtId: path.districtId, depth: path.depth, fullName: path.fullName } });
+    } else if (region.level === 'Village' && region.parentId) {
+      const parent = districts.get(region.parentId);
+      if (!parent) continue;
+      const fullName = `${region.typeLabel ?? ''} ${region.name}, ${parent.fullName}`.trim();
+      updates.push({ id: region.id, data: { provinceId: parent.provinceId, cityId: parent.cityId, districtId: parent.districtId, depth: 4, fullName } });
     }
   }
 
-  for (const item of pembaruan) {
-    await prisma.wilayah.update({ where: { id: item.id }, data: item.data });
+  for (const item of updates) {
+    await prisma.region.update({ where: { id: item.id }, data: item.data });
   }
 }

@@ -4,7 +4,7 @@ import { readSession } from '@/lib/auth';
 import { recordAudit, requestIp } from '@/lib/audit';
 import { castId, coerce, countRows, delegateFor, listRows, serialize } from '@/lib/crud/engine';
 import { getEntity } from '@/lib/crud/registry';
-import { validasiDesaAktif } from '@/lib/wilayah';
+import { validateActiveVillage } from '@/lib/wilayah';
 
 const idSchema = z.string().regex(/^\d+$/);
 
@@ -56,7 +56,7 @@ export async function POST(request: Request, context: { params: Promise<{ entity
   if (!body || typeof body !== 'object') return responseError('Data tidak valid.', 400);
   const parsed = coerce(auth.entity, body as Record<string, unknown>);
   if (parsed.errors.length) return responseError(parsed.errors[0], 400);
-  const wilayahError = await validasiDesaAktif(parsed.data.desaId);
+  const wilayahError = await validateActiveVillage(parsed.data.desaId);
   if (wilayahError) return responseError(wilayahError, 400);
   try {
     const row = await delegateFor(auth.entity).create({ data: parsed.data });
@@ -91,7 +91,7 @@ async function updateOrDelete(request: Request, context: { params: Promise<{ ent
     const data = action === 'delete' ? await delegate.delete({ where: { id: castId(auth.entity, idResult.data) } }) : await (async () => {
       const parsed = coerce(auth.entity, body ?? {}, true);
       if (parsed.errors.length) throw new Error(parsed.errors[0]);
-      const wilayahError = await validasiDesaAktif(parsed.data.desaId);
+      const wilayahError = await validateActiveVillage(parsed.data.desaId);
       if (wilayahError) throw new Error(wilayahError);
       return delegate.update({ where: { id: castId(auth.entity, idResult.data) }, data: parsed.data });
     })();

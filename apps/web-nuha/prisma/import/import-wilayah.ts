@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { PrismaClient, TingkatWilayah } from '@prisma/client';
-import { bangunUlangJalurWilayah } from '../wilayah-path';
+import { PrismaClient, RegionLevel } from '@prisma/client';
+import { rebuildRegionPaths } from '../wilayah-path';
 
 type Row = {
   code: string;
   name: string;
-  level: TingkatWilayah;
+  level: RegionLevel;
   parentCode?: string | null;
   typeLabel?: string | null;
   postalCode?: string | null;
@@ -17,17 +17,17 @@ type Input = {
     source: string;
     version: string;
     sha256?: string;
-    expectedCounts?: Partial<Record<TingkatWilayah, number>>;
+    expectedCounts?: Partial<Record<RegionLevel, number>>;
   };
   country: { iso2: string; iso3: string; name: string; numericCode?: string };
   rows: Row[];
 };
 
-const LEVEL_ORDER: TingkatWilayah[] = ['Provinsi', 'Kota', 'Kecamatan', 'Desa'];
-const PARENT_LEVEL: Partial<Record<TingkatWilayah, TingkatWilayah>> = {
-  Kota: 'Provinsi',
-  Kecamatan: 'Kota',
-  Desa: 'Kecamatan',
+const LEVEL_ORDER: RegionLevel[] = ['Province', 'City', 'District', 'Village'];
+const PARENT_LEVEL: Partial<Record<RegionLevel, RegionLevel>> = {
+  City: 'Province',
+  District: 'City',
+  Village: 'District',
 };
 
 function argumen(nama: string): string | undefined {
@@ -94,48 +94,48 @@ async function main() {
 
   const prisma = new PrismaClient();
   try {
-    const negara = await prisma.negara.upsert({
+    const country = await prisma.country.upsert({
       where: { iso2: input.country.iso2.toUpperCase() },
       create: {
         iso2: input.country.iso2.toUpperCase(),
         iso3: input.country.iso3.toUpperCase(),
-        nama: input.country.name,
-        kodeNumerik: input.country.numericCode,
+        name: input.country.name,
+        numericCode: input.country.numericCode,
       },
-      update: { iso3: input.country.iso3.toUpperCase(), nama: input.country.name, kodeNumerik: input.country.numericCode },
+      update: { iso3: input.country.iso3.toUpperCase(), name: input.country.name, numericCode: input.country.numericCode },
     });
-    const ids = new Map<string, bigint>();
+    const regionIds = new Map<string, bigint>();
     for (const level of LEVEL_ORDER) {
       for (const row of input.rows.filter((item) => item.level === level)) {
-        const parentId = row.parentCode ? ids.get(row.parentCode) : undefined;
+        const parentId = row.parentCode ? regionIds.get(row.parentCode) : undefined;
         if (row.parentCode && !parentId) gagal(`parent ${row.parentCode} belum tersedia saat menulis ${row.code}.`);
-        const wilayah = await prisma.wilayah.upsert({
-          where: { negaraId_kode: { negaraId: negara.id, kode: row.code } },
+        const region = await prisma.region.upsert({
+          where: { countryId_code: { countryId: country.id, code: row.code } },
           create: {
-            negaraId: negara.id,
-            indukId: parentId,
-            tingkat: row.level,
-            kode: row.code,
-            nama: row.name.trim(),
-            labelTipe: row.typeLabel?.trim() || null,
-            kodePos: row.postalCode || null,
-            aktif: true,
+            countryId: country.id,
+            parentId,
+            level: row.level,
+            code: row.code,
+            name: row.name.trim(),
+            typeLabel: row.typeLabel?.trim() || null,
+            postalCode: row.postalCode || null,
+            isActive: true,
           },
           update: {
-            indukId: parentId,
-            tingkat: row.level,
-            nama: row.name.trim(),
-            labelTipe: row.typeLabel?.trim() || null,
-            kodePos: row.postalCode || null,
-            aktif: true,
+            parentId,
+            level: row.level,
+            name: row.name.trim(),
+            typeLabel: row.typeLabel?.trim() || null,
+            postalCode: row.postalCode || null,
+            isActive: true,
           },
           select: { id: true },
         });
-        ids.set(row.code, wilayah.id);
+        regionIds.set(row.code, region.id);
       }
     }
-    await bangunUlangJalurWilayah(prisma, negara.id);
-    console.log(`Import wilayah selesai: ${input.rows.length} baris untuk ${negara.nama}.`);
+    await rebuildRegionPaths(prisma, country.id);
+    console.log(`Import wilayah selesai: ${input.rows.length} baris untuk ${country.name}.`);
   } finally {
     await prisma.$disconnect();
   }

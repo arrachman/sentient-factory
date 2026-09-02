@@ -25,116 +25,116 @@ enum JenisKelamin {
   P
 }
 
-enum TingkatWilayah {
-  Provinsi
-  Kota
-  Kecamatan
-  Desa
+enum RegionLevel {
+  Province
+  City
+  District
+  Village
 }
 
-enum JenisAliasWilayah {
-  NamaLama
-  EjaanLain
-  Singkatan
-  BahasaLokal
+enum RegionAliasType {
+  FormerName
+  AlternateSpelling
+  Abbreviation
+  LocalLanguage
 }
 
-model Negara {
+model Country {
   id           Int      @id @default(autoincrement())
   iso2         String   @unique @db.Char(2)
   iso3         String   @unique @db.Char(3)
-  kodeNumerik  String?  @map("kode_numerik") @db.Char(3)
-  nama         String   @db.VarChar(100)
-  namaLokal    String?  @map("nama_lokal") @db.VarChar(100)
-  kodeTelepon  String?  @map("kode_telepon") @db.VarChar(8)
-  kodeMataUang String?  @map("kode_mata_uang") @db.Char(3)
-  aktif        Boolean  @default(true)
+  numericCode  String?  @map("numeric_code") @db.Char(3)
+  name         String   @db.VarChar(100)
+  localName    String?  @map("local_name") @db.VarChar(100)
+  phoneCode    String?  @map("phone_code") @db.VarChar(8)
+  currencyCode String?  @map("currency_code") @db.Char(3)
+  isActive     Boolean  @default(true) @map("is_active")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  wilayah          Wilayah[]
-  alamatLuarNegeri AlamatLuarNegeri[]
+  regions          Region[]
+  foreignAddresses ForeignAddress[]
 
-  @@index([nama])
-  @@map("negara")
+  @@index([name])
+  @@map("countries")
 }
 
-model Wilayah {
-  id              BigInt          @id @default(autoincrement())
-  negaraId        Int             @map("negara_id")
-  indukId         BigInt?         @map("induk_id")
-  tingkat         TingkatWilayah
-  kode            String          @db.VarChar(20)
-  nama            String          @db.VarChar(120)
-  labelTipe       String?         @map("label_tipe") @db.VarChar(30)
-  provinsiId      BigInt?         @map("provinsi_id")
-  kotaId          BigInt?         @map("kota_id")
-  kecamatanId     BigInt?         @map("kecamatan_id")
-  kedalaman       Int             @default(1)
-  namaLengkap     String?         @map("nama_lengkap") @db.VarChar(400)
-  kodePos         String?         @map("kode_pos") @db.Char(5)
-  latitude        Decimal?        @db.Decimal(10, 7)
-  longitude       Decimal?        @db.Decimal(10, 7)
-  luasKm2         Decimal?        @map("luas_km2") @db.Decimal(12, 4)
-  populasi        Int?
-  aktif           Boolean         @default(true)
-  digantiDenganId BigInt?         @map("diganti_dengan_id")
-  createdAt       DateTime?       @default(now()) @map("created_at")
-  updatedAt       DateTime?       @updatedAt @map("updated_at")
+model Region {
+  id           BigInt       @id @default(autoincrement())
+  countryId    Int          @map("country_id")
+  parentId     BigInt?      @map("parent_id")
+  level        RegionLevel
+  code         String       @db.VarChar(20)
+  name         String       @db.VarChar(120)
+  typeLabel    String?      @map("type_label") @db.VarChar(30)
+  provinceId   BigInt?      @map("province_id")
+  cityId       BigInt?      @map("city_id")
+  districtId   BigInt?      @map("district_id")
+  depth        Int          @default(1)
+  fullName     String?      @map("full_name") @db.VarChar(400)
+  postalCode   String?      @map("postal_code") @db.Char(5)
+  latitude     Decimal?     @db.Decimal(10, 7)
+  longitude    Decimal?     @db.Decimal(10, 7)
+  areaKm2      Decimal?     @map("area_km2") @db.Decimal(12, 4)
+  population   Int?
+  isActive     Boolean      @default(true) @map("is_active")
+  replacedById BigInt?      @map("replaced_by_id")
+  createdAt    DateTime?    @default(now()) @map("created_at")
+  updatedAt    DateTime?    @updatedAt @map("updated_at")
 
-  negara           Negara          @relation(fields: [negaraId], references: [id])
-  induk            Wilayah?        @relation("WilayahInduk", fields: [indukId], references: [id], onDelete: Cascade)
-  anak             Wilayah[]       @relation("WilayahInduk")
-  provinsi         Wilayah?        @relation("WilayahProvinsi", fields: [provinsiId], references: [id], onDelete: SetNull)
-  wilayahProvinsi  Wilayah[]       @relation("WilayahProvinsi")
-  kota             Wilayah?        @relation("WilayahKota", fields: [kotaId], references: [id], onDelete: SetNull)
-  wilayahKota      Wilayah[]       @relation("WilayahKota")
-  kecamatan        Wilayah?        @relation("WilayahKecamatan", fields: [kecamatanId], references: [id], onDelete: SetNull)
-  wilayahKecamatan Wilayah[]       @relation("WilayahKecamatan")
-  digantiDengan    Wilayah?        @relation("WilayahPengganti", fields: [digantiDenganId], references: [id], onDelete: SetNull)
-  wilayahLama      Wilayah[]       @relation("WilayahPengganti")
-  alias            AliasWilayah[]
-  orangDesa        Orang[]         @relation("OrangDesa")
-  unitDesa         Unit[]          @relation("UnitDesa")
-  lembagaDesa      ProfilLembaga[] @relation("LembagaDesa")
+  country          Country              @relation(fields: [countryId], references: [id])
+  parent           Region?              @relation("RegionParent", fields: [parentId], references: [id], onDelete: Cascade)
+  children         Region[]             @relation("RegionParent")
+  province         Region?              @relation("RegionProvince", fields: [provinceId], references: [id], onDelete: SetNull)
+  provinceRegions  Region[]             @relation("RegionProvince")
+  city             Region?              @relation("RegionCity", fields: [cityId], references: [id], onDelete: SetNull)
+  cityRegions      Region[]             @relation("RegionCity")
+  district         Region?              @relation("RegionDistrict", fields: [districtId], references: [id], onDelete: SetNull)
+  districtRegions  Region[]             @relation("RegionDistrict")
+  replacedBy       Region?              @relation("RegionReplacement", fields: [replacedById], references: [id], onDelete: SetNull)
+  replacedRegions  Region[]             @relation("RegionReplacement")
+  aliases          RegionAlias[]
+  people           Orang[]              @relation("PersonRegion")
+  unitLocations    Unit[]               @relation("UnitRegion")
+  institutionLocations ProfilLembaga[]  @relation("InstitutionProfileRegion")
 
-  @@unique([negaraId, kode])
-  @@index([indukId, tingkat, aktif])
-  @@index([tingkat, aktif])
-  @@index([provinsiId, kotaId, kecamatanId])
-  @@index([kodePos])
-  @@map("wilayah")
+  @@unique([countryId, code])
+  @@index([parentId, level, isActive])
+  @@index([level, isActive])
+  @@index([provinceId, cityId, districtId])
+  @@index([postalCode])
+  @@map("regions")
 }
 
-model AliasWilayah {
-  id        BigInt            @id @default(autoincrement())
-  wilayahId BigInt            @map("wilayah_id")
-  alias     String            @db.VarChar(120)
-  jenis     JenisAliasWilayah
+model RegionAlias {
+  id       BigInt          @id @default(autoincrement())
+  regionId BigInt          @map("region_id")
+  alias    String          @db.VarChar(120)
+  type     RegionAliasType
 
-  wilayah   Wilayah           @relation(fields: [wilayahId], references: [id], onDelete: Cascade)
+  region   Region          @relation(fields: [regionId], references: [id], onDelete: Cascade)
 
-  @@unique([wilayahId, alias])
+  @@unique([regionId, alias])
   @@index([alias])
-  @@map("alias_wilayah")
+  @@map("region_aliases")
 }
 
-model AlamatLuarNegeri {
+model ForeignAddress {
   id           BigInt  @id @default(autoincrement())
-  orangId      BigInt  @unique @map("orang_id")
-  negaraId     Int     @map("negara_id")
-  alamatBaris1 String  @map("alamat_baris_1") @db.VarChar(255)
-  alamatBaris2 String? @map("alamat_baris_2") @db.VarChar(255)
-  kota         String? @db.VarChar(120)
-  negaraBagian String? @map("negara_bagian") @db.VarChar(120)
-  kodePos      String? @map("kode_pos") @db.VarChar(20)
-  aktif        Boolean @default(true)
+  personId     BigInt  @unique @map("person_id")
+  countryId    Int     @map("country_id")
+  addressLine1 String  @map("address_line1") @db.VarChar(255)
+  addressLine2 String? @map("address_line2") @db.VarChar(255)
+  cityName     String? @map("city_name") @db.VarChar(120)
+  stateName    String? @map("state_name") @db.VarChar(120)
+  postalCode   String? @map("postal_code") @db.VarChar(20)
+  isCurrent    Boolean @default(true) @map("is_current")
 
-  orang        Orang  @relation(fields: [orangId], references: [id], onDelete: Cascade)
-  negara       Negara @relation(fields: [negaraId], references: [id])
+  person       Orang   @relation(fields: [personId], references: [id], onDelete: Cascade)
+  country      Country @relation(fields: [countryId], references: [id])
 
-  @@index([negaraId])
-  @@map("alamat_luar_negeri")
+  @@index([countryId])
+  @@map("foreign_addresses")
 }
 
 model Orang {
@@ -183,8 +183,8 @@ model Orang {
   pegawai     Pegawai?
   waliDari    RelasiWali[] @relation("WaliOrang")
   sebagaiAnak RelasiWali[] @relation("AnakOrang")
-  desa             Wilayah?          @relation("OrangDesa", fields: [desaId], references: [id], onDelete: SetNull)
-  alamatLuarNegeri AlamatLuarNegeri?
+  region           Region?          @relation("PersonRegion", fields: [desaId], references: [id], onDelete: SetNull)
+  foreignAddress   ForeignAddress?
 
   @@index([nama])
   @@index([desaId])
@@ -326,7 +326,7 @@ model Unit {
   jadwal        JadwalPelajaran[]
   ujian         Ujian[]
   kepalaPegawai Pegawai?   @relation("UnitKepala", fields: [kepalaPegawaiId], references: [id])
-  desa          Wilayah?   @relation("UnitDesa", fields: [desaId], references: [id], onDelete: SetNull)
+  region        Region?    @relation("UnitRegion", fields: [desaId], references: [id], onDelete: SetNull)
 
   @@index([desaId])
   @@map("unit")
@@ -360,7 +360,7 @@ model ProfilLembaga {
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
-  desa      Wilayah? @relation("LembagaDesa", fields: [desaId], references: [id], onDelete: SetNull)
+  region    Region?  @relation("InstitutionProfileRegion", fields: [desaId], references: [id], onDelete: SetNull)
 
   @@index([desaId])
   @@map("profil_lembaga")

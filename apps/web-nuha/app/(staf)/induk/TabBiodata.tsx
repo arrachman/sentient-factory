@@ -16,14 +16,14 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
   const santri = await prisma.santri.findUnique({
     where: { id: santriId },
     include: {
-      orang: { include: { riwayatPendidikan: { include: { unit: true, tahunAjaran: true }, orderBy: { tahunAjaran: { kode: 'desc' } } }, desa: true } },
+      orang: { include: { riwayatPendidikan: { include: { unit: true, tahunAjaran: true }, orderBy: { tahunAjaran: { kode: 'desc' } } }, region: true } },
       unit: true, kelas: true, kamar: { include: { asrama: true } },
     },
   });
   if (!santri) return null;
 
-  const alamatTampil = santri.orang.desa
-    ? [santri.orang.alamat, santri.orang.desa.namaLengkap ?? `${santri.orang.desa.labelTipe ?? ''} ${santri.orang.desa.nama}`.trim()]
+  const alamatTampil = santri.orang.region
+    ? [santri.orang.alamat, santri.orang.region.fullName ?? `${santri.orang.region.typeLabel ?? ''} ${santri.orang.region.name}`.trim()]
         .filter(Boolean)
         .join(', ')
     : santri.orang.alamat ?? '-';
