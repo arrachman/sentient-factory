@@ -18,7 +18,6 @@ export const ENTITIES: Entity[] = [
     // Satu identitas dipakai ulang oleh modul lain; jelaskan agar operator tidak
     // membuat baris ganda untuk orang yang sama.
     formLebar: true,
-    deskripsi: 'Data dasar satu orang, dipakai ulang oleh modul Santri, Kepegawaian, Wali, dan akun login. Buat satu baris per orang — jangan digandakan per peran.',
     idType: 'bigint',
     fields: [
       ...FIELD_ORANG_DASAR,

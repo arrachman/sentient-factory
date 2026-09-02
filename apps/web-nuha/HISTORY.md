@@ -4,6 +4,11 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-02 — Label deskripsi modal Identitas orang dihapus
+
+Teks penjelasan di bawah judul modal "Tambah/Ubah identitas orang" dihapus
+sesuai permintaan; form dan validasi tidak berubah.
+
 ## 2026-09-02 — Tombol aksi modal master data dipindah ke kanan
 
 Tombol "Batal" dan "Simpan" pada footer modal form (mis. `/data/*`) kini rata
