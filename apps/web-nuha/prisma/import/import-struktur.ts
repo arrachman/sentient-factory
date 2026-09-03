@@ -142,7 +142,7 @@ const EJAAN_SK: Readonly<Record<string, string>> = Object.freeze({
 });
 
 async function jalankan(): Promise<void> {
-  const pegawai = await prisma.pegawai.findMany({ include: { person: true } });
+  const pegawai = await prisma.staff.findMany({ include: { person: true } });
   const kamusPegawai = new Map(pegawai.map((p) => [normalisasiNama(p.person.fullName), p]));
 
   let cocok = 0;
@@ -157,27 +157,27 @@ async function jalankan(): Promise<void> {
       if (p) cocok += 1;
       else takCocok += 1;
 
-      await prisma.jabatanStruktural.upsert({
-        where: { skNomor_urutan: { skNomor: sumber.skNomor, urutan: i } },
+      await prisma.structuralPosition.upsert({
+        where: { decreeNumber_order: { decreeNumber: sumber.skNomor, order: i } },
         create: {
-          skNomor: sumber.skNomor,
-          urutan: i,
-          jabatan: b.jabatan,
-          lingkup: sumber.lingkup,
-          divisi: b.divisi,
-          periodeMulai: new Date(sumber.periodeMulai),
-          periodeSelesai: new Date(sumber.periodeSelesai),
-          pegawaiId: p?.id ?? null,
-          namaMentah: b.namaMentah,
+          decreeNumber: sumber.skNomor,
+          order: i,
+          position: b.jabatan,
+          scope: sumber.lingkup,
+          division: b.divisi,
+          startPeriod: new Date(sumber.periodeMulai),
+          endPeriod: new Date(sumber.periodeSelesai),
+          staffId: p?.id ?? null,
+          sourceName: b.namaMentah,
         },
         update: {
-          jabatan: b.jabatan,
-          lingkup: sumber.lingkup,
-          divisi: b.divisi,
-          periodeMulai: new Date(sumber.periodeMulai),
-          periodeSelesai: new Date(sumber.periodeSelesai),
-          pegawaiId: p?.id ?? null,
-          namaMentah: b.namaMentah,
+          position: b.jabatan,
+          scope: sumber.lingkup,
+          division: b.divisi,
+          startPeriod: new Date(sumber.periodeMulai),
+          endPeriod: new Date(sumber.periodeSelesai),
+          staffId: p?.id ?? null,
+          sourceName: b.namaMentah,
         },
       });
       ditulis += 1;

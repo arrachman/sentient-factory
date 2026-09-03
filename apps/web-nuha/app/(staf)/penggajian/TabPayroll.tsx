@@ -14,15 +14,15 @@ export async function TabPayroll({
   const raw = searchParams.q;
   const q = (Array.isArray(raw) ? raw[0] : raw)?.trim() ?? '';
 
-  const pegawai = await prisma.pegawai.findMany({
+  const pegawai = await prisma.staff.findMany({
     where: q
-      ? { OR: [{ person: { fullName: { contains: q } } }, { jabatan: { contains: q } }] }
+      ? { OR: [{ person: { fullName: { contains: q } } }, { position: { contains: q } }] }
       : undefined,
-    include: { person: true, unit: true, komponen: true },
-    orderBy: { nip: 'asc' },
+    include: { person: true, unit: true, salaryComponent: true },
+    orderBy: { employeeNumber: 'asc' },
   });
-  const slips = await prisma.payrollSlip.findMany({ where: { periode, pegawaiId: { in: pegawai.map((p) => p.id) } } });
-  const slipByPegawai = new Map(slips.map((s) => [String(s.pegawaiId), s]));
+  const slips = await prisma.paySlip.findMany({ where: { period: periode, staffId: { in: pegawai.map((p) => p.id) } } });
+  const slipByPegawai = new Map(slips.map((s) => [String(s.staffId), s]));
 
   return (
     <Card
@@ -41,7 +41,7 @@ export async function TabPayroll({
         <Tabel kolom={['Pegawai', 'Jabatan', 'Status', { label: 'Bruto', num: true }, { label: 'Potongan', num: true }, { label: 'Netto', num: true }, 'Slip']}>
           {pegawai.map((p) => {
             const slip = slipByPegawai.get(String(p.id));
-            const h = hitungGaji(p.komponen);
+            const h = hitungGaji(p.salaryComponent);
             return (
               <tr key={String(p.id)}>
                 <td>
@@ -49,11 +49,11 @@ export async function TabPayroll({
                     <Avatar nama={p.person.fullName} />
                     <div>
                       <div style={{ fontWeight: 600 }}>{p.person.fullName}</div>
-                      <div className="muted">{p.nip} · {p.unit?.nama ?? 'Yayasan'}</div>
+                      <div className="muted">{p.employeeNumber} · {p.unit?.nama ?? 'Yayasan'}</div>
                     </div>
                   </div>
                 </td>
-                <td>{p.jabatan}</td>
+                <td>{p.position}</td>
                 <td>{p.status}</td>
                 <td className="num">{rupiah(h.bruto)}</td>
                 <td className="num" style={{ color: '#B91C1C' }}>{rupiah(h.potongan)}</td>

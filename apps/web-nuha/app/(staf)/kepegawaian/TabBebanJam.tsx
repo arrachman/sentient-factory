@@ -3,10 +3,10 @@ import { Card, Tabel, Kosong } from '@/components';
 import { whereUnit, type FilterPegawai } from './filter';
 
 export async function TabBebanJam({ f }: { f: FilterPegawai }) {
-  const pegawai = whereUnit(f.unit);
-  const beban = await prisma.bebanJam.findMany({
-    where: pegawai ? { pegawai } : {},
-    include: { pegawai: { include: { person: true } }, academicYear: true },
+  const staff = whereUnit(f.unit);
+  const beban = await prisma.teachingLoad.findMany({
+    where: staff ? { staff } : {},
+    include: { staff: { include: { person: true } }, academicYear: true },
     orderBy: [{ id: 'desc' }],
   });
 
@@ -21,11 +21,11 @@ export async function TabBebanJam({ f }: { f: FilterPegawai }) {
         <Tabel kolom={['Pegawai', 'Tahun ajaran', 'Mapel', { label: 'Jumlah jam', num: true }, 'Keterangan']}>
           {beban.map((b) => (
             <tr key={String(b.id)}>
-              <td>{b.pegawai.person.fullName}</td>
+              <td>{b.staff.person.fullName}</td>
               <td>{b.academicYear ? `${b.academicYear.code} ${b.academicYear.semester}` : '-'}</td>
-              <td>{b.mapel ?? '-'}</td>
-              <td className="num">{b.jumlahJam ?? '-'}</td>
-              <td>{b.keterangan ?? '-'}</td>
+              <td>{b.subject ?? '-'}</td>
+              <td className="num">{b.hours ?? '-'}</td>
+              <td>{b.notes ?? '-'}</td>
             </tr>
           ))}
         </Tabel>

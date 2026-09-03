@@ -195,27 +195,27 @@ async function jalankan(): Promise<void> {
       update: { fullName: g.nama, gender: g.jk, birthDate: g.tglLahir, birthPlace: g.tmpLahir },
     });
 
-    await prisma.pegawai.upsert({
-      where: { nip: g.nip },
+    await prisma.staff.upsert({
+      where: { employeeNumber: g.nip },
       create: {
         personId: orang.id,
-        nip: g.nip,
+        employeeNumber: g.nip,
         unitId: unit.id,
-        jabatan: g.jabatan,
+        position: g.jabatan,
         status: 'Aktif',
-        pendidikanTerakhir: g.pendidikanTerakhir,
-        mapelDiampu: g.mapelDiampu || null,
-        tugasTambahan: g.tugasTambahan || null,
-        tmpTglLahir: `${g.tmpLahir}, ${g.tglLahir.toISOString().slice(0, 10)}`,
+        lastEducation: g.pendidikanTerakhir,
+        subjectsTaught: g.mapelDiampu || null,
+        additionalDuties: g.tugasTambahan || null,
+        birthPlaceDate: `${g.tmpLahir}, ${g.tglLahir.toISOString().slice(0, 10)}`,
       },
       update: {
         personId: orang.id,
         unitId: unit.id,
-        jabatan: g.jabatan,
-        pendidikanTerakhir: g.pendidikanTerakhir,
-        mapelDiampu: g.mapelDiampu || null,
-        tugasTambahan: g.tugasTambahan || null,
-        tmpTglLahir: `${g.tmpLahir}, ${g.tglLahir.toISOString().slice(0, 10)}`,
+        position: g.jabatan,
+        lastEducation: g.pendidikanTerakhir,
+        subjectsTaught: g.mapelDiampu || null,
+        additionalDuties: g.tugasTambahan || null,
+        birthPlaceDate: `${g.tmpLahir}, ${g.tglLahir.toISOString().slice(0, 10)}`,
       },
     });
   }

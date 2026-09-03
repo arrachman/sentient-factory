@@ -5,10 +5,10 @@ import { whereUnit, type FilterPegawai } from './filter';
 export async function TabPiket({ f }: { f: FilterPegawai }) {
   // Baris tanpa pegawai terhubung sengaja ikut tersaring keluar saat lembaga
   // dipilih — kita belum tahu ia milik lembaga mana.
-  const pegawai = whereUnit(f.unit);
+  const staff = whereUnit(f.unit);
   const piket = await prisma.jadwalPiket.findMany({
-    where: pegawai ? { pegawai } : {},
-    include: { pegawai: { include: { person: true } } },
+    where: staff ? { staff } : {},
+    include: { staff: { include: { person: true } } },
     orderBy: [{ urutan: 'asc' }],
   });
 
@@ -25,7 +25,7 @@ export async function TabPiket({ f }: { f: FilterPegawai }) {
             <tr key={p.id}>
               <td>{p.hari}</td>
               <td>{p.waktuMulai}–{p.waktuSelesai}</td>
-              <td>{p.pegawai?.person.fullName ?? '-'}</td>
+              <td>{p.staff?.person.fullName ?? '-'}</td>
             </tr>
           ))}
         </Tabel>

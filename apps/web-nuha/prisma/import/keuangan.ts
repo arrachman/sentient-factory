@@ -138,7 +138,7 @@ async function siapkanGaji(baris: Record<string, string>[], berkas: string, gala
       if (nipTerlihat.has(nip)) throw new Error(`nip "${nip}" duplikat di dalam berkas`);
       nipTerlihat.add(nip);
 
-      const pegawai = await prisma.pegawai.findUnique({ where: { nip }, select: { id: true } });
+      const pegawai = await prisma.staff.findUnique({ where: { employeeNumber: nip }, select: { id: true } });
       if (!pegawai) throw new Error(`nip "${nip}" tidak ditemukan di data pegawai`);
 
       const baseSalary = keAngka(row.pokok, 'pokok');
@@ -300,9 +300,9 @@ async function jalankan(): Promise<void> {
 
   for (const g of siapGaji) {
     await prisma.salaryComponent.upsert({
-      where: { pegawaiId: g.pegawaiId },
+      where: { staffId: g.pegawaiId },
       create: {
-        pegawaiId: g.pegawaiId,
+        staffId: g.pegawaiId,
         baseSalary: g.baseSalary,
         positionAllowance: g.positionAllowance,
         familyAllowance: g.familyAllowance,

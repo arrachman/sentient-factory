@@ -15,7 +15,7 @@ async function kaitOrang(rows: Row[]): Promise<Map<string, PeranTersimpan>> {
 
   const [santri, pegawai, wali, orangTua] = await Promise.all([
     prisma.santri.findMany({ where: { personId: { in: ids } }, select: { personId: true, nis: true, status: true, kelas: { select: { nama: true } } } }),
-    prisma.pegawai.findMany({ where: { personId: { in: ids } }, select: { personId: true, nip: true, jabatan: true, tugasTambahan: true } }),
+    prisma.staff.findMany({ where: { personId: { in: ids } }, select: { personId: true, employeeNumber: true, position: true, additionalDuties: true } }),
     prisma.relasiWali.findMany({ where: { waliId: { in: ids } }, select: { waliId: true, anakId: true, hubungan: true, anak: { select: { fullName: true } } } }),
     // Wali dari orang ini (dipakai saat identitasnya berperan santri).
     prisma.relasiWali.findMany({ where: { anakId: { in: ids } }, select: { anakId: true, waliId: true, hubungan: true, utama: true }, orderBy: [{ utama: 'desc' }, { id: 'asc' }] }),
@@ -39,10 +39,10 @@ async function kaitOrang(rows: Row[]): Promise<Map<string, PeranTersimpan>> {
     tandai(s.personId, 'santri');
   }
   for (const p of pegawai) {
-    const detail = [`NIP ${p.nip}`, p.jabatan, p.tugasTambahan].filter(Boolean).join(' · ');
+    const detail = [`NIP ${p.employeeNumber}`, p.position, p.additionalDuties].filter(Boolean).join(' · ');
     tambah(p.personId, { label: 'Pegawai', nada: 'biru', href: '/kepegawaian', detail });
-    setel(p.personId, { peranNip: p.nip, peranJabatan: p.jabatan, peranTugasTambahan: p.tugasTambahan ?? '' });
-    tandai(p.personId, p.jabatan.includes('Guru') ? 'guru' : 'staf');
+    setel(p.personId, { peranNip: p.employeeNumber, peranJabatan: p.position, peranTugasTambahan: p.additionalDuties ?? '' });
+    tandai(p.personId, p.position.includes('Guru') ? 'guru' : 'staf');
   }
   const relasiTeks = (items: { id: bigint; hubungan: string }[]) =>
     JSON.stringify(items.map((item) => ({ id: String(item.id), hubungan: item.hubungan })));

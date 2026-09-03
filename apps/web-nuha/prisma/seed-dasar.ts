@@ -125,12 +125,12 @@ const PROFIL_YAYASAN = {
  */
 async function tautkanKepalaUnit() {
   for (const row of UNIT_ROWS) {
-    const pegawai = await prisma.pegawai.findFirst({
+    const pegawai = await prisma.staff.findFirst({
       where: { person: { fullName: row.kepalaNama } },
       select: { id: true },
     });
     if (!pegawai) continue;
-    await prisma.unit.update({ where: { key: row.key }, data: { kepalaPegawaiId: pegawai.id } });
+    await prisma.unit.update({ where: { key: row.key }, data: { headStaffId: pegawai.id } });
   }
 }
 

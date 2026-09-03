@@ -7,14 +7,14 @@ const WARNA_UNIT = ['#0F6B3D', '#1D4ED8', '#E8973A', '#7C2D12', '#5B21B6', '#9A3
 /** Rekap beban gaji per unit + ringkasan status slip period berjalan. */
 export async function TabRekap({ periode }: { periode: string }) {
   const [pegawai, slips] = await Promise.all([
-    prisma.pegawai.findMany({ include: { unit: true, komponen: true } }),
-    prisma.payrollSlip.findMany({ where: { periode } }),
+    prisma.staff.findMany({ include: { unit: true, salaryComponent: true } }),
+    prisma.paySlip.findMany({ where: { period: periode } }),
   ]);
 
   const perUnit = new Map<string, { n: number; total: number }>();
   for (const p of pegawai) {
     const nama = p.unit?.nama ?? 'Yayasan';
-    const h = hitungGaji(p.komponen);
+    const h = hitungGaji(p.salaryComponent);
     const acc = perUnit.get(nama) ?? { n: 0, total: 0 };
     acc.n += 1;
     acc.total += h.netto;

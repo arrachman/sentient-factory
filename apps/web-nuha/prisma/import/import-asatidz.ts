@@ -98,17 +98,17 @@ async function jalankan(): Promise<void> {
     // penugasan Madin-nya — jangan bikin Orang/Pegawai kembar.
     const nipLain = SUDAH_TERDAFTAR[baris.nama];
     if (nipLain) {
-      const adaDuluan = await prisma.pegawai.findUnique({ where: { nip: nipLain } });
+      const adaDuluan = await prisma.staff.findUnique({ where: { employeeNumber: nipLain } });
       if (!adaDuluan) {
         throw new Error(
           `${baris.nama} dipetakan ke NIP ${nipLain} (lihat SUDAH_TERDAFTAR) tetapi pegawai itu tidak ada — ` +
             'jalankan impor guru MA lebih dulu, atau perbaiki pemetaannya',
         );
       }
-      await prisma.pegawaiUnit.upsert({
-        where: { pegawaiId_unitId: { pegawaiId: adaDuluan.id, unitId: unit.id } },
-        create: { pegawaiId: adaDuluan.id, unitId: unit.id, jabatan, utama: false },
-        update: { jabatan },
+      await prisma.staffUnit.upsert({
+        where: { staffId_unitId: { staffId: adaDuluan.id, unitId: unit.id } },
+        create: { staffId: adaDuluan.id, unitId: unit.id, position: jabatan, isPrimary: false },
+        update: { position: jabatan },
       });
       continue;
     }
@@ -140,12 +140,12 @@ async function jalankan(): Promise<void> {
       },
     });
 
-    const sebelum = await prisma.pegawai.findUnique({ where: { nip } });
+    const sebelum = await prisma.staff.findUnique({ where: { employeeNumber: nip } });
     if (!sebelum) dibuat += 1;
 
-    const pegawai = await prisma.pegawai.upsert({
-      where: { nip },
-      create: { personId: orang.id, nip, unitId: unit.id, jabatan, status: 'Aktif' },
+    const pegawai = await prisma.staff.upsert({
+      where: { employeeNumber: nip },
+      create: { personId: orang.id, employeeNumber: nip, unitId: unit.id, position: jabatan, status: 'Aktif' },
       // `jabatan`/`unitId` sengaja TIDAK ditimpa saat update: keduanya boleh
       // diubah operator lewat aplikasi (mis. dipromosikan jadi Pengasuh) dan
       // impor ulang tidak boleh mengembalikannya ke nilai awal.
@@ -154,10 +154,10 @@ async function jalankan(): Promise<void> {
 
     // Penyaring & pohon kepegawaian membaca `pegawai_unit`, jadi unit utama
     // harus punya barisnya sendiri di sana.
-    await prisma.pegawaiUnit.upsert({
-      where: { pegawaiId_unitId: { pegawaiId: pegawai.id, unitId: pegawai.unitId ?? unit.id } },
-      create: { pegawaiId: pegawai.id, unitId: pegawai.unitId ?? unit.id, jabatan, nip, utama: true },
-      update: { utama: true },
+    await prisma.staffUnit.upsert({
+      where: { staffId_unitId: { staffId: pegawai.id, unitId: pegawai.unitId ?? unit.id } },
+      create: { staffId: pegawai.id, unitId: pegawai.unitId ?? unit.id, position: jabatan, employeeNumber: nip, isPrimary: true },
+      update: { isPrimary: true },
     });
   }
 

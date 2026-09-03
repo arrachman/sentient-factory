@@ -105,7 +105,7 @@ const ratakanNama = (nama: string): string =>
 
 /** Cari Pegawai unit MA dari nama resmi, toleran terhadap gelar & varian ejaan. */
 async function cariPegawai(unitId: number, namaResmi: string): Promise<{ id: bigint } | null> {
-  const kandidat = await prisma.pegawai.findMany({
+  const kandidat = await prisma.staff.findMany({
     where: { unitId },
     select: { id: true, person: { select: { fullName: true } } },
   });
@@ -147,7 +147,7 @@ async function jalankan(): Promise<void> {
 
   let ditulis = 0;
   for (const s of siap) {
-    let pegawaiId: bigint | null = null;
+    let staffId: bigint | null = null;
     if (s.guruAlias && !KODE_BUKAN_GURU.has(s.guruAlias)) {
       const namaResmi = namaResmiDariAlias(s.guruAlias);
       const pegawai = await cariPegawai(unit.id, namaResmi);
@@ -157,13 +157,13 @@ async function jalankan(): Promise<void> {
         await prisma.$disconnect();
         return;
       }
-      pegawaiId = pegawai.id;
+      staffId = pegawai.id;
     }
 
     await prisma.jadwalPelajaran.upsert({
       where: { hari_jamKe_kelas: { hari: s.hari, jamKe: s.jamKe, kelas: s.kelas } },
-      create: { hari: s.hari, jamKe: s.jamKe, waktu: s.waktu, mapel: s.mapel, kelas: s.kelas, unitId: unit.id, pegawaiId },
-      update: { waktu: s.waktu, mapel: s.mapel, unitId: unit.id, pegawaiId },
+      create: { hari: s.hari, jamKe: s.jamKe, waktu: s.waktu, mapel: s.mapel, kelas: s.kelas, unitId: unit.id, staffId },
+      update: { waktu: s.waktu, mapel: s.mapel, unitId: unit.id, staffId },
     });
     ditulis += 1;
   }

@@ -79,7 +79,7 @@ const EJAAN_FOTO: Readonly<Record<string, string>> = Object.freeze({
 type Galat = { baris: number; pesan: string };
 
 async function jalankan(): Promise<void> {
-  const pegawai = await prisma.pegawai.findMany({ include: { person: true } });
+  const pegawai = await prisma.staff.findMany({ include: { person: true } });
   const kamusPegawai = new Map(pegawai.map((p) => [normalisasiNama(p.person.fullName), p]));
 
   const siap: { baris: BarisPiket; pegawaiId: bigint }[] = [];
@@ -118,10 +118,10 @@ async function jalankan(): Promise<void> {
         hari: s.baris.hari,
         waktuMulai: s.baris.waktuMulai,
         waktuSelesai: s.baris.waktuSelesai,
-        pegawaiId: s.pegawaiId,
+        staffId: s.pegawaiId,
         urutan: s.baris.urutan,
       },
-      update: { waktuSelesai: s.baris.waktuSelesai, pegawaiId: s.pegawaiId, urutan: s.baris.urutan },
+      update: { waktuSelesai: s.baris.waktuSelesai, staffId: s.pegawaiId, urutan: s.baris.urutan },
     });
   }
   await recordAudit({

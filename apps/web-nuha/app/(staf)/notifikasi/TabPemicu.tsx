@@ -34,9 +34,9 @@ export async function TabPemicu() {
       orderBy: { departedAt: 'desc' },
       take: 8,
     }),
-    prisma.payrollSlip.findMany({
+    prisma.paySlip.findMany({
       where: { status: 'Terbit', paidAt: null },
-      include: { pegawai: { include: { person: true } } },
+      include: { staff: { include: { person: true } } },
       orderBy: { createdAt: 'desc' },
       take: 8,
     }),
@@ -76,11 +76,11 @@ export async function TabPemicu() {
     baris.push({
       code: `SLP-${s.id}`,
       judul: 'Slip gaji baru terbit',
-      detail: `${s.pegawai.person.fullName} · periode ${s.periode} · netto ${rupiah(Number(s.netAmount))}`,
-      target: `${s.pegawai.person.fullName} (pegawai)`,
-      nomor: s.pegawai.person.phone ?? '',
-      tujuan: s.pegawai.person.fullName,
-      isi: `Assalamu'alaikum, slip gaji periode ${s.periode} atas nama ${s.pegawai.person.fullName} telah terbit dengan netto ${rupiah(Number(s.netAmount))}.`,
+      detail: `${s.staff.person.fullName} · periode ${s.period} · netto ${rupiah(Number(s.netAmount))}`,
+      target: `${s.staff.person.fullName} (pegawai)`,
+      nomor: s.staff.person.phone ?? '',
+      tujuan: s.staff.person.fullName,
+      isi: `Assalamu'alaikum, slip gaji periode ${s.period} atas nama ${s.staff.person.fullName} telah terbit dengan netto ${rupiah(Number(s.netAmount))}.`,
     });
   }
 

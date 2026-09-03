@@ -7,16 +7,16 @@ import { TANPA_LEMBAGA, type FilterPegawai } from './filter';
 export async function TabStruktur({ f }: { f: FilterPegawai }) {
   // Struktur disaring lewat kolom `lingkup` SK ("MA", "Pondok"), bukan relasi
   // pegawai — banyak baris SK belum terhubung ke data Pegawai.
-  const lingkup = f.unit && f.unit !== TANPA_LEMBAGA ? f.unit : undefined;
-  const baris = await prisma.jabatanStruktural.findMany({
-    where: lingkup ? { lingkup } : {},
-    include: { pegawai: { include: { person: true } } },
-    orderBy: [{ lingkup: 'asc' }, { skNomor: 'asc' }, { urutan: 'asc' }],
+  const scope = f.unit && f.unit !== TANPA_LEMBAGA ? f.unit : undefined;
+  const baris = await prisma.structuralPosition.findMany({
+    where: scope ? { scope } : {},
+    include: { staff: { include: { person: true } } },
+    orderBy: [{ scope: 'asc' }, { decreeNumber: 'asc' }, { order: 'asc' }],
   });
 
   const kelompok = new Map<string, typeof baris>();
   for (const b of baris) {
-    const key = `${b.lingkup} — SK ${b.skNomor}`;
+    const key = `${b.scope} — SK ${b.decreeNumber}`;
     kelompok.set(key, [...(kelompok.get(key) ?? []), b]);
   }
 
@@ -34,18 +34,18 @@ export async function TabStruktur({ f }: { f: FilterPegawai }) {
             <Tabel kolom={['Jabatan', 'Divisi', 'Nama (SK)', 'Pegawai terhubung', 'Periode']}>
               {grup.map((b) => (
                 <tr key={String(b.id)}>
-                  <td>{b.jabatan}</td>
-                  <td>{b.divisi ?? <span style={{ opacity: 0.6 }}>—</span>}</td>
-                  <td>{b.namaMentah}</td>
+                  <td>{b.position}</td>
+                  <td>{b.division ?? <span style={{ opacity: 0.6 }}>—</span>}</td>
+                  <td>{b.sourceName}</td>
                   <td>
-                    {b.pegawai ? (
-                      <span className="badge badge-hijau">{b.pegawai.person.fullName}</span>
+                    {b.staff ? (
+                      <span className="badge badge-hijau">{b.staff.person.fullName}</span>
                     ) : (
                       <span className="badge badge-netral">belum terhubung</span>
                     )}
                   </td>
                   <td>
-                    {b.periodeMulai.toLocaleDateString('id-ID')} – {b.periodeSelesai.toLocaleDateString('id-ID')}
+                    {b.startPeriod.toLocaleDateString('id-ID')} – {b.endPeriod.toLocaleDateString('id-ID')}
                   </td>
                 </tr>
               ))}

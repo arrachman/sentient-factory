@@ -3,11 +3,11 @@ import { Card, Tabel, Kosong, Badge, UKURAN_HALAMAN } from '@/components';
 import { whereUnit, type FilterPegawai } from './filter';
 
 export async function TabPresensi({ f }: { f: FilterPegawai }) {
-  const pegawai = whereUnit(f.unit);
-  const presensi = await prisma.presensiPegawai.findMany({
-    where: pegawai ? { pegawai } : {},
-    include: { pegawai: { include: { person: true } } },
-    orderBy: [{ tgl: 'desc' }],
+  const staff = whereUnit(f.unit);
+  const presensi = await prisma.staffAttendance.findMany({
+    where: staff ? { staff } : {},
+    include: { staff: { include: { person: true } } },
+    orderBy: [{ date: 'desc' }],
     take: UKURAN_HALAMAN,
   });
 
@@ -22,10 +22,10 @@ export async function TabPresensi({ f }: { f: FilterPegawai }) {
         <Tabel kolom={['Tanggal', 'Pegawai', 'Masuk', 'Pulang', 'Status']}>
           {presensi.map((p) => (
             <tr key={String(p.id)}>
-              <td>{p.tgl.toLocaleDateString('id-ID')}</td>
-              <td>{p.pegawai.person.fullName}</td>
-              <td>{p.jamMasuk ?? '-'}</td>
-              <td>{p.jamPulang ?? '-'}</td>
+              <td>{p.date.toLocaleDateString('id-ID')}</td>
+              <td>{p.staff.person.fullName}</td>
+              <td>{p.checkIn ?? '-'}</td>
+              <td>{p.checkOut ?? '-'}</td>
               <td><Badge status={p.status} /></td>
             </tr>
           ))}

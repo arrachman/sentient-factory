@@ -3,10 +3,10 @@ import { Card, Tabel, Kosong, UKURAN_HALAMAN } from '@/components';
 import { whereUnit, type FilterPegawai } from './filter';
 
 export async function TabJurnal({ f }: { f: FilterPegawai }) {
-  const pegawai = whereUnit(f.unit);
+  const staff = whereUnit(f.unit);
   const jurnal = await prisma.jurnalMengajar.findMany({
-    where: pegawai ? { pegawai } : {},
-    include: { pegawai: { include: { person: true } } },
+    where: staff ? { staff } : {},
+    include: { staff: { include: { person: true } } },
     orderBy: [{ tgl: 'desc' }],
     take: UKURAN_HALAMAN,
   });
@@ -23,7 +23,7 @@ export async function TabJurnal({ f }: { f: FilterPegawai }) {
           {jurnal.map((j) => (
             <tr key={String(j.id)}>
               <td>{j.tgl.toLocaleDateString('id-ID')}</td>
-              <td>{j.pegawai?.person.fullName ?? '-'}</td>
+              <td>{j.staff?.person.fullName ?? '-'}</td>
               <td>{j.kelas ?? '-'}</td>
               <td>{j.jamKe ?? '-'}</td>
               <td>{j.materi ?? '-'}</td>

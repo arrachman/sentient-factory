@@ -180,7 +180,7 @@ model Person {
   user              User?
   santri            Santri?
   riwayatPendidikan RiwayatPendidikan[]
-  pegawai           Pegawai?
+  staff             Staff?
   waliDari          RelasiWali[]        @relation("WaliOrang")
   sebagaiAnak       RelasiWali[]        @relation("AnakOrang")
   region            Region?             @relation("PersonRegion", fields: [regionId], references: [id], onDelete: SetNull)
@@ -313,7 +313,7 @@ model Unit {
   kepalaNama      String?  @map("kepala_nama") @db.VarChar(160)
   /// Sebutan jabatan kepala unit ("Kepala Sekolah", "Kepala Madrasah", "Pengasuh").
   kepalaJabatan   String?  @map("kepala_jabatan") @db.VarChar(120)
-  kepalaPegawaiId BigInt?  @map("kepala_pegawai_id")
+  headStaffId     BigInt?  @map("head_staff_id")
   visi            String?  @db.Text
   misi            String?  @db.Text
 
@@ -321,11 +321,11 @@ model Unit {
   santri            Santri[]
   santriKelas       SantriKelas[]
   riwayatPendidikan RiwayatPendidikan[]
-  pegawai           Pegawai[]           @relation("PegawaiUnit")
-  pegawaiUnit       PegawaiUnit[]
+  staff             Staff[]             @relation("PegawaiUnit")
+  staffUnit         StaffUnit[]
   jadwal            JadwalPelajaran[]
   ujian             Ujian[]
-  kepalaPegawai     Pegawai?            @relation("UnitKepala", fields: [kepalaPegawaiId], references: [id])
+  kepalaPegawai     Staff?              @relation("UnitKepala", fields: [headStaffId], references: [id])
   region            Region?             @relation("UnitRegion", fields: [desaId], references: [id], onDelete: SetNull)
 
   @@index([desaId])
@@ -373,13 +373,13 @@ model Kelas {
   tingkat        String  @db.VarChar(16)
   /// Deprecated: dipertahankan untuk kompatibilitas. Sumber kebenaran adalah `waliKelasId`.
   waliKelas      String? @map("wali_kelas") @db.VarChar(160)
-  waliKelasId    BigInt? @map("wali_kelas_id")
+  homeroomStaffId BigInt? @map("homeroom_staff_id")
   /// Kelas di-scope ke tahun ajaran karena satu unit bisa punya kelas "X" di
   /// beberapa tahun ajaran berbeda dengan isi santri yang berbeda pula.
   academicYearId Int?    @map("academic_year_id")
 
   unit             Unit          @relation(fields: [unitId], references: [id])
-  waliKelasPegawai Pegawai?      @relation(fields: [waliKelasId], references: [id])
+  waliKelasPegawai Staff?        @relation(fields: [homeroomStaffId], references: [id])
   academicYear     AcademicYear? @relation(fields: [academicYearId], references: [id])
   santri           Santri[]
   santriKelas      SantriKelas[]
@@ -397,7 +397,7 @@ model AcademicYear {
   isActive Boolean @default(false) @map("is_active")
 
   kelas             Kelas[]
-  bebanJam          BebanJam[]
+  teachingLoads     TeachingLoad[]
   riwayatPendidikan RiwayatPendidikan[]
 
   @@unique([code, semester])
@@ -460,18 +460,18 @@ model Santri {
   kelas  Kelas? @relation(fields: [kelasId], references: [id])
   room   Room?  @relation(fields: [roomId], references: [id])
 
-  memorization    Memorization[]
-  discipline      Discipline[]
-  leavePermits    LeavePermit[]
-  attendance      Attendance[]
-  invoices        Invoice[]
-  medicalRecords  MedicalRecord[]
-  nilai           Nilai[]
-  kunjungan       Kunjungan[]
-  nilaiUjian      NilaiUjian[]
-  pesertaCbt      PesertaCbt[]
-  healthProfile   HealthProfile?
-  kelasLain       SantriKelas[]
+  memorization   Memorization[]
+  discipline     Discipline[]
+  leavePermits   LeavePermit[]
+  attendance     Attendance[]
+  invoices       Invoice[]
+  medicalRecords MedicalRecord[]
+  nilai          Nilai[]
+  kunjungan      Kunjungan[]
+  nilaiUjian     NilaiUjian[]
+  pesertaCbt     PesertaCbt[]
+  healthProfile  HealthProfile?
+  kelasLain      SantriKelas[]
 
   @@index([status])
   @@map("santri")
@@ -531,54 +531,54 @@ model RiwayatPendidikan {
 model HealthProfile {
   /// PK sintetis supaya modul CRUD generik (yang selalu memakai kolom `id`)
   /// bisa mengelola tabel ini; `studentId` tetap unik — satu profil per santri.
-  id              BigInt   @id @default(autoincrement())
-  studentId       BigInt   @unique @map("student_id")
-  weightKg        Decimal? @map("weight_kg") @db.Decimal(5, 2)
-  heightCm        Decimal? @map("height_cm") @db.Decimal(5, 2)
-  bloodType       String?  @map("blood_type") @db.VarChar(3)
-  medicalHistory  String?  @map("medical_history") @db.VarChar(255)
-  allergies       String?  @db.VarChar(255)
-  specialNeeds    String?  @map("special_needs") @db.VarChar(255)
-  notes           String?  @db.Text
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id             BigInt   @id @default(autoincrement())
+  studentId      BigInt   @unique @map("student_id")
+  weightKg       Decimal? @map("weight_kg") @db.Decimal(5, 2)
+  heightCm       Decimal? @map("height_cm") @db.Decimal(5, 2)
+  bloodType      String?  @map("blood_type") @db.VarChar(3)
+  medicalHistory String?  @map("medical_history") @db.VarChar(255)
+  allergies      String?  @db.VarChar(255)
+  specialNeeds   String?  @map("special_needs") @db.VarChar(255)
+  notes          String?  @db.Text
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   student Santri @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@map("health_profiles")
 }
 
-model Pegawai {
-  id                 BigInt   @id @default(autoincrement())
-  personId           BigInt   @unique @map("person_id")
-  nip                String   @unique @db.VarChar(32)
-  unitId             Int?     @map("unit_id")
-  jabatan            String   @db.VarChar(120)
-  status             String   @db.VarChar(32)
-  rekening           String?  @db.VarChar(64)
-  pendidikanTerakhir String?  @map("pendidikan_terakhir") @db.VarChar(120)
-  mapelDiampu        String?  @map("mapel_diampu") @db.VarChar(255)
-  tugasTambahan      String?  @map("tugas_tambahan") @db.VarChar(255)
-  jamMengajar        Int      @default(0) @map("jam_mengajar")
-  tmpTglLahir        String?  @map("tmp_tgl_lahir") @db.VarChar(120)
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+model Staff {
+  id               BigInt   @id @default(autoincrement())
+  personId         BigInt   @unique @map("person_id")
+  employeeNumber   String   @unique @map("employee_number") @db.VarChar(32)
+  unitId           Int?     @map("unit_id")
+  position         String   @db.VarChar(120)
+  status           String   @db.VarChar(32)
+  bankAccount      String?  @map("bank_account") @db.VarChar(64)
+  lastEducation    String?  @map("last_education") @db.VarChar(120)
+  subjectsTaught   String?  @map("subjects_taught") @db.VarChar(255)
+  additionalDuties String?  @map("additional_duties") @db.VarChar(255)
+  teachingHours    Int      @default(0) @map("teaching_hours")
+  birthPlaceDate   String?  @map("birth_place_date") @db.VarChar(120)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
-  person            Person              @relation(fields: [personId], references: [id], onDelete: Cascade)
-  unit              Unit?               @relation("PegawaiUnit", fields: [unitId], references: [id])
-  unitDipimpin      Unit[]              @relation("UnitKepala")
-  komponen          SalaryComponent?
-  slip              PayrollSlip[]
-  kelasWali         Kelas[]
-  jadwalAmpu        JadwalPelajaran[]
-  jadwalPiket       JadwalPiket[]
-  jurnalMengajar    JurnalMengajar[]
-  presensi          PresensiPegawai[]
-  bebanJam          BebanJam[]
-  arsipSk           ArsipSk[]
-  jabatanStruktural JabatanStruktural[]
-  unitLain          PegawaiUnit[]
+  person              Person               @relation(fields: [personId], references: [id], onDelete: Cascade)
+  unit                Unit?                @relation("PegawaiUnit", fields: [unitId], references: [id])
+  unitDipimpin        Unit[]               @relation("UnitKepala")
+  salaryComponent     SalaryComponent?
+  paySlips            PaySlip[]
+  kelasWali           Kelas[]
+  jadwalAmpu          JadwalPelajaran[]
+  jadwalPiket         JadwalPiket[]
+  jurnalMengajar      JurnalMengajar[]
+  attendances         StaffAttendance[]
+  teachingLoads       TeachingLoad[]
+  decreeArchives      DecreeArchive[]
+  structuralPositions StructuralPosition[]
+  otherUnits          StaffUnit[]
 
-  @@map("pegawai")
+  @@map("staff")
 }
 
 /// Penugasan seorang pegawai di sebuah unit. Satu orang bisa mengabdi di lebih
@@ -589,23 +589,20 @@ model Pegawai {
 /// ringkas & urutan lama); tabel ini adalah daftar lengkap penugasannya dan
 /// harus memuat unit utama itu juga, supaya filter/pohon kepegawaian cukup
 /// membaca satu sumber.
-model PegawaiUnit {
-  pegawaiId BigInt   @map("pegawai_id")
-  unitId    Int      @map("unit_id")
-  /// Jabatan pada unit ini bila berbeda dari `Pegawai.jabatan`
-  /// (mis. "Guru Mapel" di MA, "Asatidz" di Madin).
-  jabatan   String?  @db.VarChar(120)
-  /// NIP/kode kepegawaian pada unit ini bila unit menerbitkan nomornya sendiri.
-  nip       String?  @db.VarChar(32)
-  utama     Boolean  @default(false)
-  createdAt DateTime @default(now()) @map("created_at")
+model StaffUnit {
+  staffId        BigInt   @map("staff_id")
+  unitId         Int      @map("unit_id")
+  position       String?  @map("position") @db.VarChar(120)
+  employeeNumber String?  @map("employee_number") @db.VarChar(32)
+  isPrimary      Boolean  @default(false) @map("is_primary")
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
-  unit    Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
+  unit  Unit  @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
-  @@id([pegawaiId, unitId])
+  @@id([staffId, unitId])
   @@index([unitId])
-  @@map("pegawai_unit")
+  @@map("staff_units")
 }
 
 /// Struktur organisasi dari SK pengangkatan (unit MA, pengurus asrama, dst).
@@ -613,34 +610,29 @@ model PegawaiUnit {
 /// akses menu tetap diatur lewat `Peran`/`MenuPeran`. Satu orang boleh
 /// menjabat lebih dari satu jabatan (contoh: Waka Sarpras + Kepala Lab),
 /// jadi kunci unik berbasis (skNomor, urutan), bukan pegawaiId tunggal.
-model JabatanStruktural {
-  id             BigInt   @id @default(autoincrement())
-  skNomor        String   @map("sk_nomor") @db.VarChar(64)
-  urutan         Int      @default(0)
-  jabatan        String   @db.VarChar(160)
-  /// Lingkup SK: "MA" atau "Pondok" (asrama putra), dst.
-  lingkup        String   @db.VarChar(32)
-  /// Sub-kelompok (mis. "Div. Keamanan") — NULL bila belum dikonfirmasi client
-  /// atau memang tidak berdivisi (Lurah/Sekretaris/Keuangan).
-  divisi         String?  @db.VarChar(120)
-  periodeMulai   DateTime @map("periode_mulai") @db.Date
-  periodeSelesai DateTime @map("periode_selesai") @db.Date
-  pegawaiId      BigInt?  @map("pegawai_id")
-  /// Nama persis seperti tertulis di SK — dipertahankan walau pegawaiId sudah cocok,
-  /// untuk audit trail sumber data.
-  namaMentah     String   @map("nama_mentah") @db.VarChar(160)
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+model StructuralPosition {
+  id           BigInt   @id @default(autoincrement())
+  decreeNumber String   @map("decree_number") @db.VarChar(64)
+  order        Int      @default(0)
+  position     String   @db.VarChar(160)
+  scope        String   @db.VarChar(32)
+  division     String?  @db.VarChar(120)
+  startPeriod  DateTime @map("start_period") @db.Date
+  endPeriod    DateTime @map("end_period") @db.Date
+  staffId      BigInt?  @map("staff_id")
+  sourceName   String   @map("source_name") @db.VarChar(160)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
 
-  pegawai Pegawai? @relation(fields: [pegawaiId], references: [id])
+  staff Staff? @relation(fields: [staffId], references: [id])
 
-  @@unique([skNomor, urutan])
-  @@index([lingkup])
-  @@map("jabatan_struktural")
+  @@unique([decreeNumber, order])
+  @@index([scope])
+  @@map("structural_positions")
 }
 
 model SalaryComponent {
-  pegawaiId         BigInt  @id @map("pegawai_id")
+  staffId           BigInt  @id @map("staff_id")
   baseSalary        Decimal @default(0) @map("base_salary") @db.Decimal(14, 2)
   positionAllowance Decimal @default(0) @map("position_allowance") @db.Decimal(14, 2)
   familyAllowance   Decimal @default(0) @map("family_allowance") @db.Decimal(14, 2)
@@ -651,15 +643,15 @@ model SalaryComponent {
   cooperative       Decimal @default(0) @db.Decimal(14, 2)
   incomeTax         Decimal @default(0) @map("income_tax") @db.Decimal(14, 2)
 
-  pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
   @@map("salary_components")
 }
 
-model PayrollSlip {
+model PaySlip {
   id            BigInt    @id @default(autoincrement())
-  pegawaiId     BigInt    @map("pegawai_id")
-  periode       String    @db.VarChar(16)
+  staffId       BigInt    @map("staff_id")
+  period        String    @db.VarChar(16)
   grossAmount   Decimal   @map("gross_amount") @db.Decimal(14, 2)
   deduction     Decimal   @db.Decimal(14, 2)
   netAmount     Decimal   @map("net_amount") @db.Decimal(14, 2)
@@ -672,10 +664,10 @@ model PayrollSlip {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
-  @@unique([pegawaiId, periode])
-  @@map("payroll_slips")
+  @@unique([staffId, period])
+  @@map("pay_slips")
 }
 
 /// Jejak audit append-only: siapa melakukan apa, kapan, dan nilai apa yang berubah.
@@ -891,7 +883,7 @@ model JadwalPelajaran {
   mapel     String  @db.VarChar(160)
   /// Deprecated: dipertahankan untuk kompatibilitas. Sumber kebenaran adalah `pegawaiId`.
   guru      String? @db.VarChar(160)
-  pegawaiId BigInt? @map("pegawai_id")
+  staffId   BigInt? @map("staff_id")
   kelas     String? @db.VarChar(32)
   /// Tempat pelajaran berlangsung. Terpisah dari `kelas`: importir lama menyimpan
   /// ruangan ("Lab IPA", "Musholla") di kolom kelas, sehingga guru yang mengajar
@@ -902,9 +894,9 @@ model JadwalPelajaran {
   /// tercampur dan kartu "Kelas Saya" tak bisa dikelompokkan per unit.
   unitId    Int?    @map("unit_id")
 
-  unit    Unit?            @relation(fields: [unitId], references: [id])
-  pegawai Pegawai?         @relation(fields: [pegawaiId], references: [id])
-  jurnal  JurnalMengajar[]
+  unit   Unit?            @relation(fields: [unitId], references: [id])
+  staff  Staff?           @relation(fields: [staffId], references: [id])
+  jurnal JurnalMengajar[]
 
   @@unique([hari, jamKe, kelas])
   @@index([guru])
@@ -923,10 +915,10 @@ model JadwalPiket {
   hari         String  @db.VarChar(16)
   waktuMulai   String  @map("waktu_mulai") @db.VarChar(16)
   waktuSelesai String  @map("waktu_selesai") @db.VarChar(16)
-  pegawaiId    BigInt? @map("pegawai_id")
+  staffId      BigInt? @map("staff_id")
   urutan       Int     @default(0)
 
-  pegawai Pegawai? @relation(fields: [pegawaiId], references: [id])
+  staff Staff? @relation(fields: [staffId], references: [id])
 
   // Satu shift = satu baris per (hari, jam mulai). Kunci ini yang membuat
   // importir piket idempoten; tanpa itu setiap jalan ulang menduplikasi.
@@ -941,7 +933,7 @@ model JadwalPiket {
 /// satu baris `JadwalPelajaran` (mis. jam pengganti).
 model JurnalMengajar {
   id          BigInt   @id @default(autoincrement())
-  pegawaiId   BigInt?  @map("pegawai_id")
+  staffId     BigInt?  @map("staff_id")
   jadwalId    Int?     @map("jadwal_id")
   kelas       String?  @db.VarChar(32)
   tgl         DateTime @db.Date
@@ -951,66 +943,66 @@ model JurnalMengajar {
   jumlahHadir Int?     @map("jumlah_hadir")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  pegawai Pegawai?         @relation(fields: [pegawaiId], references: [id])
-  jadwal  JadwalPelajaran? @relation(fields: [jadwalId], references: [id])
+  staff  Staff?           @relation(fields: [staffId], references: [id])
+  jadwal JadwalPelajaran? @relation(fields: [jadwalId], references: [id])
 
   @@index([tgl])
-  @@index([pegawaiId, tgl])
+  @@index([staffId, tgl])
   @@map("jurnal_mengajar")
 }
 
 /// Staff attendance is separate from Student `Attendance`.
-model PresensiPegawai {
-  id        BigInt           @id @default(autoincrement())
-  pegawaiId BigInt           @map("pegawai_id")
-  tgl       DateTime         @db.Date
-  jamMasuk  String?          @map("jam_masuk") @db.VarChar(16)
-  jamPulang String?          @map("jam_pulang") @db.VarChar(16)
-  status    AttendanceStatus @default(Present)
-  ket       String?          @db.VarChar(255)
+model StaffAttendance {
+  id       BigInt           @id @default(autoincrement())
+  staffId  BigInt           @map("staff_id")
+  date     DateTime         @db.Date
+  checkIn  String?          @map("check_in") @db.VarChar(16)
+  checkOut String?          @map("check_out") @db.VarChar(16)
+  status   AttendanceStatus @default(Present)
+  notes    String?          @db.VarChar(255)
 
-  pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+  staff Staff @relation(fields: [staffId], references: [id], onDelete: Cascade)
 
-  @@unique([pegawaiId, tgl])
-  @@map("presensi_pegawai")
+  @@unique([staffId, date])
+  @@map("staff_attendances")
 }
 
 /// Beban jam mengajar per pegawai per tahun ajaran. Strukturnya ada di SK
 /// Pembagian Tugas Guru 2026, tapi ANGKANYA KOSONG di dokumen client —
 /// model disiapkan lebih dulu, pengisian menunggu data dari client.
-model BebanJam {
+model TeachingLoad {
   id             BigInt  @id @default(autoincrement())
-  pegawaiId      BigInt  @map("pegawai_id")
+  staffId        BigInt  @map("staff_id")
   academicYearId Int?    @map("academic_year_id")
-  mapel          String? @db.VarChar(160)
-  jumlahJam      Int?    @map("jumlah_jam")
-  keterangan     String? @db.VarChar(255)
+  subject        String? @db.VarChar(160)
+  hours          Int?    @map("hours")
+  notes          String? @db.VarChar(255)
 
-  pegawai      Pegawai       @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+  staff        Staff         @relation(fields: [staffId], references: [id], onDelete: Cascade)
   academicYear AcademicYear? @relation(fields: [academicYearId], references: [id])
 
-  @@index([pegawaiId])
-  @@map("beban_jam")
+  @@index([staffId])
+  @@map("teaching_loads")
 }
 
 /// Arsip SK kepegawaian. Berkas asli TIDAK disajikan lewat `public/` —
 /// mengikuti pola `docs-assets/` + route bergerbang (lihat
 /// app/docs/tangkapan/[nama]/route.ts); `fileUrl` di sini menyimpan nama
 /// berkas relatif ke direktori aman itu, bukan URL publik.
-model ArsipSk {
+model DecreeArchive {
   id        BigInt   @id @default(autoincrement())
-  nomor     String   @db.VarChar(64)
-  judul     String   @db.VarChar(200)
-  tgl       DateTime @db.Date
-  jenis     String   @db.VarChar(64)
-  pegawaiId BigInt?  @map("pegawai_id")
+  number    String   @db.VarChar(64)
+  title     String   @db.VarChar(200)
+  date      DateTime @db.Date
+  type      String   @db.VarChar(64)
+  staffId   BigInt?  @map("staff_id")
   fileUrl   String?  @map("file_url") @db.VarChar(255)
   createdAt DateTime @default(now()) @map("created_at")
 
-  pegawai Pegawai? @relation(fields: [pegawaiId], references: [id])
+  staff Staff? @relation(fields: [staffId], references: [id])
 
-  @@index([jenis])
-  @@map("arsip_sk")
+  @@index([type])
+  @@map("decree_archives")
 }
 
 /// Jadwal Madrasah Diniyah, terpisah dari `JadwalPelajaran` karena kuncinya
@@ -1135,15 +1127,15 @@ model TugasLms {
 // ─────────────────────────────────────────────────────────────
 
 model MedicalRecord {
-  id         BigInt   @id @default(autoincrement())
-  studentId  BigInt   @map("student_id")
-  date       DateTime @db.Date
-  time       String?  @db.VarChar(16)
-  complaint  String   @db.VarChar(255)
-  diagnosis  String?  @db.VarChar(255)
-  treatment  String?  @db.VarChar(255)
-  followUp   String?  @map("follow_up") @db.VarChar(120)
-  officer    String   @db.VarChar(160)
+  id        BigInt   @id @default(autoincrement())
+  studentId BigInt   @map("student_id")
+  date      DateTime @db.Date
+  time      String?  @db.VarChar(16)
+  complaint String   @db.VarChar(255)
+  diagnosis String?  @db.VarChar(255)
+  treatment String?  @db.VarChar(255)
+  followUp  String?  @map("follow_up") @db.VarChar(120)
+  officer   String   @db.VarChar(160)
 
   student Santri @relation(fields: [studentId], references: [id], onDelete: Cascade)
 

@@ -25,7 +25,7 @@ export async function TabUnit() {
     prisma.profilLembaga.findUnique({ where: { key: 'yayasan' }, include: { region: true } }),
     prisma.unit.findMany({
       include: {
-        _count: { select: { santri: true, pegawai: true, kelas: true } },
+        _count: { select: { santri: true, staff: true, kelas: true } },
         kepalaPegawai: { include: { person: { select: { fullName: true } } } },
         region: true,
       },
@@ -88,7 +88,7 @@ export async function TabUnit() {
                 <Baris label="Misi" nilai={unit.misi} />
                 <Baris
                   label="Populasi"
-                  nilai={`${unit._count.santri} santri · ${unit._count.pegawai} pegawai · ${unit._count.kelas} kelas`}
+                  nilai={`${unit._count.santri} santri · ${unit._count.staff} pegawai · ${unit._count.kelas} kelas`}
                 />
               </div>
             </div>

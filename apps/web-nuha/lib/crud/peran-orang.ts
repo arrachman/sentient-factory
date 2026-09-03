@@ -237,11 +237,11 @@ export async function daftarkanPeran(personId: string, input: Record<string, unk
   }
 
   const peranPegawai = peranPegawaiDari(dipilih);
-  if (peranPegawai && !(await prisma.pegawai.count({ where: { personId: id } }))) {
+  if (peranPegawai && !(await prisma.staff.count({ where: { personId: id } }))) {
     const nip = teks(input, 'peranNip') || nipCadangan(personId);
     const jabatan = jabatanDari(input, peranPegawai);
     const tugasTambahan = teks(input, 'peranTugasTambahan') || null;
-    await prisma.pegawai.create({ data: { personId: id, nip, jabatan, tugasTambahan, status: 'Aktif' } });
+    await prisma.staff.create({ data: { personId: id, employeeNumber: nip, position: jabatan, additionalDuties: tugasTambahan, status: 'Aktif' } });
     await catat(personId, `Mendaftarkan sebagai ${LABEL_PERAN[peranPegawai].toLowerCase()} (NIP ${nip})`, { peran: peranPegawai, nip, jabatan, tugasTambahan }, aktor);
   }
 
@@ -310,14 +310,14 @@ export async function selaraskanPeran(personId: string, input: Record<string, un
   const peranPegawai = peranPegawaiDari(dipilih);
   if (peranPegawai) {
     const jabatan = jabatanDari(input, peranPegawai);
-    const ada = await prisma.pegawai.findUnique({ where: { personId: id }, select: { nip: true } });
-    const nip = teks(input, 'peranNip') || ada?.nip || nipCadangan(personId);
+    const ada = await prisma.staff.findUnique({ where: { personId: id }, select: { employeeNumber: true } });
+    const nip = teks(input, 'peranNip') || ada?.employeeNumber || nipCadangan(personId);
     const tugasTambahan = teks(input, 'peranTugasTambahan') || null;
     if (ada) {
-      await prisma.pegawai.update({ where: { personId: id }, data: { nip, jabatan, tugasTambahan } });
+      await prisma.staff.update({ where: { personId: id }, data: { employeeNumber: nip, position: jabatan, additionalDuties: tugasTambahan } });
       await catat(personId, `Memperbarui data pegawai (NIP ${nip})`, { nip, jabatan, tugasTambahan }, aktor, 'CRUD_UPDATE');
     } else {
-      await prisma.pegawai.create({ data: { personId: id, nip, jabatan, tugasTambahan, status: 'Aktif' } });
+      await prisma.staff.create({ data: { personId: id, employeeNumber: nip, position: jabatan, additionalDuties: tugasTambahan, status: 'Aktif' } });
       await catat(personId, `Mendaftarkan sebagai ${LABEL_PERAN[peranPegawai].toLowerCase()} (NIP ${nip})`, { peran: peranPegawai, nip, jabatan, tugasTambahan }, aktor);
     }
   }

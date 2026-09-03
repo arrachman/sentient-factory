@@ -73,15 +73,15 @@ async function jalankanPiketH1(kodeJob: string): Promise<HasilJob> {
   const hariNama = namaHariPiket(besok.hariIndex);
   const rows = await prisma.jadwalPiket.findMany({
     where: { hari: hariNama },
-    include: { pegawai: { include: { person: true } } },
+    include: { staff: { include: { person: true } } },
   });
   const shifts = rows.map((r) => ({
     hari: r.hari,
     waktuMulai: r.waktuMulai,
     waktuSelesai: r.waktuSelesai,
-    pegawaiId: r.pegawaiId?.toString() ?? null,
-    namaPegawai: r.pegawai?.person.fullName ?? null,
-    hp: r.pegawai?.person.phone ?? null,
+    pegawaiId: r.staffId?.toString() ?? null,
+    namaPegawai: r.staff?.person.fullName ?? null,
+    hp: r.staff?.person.phone ?? null,
   }));
   const { pesan, tanpaPegawai } = bangunPesanPiketH1(shifts);
   return kirimSemuaPiket(kodeJob, pesan, besok.tanggal, tanpaPegawai);
@@ -92,15 +92,15 @@ async function jalankanPiketH0(kodeJob: string): Promise<HasilJob> {
   const hariNama = namaHariPiket(now.hariIndex);
   const rows = await prisma.jadwalPiket.findMany({
     where: { hari: hariNama },
-    include: { pegawai: { include: { person: true } } },
+    include: { staff: { include: { person: true } } },
   });
   const shifts = rows.map((r) => ({
     hari: r.hari,
     waktuMulai: r.waktuMulai,
     waktuSelesai: r.waktuSelesai,
-    pegawaiId: r.pegawaiId?.toString() ?? null,
-    namaPegawai: r.pegawai?.person.fullName ?? null,
-    hp: r.pegawai?.person.phone ?? null,
+    pegawaiId: r.staffId?.toString() ?? null,
+    namaPegawai: r.staff?.person.fullName ?? null,
+    hp: r.staff?.person.phone ?? null,
   }));
   const { pesan, tanpaPegawai } = bangunPesanPiketH0(shifts, now.jam, now.menit);
   return kirimSemuaPiket(kodeJob, pesan, now.tanggal, tanpaPegawai);
@@ -140,14 +140,14 @@ async function jalankanNgajar(kodeJob: string): Promise<HasilJob> {
   const hariNama = namaHariPelajaran(now.hariIndex);
   const rows = await prisma.jadwalPelajaran.findMany({
     where: { hari: hariNama },
-    include: { pegawai: { include: { person: true } } },
+    include: { staff: { include: { person: true } } },
     orderBy: { jamKe: 'asc' },
   });
   const slots = rows.map((r) => ({
     hari: r.hari,
-    pegawaiId: r.pegawaiId?.toString() ?? null,
-    namaPegawai: r.pegawai?.person.fullName ?? null,
-    hp: r.pegawai?.person.phone ?? null,
+    pegawaiId: r.staffId?.toString() ?? null,
+    namaPegawai: r.staff?.person.fullName ?? null,
+    hp: r.staff?.person.phone ?? null,
     jamKe: r.jamKe,
     waktu: r.waktu,
     mapel: r.mapel,

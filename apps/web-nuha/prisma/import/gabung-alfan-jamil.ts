@@ -23,14 +23,14 @@ const NIP_HAPUS = 'AST-004';
 const prisma = new PrismaClient();
 
 async function main() {
-  const simpan = await prisma.pegawai.findUnique({
-    where: { nip: NIP_SIMPAN },
+  const simpan = await prisma.staff.findUnique({
+    where: { employeeNumber: NIP_SIMPAN },
     include: { person: true },
   });
   if (!simpan) throw new Error(`pegawai ${NIP_SIMPAN} tidak ditemukan`);
 
-  const hapus = await prisma.pegawai.findUnique({
-    where: { nip: NIP_HAPUS },
+  const hapus = await prisma.staff.findUnique({
+    where: { employeeNumber: NIP_HAPUS },
     include: { person: true },
   });
 
@@ -43,16 +43,16 @@ async function main() {
 
     // Penugasan Madin menjadi baris pegawai_unit kedua pada pegawai yang bertahan.
     if (hapus.unitId !== null) {
-      await prisma.pegawaiUnit.upsert({
-        where: { pegawaiId_unitId: { pegawaiId: simpan.id, unitId: hapus.unitId } },
+      await prisma.staffUnit.upsert({
+        where: { staffId_unitId: { staffId: simpan.id, unitId: hapus.unitId } },
         create: {
-          pegawaiId: simpan.id,
+          staffId: simpan.id,
           unitId: hapus.unitId,
-          jabatan: hapus.jabatan,
-          nip: hapus.nip,
-          utama: false,
+          position: hapus.position,
+          employeeNumber: hapus.employeeNumber,
+          isPrimary: false,
         },
-        update: { jabatan: hapus.jabatan, nip: hapus.nip },
+        update: { position: hapus.position, employeeNumber: hapus.employeeNumber },
       });
     }
 
@@ -76,26 +76,26 @@ async function main() {
 
   // Pastikan unit utama juga tercatat di pegawai_unit (untuk baris lama).
   if (simpan.unitId !== null) {
-    await prisma.pegawaiUnit.upsert({
-      where: { pegawaiId_unitId: { pegawaiId: simpan.id, unitId: simpan.unitId } },
+    await prisma.staffUnit.upsert({
+      where: { staffId_unitId: { staffId: simpan.id, unitId: simpan.unitId } },
       create: {
-        pegawaiId: simpan.id,
+        staffId: simpan.id,
         unitId: simpan.unitId,
-        jabatan: simpan.jabatan,
-        nip: simpan.nip,
-        utama: true,
+        position: simpan.position,
+        employeeNumber: simpan.employeeNumber,
+        isPrimary: true,
       },
-      update: { utama: true },
+      update: { isPrimary: true },
     });
   }
 
-  const akhir = await prisma.pegawai.findUnique({
-    where: { nip: NIP_SIMPAN },
-    include: { person: true, unitLain: { include: { unit: true } } },
+  const akhir = await prisma.staff.findUnique({
+    where: { employeeNumber: NIP_SIMPAN },
+    include: { person: true, otherUnits: { include: { unit: true } } },
   });
   console.log(
     `${akhir?.person.fullName} (${akhir?.person.gelar ?? '-'}) bertugas di: ` +
-      akhir?.unitLain.map((u) => `${u.unit.nama}${u.utama ? '*' : ''}`).join(', '),
+      akhir?.otherUnits.map((u) => `${u.unit.nama}${u.isPrimary ? '*' : ''}`).join(', '),
   );
 }
 

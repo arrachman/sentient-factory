@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 export default async function ProfilPondokPage() {
   const unitPondok = await prisma.unit.findUnique({
     where: { key: 'Pondok' },
-    include: { _count: { select: { santri: true, pegawai: true } } },
+    include: { _count: { select: { santri: true, staff: true } } },
   });
 
   const [asrama, mukim] = await Promise.all([
@@ -74,7 +74,7 @@ export default async function ProfilPondokPage() {
               <span>Asrama</span>
             </div>
             <div className="pub-stat-mini">
-              <b>{(unitPondok?._count.pegawai ?? 0).toLocaleString('id-ID')}</b>
+              <b>{(unitPondok?._count.staff ?? 0).toLocaleString('id-ID')}</b>
               <span>Ustadz &amp; ustadzah</span>
             </div>
           </div>

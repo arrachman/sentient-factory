@@ -4,9 +4,9 @@ import type { Prisma } from '@prisma/client';
 export const URUT_PEGAWAI = {
   nama: { label: 'Nama A–Z', orderBy: { person: { fullName: 'asc' } } },
   'nama-desc': { label: 'Nama Z–A', orderBy: { person: { fullName: 'desc' } } },
-  nip: { label: 'NIP terkecil', orderBy: { nip: 'asc' } },
-  'jam-desc': { label: 'Jam mengajar terbanyak', orderBy: { jamMengajar: 'desc' } },
-} as const satisfies Record<string, { label: string; orderBy: Prisma.PegawaiOrderByWithRelationInput }>;
+  nip: { label: 'NIP terkecil', orderBy: { employeeNumber: 'asc' } },
+  'jam-desc': { label: 'Jam mengajar terbanyak', orderBy: { teachingHours: 'desc' } },
+} as const satisfies Record<string, { label: string; orderBy: Prisma.StaffOrderByWithRelationInput }>;
 export type UrutPegawai = keyof typeof URUT_PEGAWAI;
 const URUT_BAWAAN: UrutPegawai = 'nama';
 
@@ -48,17 +48,17 @@ export function bacaFilterPegawai(sp: Record<string, string | string[] | undefin
  * sedangkan `unitId` adalah unit utama. Keduanya dicocokkan dengan OR supaya
  * pegawai yang belum punya baris `pegawai_unit` (dibuat lewat menu CRUD atau
  * seed) tetap terhitung — tabel jung tidak wajib terisi. */
-export function whereUnit(unit?: string): Prisma.PegawaiWhereInput | undefined {
+export function whereUnit(unit?: string): Prisma.StaffWhereInput | undefined {
   if (!unit) return undefined;
   return unit === TANPA_LEMBAGA
-    ? { AND: [{ unitId: null }, { unitLain: { none: {} } }] }
-    : { OR: [{ unit: { key: unit } }, { unitLain: { some: { unit: { key: unit } } } }] };
+    ? { AND: [{ unitId: null }, { otherUnits: { none: {} } }] }
+    : { OR: [{ unit: { key: unit } }, { otherUnits: { some: { unit: { key: unit } } } }] };
 }
 
 /** WHERE Prisma untuk daftar pegawai. Disusun sebagai daftar AND supaya
  * pencarian bebas (OR nama/NIP/jabatan) tidak bentrok dengan penyaring lain. */
-export function wherePegawai(f: FilterPegawai): Prisma.PegawaiWhereInput {
-  const syarat: Prisma.PegawaiWhereInput[] = [];
+export function wherePegawai(f: FilterPegawai): Prisma.StaffWhereInput {
+  const syarat: Prisma.StaffWhereInput[] = [];
   const unit = whereUnit(f.unit);
   if (unit) syarat.push(unit);
   if (f.status) syarat.push({ status: f.status });
@@ -67,9 +67,9 @@ export function wherePegawai(f: FilterPegawai): Prisma.PegawaiWhereInput {
     syarat.push({
       OR: [
         { person: { fullName: { contains: f.q } } },
-        { nip: { contains: f.q } },
-        { jabatan: { contains: f.q } },
-        { mapelDiampu: { contains: f.q } },
+        { employeeNumber: { contains: f.q } },
+        { position: { contains: f.q } },
+        { subjectsTaught: { contains: f.q } },
       ],
     });
   }

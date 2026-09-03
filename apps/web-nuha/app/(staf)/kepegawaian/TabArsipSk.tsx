@@ -3,11 +3,11 @@ import { Card, Tabel, Kosong } from '@/components';
 import { whereUnit, type FilterPegawai } from './filter';
 
 export async function TabArsipSk({ f }: { f: FilterPegawai }) {
-  const pegawai = whereUnit(f.unit);
-  const arsip = await prisma.arsipSk.findMany({
-    where: pegawai ? { pegawai } : {},
-    include: { pegawai: { include: { person: true } } },
-    orderBy: [{ tgl: 'desc' }],
+  const staff = whereUnit(f.unit);
+  const arsip = await prisma.decreeArchive.findMany({
+    where: staff ? { staff } : {},
+    include: { staff: { include: { person: true } } },
+    orderBy: [{ date: 'desc' }],
   });
 
   return (
@@ -21,11 +21,11 @@ export async function TabArsipSk({ f }: { f: FilterPegawai }) {
         <Tabel kolom={['Nomor', 'Judul', 'Tanggal', 'Jenis', 'Pegawai', 'Berkas']}>
           {arsip.map((a) => (
             <tr key={String(a.id)}>
-              <td>{a.nomor}</td>
-              <td>{a.judul}</td>
-              <td>{a.tgl.toLocaleDateString('id-ID')}</td>
-              <td>{a.jenis}</td>
-              <td>{a.pegawai?.person.fullName ?? '-'}</td>
+              <td>{a.number}</td>
+              <td>{a.title}</td>
+              <td>{a.date.toLocaleDateString('id-ID')}</td>
+              <td>{a.type}</td>
+              <td>{a.staff?.person.fullName ?? '-'}</td>
               <td>
                 {a.fileUrl ? (
                   <a href={`/kepegawaian/berkas/${a.fileUrl}`} target="_blank" rel="noreferrer">

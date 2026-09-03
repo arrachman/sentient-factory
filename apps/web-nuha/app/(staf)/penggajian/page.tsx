@@ -25,12 +25,12 @@ export default async function PenggajianPage({
   const periode = PERIODE_GAJI();
 
   const [pegawaiN, komponenSemua] = await Promise.all([
-    prisma.pegawai.count(),
-    prisma.pegawai.findMany({ include: { komponen: true } }),
+    prisma.staff.count(),
+    prisma.staff.findMany({ include: { salaryComponent: true } }),
   ]);
   const total = komponenSemua.reduce(
     (acc, p) => {
-      const h = hitungGaji(p.komponen);
+      const h = hitungGaji(p.salaryComponent);
       return { bruto: acc.bruto + h.bruto, potongan: acc.potongan + h.potongan, netto: acc.netto + h.netto };
     },
     { bruto: 0, potongan: 0, netto: 0 },

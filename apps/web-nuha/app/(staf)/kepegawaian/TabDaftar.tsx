@@ -9,8 +9,8 @@ import { wherePegawai, hrefKepegawaian, URUT_PEGAWAI, type FilterPegawai } from 
 export async function TabDaftar({ f, halaman }: { f: FilterPegawai; halaman: number }) {
   const where = wherePegawai(f);
   const [total, baris] = await Promise.all([
-    prisma.pegawai.count({ where }),
-    prisma.pegawai.findMany({
+    prisma.staff.count({ where }),
+    prisma.staff.findMany({
       where,
       include: { person: true, unit: true },
       orderBy: URUT_PEGAWAI[f.urut].orderBy,
@@ -33,12 +33,12 @@ export async function TabDaftar({ f, halaman }: { f: FilterPegawai; halaman: num
             {baris.map((p) => (
               <tr key={String(p.id)}>
                 <td>{p.person.fullName}</td>
-                <td>{p.nip}</td>
+                <td>{p.employeeNumber}</td>
                 <td>{p.unit ? p.unit.key : <span style={{ opacity: 0.6 }}>—</span>}</td>
-                <td>{p.jabatan}</td>
-                <td>{p.mapelDiampu ?? <span style={{ opacity: 0.6 }}>—</span>}</td>
+                <td>{p.position}</td>
+                <td>{p.subjectsTaught ?? <span style={{ opacity: 0.6 }}>—</span>}</td>
                 <td><span className="badge badge-netral">{p.status}</span></td>
-                <td className="num">{p.jamMengajar || '—'}</td>
+                <td className="num">{p.teachingHours || '—'}</td>
               </tr>
             ))}
           </Tabel>

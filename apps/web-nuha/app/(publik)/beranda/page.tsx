@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
 export default async function BerandaPage() {
   const [santriAktif, pegawaiAktif, unit, agenda] = await Promise.all([
     prisma.santri.count({ where: { status: 'Mukim' } }),
-    prisma.pegawai.count({ where: { status: { notIn: ['Nonaktif', 'Keluar', 'Pensiun'] } } }),
+    prisma.staff.count({ where: { status: { notIn: ['Nonaktif', 'Keluar', 'Pensiun'] } } }),
     prisma.unit.findMany({ where: { aktif: true }, orderBy: { id: 'asc' }, include: { _count: { select: { santri: true } } } }),
     prisma.agenda.findMany({ where: { date: { gte: new Date() } }, orderBy: { date: 'asc' }, take: 5 }),
   ]);

@@ -20,14 +20,14 @@ export type PohonPegawai = {
  */
 export async function bacaPohonPegawai(f: FilterPegawai): Promise<PohonPegawai> {
   const [perStatus, unitRows, total, tanpa] = await Promise.all([
-    prisma.pegawai.groupBy({
+    prisma.staff.groupBy({
       by: ['status'],
       where: wherePegawai({ ...f, status: undefined }),
       _count: { _all: true },
     }),
     prisma.unit.findMany({ orderBy: { id: 'asc' } }),
-    prisma.pegawai.count({ where: wherePegawai({ ...f, unit: undefined }) }),
-    prisma.pegawai.count({ where: wherePegawai({ ...f, unit: TANPA_LEMBAGA }) }),
+    prisma.staff.count({ where: wherePegawai({ ...f, unit: undefined }) }),
+    prisma.staff.count({ where: wherePegawai({ ...f, unit: TANPA_LEMBAGA }) }),
   ]);
 
   // Dihitung per unit lewat `whereUnit` yang sama dengan daftarnya (unit utama
@@ -35,7 +35,7 @@ export async function bacaPohonPegawai(f: FilterPegawai): Promise<PohonPegawai> 
   // lembaga harus terhitung di setiap unit tempat ia bertugas, dan angka chip
   // harus persis sama dengan jumlah baris saat chip itu diklik.
   const jumlahUnit = await Promise.all(
-    unitRows.map((u) => prisma.pegawai.count({ where: wherePegawai({ ...f, unit: u.key }) })),
+    unitRows.map((u) => prisma.staff.count({ where: wherePegawai({ ...f, unit: u.key }) })),
   );
 
   const lembaga: SimpulLembaga[] = unitRows

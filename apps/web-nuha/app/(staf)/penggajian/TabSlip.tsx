@@ -10,15 +10,15 @@ export async function TabSlip({
   searchParams: Record<string, string | string[] | undefined>;
   periode: string;
 }) {
-  const pegawai = await prisma.pegawai.findMany({ include: { person: true, unit: true, komponen: true }, orderBy: { nip: 'asc' } });
+  const pegawai = await prisma.staff.findMany({ include: { person: true, unit: true, salaryComponent: true }, orderBy: { employeeNumber: 'asc' } });
   if (pegawai.length === 0) return <Kosong pesan="Belum ada data pegawai." />;
 
   const raw = searchParams.peg;
   const pegId = (Array.isArray(raw) ? raw[0] : raw) ?? String(pegawai[0].id);
   const pilihan = pegawai.find((p) => String(p.id) === pegId) ?? pegawai[0];
-  const komponen = pilihan.komponen;
+  const komponen = pilihan.salaryComponent;
   const h = hitungGaji(komponen);
-  const slip = await prisma.payrollSlip.findUnique({ where: { pegawaiId_periode: { pegawaiId: pilihan.id, periode } } });
+  const slip = await prisma.paySlip.findUnique({ where: { staffId_period: { staffId: pilihan.id, period: periode } } });
 
   const penerimaan = komponen
     ? [
@@ -67,10 +67,10 @@ export async function TabSlip({
           <Avatar nama={pilihan.person.fullName} size={46} />
           <div style={{ flex: 1, minWidth: 190 }}>
             <div style={{ fontSize: 15, fontWeight: 700 }}>{pilihan.person.fullName}</div>
-            <div className="muted">{pilihan.jabatan} · unit {pilihan.unit?.nama ?? 'Yayasan'}</div>
+            <div className="muted">{pilihan.position} · unit {pilihan.unit?.nama ?? 'Yayasan'}</div>
           </div>
           <div className="muted" style={{ textAlign: 'right' }}>
-            <div>NIP: <strong>{pilihan.nip}</strong></div>
+            <div>NIP: <strong>{pilihan.employeeNumber}</strong></div>
             <div>Status: <strong>{slip?.status ?? 'Belum terbit'}</strong></div>
           </div>
         </div>
@@ -104,7 +104,7 @@ export async function TabSlip({
             <p className="angka-sm" style={{ color: '#0F6B3D' }}>{rupiah(h.netto)}</p>
           </div>
           <div className="muted" style={{ textAlign: 'right' }}>
-            <div>Rekening: <strong>{pilihan.rekening ?? '-'}</strong></div>
+            <div>Rekening: <strong>{pilihan.bankAccount ?? '-'}</strong></div>
           </div>
         </div>
       </div>
