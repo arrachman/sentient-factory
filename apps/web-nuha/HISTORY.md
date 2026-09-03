@@ -1,5 +1,11 @@
 # Riwayat Perubahan — web-nuha
 
+## 2026-09-03 — Simpan wilayah domisili pendaftar PPDB (`ef8b20d7`)
+
+Pendaftar PPDB kini dapat menyimpan referensi opsional ke desa atau kelurahan aktif melalui relasi `Applicant.regionId`. Form publik dan API PPDB memvalidasi ID wilayah di server sebelum menyimpan, dan lookup desa dibatasi pada data wilayah aktif.
+
+Dampak operator: pendaftar lama tetap valid tanpa wilayah. Setelah dataset wilayah diimpor, calon pendaftar dapat memilih desa/kelurahan dari formulir PPDB; alamat teks bebas tetap tersedia sebagai keterangan alamat.
+
 ## 2026-09-03 — Rename teknis kegiatan harian ke Inggris (`3558c31e`)
 
 Model Prisma `KegiatanHarian` kini menjadi `DailyActivity`; tabel dan kolom fisiknya ikut berubah in-place dari `kegiatan_harian` menjadi `daily_activities`, serta dari `jam`/`nama`/`ket`/`urutan` menjadi `time`/`name`/`note`/`order`.
