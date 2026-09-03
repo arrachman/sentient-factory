@@ -465,12 +465,12 @@ model Santri {
   leavePermits    LeavePermit[]
   attendance      Attendance[]
   invoices        Invoice[]
-  rekamMedis      RekamMedis[]
+  medicalRecords  MedicalRecord[]
   nilai           Nilai[]
   kunjungan       Kunjungan[]
   nilaiUjian      NilaiUjian[]
   pesertaCbt      PesertaCbt[]
-  profilKesehatan ProfilKesehatan?
+  healthProfile   HealthProfile?
   kelasLain       SantriKelas[]
 
   @@index([status])
@@ -526,25 +526,25 @@ model RiwayatPendidikan {
   @@map("riwayat_pendidikan")
 }
 
-/// Profil kesehatan sekali-isi (BB, TB, riwayat penyakit) — beda dari `RekamMedis`
+/// Profil kesehatan sekali-isi (BB, TB, riwayat penyakit) — beda dari `MedicalRecord`
 /// yang mencatat per-kunjungan poskestren.
-model ProfilKesehatan {
+model HealthProfile {
   /// PK sintetis supaya modul CRUD generik (yang selalu memakai kolom `id`)
-  /// bisa mengelola tabel ini; `santriId` tetap unik — satu profil per santri.
+  /// bisa mengelola tabel ini; `studentId` tetap unik — satu profil per santri.
   id              BigInt   @id @default(autoincrement())
-  santriId        BigInt   @unique @map("santri_id")
-  beratKg         Decimal? @map("berat_kg") @db.Decimal(5, 2)
-  tinggiCm        Decimal? @map("tinggi_cm") @db.Decimal(5, 2)
-  golDarah        String?  @map("gol_darah") @db.VarChar(3)
-  riwayatPenyakit String?  @map("riwayat_penyakit") @db.VarChar(255)
-  alergi          String?  @db.VarChar(255)
-  kebutuhanKhusus String?  @map("kebutuhan_khusus") @db.VarChar(255)
-  catatan         String?  @db.Text
+  studentId       BigInt   @unique @map("student_id")
+  weightKg        Decimal? @map("weight_kg") @db.Decimal(5, 2)
+  heightCm        Decimal? @map("height_cm") @db.Decimal(5, 2)
+  bloodType       String?  @map("blood_type") @db.VarChar(3)
+  medicalHistory  String?  @map("medical_history") @db.VarChar(255)
+  allergies       String?  @db.VarChar(255)
+  specialNeeds    String?  @map("special_needs") @db.VarChar(255)
+  notes           String?  @db.Text
   updatedAt       DateTime @updatedAt @map("updated_at")
 
-  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  student Santri @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@map("profil_kesehatan")
+  @@map("health_profiles")
 }
 
 model Pegawai {
@@ -1134,33 +1134,33 @@ model TugasLms {
 // Poskestren
 // ─────────────────────────────────────────────────────────────
 
-model RekamMedis {
-  id           BigInt   @id @default(autoincrement())
-  santriId     BigInt   @map("santri_id")
-  tgl          DateTime @db.Date
-  jam          String?  @db.VarChar(16)
-  keluhan      String   @db.VarChar(255)
-  diagnosis    String?  @db.VarChar(255)
-  terapi       String?  @db.VarChar(255)
-  tindakLanjut String?  @map("tindak_lanjut") @db.VarChar(120)
-  petugas      String   @db.VarChar(160)
+model MedicalRecord {
+  id         BigInt   @id @default(autoincrement())
+  studentId  BigInt   @map("student_id")
+  date       DateTime @db.Date
+  time       String?  @db.VarChar(16)
+  complaint  String   @db.VarChar(255)
+  diagnosis  String?  @db.VarChar(255)
+  treatment  String?  @db.VarChar(255)
+  followUp   String?  @map("follow_up") @db.VarChar(120)
+  officer    String   @db.VarChar(160)
 
-  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  student Santri @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@index([santriId, tgl])
-  @@map("rekam_medis")
+  @@index([studentId, date])
+  @@map("medical_records")
 }
 
-model Obat {
-  id         Int     @id @default(autoincrement())
-  nama       String  @unique @db.VarChar(160)
-  satuan     String  @db.VarChar(32)
-  kategori   String? @db.VarChar(64)
-  stok       Int     @default(0)
-  stokMin    Int     @default(0) @map("stok_min")
-  kadaluarsa String? @db.VarChar(32)
+model Medicine {
+  id       Int     @id @default(autoincrement())
+  name     String  @unique @db.VarChar(160)
+  unit     String  @db.VarChar(32)
+  category String? @db.VarChar(64)
+  stock    Int     @default(0)
+  minStock Int     @default(0) @map("min_stock")
+  expiry   String? @db.VarChar(32)
 
-  @@map("obat")
+  @@map("medicines")
 }
 
 // ─────────────────────────────────────────────────────────────

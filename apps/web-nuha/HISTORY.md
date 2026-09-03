@@ -4,6 +4,46 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-03 — Rename teknis domain kesehatan/poskestren (profil kesehatan/rekam medis/obat) ke Inggris
+
+Model Prisma `ProfilKesehatan→HealthProfile`, `RekamMedis→MedicalRecord`,
+`Obat→Medicine` beserta seluruh field-nya diterjemahkan ke Inggris
+(`beratKg→weightKg`, `tinggiCm→heightCm`, `golDarah→bloodType`,
+`riwayatPenyakit→medicalHistory`, `alergi→allergies`,
+`kebutuhanKhusus→specialNeeds`, `catatan→notes`; `tgl→date`, `jam→time`,
+`keluhan→complaint`, `terapi→treatment`, `tindakLanjut→followUp`,
+`petugas→officer`; `nama→name`, `satuan→unit`, `kategori→category`,
+`stok→stock`, `stokMin→minStock`, `kadaluarsa→expiry`).
+
+Konsumen yang diperbaiki: `app/(staf)/poskestren/*` (Dashboard, Periksa/
+`actions.ts`, Rekam, Obat, Lapor), `app/(staf)/induk/TabKesehatan.tsx` &
+`TabBiodata.tsx`, kedua portal (`app/portal/santri/tabs/TabHafalan.tsx`,
+`app/portal/wali/tabs/TabRingkasan.tsx` & `TabKesehatan.tsx`), `prisma/seed.ts`,
+dan ketiga importir siswa MA (`import-siswa-ma.ts`, `-ma-2025.ts`,
+`-ma-2026.ts`). `lib/crud/registry.ts` sudah lebih dulu diperbarui (`model:
+'medicine'`/`'healthProfile'`) pada rename sebelumnya; kunci entitas CRUD
+(`obat`, `profil-kesehatan`) dan seluruh label/copy UI tetap Indonesia — hanya
+identifier Prisma/kolom fisik yang berubah.
+
+Migrasi `20260903020000_rename_health_to_english` memakai `RENAME TABLE`
+(`profil_kesehatan→health_profiles`, `rekam_medis→medical_records`,
+`obat→medicines`), `CHANGE COLUMN` per kolom, drop/rebuild FK ke `santri`,
+dan `RENAME INDEX` — non-destruktif, tidak ada drop+recreate tabel. DB dev
+(`127.0.0.1:3227`) saat ini masih 0 baris di ketiga tabel ini (konsisten
+dengan batch kepesantrenan sebelumnya — dev DB belum diisi data domain ini),
+jadi tidak ada konversi data yang perlu diverifikasi isinya; diverifikasi
+lewat Prisma Client setelah `prisma generate` + `prisma migrate deploy`
+bahwa `prisma.healthProfile`/`medicalRecord`/`medicine` bisa diakses tanpa
+error. Browser pass Playwright di `http://202.59.200.26:3226` memakai login
+`superadmin` berhasil merender seluruh tab Poskestren (Dashboard, Periksa,
+Rekam, Obat, Lapor) tanpa `pageerror` maupun HTTP 500 (hanya warning
+WebSocket HMR reverse-proxy, tidak memengaruhi aplikasi). Tab
+`/induk?tab=kesehatan` dan login peran Poskestren non-superadmin tidak bisa
+diverifikasi lewat browser karena dev DB tidak memiliki baris santri maupun
+akun user untuk peran tersebut (akun `poskestren@nuha.pesantren.web.id` ada
+di `prisma/proto-data.json` tapi belum pernah di-seed ke tabel `user`) —
+bukan regresi dari rename ini. `npx tsc --noEmit` bersih.
+
 ## 2026-09-03 — Rename teknis domain kepesantrenan (asrama/kamar/halaqah/hafalan/tazir/izin/presensi) ke Inggris
 
 Model Prisma `Asrama→Dormitory`, `Kamar→Room`, `Halaqah→StudyCircle`,

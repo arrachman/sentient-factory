@@ -6,17 +6,17 @@ const AMBANG_KLB = 3; // ambang KLB prototype: 3 kasus/asrama untuk diagnosis ya
 
 export async function TabDashboard() {
   const [semuaKunjungan, obat] = await Promise.all([
-    prisma.rekamMedis.findMany({
-      include: { santri: { include: { person: true, room: { include: { dormitory: true } } } } },
-      orderBy: { tgl: 'desc' },
+    prisma.medicalRecord.findMany({
+      include: { student: { include: { person: true, room: { include: { dormitory: true } } } } },
+      orderBy: { date: 'desc' },
     }),
-    prisma.obat.findMany(),
+    prisma.medicine.findMany(),
   ]);
 
   const hariIni = new Date().toDateString();
-  const kunjHariIni = semuaKunjungan.filter((k) => k.tgl.toDateString() === hariIni);
-  const obatMenipis = obat.filter((o) => o.stok < o.stokMin);
-  const rujuk = semuaKunjungan.filter((k) => k.tindakLanjut === 'Rujuk Puskesmas');
+  const kunjHariIni = semuaKunjungan.filter((k) => k.date.toDateString() === hariIni);
+  const obatMenipis = obat.filter((o) => o.stock < o.minStock);
+  const rujuk = semuaKunjungan.filter((k) => k.followUp === 'Rujuk Puskesmas');
 
   // 5 penyakit terbanyak — dihitung dari seluruh rekam medis yang tercatat.
   const diagCount = new Map<string, number>();
@@ -32,7 +32,7 @@ export async function TabDashboard() {
   // Deteksi dini KLB: diagnosis yang sama ≥ ambang di asrama yang sama.
   const klbMap = new Map<string, number>();
   semuaKunjungan.forEach((k) => {
-    const asrama = k.santri.room?.dormitory.name;
+    const asrama = k.student.room?.dormitory.name;
     if (!asrama || !k.diagnosis) return;
     const key = `${k.diagnosis}|${asrama}`;
     klbMap.set(key, (klbMap.get(key) ?? 0) + 1);
@@ -84,12 +84,12 @@ export async function TabDashboard() {
               {obatMenipis.map((o) => (
                 <div key={o.id} className="alert alert-peringatan" style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
                   <div>
-                    <b style={{ display: 'block', fontSize: 13 }}>{o.nama}</b>
-                    <span className="muted">{o.kategori ?? '-'} · exp {o.kadaluarsa ?? '-'}</span>
+                    <b style={{ display: 'block', fontSize: 13 }}>{o.name}</b>
+                    <span className="muted">{o.category ?? '-'} · exp {o.expiry ?? '-'}</span>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <b style={{ display: 'block', color: '#991B1B' }}>{o.stok} {o.satuan}</b>
-                    <span className="muted">min {o.stokMin}</span>
+                    <b style={{ display: 'block', color: '#991B1B' }}>{o.stock} {o.unit}</b>
+                    <span className="muted">min {o.minStock}</span>
                   </div>
                 </div>
               ))}
@@ -103,13 +103,13 @@ export async function TabDashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
             {kunjHariIni.map((k) => (
               <div key={String(k.id)} className="inset" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ width: 30, height: 30, borderRadius: '50%', background: avaBg(k.santri.person.fullName), color: '#FFF', display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 700, flex: '0 0 auto' }}>
-                  {inisial(k.santri.person.fullName)}
+                <span style={{ width: 30, height: 30, borderRadius: '50%', background: avaBg(k.student.person.fullName), color: '#FFF', display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 700, flex: '0 0 auto' }}>
+                  {inisial(k.student.person.fullName)}
                 </span>
-                <span style={{ fontWeight: 600, fontSize: 13 }}>{k.santri.person.fullName}</span>
-                <span className="muted">{k.jam ?? '-'} · Asrama {k.santri.room?.dormitory.name ?? '-'}</span>
+                <span style={{ fontWeight: 600, fontSize: 13 }}>{k.student.person.fullName}</span>
+                <span className="muted">{k.time ?? '-'} · Asrama {k.student.room?.dormitory.name ?? '-'}</span>
                 <span className="badge badge-merah">{k.diagnosis ?? '-'}</span>
-                <span className="muted" style={{ width: '100%' }}>{k.keluhan} → {k.terapi ?? '-'} · <strong>{k.tindakLanjut ?? '-'}</strong></span>
+                <span className="muted" style={{ width: '100%' }}>{k.complaint} → {k.treatment ?? '-'} · <strong>{k.followUp ?? '-'}</strong></span>
               </div>
             ))}
           </div>

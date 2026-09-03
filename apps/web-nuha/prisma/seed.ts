@@ -648,7 +648,7 @@ async function main() {
   }
 
   for (const row of source.pendaftar) await prisma.applicant.upsert({ where: { registrationNumber: String(row.noReg) }, create: { registrationNumber: String(row.noReg), fullName: String(row.nama), choice: String(row.pilihan), previousSchool: String(row.asal), registeredAt: parseDate(row.date), score: Number(row.nilai), status: pendaftarStatus(row.status) }, update: { status: pendaftarStatus(row.status), score: Number(row.nilai) } });
-  for (const row of source.obat) await prisma.obat.upsert({ where: { nama: String(row.nama) }, create: { nama: String(row.nama), satuan: String(row.satuan), kategori: String(row.kategori), stok: Number(row.stok), stokMin: Number(row.min), kadaluarsa: String(row.exp) }, update: { stok: Number(row.stok) } });
+  for (const row of source.obat) await prisma.medicine.upsert({ where: { name: String(row.nama) }, create: { name: String(row.nama), unit: String(row.satuan), category: String(row.kategori), stock: Number(row.stok), minStock: Number(row.min), expiry: String(row.exp) }, update: { stock: Number(row.stok) } });
   for (const [index, row] of source.kegiatanHarian.entries()) await prisma.kegiatanHarian.upsert({ where: { id: index + 1 }, create: { id: index + 1, jam: String(row.jam), nama: String(row.nama), ket: String(row.ket), urutan: index }, update: { nama: String(row.nama) } });
   for (const row of source.halaqah) await prisma.studyCircle.create({ data: { name: String(row.nama), teacher: String(row.ustadz), schedule: String(row.waktu), location: String(row.tempat), educationLevel: String(row.jenjang), memberCount: Number(row.anggota) } }).catch(() => undefined);
   for (const row of source.pengumumanSantri) await prisma.announcement.create({ data: { date: parseDate(row.tgl), title: String(row.judul), content: String(row.isi), target: 'Santri' } }).catch(() => undefined);
@@ -673,7 +673,7 @@ async function main() {
   }
   for (const row of source.kunjungan) {
     const santri = findSantri(row.santri);
-    if (santri) await prisma.rekamMedis.create({ data: { santriId: santri.id, tgl: parseDate(row.tgl), jam: String(row.jam), keluhan: String(row.keluhan), diagnosis: String(row.diagnosis), terapi: String(row.terapi), tindakLanjut: String(row.lanjut), petugas: String(row.petugas) } });
+    if (santri) await prisma.medicalRecord.create({ data: { studentId: santri.id, date: parseDate(row.tgl), time: String(row.jam), complaint: String(row.keluhan), diagnosis: String(row.diagnosis), treatment: String(row.terapi), followUp: String(row.lanjut), officer: String(row.petugas) } });
   }
   for (const row of source.kunjunganWali) {
     const santri = findSantri(row.santri);

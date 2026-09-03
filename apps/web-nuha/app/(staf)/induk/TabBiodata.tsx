@@ -28,7 +28,7 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
         .join(', ')
     : santri.person.addressLine ?? '-';
 
-  const jumlahRekamMedis = await prisma.rekamMedis.count({ where: { santriId } });
+  const jumlahRekamMedis = await prisma.medicalRecord.count({ where: { studentId: santriId } });
   const mukim = santri.status === 'Mukim';
 
   return (

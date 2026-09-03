@@ -18,10 +18,10 @@ function hitungImt(beratKg: unknown, tinggiCm: unknown) {
 /** Tab Kesehatan: profil kesehatan santri + rekam medis Poskestren miliknya. */
 export async function TabKesehatan({ santriId }: { santriId: bigint }) {
   const [profil, rekam] = await Promise.all([
-    prisma.profilKesehatan.findUnique({ where: { santriId } }),
-    prisma.rekamMedis.findMany({ where: { santriId }, orderBy: { tgl: 'desc' } }),
+    prisma.healthProfile.findUnique({ where: { studentId: santriId } }),
+    prisma.medicalRecord.findMany({ where: { studentId: santriId }, orderBy: { date: 'desc' } }),
   ]);
-  const imt = hitungImt(profil?.beratKg, profil?.tinggiCm);
+  const imt = hitungImt(profil?.weightKg, profil?.heightCm);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -32,22 +32,22 @@ export async function TabKesehatan({ santriId }: { santriId: bigint }) {
           : (
             <div className="grid g2" style={{ alignItems: 'start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-                <Baris label="Berat badan" nilai={angka(profil.beratKg, 'kg')} />
-                <Baris label="Tinggi badan" nilai={angka(profil.tinggiCm, 'cm')} />
+                <Baris label="Berat badan" nilai={angka(profil.weightKg, 'kg')} />
+                <Baris label="Tinggi badan" nilai={angka(profil.heightCm, 'cm')} />
                 <Baris label="IMT" nilai={imt ?? '-'} />
-                <Baris label="Golongan darah" nilai={profil.golDarah ?? '-'} terakhir />
+                <Baris label="Golongan darah" nilai={profil.bloodType ?? '-'} terakhir />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-                <Baris label="Riwayat penyakit" nilai={profil.riwayatPenyakit ?? '-'} />
-                <Baris label="Alergi" nilai={profil.alergi ?? '-'} />
-                <Baris label="Kebutuhan khusus" nilai={profil.kebutuhanKhusus ?? '-'} terakhir />
+                <Baris label="Riwayat penyakit" nilai={profil.medicalHistory ?? '-'} />
+                <Baris label="Alergi" nilai={profil.allergies ?? '-'} />
+                <Baris label="Kebutuhan khusus" nilai={profil.specialNeeds ?? '-'} terakhir />
               </div>
             </div>
           )}
-        {profil?.catatan && (
+        {profil?.notes && (
           <div className="inset">
             <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--hijau)' }}>Catatan</div>
-            <div className="muted" style={{ marginTop: 3, lineHeight: 1.6 }}>{profil.catatan}</div>
+            <div className="muted" style={{ marginTop: 3, lineHeight: 1.6 }}>{profil.notes}</div>
           </div>
         )}
       </div>
@@ -61,14 +61,14 @@ export async function TabKesehatan({ santriId }: { santriId: bigint }) {
               {rekam.map((k) => (
                 <div key={String(k.id)} className="inset">
                   <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 7 }}>
-                    <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--hijau)' }}>{formatTgl(k.tgl)}{k.jam ? ` · ${k.jam}` : ''}</span>
+                    <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--hijau)' }}>{formatTgl(k.date)}{k.time ? ` · ${k.time}` : ''}</span>
                     {k.diagnosis && <span className="badge badge-merah">{k.diagnosis}</span>}
-                    <span className="muted" style={{ fontSize: 12 }}>{k.petugas}</span>
+                    <span className="muted" style={{ fontSize: 12 }}>{k.officer}</span>
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--teks-2)', lineHeight: 1.6 }}>
-                    <strong>Keluhan:</strong> {k.keluhan}<br />
-                    <strong>Terapi:</strong> {k.terapi ?? '-'}<br />
-                    <strong>Tindak lanjut:</strong> {k.tindakLanjut ?? '-'}
+                    <strong>Keluhan:</strong> {k.complaint}<br />
+                    <strong>Terapi:</strong> {k.treatment ?? '-'}<br />
+                    <strong>Tindak lanjut:</strong> {k.followUp ?? '-'}
                   </div>
                 </div>
               ))}

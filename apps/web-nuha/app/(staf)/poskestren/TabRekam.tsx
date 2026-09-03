@@ -7,9 +7,9 @@ const WARNA_LANJUT: Record<string, string> = {
 };
 
 export async function TabRekam() {
-  const rekam = await prisma.rekamMedis.findMany({
-    include: { santri: { include: { person: true, room: { include: { dormitory: true } } } } },
-    orderBy: { tgl: 'desc' },
+  const rekam = await prisma.medicalRecord.findMany({
+    include: { student: { include: { person: true, room: { include: { dormitory: true } } } } },
+    orderBy: { date: 'desc' },
   });
 
   return (
@@ -20,23 +20,23 @@ export async function TabRekam() {
           {rekam.map((k) => (
             <tr key={String(k.id)}>
               <td>
-                {k.tgl.toLocaleDateString('id-ID', { dateStyle: 'medium' })}
-                <div className="muted">{k.jam ?? '-'}</div>
+                {k.date.toLocaleDateString('id-ID', { dateStyle: 'medium' })}
+                <div className="muted">{k.time ?? '-'}</div>
               </td>
               <td>
                 <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
-                  <Avatar nama={k.santri.person.fullName} size={30} />
+                  <Avatar nama={k.student.person.fullName} size={30} />
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{k.santri.person.fullName}</div>
-                    <div className="muted">{k.santri.room?.dormitory.name ?? '-'}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{k.student.person.fullName}</div>
+                    <div className="muted">{k.student.room?.dormitory.name ?? '-'}</div>
                   </div>
                 </div>
               </td>
-              <td>{k.keluhan}</td>
+              <td>{k.complaint}</td>
               <td style={{ fontWeight: 600 }}>{k.diagnosis ?? '-'}</td>
-              <td>{k.terapi ?? '-'}</td>
+              <td>{k.treatment ?? '-'}</td>
               <td>
-                {k.tindakLanjut ? <span className={`badge ${WARNA_LANJUT[k.tindakLanjut] ?? 'badge-netral'}`}>{k.tindakLanjut}</span> : '-'}
+                {k.followUp ? <span className={`badge ${WARNA_LANJUT[k.followUp] ?? 'badge-netral'}`}>{k.followUp}</span> : '-'}
               </td>
             </tr>
           ))}

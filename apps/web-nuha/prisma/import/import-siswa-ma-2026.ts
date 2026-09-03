@@ -369,13 +369,13 @@ async function jalankan(): Promise<void> {
     if (s.ibu) await tulisRelasiWali(orang.id, s.nisn, 'Ibu', { ...s.ibu, nama: judulKasus(s.ibu.nama), hp: bersihkanHp(s.ibu.hp) });
 
     const isiKesehatan = {
-      beratKg: s.beratKg,
-      tinggiCm: s.tinggiCm,
-      riwayatPenyakit: s.riwayatPenyakit,
+      weightKg: s.beratKg,
+      heightCm: s.tinggiCm,
+      medicalHistory: s.riwayatPenyakit,
     };
-    await prisma.profilKesehatan.upsert({
-      where: { santriId: santri.id },
-      create: { santriId: santri.id, ...isiKesehatan },
+    await prisma.healthProfile.upsert({
+      where: { studentId: santri.id },
+      create: { studentId: santri.id, ...isiKesehatan },
       update: isiKesehatan,
     });
 

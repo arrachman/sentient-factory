@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { requirePage } from '@/lib/access';
 import { prisma } from '@/lib/prisma';
 
-/** Simpan hasil pemeriksaan pasien — menulis baris baru ke RekamMedis. */
+/** Simpan hasil pemeriksaan pasien — menulis baris baru ke MedicalRecord. */
 export async function simpanPeriksa(formData: FormData): Promise<void> {
   const session = await requirePage('poskestren');
 
@@ -20,16 +20,16 @@ export async function simpanPeriksa(formData: FormData): Promise<void> {
   const sekarang = new Date();
   const jam = sekarang.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
-  await prisma.rekamMedis.create({
+  await prisma.medicalRecord.create({
     data: {
-      santriId,
-      tgl: sekarang,
-      jam,
-      keluhan,
+      studentId: santriId,
+      date: sekarang,
+      time: jam,
+      complaint: keluhan,
       diagnosis: diagnosis || null,
-      terapi: terapi || null,
-      tindakLanjut: tindakLanjut || null,
-      petugas: session.nama,
+      treatment: terapi || null,
+      followUp: tindakLanjut || null,
+      officer: session.nama,
     },
   });
 

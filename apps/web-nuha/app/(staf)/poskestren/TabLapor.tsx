@@ -3,19 +3,19 @@ import { prisma } from '@/lib/prisma';
 const AMBANG_KLB = 3;
 
 export async function TabLapor() {
-  const rekam = await prisma.rekamMedis.findMany({
-    include: { santri: { include: { room: { include: { dormitory: true } } } } },
+  const rekam = await prisma.medicalRecord.findMany({
+    include: { student: { include: { room: { include: { dormitory: true } } } } },
   });
 
   const totalKunjungan = rekam.length;
   const diagCount = new Map<string, number>();
   rekam.forEach((k) => { if (k.diagnosis) diagCount.set(k.diagnosis, (diagCount.get(k.diagnosis) ?? 0) + 1); });
   const [diagnosisTerbanyak, kasusTerbanyak] = [...diagCount.entries()].sort((a, b) => b[1] - a[1])[0] ?? ['-', 0];
-  const rujukan = rekam.filter((k) => k.tindakLanjut === 'Rujuk Puskesmas').length;
+  const rujukan = rekam.filter((k) => k.followUp === 'Rujuk Puskesmas').length;
 
   const klbMap = new Map<string, number>();
   rekam.forEach((k) => {
-    const asrama = k.santri.room?.dormitory.name;
+    const asrama = k.student.room?.dormitory.name;
     if (!asrama || !k.diagnosis) return;
     const key = `${k.diagnosis}|${asrama}`;
     klbMap.set(key, (klbMap.get(key) ?? 0) + 1);

@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { Kosong } from '@/components';
 
 export async function TabKesehatan({ santriId }: { santriId: bigint }) {
-  const rekam = await prisma.rekamMedis.findMany({ where: { santriId }, orderBy: { tgl: 'desc' }, take: 15 });
+  const rekam = await prisma.medicalRecord.findMany({ where: { studentId: santriId }, orderBy: { date: 'desc' }, take: 15 });
 
   return (
     <>
@@ -11,13 +11,13 @@ export async function TabKesehatan({ santriId }: { santriId: bigint }) {
         <div key={String(k.id)} style={{ background: '#FFFFFF', border: '1px solid #E8E3D9', borderRadius: 14, padding: 16, marginBottom: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
             <span style={{ padding: '4px 10px', borderRadius: 999, background: '#FEE2E2', color: '#991B1B', fontSize: 11.5, fontWeight: 700 }}>{k.diagnosis ?? 'Belum terdiagnosis'}</span>
-            <span style={{ fontSize: 11.5, color: '#6B7280' }}>{k.tgl.toLocaleDateString('id-ID')}{k.jam ? ` · ${k.jam}` : ''}</span>
+            <span style={{ fontSize: 11.5, color: '#6B7280' }}>{k.date.toLocaleDateString('id-ID')}{k.time ? ` · ${k.time}` : ''}</span>
           </div>
           <div style={{ fontSize: 12.5, color: '#374151', lineHeight: 1.65 }}>
-            <strong>Keluhan:</strong> {k.keluhan}<br />
-            <strong>Terapi:</strong> {k.terapi ?? '-'}<br />
-            <strong>Tindak lanjut:</strong> {k.tindakLanjut ?? '-'}<br />
-            <strong>Petugas:</strong> {k.petugas}
+            <strong>Keluhan:</strong> {k.complaint}<br />
+            <strong>Terapi:</strong> {k.treatment ?? '-'}<br />
+            <strong>Tindak lanjut:</strong> {k.followUp ?? '-'}<br />
+            <strong>Petugas:</strong> {k.officer}
           </div>
         </div>
       ))}

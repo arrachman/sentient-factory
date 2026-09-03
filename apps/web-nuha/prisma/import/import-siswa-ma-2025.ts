@@ -500,16 +500,16 @@ async function jalankan(): Promise<void> {
 
     // Baris kesehatan yang seluruh kolomnya kosong tidak menghasilkan profil hampa.
     const isiKesehatan = {
-      beratKg: s.beratKg,
-      tinggiCm: s.tinggiCm,
-      riwayatPenyakit: s.riwayatPenyakit,
-      kebutuhanKhusus: s.kebutuhanKhusus,
+      weightKg: s.beratKg,
+      heightCm: s.tinggiCm,
+      medicalHistory: s.riwayatPenyakit,
+      specialNeeds: s.kebutuhanKhusus,
     };
     const adaDataKesehatan = Object.values(isiKesehatan).some((v) => v !== null);
     if (adaDataKesehatan) {
-      await prisma.profilKesehatan.upsert({
-        where: { santriId: santri.id },
-        create: { santriId: santri.id, ...isiKesehatan },
+      await prisma.healthProfile.upsert({
+        where: { studentId: santri.id },
+        create: { studentId: santri.id, ...isiKesehatan },
         update: isiKesehatan,
       });
     }

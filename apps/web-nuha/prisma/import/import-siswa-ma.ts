@@ -217,20 +217,20 @@ async function jalankan(): Promise<void> {
 
       const k = s.kesehatan;
       if (k && (k.D || k.E || k.F || k.G)) {
-        await prisma.profilKesehatan.upsert({
-          where: { santriId: santri.id },
+        await prisma.healthProfile.upsert({
+          where: { studentId: santri.id },
           create: {
-            santriId: santri.id,
-            beratKg: k.D ? Number(angkaKeTeksUtuh(k.D)) : null,
-            tinggiCm: k.E ? Number(angkaKeTeksUtuh(k.E)) : null,
-            riwayatPenyakit: k.F?.trim() || null,
-            kebutuhanKhusus: k.G?.trim() || null,
+            studentId: santri.id,
+            weightKg: k.D ? Number(angkaKeTeksUtuh(k.D)) : null,
+            heightCm: k.E ? Number(angkaKeTeksUtuh(k.E)) : null,
+            medicalHistory: k.F?.trim() || null,
+            specialNeeds: k.G?.trim() || null,
           },
           update: {
-            beratKg: k.D ? Number(angkaKeTeksUtuh(k.D)) : null,
-            tinggiCm: k.E ? Number(angkaKeTeksUtuh(k.E)) : null,
-            riwayatPenyakit: k.F?.trim() || null,
-            kebutuhanKhusus: k.G?.trim() || null,
+            weightKg: k.D ? Number(angkaKeTeksUtuh(k.D)) : null,
+            heightCm: k.E ? Number(angkaKeTeksUtuh(k.E)) : null,
+            medicalHistory: k.F?.trim() || null,
+            specialNeeds: k.G?.trim() || null,
           },
         });
       }

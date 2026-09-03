@@ -9,7 +9,7 @@ const TARGET_SETORAN = 60;
 export async function TabHafalan({ santri }: { santri: SantriLengkap }) {
   const [setoran, sakit, tazir] = await Promise.all([
     prisma.memorization.findMany({ where: { studentId: santri.id }, orderBy: { date: 'desc' }, take: 15 }),
-    prisma.rekamMedis.findMany({ where: { santriId: santri.id }, orderBy: { tgl: 'desc' }, take: 2 }),
+    prisma.medicalRecord.findMany({ where: { studentId: santri.id }, orderBy: { date: 'desc' }, take: 2 }),
     prisma.discipline.findMany({ where: { studentId: santri.id }, orderBy: { date: 'desc' }, take: 3 }),
   ]);
   const pct = Math.min(100, Math.round((setoran.length / TARGET_SETORAN) * 100));
@@ -27,8 +27,8 @@ export async function TabHafalan({ santri }: { santri: SantriLengkap }) {
           <div style={{ fontFamily: 'var(--font-lora), serif', fontSize: 16, color: '#0A4A2B', fontWeight: 600, marginBottom: 10 }}>Catatan kesehatan &amp; ta&apos;zir</div>
           {sakit.map((k) => (
             <div key={String(k.id)} style={{ padding: '11px 13px', borderRadius: 11, background: '#FFFBEB', border: '1px solid #F0CFA4', marginBottom: 8 }}>
-              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#92400E' }}>{k.diagnosis ?? k.keluhan} · {k.tgl.toLocaleDateString('id-ID')}</div>
-              <div style={{ fontSize: 12, color: '#4B5563', marginTop: 3 }}>{k.keluhan} — {k.tindakLanjut ?? '-'}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 700, color: '#92400E' }}>{k.diagnosis ?? k.complaint} · {k.date.toLocaleDateString('id-ID')}</div>
+              <div style={{ fontSize: 12, color: '#4B5563', marginTop: 3 }}>{k.complaint} — {k.followUp ?? '-'}</div>
             </div>
           ))}
           {tazir.map((t) => (

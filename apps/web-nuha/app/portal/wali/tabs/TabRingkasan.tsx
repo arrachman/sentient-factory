@@ -12,7 +12,7 @@ export async function TabRingkasan({ santriId, program }: { santriId: bigint; pr
   const [presensi, hafalanN, sakit, pengumuman] = await Promise.all([
     prisma.attendance.groupBy({ by: ['status'], where: { studentId: santriId, date: { gte: awalBulan } }, _count: { status: true } }),
     prisma.memorization.count({ where: { studentId: santriId } }),
-    prisma.rekamMedis.findMany({ where: { santriId }, orderBy: { tgl: 'desc' }, take: 2 }),
+    prisma.medicalRecord.findMany({ where: { studentId: santriId }, orderBy: { date: 'desc' }, take: 2 }),
     prisma.announcement.findMany({ orderBy: { date: 'desc' }, take: 3 }),
   ]);
 
@@ -43,10 +43,10 @@ export async function TabRingkasan({ santriId, program }: { santriId: bigint; pr
         {sakit.map((k) => (
           <div key={String(k.id)} style={{ padding: '12px 13px', borderRadius: 11, background: '#FFFBEB', border: '1px solid #F0CFA4', marginBottom: 8 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: '#92400E' }}>{k.diagnosis ?? k.keluhan}</span>
-              <span style={{ fontSize: 11.5, color: '#6B7280' }}>{k.tgl.toLocaleDateString('id-ID')}</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: '#92400E' }}>{k.diagnosis ?? k.complaint}</span>
+              <span style={{ fontSize: 11.5, color: '#6B7280' }}>{k.date.toLocaleDateString('id-ID')}</span>
             </div>
-            <div style={{ fontSize: 12, color: '#4B5563', marginTop: 4, lineHeight: 1.55 }}>{k.keluhan} · {k.tindakLanjut ?? '-'}</div>
+            <div style={{ fontSize: 12, color: '#4B5563', marginTop: 4, lineHeight: 1.55 }}>{k.complaint} · {k.followUp ?? '-'}</div>
           </div>
         ))}
       </div>
