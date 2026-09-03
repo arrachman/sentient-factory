@@ -161,7 +161,7 @@ export function CrudPanel({ entity, rows: initialRows }: { entity: ClientEntity;
         <div className="modal-head">
           <div>
             <h3 style={{ margin: 0 }}>{editing ? `Ubah ${entity.label.toLowerCase()}` : `Tambah ${entity.label.toLowerCase()}`}</h3>
-            {editing && <p className="muted" style={{ fontSize: 12.5, margin: '4px 0 0' }}>{String(editing.nama ?? editing.label ?? `ID ${editing.id}`)}</p>}
+            {editing && <p className="muted" style={{ fontSize: 12.5, margin: '4px 0 0' }}>{String(editing.fullName ?? editing.nama ?? editing.label ?? `ID ${editing.id}`)}</p>}
           </div>
           <button className="btn btn-sekunder btn-icon" type="button" onClick={() => { setEditing(null); setOpen(false); }} title="Tutup" aria-label="Tutup"><IkonTutup /></button>
         </div>

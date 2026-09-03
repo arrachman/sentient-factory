@@ -109,15 +109,15 @@ export const PERSONA = RESEP.map((resep) => ({
 export const ENTITAS_PERSONA: Entity[] = RESEP.map((resep) => ({
   key: resep.key,
   menu: 'induk',
-  model: 'orang',
+  model: 'person',
   label: resep.label,
   deskripsi: resep.deskripsi,
   formLebar: true,
   idType: 'bigint',
   whereDasar: resep.whereDasar,
   fields: [...FIELD_ORANG_DASAR, ...resep.fieldPeran],
-  columns: kolom(['nama', 'Nama'], ...resep.kolomPeran, ['jk', 'JK'], ['hp', 'HP'], ['aktif', 'Aktif']),
-  orderBy: { nama: 'asc' },
+  columns: kolom(['fullName', 'Nama'], ...resep.kolomPeran, ['gender', 'JK'], ['phone', 'HP'], ['isActive', 'Aktif']),
+  orderBy: { fullName: 'asc' },
   sesudahBuat: denganPeran(resep.peran, daftarkanPeran),
   sesudahUbah: denganPeran(resep.peran, selaraskanPeran),
 }));

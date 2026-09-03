@@ -13,8 +13,8 @@ export const FILTER_JK_SANTRI: Field = {
   options: ['L', 'P'],
   optionLabels: { L: 'Laki-laki', P: 'Perempuan' },
   filterWhere: {
-    L: { orang: { is: { jk: 'L' } } },
-    P: { orang: { is: { jk: 'P' } } },
+    L: { person: { is: { gender: 'L' } } },
+    P: { person: { is: { gender: 'P' } } },
   },
 };
 

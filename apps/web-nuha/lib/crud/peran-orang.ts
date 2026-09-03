@@ -3,7 +3,7 @@ import { recordAudit } from '@/lib/audit';
 import type { Field } from './types';
 
 /**
- * Satu baris `orang` adalah identitas dasar; perannya (santri, guru, staf,
+ * Satu baris `person` adalah identitas dasar; perannya (santri, guru, staf,
  * wali) hidup di tabel lain. Operator dulu harus membuat orang lebih dahulu
  * lalu membuka modul Santri/Kepegawaian dan menyalin ID-nya. Field virtual di
  * bawah memindahkan langkah itu ke dalam form: pilih peran sekali, barisnya
@@ -24,7 +24,7 @@ const HUBUNGAN_WALI = ['Ayah', 'Ibu', 'Wali'];
 
 const tampilBila = (sama: PeranOrang[]) => ({ field: 'peranOrang', sama: [...sama] as string[] });
 
-/** Field virtual: tidak ada kolomnya di tabel `orang`. */
+/** Field virtual: tidak ada kolomnya di tabel `person`. */
 export const FIELD_PERAN: Field[] = [
   {
     name: 'peranOrang',

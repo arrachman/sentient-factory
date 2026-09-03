@@ -5,7 +5,7 @@ import { SEMUA } from './filter-nilai';
 
 export type Filters = Record<string, string>;
 
-/** `orang.nama` → `{ orang: { nama: { contains: q } } }`. */
+/** `person.fullName` → `{ person: { fullName: { contains: q } } }`. */
 const wherePath = (path: string, q: string): Record<string, unknown> =>
   path.split('.').reverse().reduce<Record<string, unknown>>((acc, key, i) => ({ [key]: i === 0 ? { contains: q } : acc }), {});
 
@@ -144,7 +144,7 @@ export async function listRows(entity: Entity, halaman = 1, ukuranHalaman = 10, 
   });
   const dasar = rows.map((row) => {
     const datar: Row = { ...(serialize(row) as Record<string, unknown>), id: String(row.id) };
-    // Kolom bertitik (mis. `orang.nama`) diratakan di server supaya tabel klien
+    // Kolom bertitik (mis. `person.fullName`) diratakan di server supaya tabel klien
     // tetap membaca `row[column.name]` tanpa tahu bentuk relasinya.
     for (const path of kolomBertitik(entity)) datar[path] = serialize(readPath(datar, path));
     return datar;

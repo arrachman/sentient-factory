@@ -4,7 +4,7 @@
  */
 export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'datetime' | 'select' | 'pilihan-banyak' | 'boolean' | 'orang-banyak' | 'wilayah';
 
-/** Options pulled from another table; `label` may walk relations, e.g. `orang.nama`. */
+/** Options pulled from another table; `label` may walk relations, e.g. `person.fullName`. */
 export type FieldRef = {
   model: string;
   label: string;
@@ -76,7 +76,7 @@ export type Field = {
 export type Keterkaitan = { label: string; detail: string; href?: string; nada?: 'hijau' | 'biru' | 'kuning' | 'netral' };
 
 /**
- * `name` boleh menyusuri relasi dengan titik (mis. `orang.nama`) selama relasi
+ * `name` boleh menyusuri relasi dengan titik (mis. `person.fullName`) selama relasi
  * itu ikut di `Entity.include`.
  */
 export type Column = {
@@ -105,7 +105,7 @@ export type Entity = {
    */
   whereDasar?: Record<string, unknown>;
   /**
-   * Path relasi yang ikut disapu kotak "Cari", mis. `orang.nama` — tanpa ini
+   * Path relasi yang ikut disapu kotak "Cari", mis. `person.fullName` — tanpa ini
    * pencarian hanya melihat kolom teks milik tabel entitas sendiri.
    */
   cariPath?: string[];

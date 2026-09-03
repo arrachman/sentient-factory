@@ -4,6 +4,62 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-03 — Perbaikan registry CRUD `orang`/persona pasca rename ke Person
+
+Menutup catatan yang di-flag di entri sebelumnya: entitas CRUD `orang` dan
+keempat persona (Santri/Guru/Staf/Wali) di `lib/crud/registry.ts` dan
+`lib/crud/persona.ts` masih memakai nama Prisma lama (`model: 'orang'`,
+`include: { orang: true }`, `'orang.nama'`, field `nama`/`jk`/`hp`/`aktif`)
+padahal modelnya sudah `Person` sejak Fase 2 — regresi yang **tidak terdeteksi
+`npx tsc --noEmit`** karena `Entity`/`Field` di `lib/crud/types.ts` menyimpan
+nama model/field sebagai `string` polos tanpa keterkaitan tipe ke Prisma
+Client. Dampaknya sebelum perbaikan: setiap create/update lewat CRUD generic
+untuk `orang` dan keempat persona akan gagal total (`delegateFor` melempar
+"Model tidak dikenal").
+
+Diperbaiki: `lib/crud/orang-fields.ts` (semua nama field diterjemahkan ke
+Prisma `Person` yang sebenarnya — `nama→fullName`, `jk→gender`, `hp→phone`,
+`alamat→addressLine`, `desaId→regionId`, `aktif→isActive`, dst.),
+`lib/crud/persona.ts`, `lib/crud/registry.ts`, `lib/crud/santri-filter.ts`
+(`orang.jk→person.gender`), serta komentar di `lib/crud/engine.ts`,
+`lib/crud/types.ts`, `lib/crud/keterkaitan.ts`, `lib/crud/peran-orang.ts`.
+
+Ditemukan bug kedua yang sama sekali tidak ter-flag sebelumnya, di
+`lib/crud/keterkaitan.ts`: guard `if (entity.model !== 'orang') return rows;`
+pada `lampirkanKeterkaitan()` diam-diam mematikan seluruh panel "Terhubung ke
+modul lain" untuk semua entitas (tidak ada lagi `entity.model` bernilai
+`'orang'`) — diperbaiki jadi `!== 'person'`.
+
+Bug ketiga: `app/api/crud/[entity]/route.ts` men-hardcode nama field wilayah
+sebagai `parsed.data.desaId` di POST dan PATCH — begitu `orang-fields.ts`
+berganti nama field jadi `regionId`, validasi desa aktif untuk entitas
+`orang`/persona diam-diam terlewati (data tersimpan tanpa pengecekan),
+sementara entitas `unit`/`profil-lembaga` yang masih memakai `desaId` tetap
+tervalidasi. Diperbaiki dengan helper `regionValue()` yang membaca field
+`type: 'wilayah'` milik entitas secara dinamis, bukan nama kolom tetap —
+berlaku benar untuk kedua skema penamaan sekaligus.
+
+Bug keempat (kosmetik/UX, bukan fungsional): `components/CrudPanel.tsx` baris
+subjudul modal ubah hardcode `editing.nama` — untuk baris `Person` yang kini
+tidak lagi punya kolom `nama`, subjudul jatuh ke `ID {id}` alih-alih nama
+orang. Diperbaiki dengan fallback `editing.fullName ?? editing.nama ?? ...`.
+
+**Pelajaran untuk rename berikutnya**: string literal nama model/field di
+`lib/crud/registry.ts`, `persona.ts`, `*-fields.ts`, `*-filter.ts`,
+`keterkaitan.ts`, dan `app/api/crud/[entity]/route.ts` harus di-grep manual
+setiap kali ada rename Prisma — `tsc --noEmit` tidak akan pernah menangkapnya.
+
+Verifikasi Playwright di `http://202.59.200.26:3226` (superadmin): create
+baris uji lewat `/data/orang` (form fullName + gender tersimpan benar di
+kolom `fullName`/`gender` tabel `people`, tanpa `pageerror`), subjudul modal
+ubah menampilkan nama, baris dihapus setelah verifikasi. Halaman
+`/data/orang`, `/data/santri-orang`, `/data/guru-orang`, `/data/staf-orang`,
+`/data/wali-orang`, `/data/santri` seluruhnya merender tanpa `pageerror`.
+Catatan: DB dev saat ini belum punya baris `santri`/`pegawai` (0 baris),
+jadi panel "Terhubung ke modul lain" belum bisa diverifikasi visual dengan
+data nyata — perlu diverifikasi ulang begitu data santri/pegawai tersedia.
+`npx tsc --noEmit` bersih.
+
 ## 2026-09-03 — Rename teknis TahunAjaran ke AcademicYear
 
 Model Prisma `TahunAjaran` dan tabel fisik `tahun_ajaran` kini menjadi

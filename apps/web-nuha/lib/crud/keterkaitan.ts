@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import type { Entity, Keterkaitan, Row } from './types';
 
 /**
- * Satu baris `orang` bisa dipakai ulang sebagai santri, pegawai, dan wali.
+ * Satu baris `person` bisa dipakai ulang sebagai santri, pegawai, dan wali.
  * Operator perlu tahu itu sebelum mengubah atau menghapus — jadi kumpulkan
  * perannya dalam satu query per relasi, bukan per baris. Akun login sengaja
  * tidak ditampilkan: semua orang di sini pasti punya akun.
@@ -74,9 +74,9 @@ async function kaitOrang(rows: Row[]): Promise<Map<string, PeranTersimpan>> {
  * supaya form ubah bisa memuat peran yang sudah ada (`row[field.name]`).
  */
 export async function lampirkanKeterkaitan(entity: Entity, rows: Row[]): Promise<Row[]> {
-  // Berlaku untuk semua entitas yang barisnya adalah `orang` — termasuk
+  // Berlaku untuk semua entitas yang barisnya adalah `person` — termasuk
   // entitas persona (Santri, Guru, Staf, Wali) yang berbagi tabel yang sama.
-  if (entity.model !== 'orang') return rows;
+  if (entity.model !== 'person') return rows;
   const peta = await kaitOrang(rows);
   return rows.map((row) => {
     const info = peta.get(row.id);
