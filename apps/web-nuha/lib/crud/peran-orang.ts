@@ -126,12 +126,12 @@ export const FILTER_KATEGORI_ORANG: Field = {
   optionLabels: { santri: 'Santri', guru: 'Guru', pegawai: 'Pegawai', wali: 'Wali', belum: 'Tanpa peran' },
   filterWhere: {
     santri: { santri: { isNot: null } },
-    guru: { pegawai: { is: { jabatan: { contains: 'Guru' } } } },
-    pegawai: { pegawai: { isNot: null } },
+    guru: { staff: { is: { position: { contains: 'Guru' } } } },
+    pegawai: { staff: { isNot: null } },
     wali: { waliDari: { some: {} } },
     // Orang yang belum terhubung ke modul mana pun — biasanya sisa impor
     // identitas yang perannya belum ditetapkan.
-    belum: { santri: { is: null }, pegawai: { is: null }, waliDari: { none: {} } },
+    belum: { santri: { is: null }, staff: { is: null }, waliDari: { none: {} } },
   },
 };
 
