@@ -1,5 +1,11 @@
 # Riwayat Perubahan — web-nuha
 
+## 2026-09-03 — Rename teknis relasi wali ke Inggris (`a7d80621`)
+
+Model Prisma `RelasiWali` kini menjadi `GuardianRelation`, delegate Prisma menjadi `guardianRelation`, dan tabel fisik `relasi_wali` menjadi `guardian_relations`. Migrasi `20260903040000_rename_guardian_relation_to_english` mengganti tabel, indeks unik, dan foreign key secara in-place sehingga data serta relasi ke `people` tetap terjaga.
+
+Dampak operator: label, istilah wali/ayah/ibu, kunci CRUD, parameter impor, dan nilai audit berbahasa Indonesia tetap dipertahankan. Database yang sudah menjalankan aplikasi harus menjalankan migrasi Prisma ini sebelum memakai versi commit tersebut.
+
 Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
