@@ -1,5 +1,11 @@
 # Riwayat Perubahan — web-nuha
 
+## 2026-09-03 — Perbaikan filter persona setelah rename Staff (`0120ee48`)
+
+Filter dinamis pada daftar Guru, Staf, dan kategori peran orang kini memakai relasi Prisma `staff` serta field `position`, menggantikan identifier teknis lama `pegawai` dan `jabatan` yang sudah tidak tersedia setelah rename skema Staff.
+
+Dampak operator: halaman `/data/guru-orang` dan `/data/staf-orang` kembali dapat dibuka tanpa galat validasi Prisma. Label, opsi filter, URL, dan istilah operasional berbahasa Indonesia tidak berubah.
+
 ## 2026-09-03 — Rename teknis profil lembaga ke Inggris (`40dfca9b`)
 
 Model Prisma `ProfilLembaga` dan delegate `profilLembaga` kini menjadi `InstitutionProfile` dan `institutionProfile`; tabel fisik `profil_lembaga` menjadi `institution_profiles`. Migrasi `20260903050000_rename_institution_profile_to_english` melakukan rename in-place untuk tabel, indeks, dan foreign key lokasi ke `regions`.
