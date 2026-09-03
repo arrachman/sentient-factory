@@ -8,7 +8,7 @@ export async function TabDiniyah({ kelas }: { kelas: string }) {
 
   const [jadwalDiniyah, kegiatan] = await Promise.all([
     kelas ? prisma.jadwalPelajaran.findMany({ where: { kelas, mapel: { in: namaDiniyah } }, orderBy: [{ hari: 'asc' }, { jamKe: 'asc' }] }) : Promise.resolve([]),
-    prisma.kegiatanHarian.findMany({ orderBy: { urutan: 'asc' } }),
+    prisma.dailyActivity.findMany({ orderBy: { order: 'asc' } }),
   ]);
 
   return (
@@ -34,8 +34,8 @@ export async function TabDiniyah({ kelas }: { kelas: string }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {kegiatan.map((k) => (
             <div key={k.id} style={{ display: 'flex', gap: 13, padding: '10px 4px', borderBottom: '1px solid #F5F2EA' }}>
-              <div style={{ width: 48, flex: '0 0 auto', fontSize: 12, fontWeight: 700, color: '#0F6B3D' }}>{k.jam}</div>
-              <div><div style={{ fontSize: 13, fontWeight: 600, color: '#1F2937' }}>{k.nama}</div><div style={{ fontSize: 11.5, color: '#6B7280' }}>{k.ket ?? ''}</div></div>
+              <div style={{ width: 48, flex: '0 0 auto', fontSize: 12, fontWeight: 700, color: '#0F6B3D' }}>{k.time}</div>
+              <div><div style={{ fontSize: 13, fontWeight: 600, color: '#1F2937' }}>{k.name}</div><div style={{ fontSize: 11.5, color: '#6B7280' }}>{k.note ?? ''}</div></div>
             </div>
           ))}
         </div>

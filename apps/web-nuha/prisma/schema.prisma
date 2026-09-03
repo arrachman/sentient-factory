@@ -783,14 +783,14 @@ model Attendance {
   @@map("attendance_records")
 }
 
-model KegiatanHarian {
-  id     Int     @id @default(autoincrement())
-  jam    String  @db.VarChar(16)
-  nama   String  @db.VarChar(160)
-  ket    String? @db.VarChar(255)
-  urutan Int     @default(0)
+model DailyActivity {
+  id    Int     @id @default(autoincrement())
+  time  String  @db.VarChar(16)
+  name  String  @db.VarChar(160)
+  note  String? @db.VarChar(255)
+  order Int     @default(0)
 
-  @@map("kegiatan_harian")
+  @@map("daily_activities")
 }
 
 // ─────────────────────────────────────────────────────────────
