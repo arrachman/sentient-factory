@@ -24,3 +24,16 @@ export async function validateActiveVillage(value: unknown): Promise<string | nu
 
   return null;
 }
+
+export async function validateDomesticAddressExclusivity(personId: bigint, data: Record<string, unknown>): Promise<string | null> {
+  if (!('addressLine' in data) && !('regionId' in data)) return null;
+  const hasDomesticAddress = ('addressLine' in data && Boolean(String(data.addressLine ?? '').trim()))
+    || ('regionId' in data && data.regionId !== null);
+  if (!hasDomesticAddress) return null;
+
+  const foreignAddress = await prisma.foreignAddress.findFirst({
+    where: { personId, isCurrent: true },
+    select: { id: true },
+  });
+  return foreignAddress ? 'Alamat domestik tidak dapat dipakai bersama alamat luar negeri aktif.' : null;
+}

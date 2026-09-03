@@ -4,7 +4,7 @@ import { readSession } from '@/lib/auth';
 import { recordAudit, requestIp } from '@/lib/audit';
 import { castId, coerce, countRows, delegateFor, listRows, serialize } from '@/lib/crud/engine';
 import { getEntity } from '@/lib/crud/registry';
-import { validateActiveVillage } from '@/lib/wilayah';
+import { validateActiveVillage, validateDomesticAddressExclusivity } from '@/lib/wilayah';
 
 const idSchema = z.string().regex(/^\d+$/);
 
@@ -98,6 +98,10 @@ async function updateOrDelete(request: Request, context: { params: Promise<{ ent
       if (parsed.errors.length) throw new Error(parsed.errors[0]);
       const wilayahError = await validateActiveVillage(regionValue(auth.entity, parsed.data));
       if (wilayahError) throw new Error(wilayahError);
+      if (auth.entity.model === 'person') {
+        const exclusivityError = await validateDomesticAddressExclusivity(castId(auth.entity, idResult.data) as bigint, parsed.data);
+        if (exclusivityError) throw new Error(exclusivityError);
+      }
       return delegate.update({ where: { id: castId(auth.entity, idResult.data) }, data: parsed.data });
     })();
     const row = await data;
