@@ -197,7 +197,7 @@ async function seedSuperAdmin() {
 async function main() {
   await seedPeranDanMenu();
   await Promise.all(UNIT_ROWS.map((row) => prisma.unit.upsert({ where: { key: row.key }, create: row, update: row })));
-  await prisma.profilLembaga.upsert({
+  await prisma.institutionProfile.upsert({
     where: { key: PROFIL_YAYASAN.key },
     create: PROFIL_YAYASAN,
     update: PROFIL_YAYASAN,

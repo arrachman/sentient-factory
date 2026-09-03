@@ -96,7 +96,7 @@ model Region {
   aliases              RegionAlias[]
   people               Person[]        @relation("PersonRegion")
   unitLocations        Unit[]          @relation("UnitRegion")
-  institutionLocations ProfilLembaga[] @relation("InstitutionProfileRegion")
+  institutionLocations InstitutionProfile[] @relation("InstitutionProfileRegion")
 
   @@unique([countryId, code])
   @@index([parentId, level, isActive])
@@ -334,7 +334,7 @@ model Unit {
 
 /// Profil yayasan induk — satu baris (`key = "yayasan"`), memuat identitas yang
 /// dipakai lintas modul: kop slip gaji, footer publik, rekening resmi, pengasuh.
-model ProfilLembaga {
+model InstitutionProfile {
   id           Int      @id @default(autoincrement())
   key          String   @unique @db.VarChar(24)
   nama         String   @db.VarChar(200)
@@ -363,7 +363,7 @@ model ProfilLembaga {
   region    Region?  @relation("InstitutionProfileRegion", fields: [desaId], references: [id], onDelete: SetNull)
 
   @@index([desaId])
-  @@map("profil_lembaga")
+  @@map("institution_profiles")
 }
 
 model Kelas {

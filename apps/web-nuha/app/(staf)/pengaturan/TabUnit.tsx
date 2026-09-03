@@ -22,7 +22,7 @@ function alamatTampil(alamat: string | null, region: { typeLabel: string | null;
 /** Profil yayasan induk beserta kartu profil tiap unit di bawahnya. */
 export async function TabUnit() {
   const [yayasan, units] = await Promise.all([
-    prisma.profilLembaga.findUnique({ where: { key: 'yayasan' }, include: { region: true } }),
+    prisma.institutionProfile.findUnique({ where: { key: 'yayasan' }, include: { region: true } }),
     prisma.unit.findMany({
       include: {
         _count: { select: { santri: true, staff: true, kelas: true } },

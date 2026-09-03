@@ -100,7 +100,7 @@ export const ENTITIES: Entity[] = [
   {
     key: 'profil-lembaga',
     menu: 'pengaturan',
-    model: 'profilLembaga',
+    model: 'institutionProfile',
     label: 'Profil yayasan',
     deskripsi: 'Identitas yayasan induk: ketua yayasan, pengasuh, akta, rekening resmi, dan kontak. Cukup satu baris (kode "yayasan").',
     formLebar: true,
