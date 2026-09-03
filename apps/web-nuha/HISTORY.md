@@ -1,5 +1,11 @@
 # Riwayat Perubahan — web-nuha
 
+## 2026-09-03 — Rename teknis kegiatan harian ke Inggris (`3558c31e`)
+
+Model Prisma `KegiatanHarian` kini menjadi `DailyActivity`; tabel dan kolom fisiknya ikut berubah in-place dari `kegiatan_harian` menjadi `daily_activities`, serta dari `jam`/`nama`/`ket`/`urutan` menjadi `time`/`name`/`note`/`order`.
+
+Dampak operator: jadwal kegiatan di portal Santri tetap memakai label dan isi berbahasa Indonesia yang sama. Database yang menjalankan aplikasi harus menerapkan migrasi Prisma `20260903060000_rename_daily_activity_to_english` sebelum memakai versi commit tersebut.
+
 ## 2026-09-03 — Perbaikan filter persona setelah rename Staff (`0120ee48`)
 
 Filter dinamis pada daftar Guru, Staf, dan kategori peran orang kini memakai relasi Prisma `staff` serta field `position`, menggantikan identifier teknis lama `pegawai` dan `jabatan` yang sudah tidak tersedia setelah rename skema Staff.
