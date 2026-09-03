@@ -53,9 +53,9 @@ async function main() {
       const tanggungan = await Promise.all([
         prisma.nilai.count({ where: { santriId: santriHapus.id } }),
         prisma.nilaiUjian.count({ where: { santriId: santriHapus.id } }),
-        prisma.presensi.count({ where: { santriId: santriHapus.id } }),
+        prisma.attendance.count({ where: { studentId: santriHapus.id } }),
         prisma.invoice.count({ where: { santriId: santriHapus.id } }),
-        prisma.hafalan.count({ where: { santriId: santriHapus.id } }),
+        prisma.memorization.count({ where: { studentId: santriHapus.id } }),
       ]);
       const total = tanggungan.reduce((a, b) => a + b, 0);
       if (total > 0) {

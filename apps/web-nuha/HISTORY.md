@@ -4,6 +4,55 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-03 — Rename teknis domain kepesantrenan (asrama/kamar/halaqah/hafalan/tazir/izin/presensi) ke Inggris
+
+Model Prisma `Asrama→Dormitory`, `Kamar→Room`, `Halaqah→StudyCircle`,
+`Hafalan→Memorization`, `Tazir→Discipline`, `Izin→LeavePermit`,
+`Presensi→Attendance`, beserta seluruh field-nya, diterjemahkan ke Inggris.
+Enum `StatusIzin→LeavePermitStatus` (Menunggu/Disetujui/Ditolak/Selesai→
+Pending/Approved/Rejected/Completed) dan `StatusHadir→AttendanceStatus`
+(Hadir/Sakit/Izin/Alpa/Terlambat/PulangCepat→Present/Sick/Excused/Absent/
+Late/EarlyDeparture) — nilai enum lama di `presensi_pegawai.status` (model
+`PresensiPegawai`, di luar cakupan model-nya tapi memakai ulang enum yang
+sama) ikut diterjemahkan agar tidak ada dua bahasa dalam satu kolom enum.
+Field skalar `Santri.kamarId` (yang di batch sebelumnya sempat tertinggal
+karena relasinya sudah berganti nama jadi `room` tapi kolomnya sendiri belum)
+sekarang konsisten menjadi `Santri.roomId` (`room_id`).
+
+Konsumen yang diperbaiki mengikuti rename ini: seluruh tab & aksi di
+`app/(staf)/kepesantrenan/*`, `app/(staf)/induk/TabKepesantrenan.tsx`,
+`app/(staf)/akademik/*` (filter kamar/asrama), `app/(staf)/data/ringkasan-santri.tsx`,
+`app/(staf)/laporan/data.ts`, `app/(staf)/notifikasi/TabPemicu.tsx`,
+`app/(staf)/poskestren/*`, kedua portal (`app/portal/santri/*`,
+`app/portal/wali/*`), `prisma/seed.ts`, `prisma/import/gabung-santri-madin-duplikat.ts`,
+dan bug CRUD registry compiler-invisible di `lib/crud/registry.ts` (entitas
+`asrama`/`halaqah` masih menunjuk `model: 'asrama'`/`model: 'halaqah'` yang
+sudah tidak ada, plus `ref` kamar di entitas `santri` masih menunjuk `model:
+'kamar'` — kalau tidak diperbaiki, membuka menu Asrama/Halaqah di CRUD staf
+akan error runtime "Model tidak dikenal" walau `tsc` bersih) dan
+`lib/crud/santri-filter.ts` (`kamarId→roomId`). Kunci rute CRUD (`asrama`,
+`halaqah`), `menuKey`, dan seluruh label/copy UI tetap Indonesia — hanya
+identifier Prisma/kolom fisik yang berubah.
+
+Migrasi `20260903010000_rename_boarding_to_english` memakai `RENAME TABLE`
+(`asrama→dormitories`, `kamar→rooms`, `halaqah→study_circles`,
+`hafalan→memorization_records`, `tazir→discipline_records`, `izin→leave_permits`,
+`presensi→attendance_records`), `CHANGE COLUMN` per kolom, drop/rebuild FK
+serta index unik, dan konversi nilai enum lama→baru lewat `UPDATE ... CASE`
+sebelum mempersempit definisi enum ke nilai Inggris saja — non-destruktif,
+tidak ada drop+recreate tabel. DB dev (`127.0.0.1:3227`) saat ini masih 0
+baris di ketujuh tabel ini, jadi belum ada data nyata yang perlu diverifikasi
+konversi enum-nya; diverifikasi lewat Prisma Client (`prisma.dormitory.count()`
+dkk.) bahwa seluruh delegate baru bisa diakses tanpa error setelah
+`prisma generate` + `prisma migrate deploy`. Browser pass Playwright di
+`http://202.59.200.26:3226` memakai login `superadmin` berhasil merender
+seluruh tab Kepesantrenan (Asrama, Jamaah, Hafalan, Halaqah, Tazir, Izin)
+tanpa `pageerror` maupun HTTP 500. Pass ini juga menangkap dua pemetaan fisik
+yang sempat terlewat di `StudyCircle`: `educationLevel→education_level` dan
+`memberCount→member_count`; keduanya diperbaiki lewat `@map` sebelum verifikasi
+ulang. Warning WebSocket HMR dari reverse proxy tetap muncul di browser tetapi
+tidak memengaruhi render aplikasi. `npx tsc --noEmit` bersih.
+
 ## 2026-09-03 — Perbaikan registry CRUD `orang`/persona pasca rename ke Person
 
 Menutup catatan yang di-flag di entri sebelumnya: entitas CRUD `orang` dan

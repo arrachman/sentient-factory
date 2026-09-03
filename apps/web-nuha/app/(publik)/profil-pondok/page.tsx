@@ -18,7 +18,7 @@ export default async function ProfilPondokPage() {
   });
 
   const [asrama, mukim] = await Promise.all([
-    prisma.asrama.count(),
+    prisma.dormitory.count(),
     prisma.santri.count({ where: { unitId: unitPondok?.id, status: 'Mukim' } }),
   ]);
 

@@ -12,7 +12,7 @@ export async function RingkasanSantri({ filters }: { filters: Record<string, str
     prisma.santri.count({ where: { status: 'Mukim' } }),
     prisma.santri.count({ where: { status: 'Alumni' } }),
     prisma.santri.count({ where: { status: 'Mukim', kelasId: null } }),
-    prisma.santri.count({ where: { status: 'Mukim', kamarId: null } }),
+    prisma.santri.count({ where: { status: 'Mukim', roomId: null } }),
     prisma.santri.count({ where: { status: 'Mukim', nis: null } }),
   ]);
 

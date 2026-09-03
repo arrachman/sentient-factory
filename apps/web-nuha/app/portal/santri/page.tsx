@@ -42,7 +42,7 @@ export default async function PortalSantriPage({ searchParams }: { searchParams:
 
   const user = await prisma.user.findUnique({
     where: { id: BigInt(session.userId) },
-    include: { person: { include: { santri: { include: { unit: true, kelas: true, kamar: { include: { asrama: true } } } } } } },
+    include: { person: { include: { santri: { include: { unit: true, kelas: true, room: { include: { dormitory: true } } } } } } },
   });
   const santri = user?.person.santri;
 

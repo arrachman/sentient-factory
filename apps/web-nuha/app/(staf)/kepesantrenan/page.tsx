@@ -28,9 +28,9 @@ export default async function KepesantrenanPage({
 
   const [santriMukim, asramaCount, kamarCount, halaqahUstadz] = await Promise.all([
     prisma.santri.count({ where: { status: 'Mukim' } }),
-    prisma.asrama.count(),
-    prisma.kamar.count(),
-    prisma.halaqah.findMany({ select: { ustadz: true }, distinct: ['ustadz'] }),
+    prisma.dormitory.count(),
+    prisma.room.count(),
+    prisma.studyCircle.findMany({ select: { teacher: true }, distinct: ['teacher'] }),
   ]);
 
   return (

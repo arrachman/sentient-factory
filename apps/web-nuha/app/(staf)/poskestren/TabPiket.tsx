@@ -11,14 +11,14 @@ const SHIFT = '16.00–21.00';
  */
 export async function TabPiket() {
   const santri = await prisma.santri.findMany({
-    where: { status: 'Mukim', kamar: { isNot: null } },
-    include: { person: true, kamar: { include: { asrama: true } } },
+    where: { status: 'Mukim', room: { isNot: null } },
+    include: { person: true, room: { include: { dormitory: true } } },
     orderBy: { person: { fullName: 'asc' } },
   });
 
   const perAsrama = new Map<string, typeof santri>();
   santri.forEach((s) => {
-    const nama = s.kamar!.asrama.nama;
+    const nama = s.room!.dormitory.name;
     perAsrama.set(nama, [...(perAsrama.get(nama) ?? []), s]);
   });
 

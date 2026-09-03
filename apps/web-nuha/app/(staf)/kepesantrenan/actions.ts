@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 
 const SESI_VALID = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
-const STATUS_VALID = ['Hadir', 'Sakit', 'Izin', 'Alpa'] as const;
+const STATUS_VALID = ['Present', 'Sick', 'Excused', 'Absent'] as const;
 
 /** Simpan absensi jamaah satu sesi untuk seluruh santri mukim sekaligus. */
 export async function simpanAbsenJamaah(formData: FormData) {
@@ -14,19 +14,19 @@ export async function simpanAbsenJamaah(formData: FormData) {
   const hariIni = new Date();
   hariIni.setHours(0, 0, 0, 0);
 
-  const entri: Array<{ santriId: bigint; status: (typeof STATUS_VALID)[number] }> = [];
+  const entri: Array<{ studentId: bigint; status: (typeof STATUS_VALID)[number] }> = [];
   for (const [key, value] of formData.entries()) {
     if (!key.startsWith('status-')) continue;
     const status = String(value);
     if (!STATUS_VALID.includes(status as (typeof STATUS_VALID)[number])) continue;
-    entri.push({ santriId: BigInt(key.slice('status-'.length)), status: status as (typeof STATUS_VALID)[number] });
+    entri.push({ studentId: BigInt(key.slice('status-'.length)), status: status as (typeof STATUS_VALID)[number] });
   }
 
   await Promise.all(
     entri.map((e) =>
-      prisma.presensi.upsert({
-        where: { santriId_tgl_sesi: { santriId: e.santriId, tgl: hariIni, sesi } },
-        create: { santriId: e.santriId, tgl: hariIni, sesi, status: e.status },
+      prisma.attendance.upsert({
+        where: { studentId_date_session: { studentId: e.studentId, date: hariIni, session: sesi } },
+        create: { studentId: e.studentId, date: hariIni, session: sesi, status: e.status },
         update: { status: e.status },
       }),
     ),
@@ -41,11 +41,11 @@ export async function ubahStatusIzin(formData: FormData) {
   const aksi = String(formData.get('aksi'));
 
   if (aksi === 'setuju') {
-    await prisma.izin.update({ where: { id }, data: { status: 'Disetujui' } });
+    await prisma.leavePermit.update({ where: { id }, data: { status: 'Approved' } });
   } else if (aksi === 'tolak') {
-    await prisma.izin.update({ where: { id }, data: { status: 'Ditolak' } });
+    await prisma.leavePermit.update({ where: { id }, data: { status: 'Rejected' } });
   } else if (aksi === 'kembali') {
-    await prisma.izin.update({ where: { id }, data: { status: 'Selesai', kembaliAt: new Date() } });
+    await prisma.leavePermit.update({ where: { id }, data: { status: 'Completed', returnedAt: new Date() } });
   }
 
   revalidatePath('/kepesantrenan');

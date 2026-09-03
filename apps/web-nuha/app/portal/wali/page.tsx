@@ -36,7 +36,7 @@ export default async function PortalWaliPage({ searchParams }: { searchParams: P
 
   const user = await prisma.user.findUnique({
     where: { id: BigInt(session.userId) },
-    include: { person: { include: { waliDari: { include: { anak: { include: { santri: { include: { unit: true, kelas: true, kamar: { include: { asrama: true } } } } } } } } } } },
+    include: { person: { include: { waliDari: { include: { anak: { include: { santri: { include: { unit: true, kelas: true, room: { include: { dormitory: true } } } } } } } } } } },
   });
   const relasi = user?.person.waliDari.filter((row) => row.anak.santri) ?? [];
 
@@ -59,7 +59,7 @@ export default async function PortalWaliPage({ searchParams }: { searchParams: P
         <div style={{ width: 52, height: 52, borderRadius: 16, background: avaBg(anak.fullName), color: '#FFF', display: 'grid', placeItems: 'center', fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-lora), serif', border: '2px solid rgba(232,151,58,.6)', flex: '0 0 auto' }}>{inisial(anak.fullName)}</div>
         <div style={{ minWidth: 0 }}>
           <div style={{ fontFamily: 'var(--font-lora), serif', fontSize: 19, fontWeight: 600, color: '#0A4A2B' }}>{anak.fullName}</div>
-          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{santri.unit?.nama ?? '-'} {santri.kelas?.nama ?? ''} · Asrama {santri.kamar?.asrama.nama ?? '-'} {santri.kamar?.kode ?? ''}</div>
+          <div style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>{santri.unit?.nama ?? '-'} {santri.kelas?.nama ?? ''} · Asrama {santri.room?.dormitory.name ?? '-'} {santri.room?.code ?? ''}</div>
         </div>
       </div>
 

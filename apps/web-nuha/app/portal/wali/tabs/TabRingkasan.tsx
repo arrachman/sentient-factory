@@ -10,16 +10,16 @@ export async function TabRingkasan({ santriId, program }: { santriId: bigint; pr
   awalBulan.setHours(0, 0, 0, 0);
 
   const [presensi, hafalanN, sakit, pengumuman] = await Promise.all([
-    prisma.presensi.groupBy({ by: ['status'], where: { santriId, tgl: { gte: awalBulan } }, _count: true }),
-    prisma.hafalan.count({ where: { santriId } }),
+    prisma.attendance.groupBy({ by: ['status'], where: { studentId: santriId, date: { gte: awalBulan } }, _count: { status: true } }),
+    prisma.memorization.count({ where: { studentId: santriId } }),
     prisma.rekamMedis.findMany({ where: { santriId }, orderBy: { tgl: 'desc' }, take: 2 }),
     prisma.announcement.findMany({ orderBy: { date: 'desc' }, take: 3 }),
   ]);
 
-  const totalPresensi = presensi.reduce((n, r) => n + r._count, 0);
-  const hadir = presensi.find((r) => r.status === 'Hadir')?._count ?? 0;
-  const sakitN = presensi.find((r) => r.status === 'Sakit')?._count ?? 0;
-  const izinN = presensi.find((r) => r.status === 'Izin')?._count ?? 0;
+  const totalPresensi = presensi.reduce((n, r) => n + r._count.status, 0);
+  const hadir = presensi.find((r) => r.status === 'Present')?._count.status ?? 0;
+  const sakitN = presensi.find((r) => r.status === 'Sick')?._count.status ?? 0;
+  const izinN = presensi.find((r) => r.status === 'Excused')?._count.status ?? 0;
   const pctHadir = totalPresensi > 0 ? Math.round((hadir / totalPresensi) * 100) : 100;
 
   return (

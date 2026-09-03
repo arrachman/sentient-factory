@@ -8,7 +8,7 @@ const WARNA_LANJUT: Record<string, string> = {
 
 export async function TabRekam() {
   const rekam = await prisma.rekamMedis.findMany({
-    include: { santri: { include: { person: true, kamar: { include: { asrama: true } } } } },
+    include: { santri: { include: { person: true, room: { include: { dormitory: true } } } } },
     orderBy: { tgl: 'desc' },
   });
 
@@ -28,7 +28,7 @@ export async function TabRekam() {
                   <Avatar nama={k.santri.person.fullName} size={30} />
                   <div>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{k.santri.person.fullName}</div>
-                    <div className="muted">{k.santri.kamar?.asrama.nama ?? '-'}</div>
+                    <div className="muted">{k.santri.room?.dormitory.name ?? '-'}</div>
                   </div>
                 </div>
               </td>

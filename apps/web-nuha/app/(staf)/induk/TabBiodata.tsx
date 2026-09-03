@@ -17,7 +17,7 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
     where: { id: santriId },
     include: {
       person: { include: { riwayatPendidikan: { include: { unit: true, academicYear: true }, orderBy: { academicYear: { code: 'desc' } } }, region: true } },
-      unit: true, kelas: true, kamar: { include: { asrama: true } },
+      unit: true, kelas: true, room: { include: { dormitory: true } },
     },
   });
   if (!santri) return null;
@@ -61,7 +61,7 @@ export async function TabBiodata({ santriId }: { santriId: bigint }) {
           <div className="inset" style={{ background: '#FFFBEB', border: '1px solid #F0CFA4' }}>
             <div style={{ fontSize: 12.5, fontWeight: 700, color: '#92400E' }}>Santri mukim</div>
             <div className="muted" style={{ marginTop: 3 }}>
-              Asrama {santri.kamar?.asrama.nama ?? '-'} kamar {santri.kamar?.kode ?? '-'} · program {santri.program ?? '-'}
+              Asrama {santri.room?.dormitory.name ?? '-'} kamar {santri.room?.code ?? '-'} · program {santri.program ?? '-'}
             </div>
           </div>
         )}

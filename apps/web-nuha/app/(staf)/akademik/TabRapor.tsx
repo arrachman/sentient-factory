@@ -18,9 +18,9 @@ export async function TabRapor({ searchParams }: { searchParams: Params }) {
         include: {
           person: true,
           nilai: true,
-          hafalan: true,
-          tazir: true,
-          presensi: true,
+          memorization: true,
+          discipline: true,
+          attendance: true,
         },
         orderBy: { person: { fullName: 'asc' } },
       })
@@ -65,14 +65,14 @@ export async function TabRapor({ searchParams }: { searchParams: Params }) {
             <tbody>
               {siswa.map((s) => {
                 const rataNilai = s.nilai.length === 0 ? null : s.nilai.reduce((sum, n) => sum + Number(n.akhir), 0) / s.nilai.length;
-                const poinTazir = s.tazir.reduce((sum, t) => sum + t.poin, 0);
-                const hadir = s.presensi.filter((p) => p.status === 'Hadir').length;
-                const persenHadir = s.presensi.length === 0 ? null : (hadir / s.presensi.length) * 100;
+                const poinTazir = s.discipline.reduce((sum, t) => sum + t.points, 0);
+                const hadir = s.attendance.filter((p) => p.status === 'Present').length;
+                const persenHadir = s.attendance.length === 0 ? null : (hadir / s.attendance.length) * 100;
                 return (
                   <tr key={String(s.id)}>
                     <td>{s.person.fullName}</td>
                     <td className="num">{rataNilai === null ? '-' : rataNilai.toFixed(1)}</td>
-                    <td className="num">{s.hafalan.length}</td>
+                    <td className="num">{s.memorization.length}</td>
                     <td className="num">{poinTazir}</td>
                     <td className="num">{persenHadir === null ? '-' : `${Math.round(persenHadir)}%`}</td>
                   </tr>

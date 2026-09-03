@@ -367,13 +367,13 @@ model ProfilLembaga {
 }
 
 model Kelas {
-  id            Int     @id @default(autoincrement())
-  unitId        Int     @map("unit_id")
-  nama          String  @db.VarChar(32)
-  tingkat       String  @db.VarChar(16)
+  id             Int     @id @default(autoincrement())
+  unitId         Int     @map("unit_id")
+  nama           String  @db.VarChar(32)
+  tingkat        String  @db.VarChar(16)
   /// Deprecated: dipertahankan untuk kompatibilitas. Sumber kebenaran adalah `waliKelasId`.
-  waliKelas     String? @map("wali_kelas") @db.VarChar(160)
-  waliKelasId   BigInt? @map("wali_kelas_id")
+  waliKelas      String? @map("wali_kelas") @db.VarChar(160)
+  waliKelasId    BigInt? @map("wali_kelas_id")
   /// Kelas di-scope ke tahun ajaran karena satu unit bisa punya kelas "X" di
   /// beberapa tahun ajaran berbeda dengan isi santri yang berbeda pula.
   academicYearId Int?    @map("academic_year_id")
@@ -404,29 +404,29 @@ model AcademicYear {
   @@map("academic_years")
 }
 
-model Asrama {
-  id        Int          @id @default(autoincrement())
-  nama      String       @unique @db.VarChar(120)
-  jk        JenisKelamin
-  kapasitas Int          @default(0)
-  musyrif   String?      @db.VarChar(160)
+model Dormitory {
+  id         Int          @id @default(autoincrement())
+  name       String       @unique @db.VarChar(120)
+  gender     JenisKelamin
+  capacity   Int          @default(0)
+  supervisor String?      @map("supervisor") @db.VarChar(160)
 
-  kamar Kamar[]
+  rooms Room[]
 
-  @@map("asrama")
+  @@map("dormitories")
 }
 
-model Kamar {
-  id        Int    @id @default(autoincrement())
-  asramaId  Int    @map("asrama_id")
-  kode      String @db.VarChar(16)
-  kapasitas Int    @default(0)
+model Room {
+  id          Int    @id @default(autoincrement())
+  dormitoryId Int    @map("dormitory_id")
+  code        String @db.VarChar(16)
+  capacity    Int    @default(0)
 
-  asrama Asrama   @relation(fields: [asramaId], references: [id], onDelete: Cascade)
-  santri Santri[]
+  dormitory Dormitory @relation(fields: [dormitoryId], references: [id], onDelete: Cascade)
+  santri    Santri[]
 
-  @@unique([asramaId, kode])
-  @@map("kamar")
+  @@unique([dormitoryId, code])
+  @@map("rooms")
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -448,7 +448,7 @@ model Santri {
   nisn       String?      @unique @db.VarChar(32)
   unitId     Int?         @map("unit_id")
   kelasId    Int?         @map("kelas_id")
-  kamarId    Int?         @map("kamar_id")
+  roomId     Int?         @map("room_id")
   status     StatusSantri @default(Mukim)
   program    String?      @db.VarChar(64)
   tahunMasuk String?      @map("tahun_masuk") @db.VarChar(8)
@@ -458,12 +458,12 @@ model Santri {
   person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
   unit   Unit?  @relation(fields: [unitId], references: [id])
   kelas  Kelas? @relation(fields: [kelasId], references: [id])
-  kamar  Kamar? @relation(fields: [kamarId], references: [id])
+  room   Room?  @relation(fields: [roomId], references: [id])
 
-  hafalan         Hafalan[]
-  tazir           Tazir[]
-  izin            Izin[]
-  presensi        Presensi[]
+  memorization    Memorization[]
+  discipline      Discipline[]
+  leavePermits    LeavePermit[]
+  attendance      Attendance[]
   invoices        Invoice[]
   rekamMedis      RekamMedis[]
   nilai           Nilai[]
@@ -508,11 +508,11 @@ model SantriKelas {
 /// AKTIF saat ini. Perlu supaya lulus SMP bisa dicatat tanpa menimpa status
 /// aktif MA santri yang sama (satu Person hanya boleh punya satu baris Santri).
 model RiwayatPendidikan {
-  id            BigInt       @id @default(autoincrement())
-  personId      BigInt       @map("person_id")
-  unitId        Int          @map("unit_id")
-  kelasNama     String       @map("kelas_nama") @db.VarChar(32)
-  tingkat       String       @db.VarChar(16)
+  id             BigInt       @id @default(autoincrement())
+  personId       BigInt       @map("person_id")
+  unitId         Int          @map("unit_id")
+  kelasNama      String       @map("kelas_nama") @db.VarChar(32)
+  tingkat        String       @db.VarChar(16)
   academicYearId Int          @map("academic_year_id")
   status         StatusSantri @default(Alumni)
   createdAt      DateTime     @default(now()) @map("created_at")
@@ -700,95 +700,95 @@ model AuditLog {
 // Kepesantrenan
 // ─────────────────────────────────────────────────────────────
 
-model Halaqah {
-  id      Int    @id @default(autoincrement())
-  nama    String @db.VarChar(120)
-  ustadz  String @db.VarChar(160)
-  waktu   String @db.VarChar(64)
-  tempat  String @db.VarChar(120)
-  jenjang String @db.VarChar(64)
-  anggota Int    @default(0)
+model StudyCircle {
+  id             Int    @id @default(autoincrement())
+  name           String @db.VarChar(120)
+  teacher        String @db.VarChar(160)
+  schedule       String @db.VarChar(64)
+  location       String @db.VarChar(120)
+  educationLevel String @map("education_level") @db.VarChar(64)
+  memberCount    Int    @default(0) @map("member_count")
 
-  @@map("halaqah")
+  @@map("study_circles")
 }
 
-model Hafalan {
-  id       BigInt   @id @default(autoincrement())
-  santriId BigInt   @map("santri_id")
-  tgl      DateTime @db.Date
-  surat    String   @db.VarChar(64)
-  ayat     String   @db.VarChar(32)
-  jenis    String   @db.VarChar(32)
-  nilai    String   @db.VarChar(32)
-  penguji  String   @db.VarChar(160)
+model Memorization {
+  id        BigInt   @id @default(autoincrement())
+  studentId BigInt   @map("student_id")
+  date      DateTime @db.Date
+  chapter   String   @db.VarChar(64)
+  verses    String   @db.VarChar(32)
+  type      String   @db.VarChar(32)
+  score     String   @db.VarChar(32)
+  examiner  String   @db.VarChar(160)
 
-  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  student Santri @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@index([santriId, tgl])
-  @@map("hafalan")
+  @@index([studentId, date])
+  @@map("memorization_records")
 }
 
-model Tazir {
-  id          BigInt   @id @default(autoincrement())
-  santriId    BigInt   @map("santri_id")
-  tgl         DateTime @db.Date
-  pelanggaran String   @db.VarChar(255)
-  poin        Int      @default(0)
-  sanksi      String?  @db.VarChar(255)
-  petugas     String   @db.VarChar(160)
+model Discipline {
+  id        BigInt   @id @default(autoincrement())
+  studentId BigInt   @map("student_id")
+  date      DateTime @db.Date
+  violation String   @db.VarChar(255)
+  points    Int      @default(0)
+  sanction  String?  @db.VarChar(255)
+  officer   String   @db.VarChar(160)
 
-  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  student Santri @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@index([santriId, tgl])
-  @@map("tazir")
+  @@index([studentId, date])
+  @@map("discipline_records")
 }
 
-enum StatusIzin {
-  Menunggu
-  Disetujui
-  Ditolak
-  Selesai
+enum LeavePermitStatus {
+  Pending
+  Approved
+  Rejected
+  Completed
 }
 
-model Izin {
-  id        BigInt     @id @default(autoincrement())
-  kode      String     @unique @db.VarChar(24)
-  santriId  BigInt     @map("santri_id")
-  jenis     String     @db.VarChar(64)
-  alasan    String     @db.VarChar(255)
-  penjemput String?    @db.VarChar(160)
-  keluarAt  DateTime   @map("keluar_at")
-  kembaliAt DateTime?  @map("kembali_at")
-  status    StatusIzin @default(Menunggu)
+model LeavePermit {
+  id         BigInt            @id @default(autoincrement())
+  code       String            @unique @db.VarChar(24)
+  studentId  BigInt            @map("student_id")
+  type       String            @db.VarChar(64)
+  reason     String            @db.VarChar(255)
+  pickupBy   String?           @map("pickup_by") @db.VarChar(160)
+  departedAt DateTime          @map("departed_at")
+  returnedAt DateTime?         @map("returned_at")
+  status     LeavePermitStatus @default(Pending)
 
-  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  student Santri @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([status])
-  @@map("izin")
+  @@map("leave_permits")
 }
 
-enum StatusHadir {
-  Hadir
-  Sakit
-  Izin
-  Alpa
-  // Nilai baru ditambah di akhir — ini enum MySQL, urutan lama tidak boleh diubah.
-  Terlambat
-  PulangCepat
+enum AttendanceStatus {
+  Present
+  Sick
+  Excused
+  Absent
+  // New values are appended because this is a MySQL enum and existing order must remain stable.
+  Late
+  EarlyDeparture
 }
 
-model Presensi {
-  id       BigInt      @id @default(autoincrement())
-  santriId BigInt      @map("santri_id")
-  tgl      DateTime    @db.Date
-  sesi     String      @db.VarChar(32)
-  status   StatusHadir @default(Hadir)
-  ket      String?     @db.VarChar(255)
+model Attendance {
+  id        BigInt           @id @default(autoincrement())
+  studentId BigInt           @map("student_id")
+  date      DateTime         @db.Date
+  session   String           @db.VarChar(32)
+  status    AttendanceStatus @default(Present)
+  note      String?          @db.VarChar(255)
 
-  santri Santri @relation(fields: [santriId], references: [id], onDelete: Cascade)
+  student Santri @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
-  @@unique([santriId, tgl, sesi])
-  @@map("presensi")
+  @@unique([studentId, date, session])
+  @@map("attendance_records")
 }
 
 model KegiatanHarian {
@@ -959,16 +959,15 @@ model JurnalMengajar {
   @@map("jurnal_mengajar")
 }
 
-/// Presensi khusus pegawai — `Presensi` yang ada sekarang hanya untuk
-/// santri. Memakai `StatusHadir` yang sama (termasuk Terlambat/PulangCepat).
+/// Staff attendance is separate from Student `Attendance`.
 model PresensiPegawai {
-  id        BigInt      @id @default(autoincrement())
-  pegawaiId BigInt      @map("pegawai_id")
-  tgl       DateTime    @db.Date
-  jamMasuk  String?     @map("jam_masuk") @db.VarChar(16)
-  jamPulang String?     @map("jam_pulang") @db.VarChar(16)
-  status    StatusHadir @default(Hadir)
-  ket       String?     @db.VarChar(255)
+  id        BigInt           @id @default(autoincrement())
+  pegawaiId BigInt           @map("pegawai_id")
+  tgl       DateTime         @db.Date
+  jamMasuk  String?          @map("jam_masuk") @db.VarChar(16)
+  jamPulang String?          @map("jam_pulang") @db.VarChar(16)
+  status    AttendanceStatus @default(Present)
+  ket       String?          @db.VarChar(255)
 
   pegawai Pegawai @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
 
@@ -980,8 +979,8 @@ model PresensiPegawai {
 /// Pembagian Tugas Guru 2026, tapi ANGKANYA KOSONG di dokumen client —
 /// model disiapkan lebih dulu, pengisian menunggu data dari client.
 model BebanJam {
-  id            BigInt  @id @default(autoincrement())
-  pegawaiId     BigInt  @map("pegawai_id")
+  id             BigInt  @id @default(autoincrement())
+  pegawaiId      BigInt  @map("pegawai_id")
   academicYearId Int?    @map("academic_year_id")
   mapel          String? @db.VarChar(160)
   jumlahJam      Int?    @map("jumlah_jam")

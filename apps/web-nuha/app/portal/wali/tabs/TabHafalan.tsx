@@ -6,7 +6,7 @@ import { Kosong } from '@/components';
 const TARGET_SETORAN = 60;
 
 export async function TabHafalan({ santriId, program }: { santriId: bigint; program: string | null }) {
-  const setoran = await prisma.hafalan.findMany({ where: { santriId }, orderBy: { tgl: 'desc' }, take: 20 });
+  const setoran = await prisma.memorization.findMany({ where: { studentId: santriId }, orderBy: { date: 'desc' }, take: 20 });
   const pct = Math.min(100, Math.round((setoran.length / TARGET_SETORAN) * 100));
 
   return (
@@ -24,10 +24,10 @@ export async function TabHafalan({ santriId, program }: { santriId: bigint; prog
         {setoran.map((k) => (
           <div key={String(k.id)} style={{ padding: '11px 0', borderBottom: '1px solid #F5F2EA' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#1F2937' }}>{k.surat} {k.ayat}</span>
-              <span style={{ padding: '3px 9px', borderRadius: 999, background: '#DCF0E3', color: '#0F6B3D', fontSize: 11, fontWeight: 700 }}>{k.nilai}</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#1F2937' }}>{k.chapter} {k.verses}</span>
+              <span style={{ padding: '3px 9px', borderRadius: 999, background: '#DCF0E3', color: '#0F6B3D', fontSize: 11, fontWeight: 700 }}>{k.score}</span>
             </div>
-            <div style={{ fontSize: 11.5, color: '#6B7280', marginTop: 3 }}>{k.tgl.toLocaleDateString('id-ID')} · {k.jenis} · {k.penguji}</div>
+            <div style={{ fontSize: 11.5, color: '#6B7280', marginTop: 3 }}>{k.date.toLocaleDateString('id-ID')} · {k.type} · {k.examiner}</div>
           </div>
         ))}
       </div>

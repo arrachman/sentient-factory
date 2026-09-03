@@ -10,19 +10,19 @@ export async function TabHafalan() {
       include: {
         person: true,
         kelas: true,
-        kamar: { include: { asrama: true } },
-        hafalan: { orderBy: { tgl: 'desc' } },
+        room: { include: { dormitory: true } },
+        memorization: { orderBy: { date: 'desc' } },
       },
     }),
-    prisma.hafalan.findMany({
-      include: { santri: { include: { person: true } } },
-      orderBy: { tgl: 'desc' },
+    prisma.memorization.findMany({
+      include: { student: { include: { person: true } } },
+      orderBy: { date: 'desc' },
       take: 12,
     }),
   ]);
 
   const daftar = santriTahfidz
-    .map((x) => ({ x, jumlah: x.hafalan.length, terakhir: x.hafalan[0] }))
+    .map((x) => ({ x, jumlah: x.memorization.length, terakhir: x.memorization[0] }))
     .sort((a, b) => b.jumlah - a.jumlah);
   const maxJumlah = Math.max(...daftar.map((d) => d.jumlah), 1);
 
@@ -46,10 +46,10 @@ export async function TabHafalan() {
                     </div>
                     <div style={{ marginTop: 6 }}><ProgressBar pct={pct} /></div>
                     <div className="muted" style={{ fontSize: 11.5, marginTop: 4 }}>
-                      {x.kelas?.nama ?? '—'} · {x.kamar?.asrama.nama ?? '—'}
+                      {x.kelas?.nama ?? '—'} · {x.room?.dormitory.name ?? '—'}
                     </div>
                   </div>
-                  <span className="badge badge-hijau">{terakhir ? terakhir.nilai : 'Belum setor'}</span>
+                  <span className="badge badge-hijau">{terakhir ? terakhir.score : 'Belum setor'}</span>
                 </div>
               );
             })}
@@ -66,11 +66,11 @@ export async function TabHafalan() {
             {setoranTerbaru.map((k) => (
               <div key={String(k.id)} className="inset">
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 600 }}>{k.santri.person.fullName}</span>
-                  <span className="muted" style={{ fontSize: 11.5 }}>{k.tgl.toLocaleDateString('id-ID')}</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 600 }}>{k.student.person.fullName}</span>
+                  <span className="muted" style={{ fontSize: 11.5 }}>{k.date.toLocaleDateString('id-ID')}</span>
                 </div>
-                <div style={{ fontSize: 12.5, marginTop: 3 }}>{k.surat} ayat {k.ayat} · {k.jenis}</div>
-                <div className="muted" style={{ fontSize: 11.5, marginTop: 3 }}>{k.nilai} — penguji {k.penguji}</div>
+                <div style={{ fontSize: 12.5, marginTop: 3 }}>{k.chapter} ayat {k.verses} · {k.type}</div>
+                <div className="muted" style={{ fontSize: 11.5, marginTop: 3 }}>{k.score} — penguji {k.examiner}</div>
               </div>
             ))}
           </div>

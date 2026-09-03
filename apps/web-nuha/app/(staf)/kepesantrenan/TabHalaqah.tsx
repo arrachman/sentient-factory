@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { Kosong, Tabel } from '@/components';
 
 export async function TabHalaqah() {
-  const halaqah = await prisma.halaqah.findMany({ orderBy: { nama: 'asc' } });
+  const halaqah = await prisma.studyCircle.findMany({ orderBy: { name: 'asc' } });
 
   return (
     <div className="card">
@@ -13,12 +13,12 @@ export async function TabHalaqah() {
         <Tabel kolom={['Halaqah', 'Pengampu', 'Waktu', 'Tempat', 'Jenjang', { label: 'Anggota', num: true }]}>
           {halaqah.map((h) => (
             <tr key={h.id}>
-              <td>{h.nama}</td>
-              <td>{h.ustadz}</td>
-              <td>{h.waktu}</td>
-              <td>{h.tempat}</td>
-              <td>{h.jenjang}</td>
-              <td className="num"><strong>{h.anggota}</strong></td>
+              <td>{h.name}</td>
+              <td>{h.teacher}</td>
+              <td>{h.schedule}</td>
+              <td>{h.location}</td>
+              <td>{h.educationLevel}</td>
+              <td className="num"><strong>{h.memberCount}</strong></td>
             </tr>
           ))}
         </Tabel>

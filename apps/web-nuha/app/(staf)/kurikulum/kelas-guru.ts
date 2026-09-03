@@ -84,16 +84,16 @@ export async function ambilKelasGuru(namaGuru: string): Promise<GrupUnit[]> {
 
     const presensi = { hadir: 0, sakit: 0, izin: 0, alpa: 0, belum: siswaIds.length };
     if (siswaIds.length > 0) {
-      const rekap = await prisma.presensi.groupBy({
+      const rekap = await prisma.attendance.groupBy({
         by: ['status'],
-        where: { santriId: { in: siswaIds }, tgl: hariIni },
+        where: { studentId: { in: siswaIds }, date: hariIni },
         _count: { status: true },
       });
       for (const baris of rekap) {
         const jumlah = baris._count.status;
-        if (baris.status === 'Hadir') presensi.hadir = jumlah;
-        else if (baris.status === 'Sakit') presensi.sakit = jumlah;
-        else if (baris.status === 'Izin') presensi.izin = jumlah;
+        if (baris.status === 'Present') presensi.hadir = jumlah;
+        else if (baris.status === 'Sick') presensi.sakit = jumlah;
+        else if (baris.status === 'Excused') presensi.izin = jumlah;
         else presensi.alpa = jumlah;
         presensi.belum -= jumlah;
       }

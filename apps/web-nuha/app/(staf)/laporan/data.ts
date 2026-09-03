@@ -17,7 +17,7 @@ export async function ambilRekapLaporan(): Promise<BarisLaporan[]> {
   const [units, santri, presensi, nilai, invoices] = await Promise.all([
     prisma.unit.findMany({ orderBy: { nama: 'asc' } }),
     prisma.santri.findMany({ select: { id: true, unitId: true } }),
-    prisma.presensi.findMany({ select: { santriId: true, status: true } }),
+    prisma.attendance.findMany({ select: { studentId: true, status: true } }),
     prisma.nilai.findMany({ select: { santriId: true, akhir: true } }),
     prisma.invoice.findMany({ select: { santriId: true, paidAmount: true } }),
   ]);
@@ -32,12 +32,12 @@ export async function ambilRekapLaporan(): Promise<BarisLaporan[]> {
 
   return units.map((unit) => {
     const idSantri = new Set((unitSantri.get(unit.id) ?? []).map(String));
-    const presensiUnit = presensi.filter((p) => idSantri.has(String(p.santriId)));
+    const presensiUnit = presensi.filter((p) => idSantri.has(String(p.studentId)));
     const nilaiUnit = nilai.filter((n) => idSantri.has(String(n.santriId)));
     const tagihanUnit = invoices.filter((t) => idSantri.has(String(t.santriId)));
 
     const hadirPct = presensiUnit.length
-      ? Math.round((presensiUnit.filter((p) => p.status === 'Hadir').length / presensiUnit.length) * 100)
+      ? Math.round((presensiUnit.filter((p) => p.status === 'Present').length / presensiUnit.length) * 100)
       : null;
     const rataNilai = nilaiUnit.length
       ? nilaiUnit.reduce((total, n) => total + Number(n.akhir), 0) / nilaiUnit.length

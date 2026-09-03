@@ -85,7 +85,7 @@ export async function GET(request: Request) {
       },
       unit: true,
       kelas: true,
-      kamar: { include: { asrama: true } },
+      room: { include: { dormitory: true } },
     },
     orderBy: { person: { fullName: 'asc' } },
   });
@@ -109,7 +109,7 @@ export async function GET(request: Request) {
       return baris([
         santri.nis, santri.nisn, person.fullName, person.nik, person.gender, person.birthPlace, tanggal(person.birthDate),
         santri.unit?.nama, santri.unit?.jenjang, santri.kelas?.nama, santri.kelas?.tingkat, santri.program, santri.tahunMasuk, santri.status,
-        santri.kamar?.asrama.nama, santri.kamar?.kode,
+        santri.room?.dormitory.name, santri.room?.code,
         person.addressLine, person.neighborhoodRt, person.neighborhoodRw, person.villageName, person.districtName, person.regencyName,
         person.regionId ? String(person.regionId) : null, person.region?.fullName, person.postalCode ?? person.region?.postalCode, person.familyCardNumber,
         person.birthOrder, person.siblingCount, person.hobby, person.aspiration, person.previousSchool, person.highestEducation, person.phone, person.email,

@@ -3,15 +3,15 @@ import { Kosong, Tabel } from '@/components';
 
 /** Akumulasi poin dihitung berjalan per santri, urut tanggal — bukan angka hardcode. */
 export async function TabTazir() {
-  const tazir = await prisma.tazir.findMany({
-    include: { santri: { include: { person: true, kamar: true } } },
-    orderBy: { tgl: 'asc' },
+  const tazir = await prisma.discipline.findMany({
+    include: { student: { include: { person: true, room: true } } },
+    orderBy: { date: 'asc' },
   });
 
   const akumulasi = new Map<string, number>();
   const baris = tazir.map((t) => {
-    const key = String(t.santriId);
-    const total = (akumulasi.get(key) ?? 0) + t.poin;
+    const key = String(t.studentId);
+    const total = (akumulasi.get(key) ?? 0) + t.points;
     akumulasi.set(key, total);
     return { ...t, total };
   });
@@ -29,17 +29,17 @@ export async function TabTazir() {
         <Tabel kolom={['Tanggal', 'Santri', 'Pelanggaran', 'Sanksi', { label: 'Poin', num: true }, { label: 'Akumulasi', num: true }]}>
           {baris.map((t) => (
             <tr key={String(t.id)}>
-              <td>{t.tgl.toLocaleDateString('id-ID')}</td>
+              <td>{t.date.toLocaleDateString('id-ID')}</td>
               <td>
-                {t.santri.person.fullName}
-                <div className="muted" style={{ fontSize: 11.5 }}>Kamar {t.santri.kamar?.kode ?? '—'}</div>
+                {t.student.person.fullName}
+                <div className="muted" style={{ fontSize: 11.5 }}>Kamar {t.student.room?.code ?? '—'}</div>
               </td>
-              <td>{t.pelanggaran}</td>
+              <td>{t.violation}</td>
               <td>
-                {t.sanksi ?? '—'}
-                <div className="muted" style={{ fontSize: 11.5 }}>{t.petugas}</div>
+                {t.sanction ?? '—'}
+                <div className="muted" style={{ fontSize: 11.5 }}>{t.officer}</div>
               </td>
-              <td className="num"><span className="badge badge-kuning">{t.poin}</span></td>
+              <td className="num"><span className="badge badge-kuning">{t.points}</span></td>
               <td className="num"><strong style={{ color: '#B91C1C' }}>{t.total}</strong></td>
             </tr>
           ))}

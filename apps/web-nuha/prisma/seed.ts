@@ -481,8 +481,8 @@ async function seedOperational() {
   }
   await seedPenjadwalNotifikasi();
 
-  if (await prisma.presensi.count() === 0) {
-    const statuses = ['Hadir', 'Sakit', 'Izin', 'Alpa'] as const;
+  if (await prisma.attendance.count() === 0) {
+    const statuses = ['Present', 'Sick', 'Excused', 'Absent'] as const;
     for (const [i, santri] of santriList.entries()) {
       for (const row of source.presensiAkademik) {
         const tgl = parseDate(row.tgl);
@@ -490,9 +490,9 @@ async function seedOperational() {
         // agar rekap kelas tidak seragam sempurna.
         const dasar = statuses.indexOf(String(row.status) as (typeof statuses)[number]);
         const status = statuses[(Math.max(dasar, 0) + (i % 3 === 0 ? 0 : i % 4)) % statuses.length];
-        await prisma.presensi.upsert({
-          where: { santriId_tgl_sesi: { santriId: santri.id, tgl, sesi: 'KBM' } },
-          create: { santriId: santri.id, tgl, sesi: 'KBM', status, ket: String(row.ket ?? '-') },
+        await prisma.attendance.upsert({
+          where: { studentId_date_session: { studentId: santri.id, date: tgl, session: 'KBM' } },
+          create: { studentId: santri.id, date: tgl, session: 'KBM', status, note: String(row.ket ?? '-') },
           update: {},
         }).catch(() => undefined);
       }
@@ -577,17 +577,17 @@ async function main() {
 
   const asramaByName = new Map<string, { id: number }>();
   for (const row of source.asrama) {
-    const asrama = await prisma.asrama.upsert({
-      where: { nama: String(row.nama) },
-      create: { nama: String(row.nama), jk: gender(row.jk), kapasitas: Number(row.kapasitas), musyrif: String(row.musyrif) },
-      update: { kapasitas: Number(row.kapasitas), musyrif: String(row.musyrif) },
+    const asrama = await prisma.dormitory.upsert({
+      where: { name: String(row.nama) },
+      create: { name: String(row.nama), gender: gender(row.jk), capacity: Number(row.kapasitas), supervisor: String(row.musyrif) },
+      update: { capacity: Number(row.kapasitas), supervisor: String(row.musyrif) },
     });
-    asramaByName.set(asrama.nama, asrama);
+    asramaByName.set(asrama.name, asrama);
     for (const kamar of (row.kamarList as unknown[][]) ?? []) {
-      await prisma.kamar.upsert({
-        where: { asramaId_kode: { asramaId: asrama.id, kode: String(kamar[0]) } },
-        create: { asramaId: asrama.id, kode: String(kamar[0]), kapasitas: Number(kamar[1]) },
-        update: { kapasitas: Number(kamar[1]) },
+      await prisma.room.upsert({
+        where: { dormitoryId_code: { dormitoryId: asrama.id, code: String(kamar[0]) } },
+        create: { dormitoryId: asrama.id, code: String(kamar[0]), capacity: Number(kamar[1]) },
+        update: { capacity: Number(kamar[1]) },
       });
     }
   }
@@ -601,7 +601,7 @@ async function main() {
       update: {},
     }) : null;
     const asrama = asramaByName.get(String(row.asrama));
-    const kamar = asrama ? await prisma.kamar.findUnique({ where: { asramaId_kode: { asramaId: asrama.id, kode: String(row.kamar) } } }) : null;
+    const kamar = asrama ? await prisma.room.findUnique({ where: { dormitoryId_code: { dormitoryId: asrama.id, code: String(row.kamar) } } }) : null;
     const orang = await prisma.person.upsert({
       where: { email: `santri.${String(row.nis)}@nuha.local` },
       create: { fullName: String(row.nama), gender: gender(row.jk), email: `santri.${String(row.nis)}@nuha.local`, addressLine: String(row.alamat), phone: String(row.hpWali) },
@@ -609,8 +609,8 @@ async function main() {
     });
     const santri = await prisma.santri.upsert({
       where: { personId: orang.id },
-      create: { personId: orang.id, nis: String(row.nis), nisn: String(row.nisn), unitId: unit?.id, kelasId: kelas?.id, kamarId: kamar?.id, status: StatusSantri.Mukim, program: String(row.program), tahunMasuk: String(row.masuk) },
-      update: { unitId: unit?.id, kelasId: kelas?.id, kamarId: kamar?.id, program: String(row.program) },
+      create: { personId: orang.id, nis: String(row.nis), nisn: String(row.nisn), unitId: unit?.id, kelasId: kelas?.id, roomId: kamar?.id, status: StatusSantri.Mukim, program: String(row.program), tahunMasuk: String(row.masuk) },
+      update: { unitId: unit?.id, kelasId: kelas?.id, roomId: kamar?.id, program: String(row.program) },
     });
     santriByName.set(String(row.nama), santri);
     const wali = await prisma.person.upsert({
@@ -650,7 +650,7 @@ async function main() {
   for (const row of source.pendaftar) await prisma.applicant.upsert({ where: { registrationNumber: String(row.noReg) }, create: { registrationNumber: String(row.noReg), fullName: String(row.nama), choice: String(row.pilihan), previousSchool: String(row.asal), registeredAt: parseDate(row.date), score: Number(row.nilai), status: pendaftarStatus(row.status) }, update: { status: pendaftarStatus(row.status), score: Number(row.nilai) } });
   for (const row of source.obat) await prisma.obat.upsert({ where: { nama: String(row.nama) }, create: { nama: String(row.nama), satuan: String(row.satuan), kategori: String(row.kategori), stok: Number(row.stok), stokMin: Number(row.min), kadaluarsa: String(row.exp) }, update: { stok: Number(row.stok) } });
   for (const [index, row] of source.kegiatanHarian.entries()) await prisma.kegiatanHarian.upsert({ where: { id: index + 1 }, create: { id: index + 1, jam: String(row.jam), nama: String(row.nama), ket: String(row.ket), urutan: index }, update: { nama: String(row.nama) } });
-  for (const row of source.halaqah) await prisma.halaqah.create({ data: { nama: String(row.nama), ustadz: String(row.ustadz), waktu: String(row.waktu), tempat: String(row.tempat), jenjang: String(row.jenjang), anggota: Number(row.anggota) } }).catch(() => undefined);
+  for (const row of source.halaqah) await prisma.studyCircle.create({ data: { name: String(row.nama), teacher: String(row.ustadz), schedule: String(row.waktu), location: String(row.tempat), educationLevel: String(row.jenjang), memberCount: Number(row.anggota) } }).catch(() => undefined);
   for (const row of source.pengumumanSantri) await prisma.announcement.create({ data: { date: parseDate(row.tgl), title: String(row.judul), content: String(row.isi), target: 'Santri' } }).catch(() => undefined);
   for (const row of source.agenda) await prisma.agenda.create({ data: { date: parseDate(row.tgl), time: jamSingkat(row.jam), title: String(row.judul), unit: String(row.unit) } }).catch(() => undefined);
   for (const row of source.waCases) await prisma.waTemplate.upsert({ where: { code: String(row.kode) }, create: { code: String(row.kode), role: String(row.role), title: String(row.judul), trigger: String(row.pemicu), schedule: String(row.waktu), content: String(row.isi), isActive: Boolean(row.aktif) }, update: { isActive: Boolean(row.aktif) } });
@@ -661,15 +661,15 @@ async function main() {
 
   for (const row of source.setoran) {
     const santri = findSantri(row.santri);
-    if (santri) await prisma.hafalan.create({ data: { santriId: santri.id, tgl: parseDate(row.tgl), surat: String(row.surat), ayat: String(row.ayat), jenis: String(row.jenis), nilai: String(row.nilai), penguji: String(row.penguji) } });
+    if (santri) await prisma.memorization.create({ data: { studentId: santri.id, date: parseDate(row.tgl), chapter: String(row.surat), verses: String(row.ayat), type: String(row.jenis), score: String(row.nilai), examiner: String(row.penguji) } });
   }
   for (const row of source.tazir) {
     const santri = findSantri(row.santri);
-    if (santri) await prisma.tazir.create({ data: { santriId: santri.id, tgl: parseDate(row.tgl), pelanggaran: String(row.pelanggaran), poin: Number(row.poin), sanksi: String(row.sanksi), petugas: String(row.petugas) } });
+    if (santri) await prisma.discipline.create({ data: { studentId: santri.id, date: parseDate(row.tgl), violation: String(row.pelanggaran), points: Number(row.poin), sanction: String(row.sanksi), officer: String(row.petugas) } });
   }
   for (const row of source.izinList) {
     const santri = findSantri(row.santri);
-    if (santri) await prisma.izin.upsert({ where: { kode: String(row.kode) }, create: { kode: String(row.kode), santriId: santri.id, jenis: String(row.alasan).split('—')[0].trim(), alasan: String(row.alasan), penjemput: String(row.penjemput), keluarAt: parseDate(row.keluar), kembaliAt: parseDate(row.kembali), status: ['Menunggu', 'Disetujui', 'Ditolak', 'Selesai'].includes(String(row.status)) ? (String(row.status) as never) : 'Menunggu' }, update: {} });
+    if (santri) await prisma.leavePermit.upsert({ where: { code: String(row.kode) }, create: { code: String(row.kode), studentId: santri.id, type: String(row.alasan).split('—')[0].trim(), reason: String(row.alasan), pickupBy: String(row.penjemput), departedAt: parseDate(row.keluar), returnedAt: parseDate(row.kembali), status: ({ Menunggu: 'Pending', Disetujui: 'Approved', Ditolak: 'Rejected', Selesai: 'Completed' } as Record<string, 'Pending' | 'Approved' | 'Rejected' | 'Completed'>)[String(row.status)] ?? 'Pending' }, update: {} });
   }
   for (const row of source.kunjungan) {
     const santri = findSantri(row.santri);

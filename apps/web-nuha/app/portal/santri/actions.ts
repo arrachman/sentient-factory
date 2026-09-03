@@ -20,16 +20,16 @@ export async function ajukanIzin(formData: FormData) {
   if (!jenis || !mulai || !alasan || !penjemput) return;
 
   const kode = `IZN-${Date.now().toString(36).toUpperCase()}`;
-  await prisma.izin.create({
+  await prisma.leavePermit.create({
     data: {
-      kode,
-      santriId: santri.id,
-      jenis,
-      alasan,
-      penjemput,
-      keluarAt: new Date(mulai),
-      kembaliAt: selesai ? new Date(selesai) : null,
-      status: 'Menunggu',
+      code: kode,
+      studentId: santri.id,
+      type: jenis,
+      reason: alasan,
+      pickupBy: penjemput,
+      departedAt: new Date(mulai),
+      returnedAt: selesai ? new Date(selesai) : null,
+      status: 'Pending',
     },
   });
 

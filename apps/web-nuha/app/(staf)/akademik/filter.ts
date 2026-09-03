@@ -70,7 +70,7 @@ export function whereFilter(f: FilterAkademik): Prisma.SantriWhereInput {
   if (f.jk) syarat.push({ person: { gender: f.jk } });
   if (f.program) syarat.push({ program: f.program });
   if (f.angkatan) syarat.push({ tahunMasuk: f.angkatan });
-  if (f.asramaId) syarat.push({ kamar: { asramaId: f.asramaId } });
+  if (f.asramaId) syarat.push({ room: { dormitoryId: f.asramaId } });
   if (f.q) {
     syarat.push({
       OR: [

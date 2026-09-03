@@ -11,7 +11,7 @@ export async function TabSiswa({ searchParams }: { searchParams: SearchParams })
     prisma.santri.count({ where }),
     prisma.santri.findMany({
       where,
-      include: { person: true, unit: true, kelas: true, kamar: { include: { asrama: true } } },
+      include: { person: true, unit: true, kelas: true, room: { include: { dormitory: true } } },
       orderBy: URUT[f.urut].orderBy,
       skip: (halaman - 1) * UKURAN_HALAMAN,
       take: UKURAN_HALAMAN,
@@ -57,7 +57,7 @@ export async function TabSiswa({ searchParams }: { searchParams: SearchParams })
                   </td>
                   <td className="num">{x.nis}{x.nisn ? ` / ${x.nisn}` : ''}</td>
                   <td>{x.unit ? `${x.unit.nama} · ${x.kelas?.nama ?? '-'}` : '-'}</td>
-                  <td>{x.kamar ? `${x.kamar.asrama.nama} ${x.kamar.kode}` : '-'}</td>
+                  <td>{x.room ? `${x.room.dormitory.name} ${x.room.code}` : '-'}</td>
                   <td><Badge status={x.status} /></td>
                 </tr>
               ))}

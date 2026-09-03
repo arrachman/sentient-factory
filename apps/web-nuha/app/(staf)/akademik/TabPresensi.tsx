@@ -11,21 +11,21 @@ export async function TabPresensi({ searchParams }: { searchParams: SearchParams
 
   // Rekap mengikuti penjelajah & penyaring yang sama dengan tab Siswa,
   // supaya "SMP › 7 › 7A" berarti hal yang sama di seluruh modul.
-  const presensi = await prisma.presensi.findMany({
-    where: { tgl: { gte: awalBulan }, santri: whereFilter(f) },
-    include: { santri: { include: { kelas: true, unit: true } } },
+  const presensi = await prisma.attendance.findMany({
+    where: { date: { gte: awalBulan }, student: whereFilter(f) },
+    include: { student: { include: { kelas: true, unit: true } } },
   });
 
   const perKelas = new Map<string, Rekap>();
   for (const p of presensi) {
-    const unit = p.santri.unit?.nama ?? p.santri.kelas?.nama ?? '';
-    const nama = p.santri.kelas ? `${unit ? `${unit} · ` : ''}${p.santri.kelas.nama}` : 'Tanpa kelas';
+    const unit = p.student.unit?.nama ?? p.student.kelas?.nama ?? '';
+    const nama = p.student.kelas ? `${unit ? `${unit} · ` : ''}${p.student.kelas.nama}` : 'Tanpa kelas';
     const rekap = perKelas.get(nama) ?? { kelas: nama, hadir: 0, sakit: 0, izin: 0, alpa: 0, total: 0 };
     rekap.total += 1;
-    if (p.status === 'Hadir') rekap.hadir += 1;
-    else if (p.status === 'Sakit') rekap.sakit += 1;
-    else if (p.status === 'Izin') rekap.izin += 1;
-    else if (p.status === 'Alpa') rekap.alpa += 1;
+    if (p.status === 'Present') rekap.hadir += 1;
+    else if (p.status === 'Sick') rekap.sakit += 1;
+    else if (p.status === 'Excused') rekap.izin += 1;
+    else if (p.status === 'Absent') rekap.alpa += 1;
     perKelas.set(nama, rekap);
   }
   const rekapPresensi = [...perKelas.values()].sort((a, b) => a.kelas.localeCompare(b.kelas, 'id'));

@@ -14,8 +14,8 @@ export async function TabBeranda({ santri }: { santri: SantriLengkap }) {
   const namaBesok = HARI[besok.getDay()];
 
   const [presensi, hafalanN, tugasAktifN, nilaiRows, pengumuman, jadwalBesok, kursus] = await Promise.all([
-    prisma.presensi.groupBy({ by: ['status'], where: { santriId: santri.id, tgl: { gte: awalBulan } }, _count: true }),
-    prisma.hafalan.count({ where: { santriId: santri.id } }),
+    prisma.attendance.groupBy({ by: ['status'], where: { studentId: santri.id, date: { gte: awalBulan } }, _count: { status: true } }),
+    prisma.memorization.count({ where: { studentId: santri.id } }),
     prisma.tugasLms.count({ where: { status: { not: 'Selesai' } } }),
     prisma.nilai.findMany({ where: { santriId: santri.id } }),
     prisma.announcement.findMany({ orderBy: { date: 'desc' }, take: 3 }),
@@ -23,8 +23,8 @@ export async function TabBeranda({ santri }: { santri: SantriLengkap }) {
     prisma.kursusLms.findMany(),
   ]);
 
-  const totalPresensi = presensi.reduce((n, r) => n + r._count, 0);
-  const hadir = presensi.find((r) => r.status === 'Hadir')?._count ?? 0;
+  const totalPresensi = presensi.reduce((n, r) => n + r._count.status, 0);
+  const hadir = presensi.find((r) => r.status === 'Present')?._count.status ?? 0;
   const pctHadir = totalPresensi > 0 ? Math.round((hadir / totalPresensi) * 100) : 100;
   const nilaiRata = nilaiRows.length > 0 ? Math.round(nilaiRows.reduce((s, n) => s + Number(n.akhir), 0) / nilaiRows.length) : 0;
   const totalModul = kursus.reduce((s, k) => s + k.modul, 0);

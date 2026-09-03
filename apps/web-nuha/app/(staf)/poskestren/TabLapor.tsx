@@ -4,7 +4,7 @@ const AMBANG_KLB = 3;
 
 export async function TabLapor() {
   const rekam = await prisma.rekamMedis.findMany({
-    include: { santri: { include: { kamar: { include: { asrama: true } } } } },
+    include: { santri: { include: { room: { include: { dormitory: true } } } } },
   });
 
   const totalKunjungan = rekam.length;
@@ -15,7 +15,7 @@ export async function TabLapor() {
 
   const klbMap = new Map<string, number>();
   rekam.forEach((k) => {
-    const asrama = k.santri.kamar?.asrama.nama;
+    const asrama = k.santri.room?.dormitory.name;
     if (!asrama || !k.diagnosis) return;
     const key = `${k.diagnosis}|${asrama}`;
     klbMap.set(key, (klbMap.get(key) ?? 0) + 1);

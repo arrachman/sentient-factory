@@ -9,14 +9,14 @@ export async function TabIzin({ santriId }: { santriId: bigint }) {
   const awalSemester = new Date();
   awalSemester.setMonth(awalSemester.getMonth() - 6);
 
-  const izin = await prisma.izin.findMany({ where: { santriId }, orderBy: { keluarAt: 'desc' } });
-  const izinSemester = izin.filter((z) => z.keluarAt >= awalSemester);
-  const berjalan = izin.filter((z) => z.status === 'Menunggu' || z.status === 'Disetujui');
+  const izin = await prisma.leavePermit.findMany({ where: { studentId: santriId }, orderBy: { departedAt: 'desc' } });
+  const izinSemester = izin.filter((z) => z.departedAt >= awalSemester);
+  const berjalan = izin.filter((z) => z.status === 'Pending' || z.status === 'Approved');
   const stat = [
     { label: 'Total pengajuan', v: izinSemester.length, c: '#0F6B3D' },
-    { label: 'Disetujui', v: izinSemester.filter((z) => z.status === 'Disetujui' || z.status === 'Selesai').length, c: '#1D4ED8' },
-    { label: 'Menunggu', v: izinSemester.filter((z) => z.status === 'Menunggu').length, c: '#E8973A' },
-    { label: 'Ditolak', v: izinSemester.filter((z) => z.status === 'Ditolak').length, c: '#B91C1C' },
+    { label: 'Disetujui', v: izinSemester.filter((z) => z.status === 'Approved' || z.status === 'Completed').length, c: '#1D4ED8' },
+    { label: 'Menunggu', v: izinSemester.filter((z) => z.status === 'Pending').length, c: '#E8973A' },
+    { label: 'Ditolak', v: izinSemester.filter((z) => z.status === 'Rejected').length, c: '#B91C1C' },
   ];
 
   return (
@@ -68,11 +68,11 @@ export async function TabIzin({ santriId }: { santriId: bigint }) {
             {berjalan.map((z) => (
               <div key={String(z.id)} style={{ padding: '13px 15px', borderRadius: 12, border: '1px solid #F0EDE4', borderLeft: '4px solid #E8973A', background: '#FAF8F3', marginBottom: 9 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1F2937' }}>{z.kode}</span>
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: '#1F2937' }}>{z.code}</span>
                   <Badge status={z.status} />
                 </div>
-                <div style={{ fontSize: 12.5, color: '#4B5563', marginTop: 5 }}>{z.alasan}</div>
-                <div style={{ fontSize: 11.5, color: '#6B7280', marginTop: 3 }}>{z.keluarAt.toLocaleDateString('id-ID')} → {z.kembaliAt ? z.kembaliAt.toLocaleDateString('id-ID') : 'belum'} · {z.penjemput}</div>
+                <div style={{ fontSize: 12.5, color: '#4B5563', marginTop: 5 }}>{z.reason}</div>
+                <div style={{ fontSize: 11.5, color: '#6B7280', marginTop: 3 }}>{z.departedAt.toLocaleDateString('id-ID')} → {z.returnedAt ? z.returnedAt.toLocaleDateString('id-ID') : 'belum'} · {z.pickupBy}</div>
               </div>
             ))}
           </div>
@@ -81,8 +81,8 @@ export async function TabIzin({ santriId }: { santriId: bigint }) {
             {izinSemester.length === 0 && <Kosong pesan="Belum ada riwayat izin semester ini." />}
             {izinSemester.map((z) => (
               <div key={String(z.id)} style={{ display: 'flex', gap: 12, alignItems: 'center', padding: '10px 2px', borderBottom: '1px solid #F5F2EA', flexWrap: 'wrap' }}>
-                <div style={{ width: 100, fontSize: 11.5, fontWeight: 700, color: '#0F6B3D' }}>{z.kode}</div>
-                <div style={{ flex: 1, minWidth: 150 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: '#1F2937' }}>{z.jenis}</div><div style={{ fontSize: 11.5, color: '#6B7280' }}>{z.alasan} · {z.keluarAt.toLocaleDateString('id-ID')}</div></div>
+                <div style={{ width: 100, fontSize: 11.5, fontWeight: 700, color: '#0F6B3D' }}>{z.code}</div>
+                <div style={{ flex: 1, minWidth: 150 }}><div style={{ fontSize: 12.5, fontWeight: 600, color: '#1F2937' }}>{z.type}</div><div style={{ fontSize: 11.5, color: '#6B7280' }}>{z.reason} · {z.departedAt.toLocaleDateString('id-ID')}</div></div>
                 <Badge status={z.status} />
               </div>
             ))}

@@ -4,16 +4,16 @@ import { ubahStatusIzin } from './actions';
 
 /** Overdue = izin Disetujui, sudah lewat jadwal kembali, tapi belum ditandai Selesai. */
 export async function TabIzin() {
-  const izin = await prisma.izin.findMany({
-    include: { santri: { include: { person: true, kamar: true } } },
-    orderBy: { keluarAt: 'desc' },
+  const izin = await prisma.leavePermit.findMany({
+    include: { student: { include: { person: true, room: true } } },
+    orderBy: { departedAt: 'desc' },
   });
 
   const sekarang = new Date();
   const baris = izin.map((z) => ({
     ...z,
-    overdue: z.status === 'Disetujui' && !!z.kembaliAt && z.kembaliAt < sekarang,
-    perluAksi: z.status === 'Menunggu',
+    overdue: z.status === 'Approved' && !!z.returnedAt && z.returnedAt < sekarang,
+    perluAksi: z.status === 'Pending',
   }));
   const menunggu = baris.filter((z) => z.perluAksi).length;
   const telat = baris.filter((z) => z.overdue).length;
@@ -46,20 +46,20 @@ export async function TabIzin() {
               style={{ borderLeft: `4px solid ${z.overdue ? '#B91C1C' : '#0F6B3D'}`, display: 'flex', flexDirection: 'column', gap: 11 }}
             >
               <div style={{ display: 'flex', gap: 11, alignItems: 'center', flexWrap: 'wrap' }}>
-                <Avatar nama={z.santri.person.fullName} size={34} />
+                <Avatar nama={z.student.person.fullName} size={34} />
                 <div style={{ flex: 1, minWidth: 130 }}>
-                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{z.santri.person.fullName}</div>
-                  <div className="muted" style={{ fontSize: 11.5 }}>{z.kode} · kamar {z.santri.kamar?.kode ?? '—'}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600 }}>{z.student.person.fullName}</div>
+                  <div className="muted" style={{ fontSize: 11.5 }}>{z.code} · kamar {z.student.room?.code ?? '—'}</div>
                 </div>
                 <span className={`badge ${kelasStatus(z.status)}`}>{z.status}</span>
               </div>
               <div style={{ fontSize: 13, lineHeight: 1.6 }}>
-                {z.alasan}
-                <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>Penjemput: {z.penjemput ?? '—'}</div>
+                {z.reason}
+                <div className="muted" style={{ fontSize: 12, marginTop: 3 }}>Penjemput: {z.pickupBy ?? '—'}</div>
               </div>
               <div style={{ display: 'flex', gap: 10, fontSize: 12, flexWrap: 'wrap' }}>
-                <span>Keluar: <strong>{z.keluarAt.toLocaleString('id-ID')}</strong></span>
-                <span>Kembali: <strong>{z.kembaliAt ? z.kembaliAt.toLocaleString('id-ID') : '—'}</strong></span>
+                <span>Keluar: <strong>{z.departedAt.toLocaleString('id-ID')}</strong></span>
+                <span>Kembali: <strong>{z.returnedAt ? z.returnedAt.toLocaleString('id-ID') : '—'}</strong></span>
               </div>
               {z.overdue && (
                 <div className="alert alert-kritis" style={{ padding: '9px 12px', fontSize: 12 }}>
@@ -81,7 +81,7 @@ export async function TabIzin() {
                     </form>
                   </>
                 )}
-                {z.status !== 'Selesai' && (
+                {z.status !== 'Completed' && (
                   <form action={ubahStatusIzin}>
                     <input type="hidden" name="id" value={String(z.id)} />
                     <input type="hidden" name="aksi" value="kembali" />

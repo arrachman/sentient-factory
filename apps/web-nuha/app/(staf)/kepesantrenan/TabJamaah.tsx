@@ -4,11 +4,11 @@ import { Avatar, Kosong } from '@/components';
 import { simpanAbsenJamaah } from './actions';
 
 const WAKTU_LIST = ['Subuh', 'Dzuhur', 'Ashar', 'Maghrib', 'Isya'];
-const OPSI_STATUS: Array<{ kode: string; status: 'Hadir' | 'Sakit' | 'Izin' | 'Alpa' }> = [
-  { kode: 'H', status: 'Hadir' },
-  { kode: 'S', status: 'Sakit' },
-  { kode: 'I', status: 'Izin' },
-  { kode: 'A', status: 'Alpa' },
+const OPSI_STATUS: Array<{ kode: string; label: string; status: 'Present' | 'Sick' | 'Excused' | 'Absent' }> = [
+  { kode: 'H', label: 'Hadir', status: 'Present' },
+  { kode: 'S', label: 'Sakit', status: 'Sick' },
+  { kode: 'I', label: 'Izin', status: 'Excused' },
+  { kode: 'A', label: 'Alpa', status: 'Absent' },
 ];
 
 /** Absensi jamaah per sesi — sesi dipilih lewat query param, bukan state klien. */
@@ -23,21 +23,21 @@ export async function TabJamaah({ searchParams }: { searchParams: Record<string,
   const [santri, presensiHariIni, rekapPekan] = await Promise.all([
     prisma.santri.findMany({
       where: { status: 'Mukim' },
-      include: { person: true, kamar: { include: { asrama: true } } },
+      include: { person: true, room: { include: { dormitory: true } } },
       orderBy: { person: { fullName: 'asc' } },
     }),
-    prisma.presensi.findMany({ where: { tgl: hariIni, sesi: waktu } }),
-    prisma.presensi.groupBy({
-      by: ['sesi', 'status'],
-      where: { tgl: { gte: new Date(hariIni.getTime() - 6 * 86400000) } },
+    prisma.attendance.findMany({ where: { date: hariIni, session: waktu } }),
+    prisma.attendance.groupBy({
+      by: ['session', 'status'],
+      where: { date: { gte: new Date(hariIni.getTime() - 6 * 86400000) } },
       _count: { _all: true },
     }),
   ]);
 
-  const statusHariIni = new Map(presensiHariIni.map((p) => [String(p.santriId), p.status]));
+  const statusHariIni = new Map(presensiHariIni.map((p) => [String(p.studentId), p.status]));
 
   const rekapPerSesi = WAKTU_LIST.map((w) => {
-    const hadir = rekapPekan.filter((r) => r.sesi === w && r.status === 'Hadir').reduce((t, r) => t + r._count._all, 0);
+    const hadir = rekapPekan.filter((r) => r.session === w && r.status === 'Present').reduce((t, r) => t + r._count._all, 0);
     return { sesi: w, hadir };
   });
   const maxHadir = Math.max(...rekapPerSesi.map((r) => r.hadir), 1);
@@ -70,19 +70,19 @@ export async function TabJamaah({ searchParams }: { searchParams: Record<string,
             <input type="hidden" name="sesi" value={waktu} />
             <div className="grid g2">
               {santri.map((x) => {
-                const nilaiSekarang = statusHariIni.get(String(x.id)) ?? 'Hadir';
+                const nilaiSekarang = statusHariIni.get(String(x.id)) ?? 'Present';
                 return (
                   <div key={String(x.id)} className="inset" style={{ display: 'flex', gap: 11, alignItems: 'center', flexWrap: 'wrap' }}>
                     <Avatar nama={x.person.fullName} size={32} />
                     <div style={{ flex: 1, minWidth: 130 }}>
                       <div style={{ fontSize: 13, fontWeight: 600 }}>{x.person.fullName}</div>
                       <div className="muted" style={{ fontSize: 11.5 }}>
-                        {x.kamar?.asrama.nama ?? '—'} · kamar {x.kamar?.kode ?? '—'}
+                        {x.room?.dormitory.name ?? '—'} · kamar {x.room?.code ?? '—'}
                       </div>
                     </div>
                     <select name={`status-${x.id}`} defaultValue={nilaiSekarang} className="field" style={{ margin: 0 }}>
                       {OPSI_STATUS.map((o) => (
-                        <option key={o.kode} value={o.status}>{o.kode} — {o.status}</option>
+                        <option key={o.kode} value={o.status}>{o.kode} — {o.label}</option>
                       ))}
                     </select>
                   </div>

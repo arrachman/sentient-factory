@@ -7,7 +7,7 @@ const AMBANG_KLB = 3; // ambang KLB prototype: 3 kasus/asrama untuk diagnosis ya
 export async function TabDashboard() {
   const [semuaKunjungan, obat] = await Promise.all([
     prisma.rekamMedis.findMany({
-      include: { santri: { include: { person: true, kamar: { include: { asrama: true } } } } },
+      include: { santri: { include: { person: true, room: { include: { dormitory: true } } } } },
       orderBy: { tgl: 'desc' },
     }),
     prisma.obat.findMany(),
@@ -32,7 +32,7 @@ export async function TabDashboard() {
   // Deteksi dini KLB: diagnosis yang sama ≥ ambang di asrama yang sama.
   const klbMap = new Map<string, number>();
   semuaKunjungan.forEach((k) => {
-    const asrama = k.santri.kamar?.asrama.nama;
+    const asrama = k.santri.room?.dormitory.name;
     if (!asrama || !k.diagnosis) return;
     const key = `${k.diagnosis}|${asrama}`;
     klbMap.set(key, (klbMap.get(key) ?? 0) + 1);
@@ -107,7 +107,7 @@ export async function TabDashboard() {
                   {inisial(k.santri.person.fullName)}
                 </span>
                 <span style={{ fontWeight: 600, fontSize: 13 }}>{k.santri.person.fullName}</span>
-                <span className="muted">{k.jam ?? '-'} · Asrama {k.santri.kamar?.asrama.nama ?? '-'}</span>
+                <span className="muted">{k.jam ?? '-'} · Asrama {k.santri.room?.dormitory.name ?? '-'}</span>
                 <span className="badge badge-merah">{k.diagnosis ?? '-'}</span>
                 <span className="muted" style={{ width: '100%' }}>{k.keluhan} → {k.terapi ?? '-'} · <strong>{k.tindakLanjut ?? '-'}</strong></span>
               </div>

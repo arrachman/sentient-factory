@@ -28,10 +28,10 @@ export async function TabPemicu() {
       orderBy: { dueDate: 'asc' },
       take: 8,
     }),
-    prisma.izin.findMany({
-      where: { status: 'Menunggu' },
-      include: { santri: { include: { person: true } } },
-      orderBy: { keluarAt: 'desc' },
+    prisma.leavePermit.findMany({
+      where: { status: 'Pending' },
+      include: { student: { include: { person: true } } },
+      orderBy: { departedAt: 'desc' },
       take: 8,
     }),
     prisma.payrollSlip.findMany({
@@ -60,15 +60,15 @@ export async function TabPemicu() {
   }
 
   for (const i of izin) {
-    const kontak = await kontakWali(i.santriId, i.santri.personId, i.santri.person.fullName, i.santri.person.phone);
+    const kontak = await kontakWali(i.studentId, i.student.personId, i.student.person.fullName, i.student.person.phone);
     baris.push({
-      code: i.kode,
-      judul: `Pengajuan izin ${i.jenis} menunggu verifikasi`,
-      detail: `${i.santri.person.fullName} · ${i.alasan}`,
+      code: i.code,
+      judul: `Pengajuan izin ${i.type} menunggu verifikasi`,
+      detail: `${i.student.person.fullName} · ${i.reason}`,
       target: `${kontak.nama} (wali)`,
       nomor: kontak.hp,
       tujuan: kontak.nama,
-      isi: `Assalamu'alaikum, pengajuan izin ${i.jenis} untuk ${i.santri.person.fullName} sedang menunggu verifikasi pengasuh.`,
+      isi: `Assalamu'alaikum, pengajuan izin ${i.type} untuk ${i.student.person.fullName} sedang menunggu verifikasi pengasuh.`,
     });
   }
 

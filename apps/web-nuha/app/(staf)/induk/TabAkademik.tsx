@@ -7,7 +7,7 @@ const formatHari = (tgl: Date) => tgl.toLocaleDateString('id-ID', { weekday: 'lo
 /** Tab Akademik: presensi 14 hari terakhir + nilai semester berjalan. */
 export async function TabAkademik({ santriId }: { santriId: bigint }) {
   const [presensi, nilai] = await Promise.all([
-    prisma.presensi.findMany({ where: { santriId }, orderBy: { tgl: 'desc' }, take: 14 }),
+    prisma.attendance.findMany({ where: { studentId: santriId }, orderBy: { date: 'desc' }, take: 14 }),
     prisma.nilai.findMany({ where: { santriId }, include: { mapel: true }, orderBy: { mapel: { nama: 'asc' } } }),
   ]);
 
@@ -27,10 +27,10 @@ export async function TabAkademik({ santriId }: { santriId: bigint }) {
             <Tabel kolom={['Tanggal', 'Hari', 'Status', 'Keterangan']}>
               {presensi.map((row) => (
                 <tr key={String(row.id)}>
-                  <td>{formatTgl(row.tgl)}</td>
-                  <td className="muted">{formatHari(row.tgl)}</td>
+                  <td>{formatTgl(row.date)}</td>
+                  <td className="muted">{formatHari(row.date)}</td>
                   <td><Badge status={row.status} /></td>
-                  <td className="muted">{row.ket ?? '-'}</td>
+                  <td className="muted">{row.note ?? '-'}</td>
                 </tr>
               ))}
             </Tabel>

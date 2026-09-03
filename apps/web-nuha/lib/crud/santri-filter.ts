@@ -38,7 +38,7 @@ export const FILTER_LENGKAP_SANTRI: Field = {
   filterWhere: {
     tanpaNis: { nis: null },
     tanpaKelas: { kelasId: null },
-    tanpaKamar: { kamarId: null },
-    belumLengkap: { OR: [{ nis: null }, { kelasId: null }, { kamarId: null }] },
+    tanpaKamar: { roomId: null },
+    belumLengkap: { OR: [{ nis: null }, { kelasId: null }, { roomId: null }] },
   },
 };
