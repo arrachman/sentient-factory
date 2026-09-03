@@ -1,5 +1,11 @@
 # Riwayat Perubahan — web-nuha
 
+## 2026-09-03 — Rename teknis profil lembaga ke Inggris (`40dfca9b`)
+
+Model Prisma `ProfilLembaga` dan delegate `profilLembaga` kini menjadi `InstitutionProfile` dan `institutionProfile`; tabel fisik `profil_lembaga` menjadi `institution_profiles`. Migrasi `20260903050000_rename_institution_profile_to_english` melakukan rename in-place untuk tabel, indeks, dan foreign key lokasi ke `regions`.
+
+Dampak operator: URL CRUD `profil-lembaga`, label Indonesia, dan struktur formulir tetap sama. Database yang sudah menjalankan aplikasi harus menjalankan migrasi Prisma ini sebelum memakai versi commit tersebut.
+
 ## 2026-09-03 — Rename teknis relasi wali ke Inggris (`a7d80621`)
 
 Model Prisma `RelasiWali` kini menjadi `GuardianRelation`, delegate Prisma menjadi `guardianRelation`, dan tabel fisik `relasi_wali` menjadi `guardian_relations`. Migrasi `20260903040000_rename_guardian_relation_to_english` mengganti tabel, indeks unik, dan foreign key secara in-place sehingga data serta relasi ke `people` tetap terjaga.
