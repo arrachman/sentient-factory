@@ -1,5 +1,11 @@
 # Riwayat Perubahan — web-nuha
 
+## 2026-09-03 — Import wilayah Indonesia dan pengaman alamat (`84db1d93`)
+
+Dataset administratif Indonesia 2025 telah diimpor ke `regions`: 38 provinsi, 514 kabupaten/kota, 7.285 kecamatan, dan 83.762 desa/kelurahan. Migrasi `20260903080000_fix_region_column_names` juga menyelaraskan dua kolom teknis lama (`kode` dan `populasi`) dengan Prisma tanpa membuat ulang data. Pembaruan orang dengan alamat domestik kini ditolak bila masih memiliki alamat luar negeri aktif; skrip `npm run report:alamat-wilayah -- --file <path.json>` hanya membuat daftar telaah manual dan tidak pernah mengisi `regionId` secara otomatis.
+
+Dampak operator: pemilih wilayah PPDB kini menggunakan data desa/kelurahan nyata. Jalankan migrasi Prisma sebelum memakai versi ini; pemeriksaan alamat lama aman karena tidak menebak wilayah dari teks alamat bebas.
+
 ## 2026-09-03 — Simpan wilayah domisili pendaftar PPDB (`ef8b20d7`)
 
 Pendaftar PPDB kini dapat menyimpan referensi opsional ke desa atau kelurahan aktif melalui relasi `Applicant.regionId`. Form publik dan API PPDB memvalidasi ID wilayah di server sebelum menyimpan, dan lookup desa dibatasi pada data wilayah aktif.
