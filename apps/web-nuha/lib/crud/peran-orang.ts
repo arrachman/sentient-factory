@@ -205,8 +205,8 @@ async function sambungkanWali(waliId: bigint, anakId: bigint, hubungan: string):
     prisma.person.count({ where: { id: anakId } }),
   ]);
   if (!adaWali || !adaAnak) return false;
-  const sudahAdaUtama = await prisma.relasiWali.count({ where: { anakId, utama: true } });
-  await prisma.relasiWali.upsert({
+  const sudahAdaUtama = await prisma.guardianRelation.count({ where: { anakId, utama: true } });
+  await prisma.guardianRelation.upsert({
     where: { waliId_anakId: { waliId, anakId } },
     create: { waliId, anakId, hubungan, peran: hubungan, utama: sudahAdaUtama === 0 },
     update: { hubungan, peran: hubungan },
@@ -266,12 +266,12 @@ async function selaraskanRelasi(
   aktor: { id: string; nama: string },
 ): Promise<void> {
   const kunci = arah === 'wali' ? { anakId: id } : { waliId: id };
-  const lama = await prisma.relasiWali.findMany({ where: kunci, select: { waliId: true, anakId: true } });
+  const lama = await prisma.guardianRelation.findMany({ where: kunci, select: { waliId: true, anakId: true } });
   const tetap = new Set(daftar.map((item) => item.id));
   for (const baris of lama) {
     const lawan = String(arah === 'wali' ? baris.waliId : baris.anakId);
     if (tetap.has(lawan)) continue;
-    await prisma.relasiWali.delete({ where: { waliId_anakId: { waliId: baris.waliId, anakId: baris.anakId } } });
+    await prisma.guardianRelation.delete({ where: { waliId_anakId: { waliId: baris.waliId, anakId: baris.anakId } } });
     await catat(personId, `Mencabut relasi wali dengan orang #${lawan}`, { arah, lawan }, aktor, 'CRUD_DELETE');
   }
   for (const item of daftar) {

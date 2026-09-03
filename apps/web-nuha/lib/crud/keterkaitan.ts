@@ -16,9 +16,9 @@ async function kaitOrang(rows: Row[]): Promise<Map<string, PeranTersimpan>> {
   const [santri, pegawai, wali, orangTua] = await Promise.all([
     prisma.santri.findMany({ where: { personId: { in: ids } }, select: { personId: true, nis: true, status: true, kelas: { select: { nama: true } } } }),
     prisma.staff.findMany({ where: { personId: { in: ids } }, select: { personId: true, employeeNumber: true, position: true, additionalDuties: true } }),
-    prisma.relasiWali.findMany({ where: { waliId: { in: ids } }, select: { waliId: true, anakId: true, hubungan: true, anak: { select: { fullName: true } } } }),
+    prisma.guardianRelation.findMany({ where: { waliId: { in: ids } }, select: { waliId: true, anakId: true, hubungan: true, anak: { select: { fullName: true } } } }),
     // Wali dari orang ini (dipakai saat identitasnya berperan santri).
-    prisma.relasiWali.findMany({ where: { anakId: { in: ids } }, select: { anakId: true, waliId: true, hubungan: true, utama: true }, orderBy: [{ utama: 'desc' }, { id: 'asc' }] }),
+    prisma.guardianRelation.findMany({ where: { anakId: { in: ids } }, select: { anakId: true, waliId: true, hubungan: true, utama: true }, orderBy: [{ utama: 'desc' }, { id: 'asc' }] }),
   ]);
 
   const hasil = new Map<string, PeranTersimpan>();

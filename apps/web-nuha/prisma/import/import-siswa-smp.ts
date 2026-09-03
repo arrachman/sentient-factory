@@ -40,7 +40,7 @@ import { recordAudit } from '@/lib/audit';
 import { JenisKelamin, StatusSantri } from '@prisma/client';
 import { bacaXlsx, angkaKeTeksUtuh } from './lib/xlsx';
 import { parseTtl } from './lib/tanggal-id';
-import { tulisRelasiWali } from './lib/tulis-wali';
+import { tulisGuardianRelation } from './lib/tulis-wali';
 
 type Galat = { sheet: string; baris: number; pesan: string };
 const AKTOR_SKRIP = { nama: 'Importir siswa SMP (skrip)' };
@@ -279,7 +279,7 @@ async function jalankan(): Promise<void> {
     });
     void santri;
 
-    await tulisRelasiWali(orang.id, s.nisn, 'Wali', { nama: s.namaWali ?? '', nik: s.nikWali, hp: s.hpWali });
+    await tulisGuardianRelation(orang.id, s.nisn, 'Wali', { nama: s.namaWali ?? '', nik: s.nikWali, hp: s.hpWali });
   }
 
   await recordAudit({

@@ -419,7 +419,7 @@ async function seedPortalAccess() {
   // akun portal wali berusername `wali.<nis>`, satu per santri, jadi harus
   // dipilih satu pemegang akun. Dipilih `waliId` terkecil supaya deterministik
   // dan idempoten; wali lain tetap ada sebagai relasi, hanya tanpa akun login.
-  const waliRows = await prisma.relasiWali.findMany({
+  const waliRows = await prisma.guardianRelation.findMany({
     where: { utama: true },
     include: { wali: true, anak: { include: { santri: true } } },
     orderBy: { waliId: 'asc' },
@@ -618,7 +618,7 @@ async function main() {
       create: { fullName: String(row.wali), gender: JenisKelamin.L, phone: String(row.hpWali), email: `wali.${String(row.nis)}@nuha.local` },
       update: { phone: String(row.hpWali) },
     });
-    await prisma.relasiWali.upsert({ where: { waliId_anakId: { waliId: wali.id, anakId: orang.id } }, create: { waliId: wali.id, anakId: orang.id, hubungan: 'Orang Tua', pekerjaan: String(row.pekerjaan) }, update: {} });
+    await prisma.guardianRelation.upsert({ where: { waliId_anakId: { waliId: wali.id, anakId: orang.id } }, create: { waliId: wali.id, anakId: orang.id, hubungan: 'Orang Tua', pekerjaan: String(row.pekerjaan) }, update: {} });
   }
 
   for (const row of source.users) {

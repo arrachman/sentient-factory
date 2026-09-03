@@ -24,7 +24,7 @@ import { recordAudit } from '@/lib/audit';
 const AKTOR_SKRIP = { nama: 'Perbaikan wali utama (skrip)' };
 
 async function jalankan(): Promise<void> {
-  const semua = await prisma.relasiWali.findMany({
+  const semua = await prisma.guardianRelation.findMany({
     select: { id: true, anakId: true, peran: true, utama: true },
     orderBy: { id: 'asc' },
   });
@@ -41,7 +41,7 @@ async function jalankan(): Promise<void> {
 
   for (const r of perluUbah) {
     const seharusnya = r.peran === 'Ayah' || r.peran === 'Ibu' || !punyaOrtu.has(r.anakId.toString());
-    await prisma.relasiWali.update({ where: { id: r.id }, data: { utama: seharusnya } });
+    await prisma.guardianRelation.update({ where: { id: r.id }, data: { utama: seharusnya } });
   }
 
   if (perluUbah.length > 0) {

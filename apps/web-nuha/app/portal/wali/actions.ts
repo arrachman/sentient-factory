@@ -7,14 +7,14 @@ import { readSession } from '@/lib/auth';
 /**
  * Pastikan santriId yang dikirim form benar-benar anak dari wali yang sedang
  * login — form field bisa dipalsukan klien, jadi validasi ulang di server
- * terhadap RelasiWali, jangan percaya nilai yang dikirim begitu saja.
+ * terhadap GuardianRelation, jangan percaya nilai yang dikirim begitu saja.
  */
 async function santriMilikWaliSesi(santriId: bigint) {
   const session = await readSession();
   if (!session) return null;
   const user = await prisma.user.findUnique({ where: { id: BigInt(session.userId) } });
   if (!user) return null;
-  const relasi = await prisma.relasiWali.findFirst({
+  const relasi = await prisma.guardianRelation.findFirst({
     where: { waliId: user.personId, anak: { santri: { id: santriId } } },
     include: { anak: { include: { santri: true } } },
   });

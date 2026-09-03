@@ -7,7 +7,7 @@
  *
  * Tiap berkas berisi 3 sheet: DATA DIRI SISWA, DATA WALI MURID, DATA
  * KESEHATAN, dicocokkan lewat kolom "No" (posisi baris konsisten di ketiga
- * sheet pada berkas yang sama). Menulis Santri + Orang + RelasiWali
+ * sheet pada berkas yang sama). Menulis Santri + Orang + GuardianRelation
  * (Ayah/Ibu/Wali) + ProfilKesehatan. NIS dibuat deterministik
  * (`lib/nis.ts`); NISN adalah kunci pencocokan idempoten.
  *
@@ -20,7 +20,7 @@ import { JenisKelamin, StatusSantri } from '@prisma/client';
 import { bacaXlsx, angkaKeTeksUtuh, type Lembar } from './lib/xlsx';
 import { parseTtl } from './lib/tanggal-id';
 import { buatNis } from './lib/nis';
-import { tulisRelasiWali } from './lib/tulis-wali';
+import { tulisGuardianRelation } from './lib/tulis-wali';
 
 type Galat = { berkas: string; baris: number; pesan: string };
 const AKTOR_SKRIP = { nama: 'Importir siswa MA (skrip)' };
@@ -211,9 +211,9 @@ async function jalankan(): Promise<void> {
       });
 
       const w = s.wali?.row ?? {};
-      await tulisRelasiWali(orang.id, s.nisn, 'Ayah', { nama: w.E, nik: w.F, ttl: w.G, pekerjaan: w.H, pendapatan: w.I, pendidikan: w.J, hp: w.K });
-      await tulisRelasiWali(orang.id, s.nisn, 'Ibu', { nama: w.L, nik: w.M, ttl: w.N, pekerjaan: w.O, pendapatan: w.P, pendidikan: w.Q, hp: w.R });
-      await tulisRelasiWali(orang.id, s.nisn, 'Wali', { nama: w.T, nik: w.U, ttl: w.V, pendidikan: w.W, pekerjaan: w.X, hp: w.Y });
+      await tulisGuardianRelation(orang.id, s.nisn, 'Ayah', { nama: w.E, nik: w.F, ttl: w.G, pekerjaan: w.H, pendapatan: w.I, pendidikan: w.J, hp: w.K });
+      await tulisGuardianRelation(orang.id, s.nisn, 'Ibu', { nama: w.L, nik: w.M, ttl: w.N, pekerjaan: w.O, pendapatan: w.P, pendidikan: w.Q, hp: w.R });
+      await tulisGuardianRelation(orang.id, s.nisn, 'Wali', { nama: w.T, nik: w.U, ttl: w.V, pendidikan: w.W, pekerjaan: w.X, hp: w.Y });
 
       const k = s.kesehatan;
       if (k && (k.D || k.E || k.F || k.G)) {

@@ -32,7 +32,7 @@ import { recordAudit } from '@/lib/audit';
 import { JenisKelamin, StatusSantri } from '@prisma/client';
 import { parseTtl } from './lib/tanggal-id';
 import { buatNis } from './lib/nis';
-import { tulisRelasiWali, type DataWali } from './lib/tulis-wali';
+import { tulisGuardianRelation, type DataWali } from './lib/tulis-wali';
 
 const AKTOR_SKRIP = { nama: 'Importir siswa MA 2025/2026 (skrip)' };
 const KODE_UNIT = 'MA';
@@ -495,8 +495,8 @@ async function jalankan(): Promise<void> {
       ? await prisma.santri.update({ where: { id: santriLama.id }, data: { personId: orang.id, ...isiSantri } })
       : await prisma.santri.create({ data: { personId: orang.id, ...isiSantri } });
 
-    if (s.ayah) await tulisRelasiWali(orang.id, s.nisn, 'Ayah', { ...s.ayah, nama: judulKasus(s.ayah.nama), hp: bersihkanHp(s.ayah.hp) });
-    if (s.ibu) await tulisRelasiWali(orang.id, s.nisn, 'Ibu', { ...s.ibu, nama: judulKasus(s.ibu.nama), hp: bersihkanHp(s.ibu.hp) });
+    if (s.ayah) await tulisGuardianRelation(orang.id, s.nisn, 'Ayah', { ...s.ayah, nama: judulKasus(s.ayah.nama), hp: bersihkanHp(s.ayah.hp) });
+    if (s.ibu) await tulisGuardianRelation(orang.id, s.nisn, 'Ibu', { ...s.ibu, nama: judulKasus(s.ibu.nama), hp: bersihkanHp(s.ibu.hp) });
 
     // Baris kesehatan yang seluruh kolomnya kosong tidak menghasilkan profil hampa.
     const isiKesehatan = {

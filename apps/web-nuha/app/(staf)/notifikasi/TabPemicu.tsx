@@ -7,7 +7,7 @@ type Baris = { code: string; judul: string; detail: string; target: string; nomo
 
 /** Ambil kontak wali utama seorang santri, jatuh ke HP santri sendiri bila tidak ada. */
 async function kontakWali(santriId: bigint, orangId: bigint, fallbackNama: string, fallbackHp: string | null) {
-  const relasi = await prisma.relasiWali.findFirst({
+  const relasi = await prisma.guardianRelation.findFirst({
     where: { anakId: orangId },
     include: { wali: true },
     orderBy: [{ utama: 'desc' }, { id: 'asc' }],

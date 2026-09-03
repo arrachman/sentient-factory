@@ -26,7 +26,7 @@ import { prisma } from '@/lib/prisma';
 import { recordAudit } from '@/lib/audit';
 import { JenisKelamin, StatusSantri } from '@prisma/client';
 import { parseTtl } from './lib/tanggal-id';
-import { tulisRelasiWali } from './lib/tulis-wali';
+import { tulisGuardianRelation } from './lib/tulis-wali';
 
 const AKTOR_SKRIP = { nama: 'Importir alumni SMP 2025/2026 (skrip)' };
 const KODE_UNIT = 'SMP';
@@ -127,7 +127,7 @@ async function jalankan(): Promise<void> {
     // Ayah/Ibu lewat importir MA (yang sumbernya memang memisah peran), peran
     // itu dipertahankan — menuliskannya ulang sebagai `Wali` justru membuang
     // informasi yang lebih spesifik.
-    await tulisRelasiWali(orang.id, s.nisn, s.wali.peran ?? 'Wali', {
+    await tulisGuardianRelation(orang.id, s.nisn, s.wali.peran ?? 'Wali', {
       nama: s.wali.nama,
       nik: s.wali.nik,
       hp: s.wali.hp,

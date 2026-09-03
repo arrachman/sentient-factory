@@ -9,7 +9,7 @@
  *     Baris-baris itu **dilewati** di sini supaya data walinya yang lebih kaya
  *     tidak tergerus jadi satu baris "Wali" tanpa atribut.
  *   - 17 sisanya masih `unit = SMP`, `status = Alumni`, tanpa kelas/tahun masuk
- *     dan **tanpa satu pun `RelasiWali`**. Merekalah alumni SMP yang naik ke MA;
+ *     dan **tanpa satu pun `GuardianRelation`**. Merekalah alumni SMP yang naik ke MA;
  *     skrip ini memindahkan mereka ke unit MA, Kelas 1 (tingkat 10), status
  *     Mukim, tahun masuk 2026, memberi NIS deterministik, melengkapi NISN/HP/
  *     asal sekolah, dan menuliskan wali dari kolom tunggal tabel operator.
@@ -39,7 +39,7 @@ import { recordAudit } from '@/lib/audit';
 import { JenisKelamin, StatusSantri } from '@prisma/client';
 import { parseTtl } from './lib/tanggal-id';
 import { buatNis } from './lib/nis';
-import { tulisRelasiWali } from './lib/tulis-wali';
+import { tulisGuardianRelation } from './lib/tulis-wali';
 
 const AKTOR_SKRIP = { nama: 'Importir siswa MA 2026/2027 gel. 2 (skrip)' };
 const KODE_UNIT = 'MA';
@@ -334,7 +334,7 @@ async function jalankan(): Promise<void> {
       : await prisma.santri.create({ data: { personId: orang.id, ...isiSantri } });
 
     // Sumber hanya punya satu kolom wali tanpa penanda ayah/ibu → peran "Wali".
-    await tulisRelasiWali(orang.id, s.nisn, 'Wali', {
+    await tulisGuardianRelation(orang.id, s.nisn, 'Wali', {
       nama: s.waliNama,
       nik: s.waliNik,
       hp: bersihkanHp(s.waliHp),

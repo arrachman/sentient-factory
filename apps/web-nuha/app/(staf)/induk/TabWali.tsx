@@ -9,7 +9,7 @@ export async function TabWali({ santriId }: { santriId: bigint }) {
   // Utamakan kontak bertanda `utama`, tapi jangan menampilkan "belum ada data"
   // saat relasinya sebenarnya ada dan hanya tidak bertanda — data impor SMP
   // pernah masuk seluruhnya dengan `utama: false`.
-  const relasi = await prisma.relasiWali.findFirst({
+  const relasi = await prisma.guardianRelation.findFirst({
     where: { anakId: santri.personId },
     include: { wali: true },
     orderBy: [{ utama: 'desc' }, { id: 'asc' }],

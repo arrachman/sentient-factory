@@ -26,7 +26,7 @@ const TABS = [
 /**
  * Portal Wali — beda dari prototype: prototype cuma render santri[0], di sini
  * wali dengan >1 anak WAJIB memilih lewat ?anak=<santriId>. Param itu divalidasi
- * di server terhadap RelasiWali milik sesi — tidak pernah dipercaya mentah.
+ * di server terhadap GuardianRelation milik sesi — tidak pernah dipercaya mentah.
  */
 export default async function PortalWaliPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const session = await requirePage('portal-wali');

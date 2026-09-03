@@ -6,7 +6,7 @@
  *
  * BEDA dengan seed.ts: form pendataan SMP hanya punya SATU kolom
  * "NAMA IBU/AYAH/WALI" (bukan blok Ayah/Ibu terpisah), sehingga
- * `tulisRelasiWali` menulisnya dengan `peran: 'Wali'` dan `utama: false`
+ * `tulisGuardianRelation` menulisnya dengan `peran: 'Wali'` dan `utama: false`
  * (lihat `import/lib/tulis-wali.ts`). Logika akun wali di seed.ts hanya
  * mengambil relasi `utama: true`, jadi wali-wali ini TIDAK otomatis dapat
  * akun dari seed — skrip ini secara eksplisit memakai relasi `peran: 'Wali'`
@@ -59,21 +59,21 @@ async function jalankan(): Promise<void> {
     });
     akunSantriDibuat += 1;
 
-    const relasiWali = await prisma.relasiWali.findFirst({
+    const guardianRelation = await prisma.guardianRelation.findFirst({
       where: { anakId: santri.personId, peran: 'Wali' },
       include: { wali: true },
       orderBy: { id: 'asc' },
     });
-    if (!relasiWali) {
+    if (!guardianRelation) {
       waliTanpaKontak += 1;
       continue;
     }
 
     const userWali = await prisma.user.upsert({
-      where: { personId: relasiWali.waliId },
+      where: { personId: guardianRelation.waliId },
       create: {
-        personId: relasiWali.waliId,
-        email: relasiWali.wali.email ?? `wali.${santri.nis}@nuha.local`,
+        personId: guardianRelation.waliId,
+        email: guardianRelation.wali.email ?? `wali.${santri.nis}@nuha.local`,
         username: `wali.${santri.nis}`,
         passwordHash,
       },

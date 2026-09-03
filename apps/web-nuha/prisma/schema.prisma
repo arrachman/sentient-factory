@@ -181,8 +181,8 @@ model Person {
   santri            Santri?
   riwayatPendidikan RiwayatPendidikan[]
   staff             Staff?
-  waliDari          RelasiWali[]        @relation("WaliOrang")
-  sebagaiAnak       RelasiWali[]        @relation("AnakOrang")
+  waliDari          GuardianRelation[]        @relation("WaliOrang")
+  sebagaiAnak       GuardianRelation[]        @relation("AnakOrang")
   region            Region?             @relation("PersonRegion", fields: [regionId], references: [id], onDelete: SetNull)
   foreignAddress    ForeignAddress?
 
@@ -255,7 +255,7 @@ model MenuRole {
   @@map("menu_roles")
 }
 
-model RelasiWali {
+model GuardianRelation {
   id         BigInt  @id @default(autoincrement())
   waliId     BigInt  @map("wali_id")
   anakId     BigInt  @map("anak_id")
@@ -273,7 +273,7 @@ model RelasiWali {
   anak Person @relation("AnakOrang", fields: [anakId], references: [id], onDelete: Cascade)
 
   @@unique([waliId, anakId])
-  @@map("relasi_wali")
+  @@map("guardian_relations")
 }
 
 // ─────────────────────────────────────────────────────────────

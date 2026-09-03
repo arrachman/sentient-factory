@@ -68,7 +68,7 @@ const KOREKSI_BIODATA: Record<string, { catatan: string; data: Record<string, un
   },
   // No. 1–4 mengosongkan kolom NO. HP di tabel operator, tapi DB telanjur
   // menyimpan nomor **wali** di `Orang.hp` santri — ikut terbawa impor lama.
-  // Nomor itu tidak hilang: tetap tersimpan di `RelasiWali` ayah/ibu, yang
+  // Nomor itu tidak hilang: tetap tersimpan di `GuardianRelation` ayah/ibu, yang
   // memang jalur kontak notifikasi. `Orang.hp` santri dikembalikan kosong.
   '3573032507110005': {
     catatan: 'kolom NO. HP kosong di tabel operator (nomor lama milik ibu)',

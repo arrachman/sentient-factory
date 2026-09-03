@@ -6,7 +6,7 @@
  *
  * Enam dari delapan santri sudah ada di DB dari impor terdahulu yang tak
  * lengkap: `status = Alumni`, tanpa kelas/tahun masuk, tanpa No. KK / anak ke /
- * hobi / cita-cita / asal sekolah, dan hanya punya satu baris `RelasiWali`
+ * hobi / cita-cita / asal sekolah, dan hanya punya satu baris `GuardianRelation`
  * berlabel "Wali". Skrip ini memperbaiki semuanya dan menambah dua santri yang
  * belum ada, plus `ProfilKesehatan`.
  *
@@ -23,7 +23,7 @@ import { recordAudit } from '@/lib/audit';
 import { JenisKelamin, StatusSantri } from '@prisma/client';
 import { parseTtl } from './lib/tanggal-id';
 import { buatNis } from './lib/nis';
-import { tulisRelasiWali, type DataWali } from './lib/tulis-wali';
+import { tulisGuardianRelation, type DataWali } from './lib/tulis-wali';
 
 const AKTOR_SKRIP = { nama: 'Importir siswa MA 2026/2027 (skrip)' };
 const KODE_UNIT = 'MA';
@@ -365,8 +365,8 @@ async function jalankan(): Promise<void> {
       ? await prisma.santri.update({ where: { id: santriLama.id }, data: { personId: orang.id, ...isiSantri } })
       : await prisma.santri.create({ data: { personId: orang.id, ...isiSantri } });
 
-    if (s.ayah) await tulisRelasiWali(orang.id, s.nisn, 'Ayah', { ...s.ayah, nama: judulKasus(s.ayah.nama), hp: bersihkanHp(s.ayah.hp) });
-    if (s.ibu) await tulisRelasiWali(orang.id, s.nisn, 'Ibu', { ...s.ibu, nama: judulKasus(s.ibu.nama), hp: bersihkanHp(s.ibu.hp) });
+    if (s.ayah) await tulisGuardianRelation(orang.id, s.nisn, 'Ayah', { ...s.ayah, nama: judulKasus(s.ayah.nama), hp: bersihkanHp(s.ayah.hp) });
+    if (s.ibu) await tulisGuardianRelation(orang.id, s.nisn, 'Ibu', { ...s.ibu, nama: judulKasus(s.ibu.nama), hp: bersihkanHp(s.ibu.hp) });
 
     const isiKesehatan = {
       weightKg: s.beratKg,

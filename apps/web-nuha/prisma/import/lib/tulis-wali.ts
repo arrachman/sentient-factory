@@ -1,5 +1,5 @@
 /**
- * Helper bersama untuk menulis satu baris `RelasiWali` (Ayah/Ibu/Wali) dari
+ * Helper bersama untuk menulis satu baris `GuardianRelation` (Ayah/Ibu/Wali) dari
  * importir siswa MA maupun SMP. `Orang` milik wali dikunci lewat NIK bila
  * tersedia (unik di seluruh tabel `Orang`); bila NIK kosong dipakai email
  * sintetis per-anak-per-peran supaya tetap idempoten tanpa menabrak wali
@@ -18,7 +18,7 @@ export type DataWali = {
   hp?: string | null;
 };
 
-/** Peran wali: menentukan `hubungan`/`peran` di RelasiWali dan `utama` (lihat `apakahUtama`). */
+/** Peran wali: menentukan `hubungan`/`peran` di GuardianRelation dan `utama` (lihat `apakahUtama`). */
 export type PeranWali = 'Ayah' | 'Ibu' | 'Wali';
 
 /**
@@ -29,18 +29,18 @@ export type PeranWali = 'Ayah' | 'Ibu' | 'Wali';
  */
 async function apakahUtama(anakOrangId: bigint, peran: PeranWali): Promise<boolean> {
   if (peran !== 'Wali') return true;
-  const ortu = await prisma.relasiWali.count({
+  const ortu = await prisma.guardianRelation.count({
     where: { anakId: anakOrangId, peran: { in: ['Ayah', 'Ibu'] } },
   });
   return ortu === 0;
 }
 
 /**
- * Upsert Orang (wali) + RelasiWali untuk satu anak. Dilewati (return null)
+ * Upsert Orang (wali) + GuardianRelation untuk satu anak. Dilewati (return null)
  * bila `data.nama` kosong — banyak baris client tidak mengisi blok Wali
  * pihak ketiga sama sekali, itu bukan galat.
  */
-export async function tulisRelasiWali(
+export async function tulisGuardianRelation(
   anakOrangId: bigint,
   kunciAnakUntukEmail: string,
   peran: PeranWali,
@@ -76,7 +76,7 @@ export async function tulisRelasiWali(
 
   const utama = await apakahUtama(anakOrangId, peran);
 
-  await prisma.relasiWali.upsert({
+  await prisma.guardianRelation.upsert({
     where: { waliId_anakId: { waliId: waliOrang.id, anakId: anakOrangId } },
     create: {
       waliId: waliOrang.id,
