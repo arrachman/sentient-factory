@@ -4,6 +4,12 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-03 — Rename teknis domain kepegawaian dan penggajian ke Inggris (`4e029031`)
+
+Model Prisma dan struktur MySQL untuk pegawai/penggajian kini memakai istilah Inggris: `Staff`, `StaffUnit`, `StructuralPosition`, `PaySlip`, `StaffAttendance`, `TeachingLoad`, dan `DecreeArchive`, termasuk field, indeks, serta foreign key terkait. Migrasi `20260903030000_rename_staff_payroll_to_english` menggunakan rename in-place sehingga tidak membuat ulang atau menghapus data.
+
+Dampak operator: tidak ada perubahan label UI, URL CRUD (`pegawai`), parameter/form data, atau istilah operasional berbahasa Indonesia. Database yang sudah menjalankan aplikasi harus menjalankan migrasi Prisma ini sebelum memakai versi commit tersebut.
+
 ## 2026-09-03 — Rename teknis domain kesehatan/poskestren (profil kesehatan/rekam medis/obat) ke Inggris
 
 Model Prisma `ProfilKesehatan→HealthProfile`, `RekamMedis→MedicalRecord`,
