@@ -91,9 +91,9 @@ const atau = (baru: string, lama: string | null): string | null => baru.trim() |
 
 async function jalankan(): Promise<void> {
   const unit = await prisma.unit.findUniqueOrThrow({ where: { key: KODE_UNIT } });
-  const tahunAjaran = await prisma.tahunAjaran.upsert({
-    where: { kode_semester: { kode: KODE_TA, semester: SEMESTER_TA } },
-    create: { kode: KODE_TA, semester: SEMESTER_TA },
+  const academicYear = await prisma.academicYear.upsert({
+    where: { code_semester: { code: KODE_TA, semester: SEMESTER_TA } },
+    create: { code: KODE_TA, semester: SEMESTER_TA },
     update: {},
   });
   console.log(`Menulis ${DATA.length} riwayat kelulusan SMP kelas ${NAMA_KELAS} (TA ${KODE_TA} ${SEMESTER_TA})...`);
@@ -134,10 +134,10 @@ async function jalankan(): Promise<void> {
     });
 
     await prisma.riwayatPendidikan.upsert({
-      where: { personId_unitId_tahunAjaranId: { personId: orang.id, unitId: unit.id, tahunAjaranId: tahunAjaran.id } },
+      where: { personId_unitId_academicYearId: { personId: orang.id, unitId: unit.id, academicYearId: academicYear.id } },
       create: {
         personId: orang.id, unitId: unit.id, kelasNama: NAMA_KELAS, tingkat: TINGKAT_KELAS,
-        tahunAjaranId: tahunAjaran.id, status: StatusSantri.Alumni,
+        academicYearId: academicYear.id, status: StatusSantri.Alumni,
       },
       update: { kelasNama: NAMA_KELAS, tingkat: TINGKAT_KELAS, status: StatusSantri.Alumni },
     });

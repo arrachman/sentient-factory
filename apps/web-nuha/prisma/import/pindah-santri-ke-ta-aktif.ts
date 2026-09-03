@@ -31,17 +31,17 @@ const AKTOR_SKRIP = { nama: 'Pindah santri ke kelas TA aktif (skrip)' };
 const prisma = new PrismaClient();
 
 async function main() {
-  const taAktif = await prisma.tahunAjaran.findFirst({ where: { aktif: true } });
+  const taAktif = await prisma.academicYear.findFirst({ where: { isActive: true } });
   if (!taAktif) throw new Error('Tidak ada tahun ajaran aktif — batal');
-  console.log(`Tahun ajaran aktif: ${taAktif.kode} ${taAktif.semester}`);
+  console.log(`Tahun ajaran aktif: ${taAktif.code} ${taAktif.semester}`);
 
   // Kelas TA aktif, dikunci per (unit, nama) untuk mencari tujuan pindah.
-  const kelasAktif = await prisma.kelas.findMany({ where: { tahunAjaranId: taAktif.id } });
+  const kelasAktif = await prisma.kelas.findMany({ where: { academicYearId: taAktif.id } });
   const tujuan = new Map(kelasAktif.map((k) => [`${k.unitId}@${k.nama}`, k]));
 
   const kelasLama = await prisma.kelas.findMany({
-    where: { tahunAjaranId: { not: taAktif.id } },
-    include: { unit: true, tahunAjaran: true },
+    where: { academicYearId: { not: taAktif.id } },
+    include: { unit: true, academicYear: true },
   });
 
   // Validasi seluruh pemetaan dulu, baru menulis (hindari partial write).
@@ -56,7 +56,7 @@ async function main() {
     const ke = tujuan.get(`${k.unitId}@${k.nama}`);
     if (!ke) {
       throw new Error(
-        `Kelas "${k.nama}" (${k.unit.nama}, TA ${k.tahunAjaran?.kode ?? "-"}) berisi ${jumlah} santri ` +
+        `Kelas "${k.nama}" (${k.unit.nama}, TA ${k.academicYear?.code ?? "-"}) berisi ${jumlah} santri ` +
           'tetapi tidak punya kelas bernama sama di TA aktif — batal, buat kelasnya dulu',
       );
     }
@@ -103,19 +103,19 @@ async function main() {
       entitasId: `kelas:${dari.id}->${ke.id}`,
       ringkasan:
         `Pindahkan ${count} santri ${dari.unit.nama} "${dari.nama}" dari TA ` +
-        `${dari.tahunAjaran?.kode ?? "-"} ke TA aktif`,
+        `${dari.academicYear?.code ?? "-"} ke TA aktif`,
       perubahan: { dari: { kelasId: dari.id }, ke: { kelasId: ke.id } },
       aktor: AKTOR_SKRIP,
     });
     console.log(
-      `${dari.unit.nama} "${dari.nama}": ${jumlah} santri, kelas #${dari.id} (TA ${dari.tahunAjaran?.kode ?? "-"}) → #${ke.id}`,
+      `${dari.unit.nama} "${dari.nama}": ${jumlah} santri, kelas #${dari.id} (TA ${dari.academicYear?.code ?? "-"}) → #${ke.id}`,
     );
   }
   console.log(`Total dipindah: ${total} santri.`);
 
   // Ringkasan akhir: tiap (unit, nama kelas) harus tinggal satu baris berisi santri.
   const sisa = await prisma.kelas.findMany({
-    where: { tahunAjaranId: { not: taAktif.id } },
+    where: { academicYearId: { not: taAktif.id } },
     include: { unit: true, _count: { select: { santri: true, santriKelas: true } } },
   });
   const bermasalah = sisa.filter((k) => k._count.santri > 0 || k._count.santriKelas > 0);

@@ -88,8 +88,8 @@ async function main() {
   const unitMa = await prisma.unit.findUniqueOrThrow({ where: { key: 'MA' } });
   const unitSmp = await prisma.unit.findUniqueOrThrow({ where: { key: 'SMP' } });
 
-  const tahunAjaran = await prisma.tahunAjaran.findFirstOrThrow({
-    where: { kode: TA.kode, semester: TA.semester },
+  const academicYear = await prisma.academicYear.findFirstOrThrow({
+    where: { code: TA.kode, semester: TA.semester },
   });
 
   const kelas = await prisma.kelas.findFirstOrThrow({
@@ -97,7 +97,7 @@ async function main() {
       nama: KELAS_MA1.nama,
       tingkat: KELAS_MA1.tingkat,
       unitId: unitMa.id,
-      tahunAjaranId: tahunAjaran.id,
+      academicYearId: academicYear.id,
     },
   });
 

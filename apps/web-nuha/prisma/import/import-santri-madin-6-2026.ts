@@ -82,7 +82,7 @@ async function main() {
   }
 
   const unit = await prisma.unit.findUniqueOrThrow({ where: { key: UNIT_KEY } });
-  const tahunAjaran = await prisma.tahunAjaran.findFirstOrThrow({ where: { aktif: true } });
+  const academicYear = await prisma.academicYear.findFirstOrThrow({ where: { isActive: true } });
 
   // Pastikan tiga orang yang diklaim sudah ada memang ada, sebelum menulis apa pun.
   for (const s of DAFTAR.filter((x) => x.orangIdExisting)) {
@@ -94,10 +94,10 @@ async function main() {
 
   const kelas = await prisma.kelas.upsert({
     where: {
-      unitId_nama_tahunAjaranId: {
+      unitId_nama_academicYearId: {
         unitId: unit.id,
         nama: KELAS_MADIN_6.nama,
-        tahunAjaranId: tahunAjaran.id,
+        academicYearId: academicYear.id,
       },
     },
     update: {},
@@ -105,7 +105,7 @@ async function main() {
       unitId: unit.id,
       nama: KELAS_MADIN_6.nama,
       tingkat: KELAS_MADIN_6.tingkat,
-      tahunAjaranId: tahunAjaran.id,
+      academicYearId: academicYear.id,
     },
   });
 
@@ -148,7 +148,7 @@ async function main() {
         aksi: 'update',
         entitas: 'Santri',
         entitasId: String(santriLama.id),
-        ringkasan: `Tempatkan "${orang.fullName}" di Madin ${KELAS_MADIN_6.nama} ${tahunAjaran.kode}`,
+        ringkasan: `Tempatkan "${orang.fullName}" di Madin ${KELAS_MADIN_6.nama} ${academicYear.code}`,
         perubahan: {
           dari: {
             nis: santriLama.nis,
@@ -167,7 +167,7 @@ async function main() {
         aksi: 'create',
         entitas: 'Santri',
         entitasId: String(dibuat.id),
-        ringkasan: `Daftarkan "${orang.fullName}" sebagai santri Madin ${KELAS_MADIN_6.nama} ${tahunAjaran.kode}`,
+        ringkasan: `Daftarkan "${orang.fullName}" sebagai santri Madin ${KELAS_MADIN_6.nama} ${academicYear.code}`,
         perubahan: { ke: dataSantri },
         aktor: AKTOR_SKRIP,
       });
@@ -176,10 +176,10 @@ async function main() {
     // 3. Jejak jenjang per tahun ajaran.
     await prisma.riwayatPendidikan.upsert({
       where: {
-        personId_unitId_tahunAjaranId: {
+        personId_unitId_academicYearId: {
           personId: orang.id,
           unitId: unit.id,
-          tahunAjaranId: tahunAjaran.id,
+          academicYearId: academicYear.id,
         },
       },
       update: {
@@ -192,13 +192,13 @@ async function main() {
         unitId: unit.id,
         kelasNama: KELAS_MADIN_6.nama,
         tingkat: KELAS_MADIN_6.tingkat,
-        tahunAjaranId: tahunAjaran.id,
+        academicYearId: academicYear.id,
         status: StatusSantri.Mukim,
       },
     });
   }
 
-  console.log(`Madin ${KELAS_MADIN_6.nama} — TA ${tahunAjaran.kode} ${tahunAjaran.semester}`);
+  console.log(`Madin ${KELAS_MADIN_6.nama} — TA ${academicYear.code} ${academicYear.semester}`);
   console.log(hasil.join('\n'));
 
   // Assertion akhir: 7 santri daftar ini harus duduk di kelas tersebut.

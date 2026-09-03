@@ -54,7 +54,7 @@ export async function bacaPohon(f: FilterAkademik): Promise<PohonAkademik> {
   const [baris, unitRows, kelasRows] = await Promise.all([
     prisma.santri.groupBy({ by: ['unitId', 'kelasId'], where: dasar, _count: { _all: true } }),
     prisma.unit.findMany({ orderBy: { id: 'asc' } }),
-    prisma.kelas.findMany({ include: { unit: true, tahunAjaran: true }, orderBy: { nama: 'asc' } }),
+    prisma.kelas.findMany({ include: { unit: true, academicYear: true }, orderBy: { nama: 'asc' } }),
   ]);
 
   const kelasById = new Map(kelasRows.map((k) => [k.id, k]));
@@ -92,7 +92,7 @@ export async function bacaPohon(f: FilterAkademik): Promise<PohonAkademik> {
               .filter(([id]) => id !== null)
               .map(([id, jumlah]) => {
                 const k = kelasById.get(id as number);
-                return { id: id as number, nama: k?.nama ?? '-', tahun: k?.tahunAjaran?.kode ?? null, jumlah };
+                return { id: id as number, nama: k?.nama ?? '-', tahun: k?.academicYear?.code ?? null, jumlah };
               })
               .sort((a, b) => a.nama.localeCompare(b.nama, 'id')),
           ),

@@ -6,7 +6,7 @@ export async function TabBebanJam({ f }: { f: FilterPegawai }) {
   const pegawai = whereUnit(f.unit);
   const beban = await prisma.bebanJam.findMany({
     where: pegawai ? { pegawai } : {},
-    include: { pegawai: { include: { person: true } }, tahunAjaran: true },
+    include: { pegawai: { include: { person: true } }, academicYear: true },
     orderBy: [{ id: 'desc' }],
   });
 
@@ -22,7 +22,7 @@ export async function TabBebanJam({ f }: { f: FilterPegawai }) {
           {beban.map((b) => (
             <tr key={String(b.id)}>
               <td>{b.pegawai.person.fullName}</td>
-              <td>{b.tahunAjaran ? `${b.tahunAjaran.kode} ${b.tahunAjaran.semester}` : '-'}</td>
+              <td>{b.academicYear ? `${b.academicYear.code} ${b.academicYear.semester}` : '-'}</td>
               <td>{b.mapel ?? '-'}</td>
               <td className="num">{b.jumlahJam ?? '-'}</td>
               <td>{b.keterangan ?? '-'}</td>

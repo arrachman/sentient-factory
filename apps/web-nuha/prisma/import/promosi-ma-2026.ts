@@ -19,7 +19,7 @@
  * ditulis terpisah — pola yang sama dipakai `import-alumni-smp-2025-2026.ts`.
  *
  * Idempoten: pencocokan lewat NIK (identitas terkuat), upsert riwayat lewat
- * kunci unik `personId_unitId_tahunAjaranId`, dan pindah kelas yang menulis nilai
+ * kunci unik `personId_unitId_academicYearId`, dan pindah kelas yang menulis nilai
  * akhir yang sama berapa kali pun dijalankan.
  *
  * Jalankan: `npm run promosi:ma-2026`
@@ -65,16 +65,16 @@ const NIK_SANTRI = [
 async function jalankan(): Promise<void> {
   const unit = await prisma.unit.findUniqueOrThrow({ where: { key: KODE_UNIT } });
 
-  const taAsal = await prisma.tahunAjaran.upsert({
-    where: { kode_semester: { kode: TA_ASAL.kode, semester: TA_ASAL.semester } },
-    create: { kode: TA_ASAL.kode, semester: TA_ASAL.semester },
+  const taAsal = await prisma.academicYear.upsert({
+    where: { code_semester: { code: TA_ASAL.kode, semester: TA_ASAL.semester } },
+    create: { code: TA_ASAL.kode, semester: TA_ASAL.semester },
     update: {},
   });
-  const taTujuan = await prisma.tahunAjaran.findFirstOrThrow({
-    where: { kode: TA_TUJUAN.kode, semester: TA_TUJUAN.semester },
+  const taTujuan = await prisma.academicYear.findFirstOrThrow({
+    where: { code: TA_TUJUAN.kode, semester: TA_TUJUAN.semester },
   });
   const kelasTujuan = await prisma.kelas.findUniqueOrThrow({
-    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: KELAS_TUJUAN.nama, tahunAjaranId: taTujuan.id } },
+    where: { unitId_nama_academicYearId: { unitId: unit.id, nama: KELAS_TUJUAN.nama, academicYearId: taTujuan.id } },
   });
 
   console.log(
@@ -104,10 +104,10 @@ async function jalankan(): Promise<void> {
 
     // Riwayat kelas asal: naik kelas, jadi statusnya tetap Mukim (bukan Alumni).
     await prisma.riwayatPendidikan.upsert({
-      where: { personId_unitId_tahunAjaranId: { personId: orang.id, unitId: unit.id, tahunAjaranId: taAsal.id } },
+      where: { personId_unitId_academicYearId: { personId: orang.id, unitId: unit.id, academicYearId: taAsal.id } },
       create: {
         personId: orang.id, unitId: unit.id, kelasNama: KELAS_ASAL.nama, tingkat: KELAS_ASAL.tingkat,
-        tahunAjaranId: taAsal.id, status: StatusSantri.Mukim,
+        academicYearId: taAsal.id, status: StatusSantri.Mukim,
       },
       update: { kelasNama: KELAS_ASAL.nama, tingkat: KELAS_ASAL.tingkat, status: StatusSantri.Mukim },
     });

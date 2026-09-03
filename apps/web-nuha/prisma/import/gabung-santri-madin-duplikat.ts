@@ -74,10 +74,10 @@ async function main() {
     for (const r of riwayat) {
       const bentrok = await prisma.riwayatPendidikan.findUnique({
         where: {
-          personId_unitId_tahunAjaranId: {
+          personId_unitId_academicYearId: {
             personId: simpan.id,
             unitId: r.unitId,
-            tahunAjaranId: r.tahunAjaranId,
+            academicYearId: r.academicYearId,
           },
         },
       });
@@ -105,14 +105,14 @@ async function main() {
       where: { fullName: namaSimpan, deletedAt: null },
       include: {
         santri: { include: { kelas: true, unit: true } },
-        riwayatPendidikan: { include: { tahunAjaran: true } },
+        riwayatPendidikan: { include: { academicYear: true } },
       },
     });
     console.log(
       `${orang?.fullName}: santri ${orang?.santri?.unit?.nama ?? '-'} ${orang?.santri?.kelas?.nama ?? '-'} ` +
         `(NIS ${orang?.santri?.nis ?? '-'}), riwayat: ` +
         orang?.riwayatPendidikan
-          .map((r) => `${r.tahunAjaran.kode} ${r.kelasNama}`)
+          .map((r) => `${r.academicYear.code} ${r.kelasNama}`)
           .sort()
           .join(', '),
     );

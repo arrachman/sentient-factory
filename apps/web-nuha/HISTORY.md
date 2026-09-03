@@ -4,6 +4,42 @@ Catatan perubahan yang di-commit, terbaru di atas. Setiap entri: tanggal,
 hash commit, ringkasan, dan dampak operasional bila ada. Diperbarui setiap
 kali ada perubahan yang di-commit (lihat CLAUDE.md §Dokumentasi & riwayat).
 
+## 2026-09-03 — Rename teknis TahunAjaran ke AcademicYear
+
+Model Prisma `TahunAjaran` dan tabel fisik `tahun_ajaran` kini menjadi
+`AcademicYear`/`academic_years`. Kolom teknis diterjemahkan: `kode→code`,
+`aktif→isActive`. Kolom FK yang menunjuk ke model ini juga diterjemahkan:
+`Kelas.tahunAjaranId→academicYearId`, `RiwayatPendidikan.tahunAjaranId→
+academicYearId`, `BebanJam.tahunAjaranId→academicYearId`, beserta kunci unik
+gabungannya (`kode_semester→code_semester`, `unitId_nama_tahunAjaranId→
+unitId_nama_academicYearId`, `personId_unitId_tahunAjaranId→
+personId_unitId_academicYearId`). Field skalar `Ujian.tahunAjaran` (VARCHAR
+bebas, model berbeda, bukan relasi ke tabel ini) sengaja **tidak** disentuh —
+di luar cakupan batch ini. Kunci rute CRUD (`tahun-ajaran`) dan label UI tetap
+berbahasa Indonesia sebagai kontrak presentasi.
+
+Migrasi `20260903000000_rename_academic_year_to_english` memakai `RENAME
+TABLE`, `CHANGE COLUMN`, drop/rebuild index unik, dan drop/rebuild tiga
+foreign key (`kelas`, `riwayat_pendidikan`, `beban_jam` → `academic_years`)
+secara non-destruktif — termasuk menambah indeks pendukung
+`riwayat_pendidikan_person_id_idx` karena FK `person_id` ternyata bergantung
+pada indeks unik gabungan yang di-drop. Konsumen yang diperbarui:
+`prisma/tahun-ajaran.ts`, `prisma/seed.ts`, `prisma/seed-dasar.ts`,
+`lib/crud/registry.ts`, `app/(staf)/akademik/pohon.ts`,
+`app/(staf)/induk/{TabBiodata.tsx,pohon.ts}`,
+`app/(staf)/kepegawaian/TabBebanJam.tsx`, dan 13 skrip di `prisma/import/`.
+`npx tsc --noEmit` dan `prisma migrate status` bersih; verifikasi Playwright
+di `http://202.59.200.26:3226` (login superadmin dan guru.1) mengonfirmasi
+`/pengaturan?tab=tahun-ajaran`, `/kurikulum`, `/induk`, dan
+`/kepegawaian?tab=beban-jam` merender tanpa `pageerror`, dan guru tetap
+diarahkan keluar dari halaman pengaturan.
+
+Catatan tersendiri (belum diperbaiki, di-flag untuk batch Fase 4): entitas
+CRUD `orang` di `lib/crud/registry.ts` (baris ~14-31) masih memakai
+`model: 'orang'`/`include: { orang: true }`/`'orang.nama'`, padahal model
+Prisma sudah `Person` sejak Fase 2 — kemungkinan bug laten pada resolusi
+delegate dinamis, perlu diverifikasi dan diperbaiki terpisah.
+
 ## 2026-09-02 — Rename teknis notifikasi WhatsApp ke Bahasa Inggris
 
 Model Prisma `TemplateWa`, `LogWa`, `JadwalNotifikasi`, `AntreanNotifikasi` kini

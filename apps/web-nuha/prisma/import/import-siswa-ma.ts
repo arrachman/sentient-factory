@@ -170,18 +170,18 @@ async function jalankan(): Promise<void> {
   }
 
   const unit = await prisma.unit.findUniqueOrThrow({ where: { key: KODE_UNIT } });
-  const tahunAjaran = await prisma.tahunAjaran.findFirstOrThrow({ where: { aktif: true } });
+  const academicYear = await prisma.academicYear.findFirstOrThrow({ where: { isActive: true } });
 
   console.log(`Validasi lolos: ${siapXi.length} siswa (kelas 11, ${pathXi}) + ${siapX.length} siswa (kelas 10, ${pathX}). Menulis ke database...`);
 
   const kelasXi = await prisma.kelas.upsert({
-    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: 'Kelas 2', tahunAjaranId: tahunAjaran.id } },
-    create: { unitId: unit.id, nama: 'Kelas 2', tingkat: '11', tahunAjaranId: tahunAjaran.id },
+    where: { unitId_nama_academicYearId: { unitId: unit.id, nama: 'Kelas 2', academicYearId: academicYear.id } },
+    create: { unitId: unit.id, nama: 'Kelas 2', tingkat: '11', academicYearId: academicYear.id },
     update: {},
   });
   const kelasX = await prisma.kelas.upsert({
-    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: 'Kelas 1', tahunAjaranId: tahunAjaran.id } },
-    create: { unitId: unit.id, nama: 'Kelas 1', tingkat: '10', tahunAjaranId: tahunAjaran.id },
+    where: { unitId_nama_academicYearId: { unitId: unit.id, nama: 'Kelas 1', academicYearId: academicYear.id } },
+    create: { unitId: unit.id, nama: 'Kelas 1', tingkat: '10', academicYearId: academicYear.id },
     update: {},
   });
 

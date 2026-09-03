@@ -70,7 +70,7 @@ export async function ambilPohon(f: FilterInduk): Promise<PohonInduk> {
     // ganda (mis. "Kelas 6" dua kali — TA lama dan TA aktif). Sejarah rombel
     // tetap dibaca dari `RiwayatPendidikan`, bukan dari pohon ini.
     prisma.kelas.findMany({
-      where: { tahunAjaran: { aktif: true } },
+      where: { academicYear: { isActive: true } },
       orderBy: [{ tingkat: 'asc' }, { nama: 'asc' }],
     }),
     // Dicacah dari `SantriKelas` supaya santri berkelas jamak (mis. SMP + Madin)

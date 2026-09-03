@@ -211,7 +211,7 @@ async function jalankan(): Promise<void> {
   }
 
   const unit = await prisma.unit.findUniqueOrThrow({ where: { key: KODE_UNIT } });
-  const tahunAjaran = await prisma.tahunAjaran.findFirstOrThrow({ where: { aktif: true } });
+  const academicYear = await prisma.academicYear.findFirstOrThrow({ where: { isActive: true } });
 
   console.log(`Validasi lolos: ${semua.length} siswa SMP dari "${path}". Menulis ke database...`);
 
@@ -245,8 +245,8 @@ async function jalankan(): Promise<void> {
       let idKelas = kelasCache.get(namaKelas);
       if (idKelas === undefined) {
         const kelas = await prisma.kelas.upsert({
-          where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: namaKelas, tahunAjaranId: tahunAjaran.id } },
-          create: { unitId: unit.id, nama: namaKelas, tingkat, tahunAjaranId: tahunAjaran.id },
+          where: { unitId_nama_academicYearId: { unitId: unit.id, nama: namaKelas, academicYearId: academicYear.id } },
+          create: { unitId: unit.id, nama: namaKelas, tingkat, academicYearId: academicYear.id },
           update: {},
         });
         idKelas = kelas.id;

@@ -10,7 +10,7 @@
 import { PrismaClient, JenisKelamin } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import data from './proto-data.json';
-import { daftarTahunAjaran } from './tahun-ajaran';
+import { daftarAcademicYear } from './tahun-ajaran';
 
 const prisma = new PrismaClient();
 type PrototypeData = Record<string, Array<Record<string, unknown>>>;
@@ -134,7 +134,7 @@ async function tautkanKepalaUnit() {
   }
 }
 
-const TAHUN_AJARAN_ROWS = daftarTahunAjaran();
+const TAHUN_AJARAN_ROWS = daftarAcademicYear();
 
 async function seedPeranDanMenu() {
   const roles = await Promise.all(source.roles.map((row) => prisma.role.upsert({
@@ -203,10 +203,10 @@ async function main() {
     update: PROFIL_YAYASAN,
   });
   await tautkanKepalaUnit();
-  await Promise.all(TAHUN_AJARAN_ROWS.map((row) => prisma.tahunAjaran.upsert({
-    where: { kode_semester: { kode: row.kode, semester: row.semester } },
+  await Promise.all(TAHUN_AJARAN_ROWS.map((row) => prisma.academicYear.upsert({
+    where: { code_semester: { code: row.code, semester: row.semester } },
     create: row,
-    update: { aktif: row.aktif },
+    update: { isActive: row.isActive },
   })));
   for (const row of source.waCases) {
     await prisma.waTemplate.upsert({

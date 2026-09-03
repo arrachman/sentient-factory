@@ -2,7 +2,7 @@ import { PrismaClient, JenisKelamin, ApplicantStatus, StatusSantri } from '@pris
 import bcrypt from 'bcryptjs';
 import data from './proto-data.json';
 import { seedCbt } from './seed-cbt';
-import { seedTahunAjaran as seedTahunAjaranRows } from './tahun-ajaran';
+import { seedAcademicYear as seedAcademicYearRows } from './tahun-ajaran';
 
 const prisma = new PrismaClient();
 type PrototypeData = Record<string, Array<Record<string, unknown>>>;
@@ -48,7 +48,7 @@ const KELAS_JADWAL_PROTOTYPE = '8B';
  * dipanggil berkali-kali dari fungsi seed berbeda; daftar 2024/2025 s.d.
  * tahun pelajaran berjalan (Gasal + Genap) ada di prisma/tahun-ajaran.ts.
  */
-const seedTahunAjaran = () => seedTahunAjaranRows(prisma);
+const seedTahunAjaran = () => seedAcademicYearRows(prisma);
 
 const gender = (value: unknown): JenisKelamin => String(value) === 'P' ? JenisKelamin.P : JenisKelamin.L;
 const pendaftarStatus = (value: unknown): ApplicantStatus => {
@@ -208,15 +208,15 @@ async function seedJadwalLintasUnit() {
   // guru yang merangkap ustadz punya tempat mengajar di tiap jenjangnya.
   // I'dad memakai tingkat '0' supaya urut paling depan.
   if (pondok) {
-    const tahunAjaranAktif = await seedTahunAjaran();
+    const academicYearAktif = await seedTahunAjaran();
     const jenjang: { nama: string; tingkat: string }[] = [
       { nama: "Kelas I'dad", tingkat: '0' },
       ...Array.from({ length: 6 }, (_, i) => ({ nama: `Kelas ${i + 1}`, tingkat: String(i + 1) })),
     ];
     for (const { nama, tingkat } of jenjang) {
       await prisma.kelas.upsert({
-        where: { unitId_nama_tahunAjaranId: { unitId: pondok.id, nama, tahunAjaranId: tahunAjaranAktif.id } },
-        create: { unitId: pondok.id, nama, tingkat, tahunAjaranId: tahunAjaranAktif.id },
+        where: { unitId_nama_academicYearId: { unitId: pondok.id, nama, academicYearId: academicYearAktif.id } },
+        create: { unitId: pondok.id, nama, tingkat, academicYearId: academicYearAktif.id },
         update: { tingkat },
       });
     }
@@ -557,7 +557,7 @@ async function main() {
   }
 
   const passwordHash = await bcrypt.hash('Nuha2026!', 12);
-  const tahunAjaranAktif = await seedTahunAjaran();
+  const academicYearAktif = await seedTahunAjaran();
 
   const roles = await Promise.all(source.roles.map((row) => prisma.role.upsert({
     where: { key: String(row.key) },
@@ -596,8 +596,8 @@ async function main() {
   for (const row of source.santri) {
     const unit = unitByKey.get(String(row.unit));
     const kelas = unit ? await prisma.kelas.upsert({
-      where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: String(row.kelas), tahunAjaranId: tahunAjaranAktif.id } },
-      create: { unitId: unit.id, nama: String(row.kelas), tingkat: String(row.kelas).replace(/[^0-9X]/g, '') || '-', tahunAjaranId: tahunAjaranAktif.id },
+      where: { unitId_nama_academicYearId: { unitId: unit.id, nama: String(row.kelas), academicYearId: academicYearAktif.id } },
+      create: { unitId: unit.id, nama: String(row.kelas), tingkat: String(row.kelas).replace(/[^0-9X]/g, '') || '-', academicYearId: academicYearAktif.id },
       update: {},
     }) : null;
     const asrama = asramaByName.get(String(row.asrama));

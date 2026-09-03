@@ -297,16 +297,16 @@ async function jalankan(): Promise<void> {
   if (nisnUnik.size !== siap.length) throw new Error('Ada NISN duplikat di tabel sumber.');
 
   const unit = await prisma.unit.findUniqueOrThrow({ where: { key: KODE_UNIT } });
-  const tahunAjaran = await prisma.tahunAjaran.findFirstOrThrow({ where: { aktif: true } });
+  const academicYear = await prisma.academicYear.findFirstOrThrow({ where: { isActive: true } });
   const kelas = await prisma.kelas.upsert({
-    where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: NAMA_KELAS, tahunAjaranId: tahunAjaran.id } },
-    create: { unitId: unit.id, nama: NAMA_KELAS, tingkat: TINGKAT_KELAS, tahunAjaranId: tahunAjaran.id },
+    where: { unitId_nama_academicYearId: { unitId: unit.id, nama: NAMA_KELAS, academicYearId: academicYear.id } },
+    create: { unitId: unit.id, nama: NAMA_KELAS, tingkat: TINGKAT_KELAS, academicYearId: academicYear.id },
     update: {},
   });
 
   console.log(
     `Validasi lolos: ${siap.length} siswa → unit ${unit.key}, ${NAMA_KELAS} (tingkat ${TINGKAT_KELAS}), `
-    + `TA ${tahunAjaran.kode} ${tahunAjaran.semester}. Menulis ke database...`,
+    + `TA ${academicYear.code} ${academicYear.semester}. Menulis ke database...`,
   );
 
   let urut = 0;
@@ -387,7 +387,7 @@ async function jalankan(): Promise<void> {
     entitas: 'Santri',
     entitasId: 'batch',
     ringkasan:
-      `Impor ${siap.length} siswa MA ${NAMA_KELAS} TA ${tahunAjaran.kode} ${tahunAjaran.semester} `
+      `Impor ${siap.length} siswa MA ${NAMA_KELAS} TA ${academicYear.code} ${academicYear.semester} `
       + '(data diri, wali Ayah/Ibu, profil kesehatan) dari tabel operator.',
     aktor: AKTOR_SKRIP,
   });

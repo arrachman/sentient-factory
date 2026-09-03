@@ -376,34 +376,32 @@ model Kelas {
   waliKelasId   BigInt? @map("wali_kelas_id")
   /// Kelas di-scope ke tahun ajaran karena satu unit bisa punya kelas "X" di
   /// beberapa tahun ajaran berbeda dengan isi santri yang berbeda pula.
-  tahunAjaranId Int?    @map("tahun_ajaran_id")
+  academicYearId Int?    @map("academic_year_id")
 
   unit             Unit          @relation(fields: [unitId], references: [id])
   waliKelasPegawai Pegawai?      @relation(fields: [waliKelasId], references: [id])
-  tahunAjaran      TahunAjaran?  @relation(fields: [tahunAjaranId], references: [id])
+  academicYear     AcademicYear? @relation(fields: [academicYearId], references: [id])
   santri           Santri[]
   santriKelas      SantriKelas[]
   jadwalUjian      JadwalUjian[]
   sesiCbt          SesiCbt[]
 
-  @@unique([unitId, nama, tahunAjaranId])
+  @@unique([unitId, nama, academicYearId])
   @@map("kelas")
 }
 
-/// Menggantikan periode hardcode di app/kurikulum/kelas-guru.ts — satu santri
-/// bisa punya lebih dari satu tahun ajaran sepanjang masa studinya.
-model TahunAjaran {
+model AcademicYear {
   id       Int     @id @default(autoincrement())
-  kode     String  @db.VarChar(16)
+  code     String  @db.VarChar(16)
   semester String  @db.VarChar(8)
-  aktif    Boolean @default(false)
+  isActive Boolean @default(false) @map("is_active")
 
   kelas             Kelas[]
   bebanJam          BebanJam[]
   riwayatPendidikan RiwayatPendidikan[]
 
-  @@unique([kode, semester])
-  @@map("tahun_ajaran")
+  @@unique([code, semester])
+  @@map("academic_years")
 }
 
 model Asrama {
@@ -515,16 +513,16 @@ model RiwayatPendidikan {
   unitId        Int          @map("unit_id")
   kelasNama     String       @map("kelas_nama") @db.VarChar(32)
   tingkat       String       @db.VarChar(16)
-  tahunAjaranId Int          @map("tahun_ajaran_id")
-  status        StatusSantri @default(Alumni)
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
+  academicYearId Int          @map("academic_year_id")
+  status         StatusSantri @default(Alumni)
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
 
-  person      Person      @relation(fields: [personId], references: [id], onDelete: Cascade)
-  unit        Unit        @relation(fields: [unitId], references: [id])
-  tahunAjaran TahunAjaran @relation(fields: [tahunAjaranId], references: [id])
+  person       Person       @relation(fields: [personId], references: [id], onDelete: Cascade)
+  unit         Unit         @relation(fields: [unitId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
 
-  @@unique([personId, unitId, tahunAjaranId])
+  @@unique([personId, unitId, academicYearId])
   @@map("riwayat_pendidikan")
 }
 
@@ -984,13 +982,13 @@ model PresensiPegawai {
 model BebanJam {
   id            BigInt  @id @default(autoincrement())
   pegawaiId     BigInt  @map("pegawai_id")
-  tahunAjaranId Int?    @map("tahun_ajaran_id")
-  mapel         String? @db.VarChar(160)
-  jumlahJam     Int?    @map("jumlah_jam")
-  keterangan    String? @db.VarChar(255)
+  academicYearId Int?    @map("academic_year_id")
+  mapel          String? @db.VarChar(160)
+  jumlahJam      Int?    @map("jumlah_jam")
+  keterangan     String? @db.VarChar(255)
 
-  pegawai     Pegawai      @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
-  tahunAjaran TahunAjaran? @relation(fields: [tahunAjaranId], references: [id])
+  pegawai      Pegawai       @relation(fields: [pegawaiId], references: [id], onDelete: Cascade)
+  academicYear AcademicYear? @relation(fields: [academicYearId], references: [id])
 
   @@index([pegawaiId])
   @@map("beban_jam")

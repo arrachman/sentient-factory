@@ -16,7 +16,7 @@
  *      operator "muat riwayat semuanya"). Baris TA lama masuk sebagai
  *      `RiwayatPendidikan` berstatus `Alumni`; hanya roster **2025/2026**
  *      yang menyentuh tabel `Santri` (status `Mukim`). Karena
- *      `RiwayatPendidikan` unik per `[personId, unitId, tahunAjaranId]`,
+ *      `RiwayatPendidikan` unik per `[personId, unitId, academicYearId]`,
  *      satu orang boleh punya banyak baris lintas tahun tanpa saling timpa —
  *      dan santri MA/SMP yang juga mengaji di Madin tidak berubah unitnya.
  *
@@ -387,12 +387,12 @@ async function main() {
   const kodeTa = [...new Set(DAFTAR.flatMap((o) => o.riwayat.map((r) => r.ta)))].sort();
   const taPerKode = new Map<string, { id: number; kode: string }>();
   for (const kode of kodeTa) {
-    const ta = await prisma.tahunAjaran.upsert({
-      where: { kode_semester: { kode, semester: SEMESTER } },
+    const ta = await prisma.academicYear.upsert({
+      where: { code_semester: { code: kode, semester: SEMESTER } },
       update: {},
-      create: { kode, semester: SEMESTER, aktif: false },
+      create: { code: kode, semester: SEMESTER, isActive: false },
     });
-    taPerKode.set(kode, { id: ta.id, kode: ta.kode });
+    taPerKode.set(kode, { id: ta.id, kode: ta.code });
   }
 
   // --- Kelas per (nama kelas, tahun ajaran) yang dipakai daftar ini. ---
@@ -405,9 +405,9 @@ async function main() {
   for (const r of kombinasi.values()) {
     const ta = taPerKode.get(r.ta)!;
     const kelas = await prisma.kelas.upsert({
-      where: { unitId_nama_tahunAjaranId: { unitId: unit.id, nama: r.kelas, tahunAjaranId: ta.id } },
+      where: { unitId_nama_academicYearId: { unitId: unit.id, nama: r.kelas, academicYearId: ta.id } },
       update: {},
-      create: { unitId: unit.id, nama: r.kelas, tingkat: r.tingkat, tahunAjaranId: ta.id },
+      create: { unitId: unit.id, nama: r.kelas, tingkat: r.tingkat, academicYearId: ta.id },
     });
     kelasPerKunci.set(kunciKelas(r.kelas, ta.id), { id: kelas.id });
   }
@@ -504,7 +504,7 @@ async function main() {
       const status = r.ta === TA_AKTIF_BERKAS ? StatusSantri.Mukim : StatusSantri.Alumni;
       await prisma.riwayatPendidikan.upsert({
         where: {
-          personId_unitId_tahunAjaranId: { personId: orang.id, unitId: unit.id, tahunAjaranId: ta.id },
+          personId_unitId_academicYearId: { personId: orang.id, unitId: unit.id, academicYearId: ta.id },
         },
         update: { kelasNama: r.kelas, tingkat: r.tingkat, status },
         create: {
@@ -512,7 +512,7 @@ async function main() {
           unitId: unit.id,
           kelasNama: r.kelas,
           tingkat: r.tingkat,
-          tahunAjaranId: ta.id,
+          academicYearId: ta.id,
           status,
         },
       });
@@ -534,7 +534,7 @@ async function main() {
   }
   for (const [kode, ta] of taPerKode) {
     const n = await prisma.riwayatPendidikan.count({
-      where: { unitId: unit.id, tahunAjaranId: ta.id },
+      where: { unitId: unit.id, academicYearId: ta.id },
     });
     const harap = DAFTAR.filter((o) => o.riwayat.some((r) => r.ta === kode)).length;
     if (n < harap) {
