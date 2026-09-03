@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { readSession } from '@/lib/auth';
 
 const LIMIT = 10;
 
 export async function GET(request: Request) {
-  const session = await readSession();
-  if (!session) {
-    return NextResponse.json({ success: false, error: { code: 'UNAUTHENTICATED', message: 'Sesi tidak ditemukan.' } }, { status: 401 });
-  }
-
   const params = new URL(request.url).searchParams;
   const q = params.get('q')?.trim() ?? '';
   const ids = (params.get('ids') ?? '').split(',').map((item) => item.trim()).filter((item) => /^\d+$/.test(item));

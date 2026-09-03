@@ -97,6 +97,7 @@ model Region {
   people               Person[]        @relation("PersonRegion")
   unitLocations        Unit[]          @relation("UnitRegion")
   institutionLocations InstitutionProfile[] @relation("InstitutionProfileRegion")
+  applicants          Applicant[]          @relation("ApplicantRegion")
 
   @@unique([countryId, code])
   @@index([parentId, level, isActive])
@@ -1233,11 +1234,14 @@ model Applicant {
   registeredAt       DateTime        @map("registered_at") @db.Date
   score              Decimal?        @db.Decimal(5, 2)
   status             ApplicantStatus @default(New)
+  regionId           BigInt?         @map("region_id")
   createdAt          DateTime        @default(now()) @map("created_at")
 
   documents ApplicantDocument[]
+  region    Region?             @relation("ApplicantRegion", fields: [regionId], references: [id], onDelete: SetNull)
 
   @@index([status])
+  @@index([regionId])
   @@map("applicants")
 }
 

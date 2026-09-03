@@ -2,6 +2,7 @@
 
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { parseRegionId, validateActiveVillage } from '@/lib/wilayah';
 
 /** Tiga berkas yang wajib dilampirkan — persis validasi di prototype. */
 const BERKAS_WAJIB = ['Akta Kelahiran', 'Kartu Keluarga', 'Ijazah / SKL'];
@@ -14,6 +15,7 @@ export type PayloadDaftarPpdb = {
   tempatLahir: string;
   tglLahir: string;
   alamat: string;
+  regionId: string;
   wali: string;
   hp: string;
   asalSekolah: string;
@@ -29,7 +31,7 @@ export type PayloadDaftarPpdb = {
 
 export type HasilDaftarPpdb =
   | { ok: true; noReg: string }
-  | { ok: false; errors: Partial<Record<'nama' | 'nisn' | 'tglLahir' | 'wali' | 'hp' | 'asalSekolah' | 'unit' | 'berkas', string>> };
+  | { ok: false; errors: Partial<Record<'nama' | 'nisn' | 'tglLahir' | 'wali' | 'hp' | 'asalSekolah' | 'unit' | 'berkas' | 'regionId', string>> };
 
 /** Validasi persis `validateStep` di prototype, dijalankan ulang untuk seluruh langkah sekaligus. */
 function validasi(data: PayloadDaftarPpdb): Record<string, string> {
@@ -73,6 +75,10 @@ export async function daftarPpdb(data: PayloadDaftarPpdb): Promise<HasilDaftarPp
   const errors = validasi(data);
   if (Object.keys(errors).length > 0) return { ok: false, errors };
 
+  const regionError = await validateActiveVillage(data.regionId);
+  if (regionError) return { ok: false, errors: { regionId: regionError } };
+  const regionId = parseRegionId(data.regionId);
+
   const tahun = new Date().getFullYear();
   const prefix = `PPDB-${tahun}-`;
   const pilihan = susunPilihan(data);
@@ -104,6 +110,7 @@ export async function daftarPpdb(data: PayloadDaftarPpdb): Promise<HasilDaftarPp
             guardianPhone: data.hp.trim(),
             registeredAt: new Date(),
             status: 'New',
+            regionId,
             documents: { create: berkasBaris },
           },
         });

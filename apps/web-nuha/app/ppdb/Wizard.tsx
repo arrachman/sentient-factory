@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { PemilihWilayah } from '@/components';
 import { daftarPpdb, type PayloadDaftarPpdb } from './actions';
 
 const LABEL_LANGKAH = ['Data Diri', 'Asal Sekolah', 'Unit & Program', 'Berkas', 'Ringkasan'];
@@ -19,7 +20,7 @@ const BERKAS_DEFS = [
 ];
 
 const FORM_AWAL = {
-  nama: '', nisn: '', jk: 'L', tempatLahir: '', tglLahir: '', alamat: '',
+  nama: '', nisn: '', jk: 'L', tempatLahir: '', tglLahir: '', alamat: '', regionId: '',
   wali: '', hp: '', asalSekolah: '', kabSekolah: '', tahunLulus: '2026',
   nilaiRapor: '', pernahMondok: 'Belum', jurusan: '-', programPondok: '-',
 };
@@ -141,6 +142,15 @@ export function Wizard() {
               <div className="field" style={{ gridColumn: 'span 2' }}>
                 <label>Alamat</label>
                 <textarea rows={2} value={form.alamat} onChange={(e) => ubah('alamat', e.target.value)} placeholder="Dusun, desa, kecamatan, kabupaten" />
+              </div>
+              <div className="field" style={{ gridColumn: 'span 2' }}>
+                <PemilihWilayah
+                  name="regionId"
+                  label="Desa atau kelurahan"
+                  hint="Pilih desa atau kelurahan domisili dari daftar."
+                  onChange={(regionId) => ubah('regionId', regionId)}
+                />
+                {errors.regionId && <span className="error">{errors.regionId}</span>}
               </div>
               <div className="field">
                 <label>Nama wali *</label>

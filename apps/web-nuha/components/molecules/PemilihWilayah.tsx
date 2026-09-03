@@ -11,11 +11,13 @@ type Props = {
   hint?: string;
   placeholder?: string;
   nilaiAwal?: string;
+  /** Opsional: dipanggil tiap kali pilihan berubah (dipilih atau dikosongkan). Dipakai oleh form berbasis state, bukan FormData. */
+  onChange?: (regionId: string) => void;
 };
 
 const JEDA_KETIK = 250;
 
-export function PemilihWilayah({ name, label, id, hint, placeholder, nilaiAwal }: Props) {
+export function PemilihWilayah({ name, label, id, hint, placeholder, nilaiAwal, onChange }: Props) {
   const [ketik, setKetik] = useState('');
   const [hasil, setHasil] = useState<OpsiWilayah[]>([]);
   const [dipilih, setDipilih] = useState<OpsiWilayah | null>(null);
@@ -55,7 +57,7 @@ export function PemilihWilayah({ name, label, id, hint, placeholder, nilaiAwal }
       type="text"
       autoComplete="off"
       value={dipilih ? dipilih.nama : ketik}
-      onChange={(event) => { setDipilih(null); setKetik(event.target.value); }}
+      onChange={(event) => { setDipilih(null); setKetik(event.target.value); onChange?.(''); }}
       onFocus={() => setTerbuka(true)}
       onBlur={() => setTimeout(() => setTerbuka(false), 150)}
       placeholder={placeholder ?? 'Ketik nama desa atau kelurahan…'}
@@ -64,7 +66,7 @@ export function PemilihWilayah({ name, label, id, hint, placeholder, nilaiAwal }
     {terbuka && <ul className="saran">
       {memuat && <li className="saran-kosong">Mencari…</li>}
       {!memuat && hasil.length === 0 && <li className="saran-kosong">Tidak ada desa yang cocok.</li>}
-      {hasil.map((item) => <li key={item.id}><button type="button" onClick={() => { setDipilih(item); setKetik(''); setTerbuka(false); }}><strong>{item.nama}</strong><span>{item.keterangan}</span></button></li>)}
+      {hasil.map((item) => <li key={item.id}><button type="button" onClick={() => { setDipilih(item); setKetik(''); setTerbuka(false); onChange?.(item.id); }}><strong>{item.nama}</strong><span>{item.keterangan}</span></button></li>)}
     </ul>}
     <input type="hidden" name={name} value={dipilih?.id ?? ''} />
   </div>;
