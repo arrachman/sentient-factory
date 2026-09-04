@@ -1,3 +1,0 @@
-ALTER TABLE `orang` ADD COLUMN `gelar` VARCHAR(60) NULL;
-ALTER TABLE `orang` ADD COLUMN `panggilan` VARCHAR(80) NULL;
-ALTER TABLE `orang` ADD COLUMN `nama_lengkap` VARCHAR(255) NULL;
