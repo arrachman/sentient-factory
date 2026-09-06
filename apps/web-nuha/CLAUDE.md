@@ -53,35 +53,47 @@ done
 
 ## Prosedur update dari export baru
 
-Saat datang zip versi berikutnya (mis. `... (7).zip`), lakukan urut:
+Saat datang zip versi berikutnya (mis. `... (7).zip`):
 
-```bash
-cd apps/marketing/sub/nuha
-mv dist dist.old                                  # jangan rm — untuk diff & rollback
-unzip -q "_source/Prototype Sistem Manajemen Pesantren (7).zip" -d dist
-mv dist/SIMTERPADU.dc.html dist/index.html
-mv dist/uploads _source/uploads-v7 && rm -f dist/.thumbnail
+1. Simpan zip di `_source/` dan pindahkan folder `uploads` dari export ke
+   `_source/uploads-v7` bila diperlukan sebagai referensi desain.
+2. Jalankan pipeline pasca-export:
 
-# 1. versi CDN berubah? kalau sama, vendor lama bisa dipakai ulang
-grep -oE 'https://unpkg.com/[^"]+' dist/support.js | sort -u
-cp -a dist.old/vendor dist/vendor
+   ```bash
+   cd apps/web-nuha
+   ./scripts/rebuild-dist.sh
+   ```
 
-# 2. re-inject window.__resources (patch ini SELALU hilang di export baru)
+   Skrip otomatis memilih zip bernomor tertinggi, mengekstrak ke staging,
+   menghapus artefak sumber dari document root, memasang ulang vendor React /
+   ReactDOM / Babel, menginjeksi `window.__resources`, memasang
+   `overlay/density.css`, dan memvalidasi semua referensi aset lokal sebelum
+   mengganti `dist/`. Versi sebelumnya disimpan sebagai `dist.old` untuk
+   rollback.
+3. Periksa apakah versi CDN di export berubah:
 
-# 3. cek semua rujukan aset lokal resolve (abaikan '{{ ... }}' = binding runtime)
-python3 - <<'PY'
-import re, os
-os.chdir('dist')
-s = open('index.html', encoding='utf8', errors='replace').read()
-refs = set(re.findall(r'(?:src|href)="(?!https?:|#|/)([^"]+)"', s))
-print('MISSING:', [r for r in sorted(refs) if '{{' not in r and not os.path.exists(r)] or 'none')
-PY
+   ```bash
+   grep -oE 'https://unpkg.com/[^"]+' dist/support.js | sort -u
+   ```
 
-# 4. restart + verifikasi RENDER, bukan cuma status code
-docker restart sentient-infra-nuha-marketing
-```
+   Jika berubah, update versi dan mapping terkait di `scripts/rebuild-dist.sh`.
+4. Restart dan verifikasi **render**, bukan hanya status code:
+
+   ```bash
+   docker restart sentient-infra-nuha-marketing
+   curl -fsS http://127.0.0.1:3223/health
+   ```
 
 Setelah yakin, baru buang `dist.old`. Simpan zip lama di `_source/` sebagai arsip.
+
+### Overlay admin
+
+`overlay/density.css` adalah lapisan perbaikan inkremental untuk shell internal:
+sidebar, topbar, jarak konten, kartu, tipografi KPI, kontrol, dan tabel. Aturannya
+sengaja di-scope ke `[data-sim="main"]` / `[data-sim="sidebar"]`, sehingga landing,
+profil pesantren, PPDB publik, dan portal tidak ikut berubah. Jangan pindahkan
+aturan ini kembali menjadi edit manual di `dist/index.html`; pertahankan sebagai
+overlay tracked agar tidak hilang pada export berikutnya.
 
 ## Menjalankan
 

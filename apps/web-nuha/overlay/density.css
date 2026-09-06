@@ -1,0 +1,224 @@
+/* SIMTERPADU — lapisan density & efisiensi operasional.
+ *
+ * Ini overlay pasca-export, bukan redesign. Bundel `dist/index.html` adalah
+ * artefak mesin dari claude.ai/design dengan inline style di hampir setiap
+ * elemen, jadi satu-satunya cara memperbaikinya tanpa mengedit ribuan baris
+ * markup generated adalah menimpa lewat CSS ber-`!important` yang di-scope
+ * ketat. Semua selector di sini menempel pada `data-sim` yang sudah dipakai
+ * export, sehingga patch bertahan lintas export selama nama data-sim tetap.
+ *
+ * Prinsip: identitas visual Source 2 (hijau pesantren, Lora/Plus Jakarta Sans,
+ * sudut membulat, latar krem) dipertahankan utuh. Yang berubah hanya kerapatan,
+ * hierarki, dan pola tabel — kira-kira 20–30% efisiensi ala ERP.
+ *
+ * Scope: SELURUH aturan dibatasi ke shell internal (`[data-sim="sidebar"]` dan
+ * `[data-sim="main"]`). Halaman publik (landing, profil, PPDB, cek status)
+ * sengaja TIDAK disentuh — di sana whitespace lega itu memang disengaja.
+ */
+
+/* ---------------------------------------------------------------- tokens -- */
+:root {
+  /* Skala 8px. Nilai non-kelipatan-8 di bawah (10px, 12px) adalah setengah
+     langkah yang disengaja untuk baris tabel padat. */
+  --sim-s1: 4px;
+  --sim-s2: 8px;
+  --sim-s3: 12px;
+  --sim-s4: 16px;
+  --sim-s5: 24px;
+
+  --sim-green: #0f6b3d;
+  --sim-green-deep: #0a4a2b;
+  --sim-line: #e8e3d9;
+  --sim-line-soft: #f0ede4;
+  --sim-surface: #ffffff;
+  --sim-canvas: #faf8f3;
+  --sim-muted: #6b7280;
+}
+
+/* -------------------------------------------------------------- sidebar -- */
+/* Baris menu dirapatkan supaya modul yang banyak tetap muat tanpa scroll
+   panjang, tapi tetap lebih lega dari sidebar ERP korporat. */
+@media (min-width: 901px) {
+  [data-sim="sidebar"] {
+    width: 232px !important;
+    flex: 0 0 232px !important;
+  }
+
+  [data-sim="sidehead"] {
+    padding: var(--sim-s4) var(--sim-s4) !important;
+  }
+
+  [data-sim="menu"] {
+    gap: 1px !important;
+    padding: var(--sim-s2) var(--sim-s2) !important;
+  }
+
+  [data-sim="menuitem"] {
+    padding: 7px 10px !important;
+    gap: 10px !important;
+    font-size: 13px !important;
+    border-radius: var(--sim-s2) !important;
+  }
+
+  [data-sim="sidefoot"] {
+    padding: 10px !important;
+    gap: var(--sim-s2) !important;
+  }
+
+  [data-sim="sidefoot"] > div:first-child {
+    padding: var(--sim-s2) !important;
+  }
+}
+
+/* Active state dipertegas dengan penanda kiri — export hanya membedakan lewat
+   background, yang sulit dipindai saat menu sudah rapat. */
+[data-sim="menuitem"] {
+  transition: background-color 0.15s ease;
+}
+
+@media (min-width: 901px) {
+  [data-sim="menuitem"][style*="rgba(250,248,243"]::before,
+  [data-sim="menuitem"][style*="rgba(250, 248, 243"]::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 18px;
+    border-radius: 0 3px 3px 0;
+    background: #e8973a;
+  }
+}
+
+/* --------------------------------------------------------------- topbar -- */
+/* Bar atas dipadatkan; konteks tahun ajaran, peran, cari, notifikasi, dan
+   shortcut portal semuanya dipertahankan sesuai permintaan. */
+@media (min-width: 901px) {
+  [data-sim="main"] > header {
+    padding: 10px var(--sim-s4) !important;
+    gap: var(--sim-s3) !important;
+  }
+
+  [data-sim="main"] > header > div:first-child > div:first-child {
+    font-size: 15px !important;
+  }
+}
+
+/* ------------------------------------------------------- kerapatan konten -- */
+@media (min-width: 901px) {
+  [data-sim="main"] [data-sim="pad"] {
+    padding: var(--sim-s4) !important;
+  }
+
+  /* Jarak antar-section dikurangi ~25% tanpa membuat blok saling menempel. */
+  [data-sim="main"] [data-sim="pad"] > div[style*="flex-direction: column"] {
+    gap: var(--sim-s3) !important;
+  }
+
+  [data-sim="main"] [data-sim="g2"],
+  [data-sim="main"] [data-sim="g3"],
+  [data-sim="main"] [data-sim="g4"] {
+    gap: var(--sim-s3) !important;
+  }
+}
+
+/* Padding kartu dipangkas ~15–25%. Radius sengaja tidak diubah — sudut
+   membulat itu bagian dari identitas, bukan kelonggaran. */
+@media (min-width: 901px) {
+  [data-sim="main"] div[style*="border-radius: 15px"][style*="padding: 20px"],
+  [data-sim="main"] div[style*="border-radius: 15px"][style*="padding: 18px"],
+  [data-sim="main"] div[style*="border-radius: 16px"][style*="padding: 20px"],
+  [data-sim="main"] div[style*="border-radius: 14px"][style*="padding: 18px"] {
+    padding: var(--sim-s4) !important;
+  }
+
+  [data-sim="main"] div[style*="border-radius: 18px"][style*="padding: 22px"],
+  [data-sim="main"] div[style*="border-radius: 20px"][style*="padding: 26px"],
+  [data-sim="main"] div[style*="border-radius: 20px"][style*="padding: 28px"] {
+    padding: var(--sim-s5) !important;
+  }
+}
+
+/* --------------------------------------------------------------- tipografi -- */
+/* Angka KPI hasil export sampai 34px — terlalu dominan begitu beberapa kartu
+   berjajar. Diturunkan agar hierarki judul→angka→metadata terbaca tenang. */
+@media (min-width: 901px) {
+  [data-sim="main"] div[style*="font-size: 34px"][style*="Lora"] {
+    font-size: 27px !important;
+  }
+
+  [data-sim="main"] div[style*="font-size: 28px"][style*="Lora"] {
+    font-size: 24px !important;
+  }
+
+  [data-sim="main"] div[style*="font-size: 22px"][style*="Lora"] {
+    font-size: 19px !important;
+  }
+}
+
+/* ---------------------------------------------------------------- tabel -- */
+/* Pola tabel operasional: baris padat, header sticky, angka rata kanan dengan
+   tabular-nums, hover baris. Border tetap tipis dan hangat — bukan grid ERP. */
+[data-sim="main"] table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+}
+
+[data-sim="main"] table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--sim-canvas);
+  padding: var(--sim-s2) 10px !important;
+  font-size: 11px !important;
+  white-space: nowrap;
+}
+
+[data-sim="main"] table tbody td {
+  padding: 9px 10px !important;
+  font-size: 12.5px !important;
+}
+
+[data-sim="main"] table tbody tr {
+  transition: background-color 0.12s ease;
+}
+
+[data-sim="main"] table tbody tr:hover td {
+  background: #f7f9f6;
+}
+
+/* Kolom nominal & jumlah lebih cepat dibandingkan saat digitnya sejajar. */
+[data-sim="main"] table td[style*="text-align: right"],
+[data-sim="main"] table th[style*="text-align: right"] {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Badge status dirapatkan sedikit agar tidak menaikkan tinggi baris. */
+[data-sim="main"] table td span[style*="border-radius: 999px"] {
+  padding: 2px var(--sim-s2) !important;
+  font-size: 10.5px !important;
+}
+
+/* Kontrol tabel (cari, filter, aksi) dipadatkan seirama dengan barisnya. */
+[data-sim="main"] input[style*="border-radius: 10px"],
+[data-sim="main"] select[style*="border-radius: 10px"] {
+  padding: var(--sim-s2) 10px !important;
+  font-size: 12.5px !important;
+}
+
+[data-sim="main"] button[style*="border-radius: 9px"],
+[data-sim="main"] button[style*="border-radius: 10px"] {
+  padding: 7px var(--sim-s3) !important;
+}
+
+/* ------------------------------------------------------------ aksesibilitas -- */
+/* Kerapatan tidak boleh mengorbankan target sentuh di layar kecil: di bawah
+   901px seluruh aturan density di atas memang tidak aktif, dan sidebar tetap
+   memakai mode dock bawah bawaan export. */
+@media (prefers-reduced-motion: reduce) {
+  [data-sim="menuitem"],
+  [data-sim="main"] table tbody tr {
+    transition: none !important;
+  }
+}
