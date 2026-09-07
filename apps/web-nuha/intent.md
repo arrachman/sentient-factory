@@ -28,6 +28,13 @@ npm run dev
 - Web: http://localhost:3226
 - API health: http://localhost:3228/api/health
 
+## Optimasi baseline
+
+- API memakai compression untuk response di atas 1 KB, Helmet, throttling global, dan logger produksi yang lebih tenang.
+- Web memakai compression, ETag, `poweredByHeader` nonaktif, serta cache immutable untuk chunk `/_next/static/*`.
+- Jalur pengukuran awal: API langsung median sekitar 1,2 ms, API melalui proxy web sekitar 5,7 ms pada mesin development.
+- Setelah domain dan database ditambahkan, ukur ulang query, serialisasi payload, cache response, dan ukuran bundle sebelum menambah optimasi lain.
+
 ## Arah berikutnya
 
 - Tambahkan module domain (santri, akademik, kepesantrenan, keuangan, PPDB).

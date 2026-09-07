@@ -12,7 +12,9 @@
     "typecheck": "npm run typecheck:web && npm run typecheck:api",
     "typecheck:web": "tsc --noEmit -p apps/web/tsconfig.json",
     "typecheck:api": "npm --prefix apps/api run typecheck",
-    "start": "npm --prefix apps/api run start:prod",
+    "start": "concurrently -k \"npm run start:web\" \"npm run start:api\"",
+    "start:web": "node apps/web/.next/standalone/server.js",
+    "start:api": "npm --prefix apps/api run start:prod",
     "test": "npm --prefix apps/api test",
     "format": "prettier --write apps *.md"
   },
