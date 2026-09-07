@@ -1,4 +1,45 @@
-# nuha — SIMTERPADU (prototype)
+# nuha — SIMTERPADU
+
+Folder ini berisi **dua hal**:
+
+1. **Aplikasi (aktif dikembangkan)** — `frontend/` (Next.js) + `backend/` (NestJS).
+   Lihat [Aplikasi: frontend + backend](#aplikasi-frontend--backend) dan
+   [`intent.md`](./intent.md).
+2. **Prototype statis (referensi)** — `dist/` hasil export claude.ai/design.
+   Dokumentasinya ada di [Prototype statis](#prototype-statis-referensi) ke bawah
+   dan **tetap berlaku**; jangan dihapus.
+
+## Aplikasi: frontend + backend
+
+- Frontend: Next.js App Router, React, TypeScript, **Atomic Design**
+  (`frontend/components/atoms` → `molecules` → `organisms` → `templates`).
+- Backend: NestJS + TypeScript, prefix `/api`, Helmet + CORS terbatas + throttling.
+- Butuh **Node 20+**. Di VPS ini: `export PATH="$HOME/.nvm/versions/node/v20.20.0/bin:$PATH"`.
+
+```bash
+npm install --workspaces=false          # deps frontend
+npm install --prefix backend --workspaces=false
+npm run dev                             # frontend 3226 + backend 3228
+npm run typecheck && npm test
+```
+
+- Frontend: <http://localhost:3226>
+- Backend health: <http://localhost:3228/api/health>
+- Port lewat env: `NUHA_FRONTEND_PORT`, `NUHA_BACKEND_PORT`; frontend mem-proxy
+  `/api/*` ke `NUHA_BACKEND_URL`.
+
+Konvensi: satu fitur backend = satu NestJS module; validasi input di boundary
+lewat DTO + `ValidationPipe`; komponen UI naik bertingkat sesuai Atomic Design;
+jangan commit secret. Untuk fitur baru **jangan** edit `dist/index.html` —
+migrasikan layar ke Next.js.
+
+> Catatan: instalasi memakai `--workspaces=false` karena `npm install` dari root
+> monorepo saat ini gagal (`Cannot read properties of null (reading 'edgesOut')`).
+> App ini karena itu punya `package-lock.json` sendiri.
+
+---
+
+# Prototype statis (referensi)
 
 Prototype web app **SIMTERPADU** (Sistem Informasi Manajemen Terpadu Yayasan
 Pendidikan Islam) untuk Pesantren Nuha Mergosono. Dibuat lewat
