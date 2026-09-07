@@ -28,6 +28,16 @@ npm run typecheck && npm test
 - Port lewat env: `NUHA_WEB_PORT`, `NUHA_API_PORT`; web mem-proxy
   `/api/*` ke `NUHA_API_URL`.
 
+### Database
+
+- MySQL 8, container `nuha-mysql`, **port host `3227`** (`127.0.0.1:3227`).
+- Nama database: **`simterpadu`** (shadow database Prisma: `simterpadu_shadow`).
+- Konfigurasi koneksi (`DATABASE_URL`, `SHADOW_DATABASE_URL`,
+  `NUHA_MYSQL_*`) ada di `.env` (tidak di-commit — lihat aturan rahasia di
+  `CLAUDE.md` root).
+- Tabel wilayah (`countries`, `regions`) sudah diisi dataset administratif
+  Indonesia Kepmendagri 2025 (91.599 baris `regions`, 1 `countries` = Indonesia).
+
 Konvensi: satu fitur backend = satu NestJS module; validasi input di boundary
 lewat DTO + `ValidationPipe`; komponen UI naik bertingkat sesuai Atomic Design;
 jangan commit secret. Untuk fitur baru **jangan** edit `dist/index.html` —
