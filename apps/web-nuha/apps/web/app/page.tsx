@@ -1,10 +1,11 @@
-import { DashboardSummary } from '../components/organisms/DashboardSummary';
-import { DashboardTemplate } from '../components/templates/DashboardTemplate';
-
 export default function HomePage() {
   return (
-    <DashboardTemplate>
-      <DashboardSummary />
-    </DashboardTemplate>
+    <main className="template-shell">
+      <iframe
+        className="template-frame"
+        src="/template/index.html"
+        title="SIMTERPADU Pesantren Nuha Mergosono"
+      />
+    </main>
   );
 }
