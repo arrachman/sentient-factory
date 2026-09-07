@@ -1,5 +1,5 @@
 {
-  "name": "@sentient-factory/web-nuha-backend",
+  "name": "@sentient-factory/nuha-api",
   "version": "0.1.0",
   "private": true,
   "scripts": {

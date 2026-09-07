@@ -9,8 +9,8 @@ const nextConfig = {
   // Keep tracing inside this app so the monorepo root lockfile is not picked up.
   outputFileTracingRoot: APP_ROOT,
   async rewrites() {
-    const backendUrl = process.env.NUHA_BACKEND_URL ?? 'http://localhost:3228';
-    return [{ source: '/api/:path*', destination: `${backendUrl}/api/:path*` }];
+    const apiUrl = process.env.NUHA_API_URL ?? 'http://localhost:3228';
+    return [{ source: '/api/:path*', destination: `${apiUrl}/api/:path*` }];
   },
 };
 
