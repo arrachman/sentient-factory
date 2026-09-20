@@ -29,6 +29,7 @@ function leafHref(id: string, workspaceId?: string): string {
 
 /** Icon-only nav rail with a hover flyout submenu — ported from `sidebar.jsx`. */
 export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuMode = 'flyout', sidebarMode = 'icon' }: SidebarProps) {
+  const isHorizontal = sidebarMode === 'horizontal';
   const [open, setOpen] = React.useState<string | null>(null);
   const [openTop, setOpenTop] = React.useState(0);
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -96,6 +97,17 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
       return next;
     });
   };
+
+  // Close expanded horizontal submenu when clicking outside the sidebar.
+  const navElRef = React.useRef<HTMLElement | null>(null);
+  React.useEffect(() => {
+    if (!isHorizontal) return;
+    const onOutside = (e: MouseEvent) => {
+      if (navElRef.current && !navElRef.current.contains(e.target as Node)) setExpandedId(null);
+    };
+    document.addEventListener('click', onOutside);
+    return () => document.removeEventListener('click', onOutside);
+  }, [isHorizontal]);
 
   const currentTop = nav.find(
     (i) =>
@@ -196,6 +208,7 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
     <>
       <nav
         className="sidebar"
+        ref={navElRef}
         onMouseLeave={sidebarMode === 'horizontal' || sidebarMenuMode === 'flyout' ? handleLeaveAll : undefined}
         style={sidebarMode === 'horizontal' ? { overflowX: 'auto', overflowY: 'hidden', scrollbarGutter: 'stable' } : sidebarMenuMode === 'accordion' ? { overflowY: 'auto', scrollbarGutter: 'stable' } : undefined}
       >
@@ -233,21 +246,42 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
             );
           }
 
-          // Horizontal mode: render items as horizontal tabs
-          if ((sidebarMode as SidebarMode) === 'horizontal') {
+// Horizontal mode: top bar with dropdown submenu below (appears on hover)
+          if (isHorizontal) {
             const isExpanded = expandedId === item.id;
             return (
-              <React.Fragment key={item.id}>
-                <div
-                  className={cn('nav-item', isActive && 'active')}
-                  data-tip={t(item.label ?? '')}
-                  style={{ cursor: 'pointer' }}
-                  onClick={() => onNavigate(item.id!)}
-                >
-                  {item.icon && <Icon name={item.icon} size={16} stroke={1.6} />}
-                  <span className="nav-label">{t(item.label ?? '')}</span>
-                </div>
-              </React.Fragment>
+              <div
+                key={item.id}
+                className={cn('nav-item', isActive && 'active')}
+                style={{ cursor: 'pointer', position: 'relative' }}
+                onMouseEnter={(e) => {
+                  if (item.children) {
+                    if (timer.current) clearTimeout(timer.current);
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    setOpenTop(rect.top);
+                    setExpandedId(item.id ?? null);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (item.children) {
+                    timer.current = setTimeout(() => setExpandedId(null), 120);
+                  }
+                }}
+                onClick={() => {
+                  if (!item.children) onNavigate(item.id!);
+                }}
+              >
+                {item.icon && <Icon name={item.icon} size={16} stroke={1.6} />}
+                <span className="nav-label">{t(item.label ?? '')}</span>
+                {item.children && (
+                  <Icon name={isExpanded ? 'chevup' : 'chevdown'} size={12} stroke={1.6} style={{ opacity: 0.5, flexShrink: 0 }} />
+                )}
+                {isExpanded && item.children && (
+                  <div className="accordion-submenu" style={{ position: 'absolute', top: '100%', left: 0, minWidth: 180, display: 'flex', flexDirection: 'column', gap: 2, padding: '4px 0 8px 0', background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 6, boxShadow: 'var(--shadow-flyout)', zIndex: 100 }}>
+                    {renderAccordionChildren(item)}
+                  </div>
+                )}
+              </div>
             );
           }
 

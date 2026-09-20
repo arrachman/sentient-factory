@@ -93,9 +93,46 @@ html[data-sidebar='horizontal'] .sidebar .nav-item {
   gap: 8px;
   padding: 0 12px;
   white-space: nowrap;
+  position: relative;
 }
-html[data-sidebar='horizontal'] .sidebar .nav-label {
+html[data-sidebar='horizontal'] .sidebar .nav-item .nav-label {
   display: inline;
+}
+html[data-sidebar='horizontal'] .sidebar .accordion-submenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 0 8px 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow-flyout);
+  z-index: 100;
+}
+html[data-sidebar='horizontal'] .sidebar .accordion-submenu .accordion-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 0;
+}
+html[data-sidebar='horizontal'] .sidebar .accordion-submenu .accordion-group-label {
+  padding: 6px 12px 2px 12px;
+  font-size: calc(11px * var(--font-scale, 1));
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+}
+html[data-sidebar='horizontal'] .sidebar .accordion-submenu .accordion-item {
+  padding: 5px 12px 5px 24px;
+  font-size: calc(12px * var(--font-scale, 1));
+}
+html[data-sidebar='horizontal'] .sidebar .accordion-submenu .accordion-item.active {
+  background: var(--primary-soft);
+  color: var(--primary-soft-fg);
 }
 html[data-sidebar='horizontal'] .sidebar [data-tip]:hover::after,
 html[data-sidebar='horizontal'] .sidebar [data-tip]:hover::before {

@@ -223,16 +223,19 @@ export function SidebarModeCard({
           ]}
         />
       </SetRow>
-      <SetRow label={t('Mode Menu')} hint={t('Flyout: submenu muncul di kanan saat hover · Accordion: submenu expand di bawah modul')}>
-        <Seg
-          value={sidebarMenu || 'flyout'}
-          onChange={(v) => onMenuMode(v as SidebarMenuMode)}
-          options={[
-            { v: 'flyout', label: t('Flyout'), icon: 'layers' },
-            { v: 'accordion', label: t('Accordion'), icon: 'chevdown' },
-          ]}
-        />
-      </SetRow>
+      {/* Mode Menu only shown when sidebar is vertical (icon/label) */}
+      {sidebar !== 'horizontal' && (
+        <SetRow label={t('Mode Menu')} hint={t('Flyout: submenu muncul di kanan saat hover · Accordion: submenu expand di bawah modul')}>
+          <Seg
+            value={sidebarMenu || 'flyout'}
+            onChange={(v) => onMenuMode(v as SidebarMenuMode)}
+            options={[
+              { v: 'flyout', label: t('Flyout'), icon: 'layers' },
+              { v: 'accordion', label: t('Accordion'), icon: 'chevdown' },
+            ]}
+          />
+        </SetRow>
+      )}
       <SetRow label={t('Pratinjau')}>
         <div style={{ display: 'inline-flex', flexDirection: sidebar === 'horizontal' ? 'row' : 'column', gap: 3, border: '1px solid var(--border)', borderRadius: 8, padding: 8, background: 'var(--panel-2)', minWidth: sidebar === 'horizontal' ? 'auto' : sidebar === 'label' ? 170 : 'auto', ...(sidebar === 'horizontal' ? { alignItems: 'center', gap: 4 } : {}) }}>
           {PREVIEW_ITEMS.map(({ ic, lb }, i) => (
