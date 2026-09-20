@@ -77,13 +77,13 @@ html[data-sidebar='horizontal'] .sidebar {
   width: 100%;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   gap: 2px;
   padding: 0 12px;
   border-bottom: 1px solid var(--border);
   border-right: none;
   overflow-x: auto;
-  overflow-y: hidden;
+  overflow-y: visible;
   background: var(--panel);
 }
 html[data-sidebar='horizontal'] .sidebar .nav-item {
@@ -111,7 +111,9 @@ html[data-sidebar='horizontal'] .sidebar .accordion-submenu {
   border: 1px solid var(--border);
   border-radius: 6px;
   box-shadow: var(--shadow-flyout);
-  z-index: 100;
+  z-index: 9999;
+  /* Ensure dropdown renders above all content */
+  margin: 0;
 }
 html[data-sidebar='horizontal'] .sidebar .accordion-submenu .accordion-group {
   display: flex;
