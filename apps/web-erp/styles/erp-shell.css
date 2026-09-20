@@ -104,6 +104,8 @@ html[data-sidebar='horizontal'] .sidebar .accordion-submenu {
   top: 100%;
   left: 0;
   min-width: 180px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 2px;

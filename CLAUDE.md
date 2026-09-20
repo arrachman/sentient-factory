@@ -179,7 +179,7 @@ Env internal-API per app (rewrite `/api/*` → api-gateway 3203, dibake saat bui
 - **Eksplorasi besar** → pakai sub-agent `Explore` atau `general-purpose`, jangan grep manual berulang.
 - **Spec/milestone/phase** → driver-nya **GSD** (`/gsd-new-milestone`, `/gsd-plan-phase`, `/gsd-execute-phase`).
 - **Eksekusi mendalam (TDD, refactor, debug)** → driver-nya **Superpowers**. Jangan campur driver di satu fase.
-- **Branch baru** sebelum eksekusi besar: `git checkout -b feat/<nama>` di checkout aktif. Jangan gunakan worktree.
+- **Selalu kerjakan di branch `main`**: jangan membuat atau berpindah ke branch lain, dan jangan gunakan worktree.
 - **Commit per langkah** kecil, pesan jelas. Jangan tumpuk 500 baris dalam satu commit.
 - **PR template**: ringkasan + test plan; pakai `gh pr create`.
 
@@ -188,7 +188,7 @@ Env internal-API per app (rewrite `/api/*` → api-gateway 3203, dibake saat bui
 - Membuka dua dev server di port 3101 → konflik. Selalu `npm run ports:check` dulu.
 - Edit `apps/myerpplus-db-mapping` tanpa render ulang Vault env (`vault:render:myerp`) → koneksi MySQL gagal.
 - Update `packages/shared-types` di TS saja → runtime ai-engine error karena Pydantic tertinggal.
-- **Jangan gunakan worktree**: lakukan edit di checkout aktif yang ditonton dev server. Sebelum fix UI, konfirmasi branch yang sedang dijalankan.
+- **Selalu gunakan branch `main` aktif**: jangan membuat, berpindah ke, atau merekomendasikan branch lain maupun worktree. Semua perubahan dikerjakan langsung di checkout `main` yang ditonton dev server.
 
 ## 9. Jangan disentuh tanpa diminta
 

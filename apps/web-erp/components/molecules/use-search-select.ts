@@ -240,6 +240,7 @@ export function useSearchSelect(props: SearchSelectProps): SearchSelectState & S
     confirm: modalHandlers.confirm,
     toggleAll: modalHandlers.toggleAll,
     handleKeyDown: modalHandlers.handleKeyDown,
+    goToPage: setPage,
     setQuery, setPage,
   };
 }
