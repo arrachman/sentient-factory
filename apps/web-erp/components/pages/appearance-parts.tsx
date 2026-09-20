@@ -10,7 +10,7 @@ import { KPI_SERIES, type Translator } from '@/lib/mock';
 export type Lang = 'id' | 'en' | 'ja';
 export type FontScale = 'sm' | 'base' | 'lg' | 'xl';
 export type Density = 'compact' | 'comfortable';
-export type SidebarMode = 'icon' | 'label';
+export type SidebarMode = 'icon' | 'label' | 'horizontal';
 export type SidebarMenuMode = 'flyout' | 'accordion';
 
 export const STORAGE_KEY = 'erp-appearance';
@@ -212,13 +212,14 @@ export function SidebarModeCard({
 }) {
   return (
     <SetCard icon="database" title={t('Menu Sidebar')} sub={t('Template navigasi samping')}>
-      <SetRow label={t('Template')} hint={t('Ikon saja atau dengan label teks')}>
+      <SetRow label={t('Template')} hint={t('Ikon saja, dengan label teks, atau horizontal di atas')}>
         <Seg
           value={sidebar || 'icon'}
           onChange={(v) => onChange(v as SidebarMode)}
           options={[
             { v: 'icon', label: t('Ikon'), icon: 'boxes' },
             { v: 'label', label: t('Ikon + Label'), icon: 'database' },
+            { v: 'horizontal', label: t('Horizontal'), icon: 'layers' },
           ]}
         />
       </SetRow>
@@ -233,15 +234,16 @@ export function SidebarModeCard({
         />
       </SetRow>
       <SetRow label={t('Pratinjau')}>
-        <div style={{ display: 'inline-flex', flexDirection: 'column', gap: 3, border: '1px solid var(--border)', borderRadius: 8, padding: 8, background: 'var(--panel-2)', minWidth: sidebar === 'label' ? 170 : 'auto' }}>
+        <div style={{ display: 'inline-flex', flexDirection: sidebar === 'horizontal' ? 'row' : 'column', gap: 3, border: '1px solid var(--border)', borderRadius: 8, padding: 8, background: 'var(--panel-2)', minWidth: sidebar === 'horizontal' ? 'auto' : sidebar === 'label' ? 170 : 'auto', ...(sidebar === 'horizontal' ? { alignItems: 'center', gap: 4 } : {}) }}>
           {PREVIEW_ITEMS.map(({ ic, lb }, i) => (
             <React.Fragment key={ic}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 8px', borderRadius: 6, fontSize: 'calc(12px * var(--font-scale, 1))', background: i === 0 ? 'var(--primary-soft)' : 'transparent', color: i === 0 ? 'var(--primary-soft-fg)' : 'var(--fg-muted)' }}>
                 <Icon name={ic} size={14} />
+                {sidebar === 'horizontal' && <span style={{ marginLeft: 2 }}>{t(lb)}</span>}
                 {sidebar === 'label' && <span style={{ flex: 1 }}>{t(lb)}</span>}
                 {sidebar === 'label' && i === 0 && sidebarMenu === 'accordion' && <Icon name="chevdown" size={10} />}
               </span>
-              {i === 0 && sidebarMenu === 'accordion' && (
+              {i === 0 && sidebarMenu === 'accordion' && sidebar !== 'horizontal' && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 8px 3px 28px', fontSize: 'calc(11px * var(--font-scale, 1))', color: 'var(--primary)' }}>
                   <Icon name="dot" size={8} /> {sidebar === 'label' && <span>{t('Sub Menu')}</span>}
                 </span>

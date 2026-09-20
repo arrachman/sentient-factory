@@ -16,7 +16,10 @@ interface SidebarProps {
   t: (key: string) => string;
   workspaceId?: string;
   sidebarMenuMode?: 'flyout' | 'accordion';
+  sidebarMode?: 'icon' | 'label' | 'horizontal';
 }
+
+type SidebarMode = SidebarProps['sidebarMode'];
 
 /** Builds a navigable href for a route id so browsers can offer right-click / Ctrl+click. */
 function leafHref(id: string, workspaceId?: string): string {
@@ -25,7 +28,7 @@ function leafHref(id: string, workspaceId?: string): string {
 }
 
 /** Icon-only nav rail with a hover flyout submenu — ported from `sidebar.jsx`. */
-export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuMode = 'flyout' }: SidebarProps) {
+export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuMode = 'flyout', sidebarMode = 'icon' }: SidebarProps) {
   const [open, setOpen] = React.useState<string | null>(null);
   const [openTop, setOpenTop] = React.useState(0);
   const timer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -116,7 +119,7 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
 
   // Flyout handlers
   const handleEnter = (e: React.MouseEvent<HTMLElement>, item: NavItem) => {
-    if (sidebarMenuMode === 'accordion' || !item.children) {
+    if (sidebarMode === 'horizontal' || sidebarMenuMode === 'accordion' || !item.children) {
       setOpen(null);
       return;
     }
@@ -193,8 +196,8 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
     <>
       <nav
         className="sidebar"
-        onMouseLeave={sidebarMenuMode === 'flyout' ? handleLeaveAll : undefined}
-        style={sidebarMenuMode === 'accordion' ? { overflowY: 'auto', scrollbarGutter: 'stable' } : undefined}
+        onMouseLeave={sidebarMode === 'horizontal' || sidebarMenuMode === 'flyout' ? handleLeaveAll : undefined}
+        style={sidebarMode === 'horizontal' ? { overflowX: 'auto', overflowY: 'hidden', scrollbarGutter: 'stable' } : sidebarMenuMode === 'accordion' ? { overflowY: 'auto', scrollbarGutter: 'stable' } : undefined}
       >
         {nav.map((item, i) => {
           if (item.divider)
@@ -213,6 +216,11 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
                 data-tip={t(item.label ?? '')}
                 onMouseEnter={(e) => handleEnter(e, item)}
                 onClick={(e) => {
+                  if (sidebarMode === 'horizontal') {
+                    e.preventDefault();
+                    onNavigate(item.id!);
+                    return;
+                  }
                   if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
                     e.preventDefault();
                     onNavigate(item.id!);
@@ -222,6 +230,24 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
                 {item.icon && <Icon name={item.icon} size={16} stroke={1.6} />}
                 <span className="nav-label">{t(item.label ?? '')}</span>
               </a>
+            );
+          }
+
+          // Horizontal mode: render items as horizontal tabs
+          if ((sidebarMode as SidebarMode) === 'horizontal') {
+            const isExpanded = expandedId === item.id;
+            return (
+              <React.Fragment key={item.id}>
+                <div
+                  className={cn('nav-item', isActive && 'active')}
+                  data-tip={t(item.label ?? '')}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => onNavigate(item.id!)}
+                >
+                  {item.icon && <Icon name={item.icon} size={16} stroke={1.6} />}
+                  <span className="nav-label">{t(item.label ?? '')}</span>
+                </div>
+              </React.Fragment>
             );
           }
 
@@ -250,6 +276,9 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
           }
 
           // Flyout mode: items with children open a flyout on hover.
+          if ((sidebarMode as SidebarMode) === 'horizontal') {
+            return null;
+          }
           return (
             <div
               key={item.id}
@@ -274,7 +303,7 @@ export function Sidebar({ nav, current, onNavigate, t, workspaceId, sidebarMenuM
           <span className="nav-label">{t('Pintasan')}</span>
         </div>
       </nav>
-      {sidebarMenuMode === 'flyout' && openItem && openItem.children && (
+      {sidebarMode === 'horizontal' ? null : sidebarMenuMode === 'flyout' && openItem && openItem.children && (
         <div
           className="flyout fade-in"
           style={{

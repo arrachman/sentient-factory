@@ -13,6 +13,7 @@ interface UseAppShellKeyboardOptions {
   setShortcutsOpen: (open: boolean) => void;
   setLang: React.Dispatch<React.SetStateAction<Lang>>;
   setSidebarMenuMode: React.Dispatch<React.SetStateAction<'flyout' | 'accordion'>>;
+  setSidebarMode: React.Dispatch<React.SetStateAction<'icon' | 'label' | 'horizontal'>>;
 }
 
 /** Registers all window-level keyboard and custom-event listeners for AppShell. */
@@ -26,6 +27,7 @@ export function useAppShellKeyboard({
   setShortcutsOpen,
   setLang,
   setSidebarMenuMode,
+  setSidebarMode,
 }: UseAppShellKeyboardOptions): void {
   // Global keyboard shortcuts
   React.useEffect(() => {
@@ -81,6 +83,18 @@ export function useAppShellKeyboard({
     window.addEventListener('erp-set-sidebar-menu', onSetMode as EventListener);
     return () => window.removeEventListener('erp-set-sidebar-menu', onSetMode as EventListener);
   }, [setSidebarMenuMode]);
+
+  // Listen for sidebar mode changes dispatched by AppearancePage
+  React.useEffect(() => {
+    const onSetMode = (e: Event) => {
+      const detail = (e as CustomEvent<{ mode: string }>).detail;
+      if (['icon', 'label', 'horizontal'].includes(detail?.mode)) {
+        setSidebarMode(detail.mode as 'icon' | 'label' | 'horizontal');
+      }
+    };
+    window.addEventListener('erp-set-sidebar', onSetMode as EventListener);
+    return () => window.removeEventListener('erp-set-sidebar', onSetMode as EventListener);
+  }, [setSidebarMode]);
 
   // Listen for lang changes dispatched by AppearancePage
   React.useEffect(() => {

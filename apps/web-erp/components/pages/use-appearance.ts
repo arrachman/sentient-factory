@@ -143,6 +143,8 @@ export function useAppearance(): UseAppearanceResult {
         window.dispatchEvent(new CustomEvent('erp-set-url-routing', { detail: { enabled: next.urlRouting } }));
       if (key === 'sidebarMenu')
         window.dispatchEvent(new CustomEvent('erp-set-sidebar-menu', { detail: { mode: next.sidebarMenu } }));
+      if (key === 'sidebar')
+        window.dispatchEvent(new CustomEvent('erp-set-sidebar', { detail: { mode: next.sidebar } }));
       setTw(next);
     },
     [],
@@ -187,6 +189,7 @@ export function useAppearance(): UseAppearanceResult {
     el.setAttribute('data-sidebar', DEFAULTS.sidebar);
     el.setAttribute('data-sidebar-menu', DEFAULTS.sidebarMenu);
     window.dispatchEvent(new CustomEvent('erp-set-sidebar-menu', { detail: { mode: DEFAULTS.sidebarMenu } }));
+    window.dispatchEvent(new CustomEvent('erp-set-sidebar', { detail: { mode: DEFAULTS.sidebar } }));
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULTS));
     } catch {

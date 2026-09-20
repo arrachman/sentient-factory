@@ -47,6 +47,14 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
   const [lang, setLang] = React.useState<Lang>('id');
   const [paletteOpen, setPaletteOpen] = React.useState(false);
   const [shortcutsOpen, setShortcutsOpen] = React.useState(false);
+  const [sidebarMode, setSidebarMode] = React.useState<'icon' | 'label' | 'horizontal'>(() => {
+    if (typeof window === 'undefined') return 'icon';
+    try {
+      const stored = JSON.parse(window.localStorage.getItem('erp-appearance') ?? '{}') as Record<string, unknown>;
+      if (stored.sidebar === 'horizontal' || stored.sidebar === 'label' || stored.sidebar === 'icon') return stored.sidebar;
+    } catch { /* ignore */ }
+    return (document.documentElement.getAttribute('data-sidebar') as 'icon' | 'label' | 'horizontal') ?? 'icon';
+  });
   const [sidebarMenuMode, setSidebarMenuMode] = React.useState<'flyout' | 'accordion'>(() => {
     if (typeof window === 'undefined') return 'flyout';
     try {
@@ -257,6 +265,7 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
     setShortcutsOpen,
     setLang,
     setSidebarMenuMode,
+    setSidebarMode,
   });
 
   const onPaletteAction = React.useCallback(
@@ -286,7 +295,7 @@ export function AppShell({ workspaceId, initialRoute }: AppShellProps) {
   return (
     <>
       <div className="app">
-        <Sidebar nav={nav} current={sidebarCurrent} onNavigate={navigate} t={t} workspaceId={workspaceId} sidebarMenuMode={sidebarMenuMode} />
+        <Sidebar nav={nav} current={sidebarCurrent} onNavigate={navigate} t={t} workspaceId={workspaceId} sidebarMenuMode={sidebarMenuMode} sidebarMode={sidebarMode} />
         <Topbar
           crumbs={crumbs}
           onOpenPalette={() => setPaletteOpen(true)}

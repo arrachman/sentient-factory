@@ -61,6 +61,61 @@ body {
   background: var(--bg);
 }
 
+/* Horizontal sidebar layout */
+html[data-sidebar='horizontal'] .app {
+  grid-template-columns: 1fr;
+  grid-template-rows: var(--topbar-h) 1fr;
+  grid-template-areas:
+    'topbar'
+    'main';
+}
+html[data-sidebar='horizontal'] .sidebar {
+  grid-area: topbar;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--border);
+  border-right: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--panel);
+}
+html[data-sidebar='horizontal'] .sidebar .nav-item {
+  height: 36px;
+  min-height: 36px;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 12px;
+  white-space: nowrap;
+}
+html[data-sidebar='horizontal'] .sidebar .nav-label {
+  display: inline;
+}
+html[data-sidebar='horizontal'] .sidebar [data-tip]:hover::after,
+html[data-sidebar='horizontal'] .sidebar [data-tip]:hover::before {
+  content: none;
+  display: none;
+}
+html[data-sidebar='horizontal'] .sidebar .nav-divider {
+  width: 1px;
+  height: 24px;
+  margin: 6px 4px;
+}
+html[data-sidebar='horizontal'] .sidebar .nav-item.active::before {
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+}
+html[data-sidebar='horizontal'] .main {
+  grid-area: main;
+}
+
 /* Topbar */
 .topbar {
   display: flex;

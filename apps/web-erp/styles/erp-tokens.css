@@ -322,3 +322,9 @@ html[data-fontscale='xl'] {
 html[data-sidebar='label'] {
   --sidebar-w: 210px;
 }
+
+/* Horizontal sidebar: sidebar becomes a top bar */
+html[data-sidebar='horizontal'] {
+  --sidebar-w: 100%;
+  --topbar-h: 52px;
+}
