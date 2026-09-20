@@ -68,6 +68,7 @@ html[data-sidebar='horizontal'] .app {
   grid-template-areas:
     'topbar'
     'main';
+  overflow: visible;
 }
 html[data-sidebar='horizontal'] .sidebar {
   grid-area: topbar;
@@ -153,6 +154,7 @@ html[data-sidebar='horizontal'] .sidebar .nav-item.active::before {
 }
 html[data-sidebar='horizontal'] .main {
   grid-area: main;
+  overflow: visible;
 }
 
 /* Topbar */
