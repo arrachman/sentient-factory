@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     agent_workflow_enabled: bool = Field(default=True, alias="AI_AGENT_WORKFLOW_ENABLED")
     agent_workflow_max_passes: int = Field(default=10, alias="AI_AGENT_WORKFLOW_MAX_PASSES")
     agent_workflow_first_prompt_path: Path = Field(
-        default=Path("/app/prompts/sales_sql_readonly_generator.prompt.md"),
+        default=Path("apps/ai-engine/prompts/sales_sql_readonly_generator.prompt.md"),
         alias="AI_AGENT_WORKFLOW_FIRST_PROMPT_PATH",
     )
     llm_request_timeout_seconds: float = Field(default=60.0, alias="LLM_REQUEST_TIMEOUT_SECONDS")

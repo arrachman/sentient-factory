@@ -196,7 +196,7 @@ def _truncate_text(text: str, max_length: int) -> str:
 
 
 def build_first_step_prompt(user_prompt: str) -> tuple[str, str]:
-    prompt_path = settings.agent_workflow_first_prompt_path
+    prompt_path = _resolve_existing_path(settings.agent_workflow_first_prompt_path)
     try:
         prompt_template = prompt_path.read_text(encoding="utf-8").strip()
     except OSError as error:
@@ -240,6 +240,13 @@ def _resolve_existing_path(configured_path: Path) -> Path:
         Path(__file__).resolve().parents[2] / configured_path,
     ]
 
+    if configured_path.name == "sales_sql_readonly_generator.prompt.md":
+        candidates.extend(
+            [
+                Path("/app/prompts") / configured_path.name,
+                Path("prompts") / configured_path.name,
+            ]
+        )
     if configured_path.name == "semantic-query-schema-sales.json":
         candidates.extend(
             [
